@@ -1,0 +1,31 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<h2>Meu Perfil</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        <label>Nome:</label>
+        <input type="text" name="first_name" value="{{ user.first_name }}">
+    </div>
+    <div>
+        <label>Sobrenome:</label>
+        <input type="text" name="last_name" value="{{ user.last_name }}">
+    </div>
+    <div>
+        <label>Email:</label>
+        <input type="email" name="email" value="{{ user.email }}">
+        {% if not user.email_verified %}
+            <span class="error">(Não verificado)</span>
+        {% endif %}
+    </div>
+    <div>
+        <label>Foto:</label>
+        <input type="file" name="photo">
+        {% if user.photo %}
+            <img src="{{ user.photo.url }}" width="100">
+        {% endif %}
+    </div>
+    <button type="submit">Atualizar</button>
+</form>
+{% endblock %}

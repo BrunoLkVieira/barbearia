@@ -1,0 +1,12 @@
+{% extends "user/base.html" %}
+
+{% block content %}
+<h2>Verificação de Email</h2>
+{% if success %}
+    <p class="success">Email verificado com sucesso!</p>
+    <a href="{% url 'user:profile' %}">Ir para o perfil</a>
+{% else %}
+    <p class="error">Falha na verificação. Token inválido ou expirado.</p>
+    <a href="{% url 'user:resend_verification' %}">Reenviar email de verificação</a>
+{% endif %}
+{% endblock %}
