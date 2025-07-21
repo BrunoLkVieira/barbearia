@@ -1,0 +1,190 @@
+
+
+🏗️ ETAPA 1 – Estrutura Inicial e Configurações
+
+    1-Criar e ativar o ambiente virtual .venv
+
+    2-Instalar Django e python-decouple
+
+    3-Criar o projeto com django-admin startproject configs .
+
+    4-Criar as pastas: apps/, static/, templates/, media/
+
+    5-Criar o arquivo .env com SECRET_KEY, DEBUG, dados do banco etc.
+
+    6-Configurar config/settings/base.py com from decouple import config
+
+    7-Criar config/settings/dev.py e config/settings/prod.py
+
+    8-Alterar os arquivos manage.py, wsgi.py e asgi.py para apontar para config.settings.dev (em dev) ou config.settings.prod (em produção)
+
+    9-Configurar no base.py:
+    
+                        import os
+        -TEMPLATES com 'DIRS': [os.path.join(BASE_DIR, 'templates')],
+
+        -STATICFILES_DIRS, STATIC_ROOT, MEDIA_ROOT
+
+        -Banco de dados condicional (USE_SQLITE, DATABASES)
+
+        -Adicionar apps/ ao Python path usando sys.path.append(str(BASE_DIR / 'apps'))
+
+
+
+🧱 ETAPA 2 – Criação e Organização dos Apps
+
+    1-Criar os apps dentro de apps/ com python manage.py startapp nome_do_app
+
+    2-Registrar os apps no INSTALLED_APPS do base.py
+
+    3-Criar dentro do app as pastas templates/nome_do_app/ e static/nome_do_app/ se for usar templates ou arquivos estáticos próprios
+
+
+
+🧑‍💻 ETAPA 3 – Desenvolvimento das Funcionalidades
+
+    1-Criar o models.py se houver dados
+
+    2-Criar o forms.py se houver formulários
+
+    3-Criar o views.py com as views da aplicação
+
+    4-Criar os templates HTML em templates/nome_do_app/
+
+    5-Criar o urls.py do app e registrar as rotas
+
+    6-Incluir o include('apps.nome_do_app.urls') no urls.py principal
+
+    7-Rodar python manage.py makemigrations e migrate (se houver modelos)
+
+    8-Criar o superusuário com python manage.py createsuperuser
+
+
+
+🧪 ETAPA 4 – Testes Locais
+
+    1-Rodar o servidor com python manage.py runserver
+
+    2-Testar os acessos às rotas, views e templates
+
+    3-Ajustar qualquer bug ou erro visual
+
+
+
+🚀 ETAPA 5 – Preparação para o Deploy
+
+    1-Criar arquivos como Procfile, build.sh, etc. (se for usar Render, por exemplo)
+
+    2-Configurar STATIC_ROOT e MEDIA_ROOT corretamente
+
+    3-Criar conta no Cloudinary (para imagens)
+
+    4-Mover DEBUG, SECRET_KEY, ALLOWED_HOSTS e dados sensíveis para .env
+
+    5-Garantir que o prod.py use tudo do .env corretamente
+
+
+
+🌐 ETAPA 6 – Deploy Real
+
+    1-Subir o código no GitHub
+
+    2-Conectar com o Render (ou outro serviço)
+
+    3-Criar as variáveis de ambiente lá (copiadas do seu .env)
+
+    4-Fazer o deploy
+
+    5-Testar tudo online (rotas, login, imagens, etc.)
+
+    6-Corrigir problemas de produção (se aparecerem)
+
+
+
+
+
+
+
+
+
+
+-------------------Docker---------------------------
+
+1. Crie o arquivo Dockerfile
+
+2. Crie o arquivo docker-compose.yml
+
+3. Crie o arquivo .env com os dados do banco
+
+4. Edite o settings.py (ou base.py) do Django para usar o Postgre
+
+5. Crie o volume local do banco
+
+    docker volume create postgres_data
+
+
+6. Construa e suba os containers
+
+    docker-compose up --build
+
+
+7. Acesse o Django no navegador
+
+    http://localhost:8000/
+
+
+8. Crie o banco, migrações e usuário admin (se quiser)
+
+    docker-compose exec web python manage.py migrate
+    docker-compose exec web python manage.py createsuperuser
+
+
+___________________________________________________________________________________________________________________________________________________________
+
+
+
+1- Cria projeto + ambiente
+
+2- Modulariza com apps/
+
+3- Configura settings (base, dev, prod, .env)
+
+4- Implementa app: models, views, urls, templates, static
+
+5- Executa migrations e admin
+
+6- Adiciona testes e qualidade com pytest, black
+
+Use pytest-django
+
+Estruture diretórios tests/
+
+Adicione flake8, black, etc.
+
+
+7- Prepara deploy: settings, WSGI/ASGI, Gunicorn/Nginx ou Docker
+
+Configurar DEBUG=False
+
+Servir static via Nginx ou WhiteNoise
+
+Usar Gunicorn como WSGI
+
+
+8- Deploy em PaaS ou Docker (Render/Heroku)
+
+PaaS: Render, Heroku, PythonAnywhere
+
+Infra self-managed: Gunicorn + Nginx + Docker
+
+Containerizado: via Docker Compose com ambiente similar ao Cookiecutter
+
+
+
+Render + Cloudinary + Docker + CI/CD (GitHub Actions)
+
+
+
+
+
+
