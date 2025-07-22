@@ -2,16 +2,23 @@
 
 {% block content %}
 <h2>Login</h2>
+
+{% if form.errors %}
+    <ul style="color: red;">
+        {% for field in form %}
+            {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
 <form method="post">
     {% csrf_token %}
-    <div>
-        <label>Usuário/Email:</label>
-        <input type="text" name="username" required>
-    </div>
-    <div>
-        <label>Senha:</label>
-        <input type="password" name="password" required>
-    </div>
+    {{ form.as_p }}
     <button type="submit">Entrar</button>
 </form>
 {% endblock %}

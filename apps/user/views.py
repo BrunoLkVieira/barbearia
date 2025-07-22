@@ -21,6 +21,10 @@ class UserRegisterView(View):
             return redirect('user:login')
         return render(request, 'user/register.html', {'form': form})
 
+
+
+
+
 class UserLoginView(View):
     def get(self, request):
         form = UserLoginForm()
@@ -34,8 +38,13 @@ class UserLoginView(View):
                 messages.warning(request, 'Verifique seu e-mail para acessar.')
                 return redirect('user:login')
             login(request, user)
-            return redirect('core:home')
+            return redirect('user:home')
         return render(request, 'user/login.html', {'form': form})
+    
+
+
+
+
 
 class UserLogoutView(View):
     def get(self, request):
