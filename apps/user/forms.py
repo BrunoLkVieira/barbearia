@@ -18,6 +18,12 @@ class UserRegistrationForm(forms.ModelForm):
             raise forms.ValidationError('As senhas não coincidem')
         validate_password(password2)
         return password2
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])  # 👈 ESSENCIAL
+        if commit:
+            user.save()
+        return user
 
 class UserLoginForm(AuthenticationForm):
     username = forms.CharField(label='Email/Usuário')

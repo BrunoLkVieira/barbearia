@@ -6,6 +6,8 @@ from django.utils import timezone
 from .models import User
 from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 
 class UserRegisterView(View):
     def get(self, request):
@@ -49,14 +51,27 @@ class UserLoginView(View):
 class UserLogoutView(View):
     def get(self, request):
         logout(request)
-        return redirect('core:home')
+        return redirect('user:register')
+    
+class HomeView(View):
+    def get(self, request):
+        return render(request, 'user/home.html')
 
 class VerifyEmailView(View):
     def get(self, request, uidb64, token):
         try:
-            # Lógica de verificação (implementar conforme mostrado anteriormente)
-            messages.success(request, 'E-mail verificado com sucesso!')
-            return redirect('user:profile')
-        except Exception:
-            messages.error(request, 'Link inválido ou expirado.')
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+
+            if default_token_generator.check_token(user, token):
+                user.email_verified = True
+                user.save()
+                messages.success(request, 'E-mail verificado com sucesso!')
+                return redirect('user:login')
+            else:
+                messages.error(request, 'Token inválido ou expirado.')
+                return redirect('user:register')
+
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            messages.error(request, 'Ocorreu um erro ao verificar o e-mail.')
             return redirect('user:register')
