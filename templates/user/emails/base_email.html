@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}OrblyCut{% endblock %}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px 0;
+      margin: 0;
+    }
+    .container {
+      background-color: #ffffff;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo img {
+      width: 100px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 30px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background-color: #FF9900;
+      color: #1A355B;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    h2 {
+      color: #1A355B;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://i.ibb.co/4wgcmTgS/logo-barbearia-Photoroom.png" alt="OrblyCut Logo">
+    </div>
+    {% block content %}
+    {% endblock %}
+    <div class="footer">
+      © {{ year }} OrblyCut. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>

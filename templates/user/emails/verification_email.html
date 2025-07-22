@@ -1,0 +1,12 @@
+{% extends "user/emails/base_email.html" %}
+
+{% block title %}Confirme seu e-mail - OrblyCut{% endblock %}
+
+{% block content %}
+  <h2>Bem-vindo à OrblyCut, {{ user.username }}!</h2>
+  <p>Estamos felizes em tê-lo conosco. Para começar a usar a plataforma, confirme seu endereço de e-mail clicando no botão abaixo:</p>
+  <p style="text-align: center;">
+    <a href="{{ activate_url }}" class="btn">Confirmar E-mail</a>
+  </p>
+  <p>Se você não criou esta conta, apenas ignore este e-mail.</p>
+{% endblock %}
