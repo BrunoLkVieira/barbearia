@@ -33,7 +33,7 @@ class UserLoginView(View):
         return render(request, 'user/login.html', {'form': form})
 
     def post(self, request):
-        form = UserLoginForm(request, data=request.POST)
+        form = UserLoginForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             if not user.email_verified:
