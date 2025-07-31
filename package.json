@@ -1,0 +1,20 @@
+{
+  "name": "barbearia",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "git": "git add . && git commit -m \"add: insercao com node \" && git push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrunoLkVieira/barbearia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BrunoLkVieira/barbearia/issues"
+  },
+  "homepage": "https://github.com/BrunoLkVieira/barbearia#readme",
+  "description": ""
+}
