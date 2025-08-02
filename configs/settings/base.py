@@ -44,11 +44,23 @@ INSTALLED_APPS = [
     'apps.barbershop',
 ]
 
+# Backends de autenticação personalizados
+AUTHENTICATION_BACKENDS = [
+    'apps.user.backends.EmailOrCPFBackend',  # Permite login com email ou CPF
+    'apps.user.backends.CPFBackend',         # Login específico por CPF
+    'django.contrib.auth.backends.ModelBackend',  # Backend padrão
+]
+
 AUTH_USER_MODEL='user.User'
 # Configurações de autenticação
 LOGIN_URL = '/user/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Configurações de sessão
+SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Configurações de e-mail (para verificação)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -1,312 +1,403 @@
-# apps/barbershop/views.py
+# apps/barbershop/forms.py
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.urls import reverse_lazy, reverse
-from django.http import JsonResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_http_methods
-from django.views import View
-
+from django import forms
+from django.forms import inlineformset_factory
+from django.contrib.auth import get_user_model
 from .models import (
     Barbershop, BarbershopImage, Unit, UnitWorkDay,
-    Employee, EmployeeWorkDay, EmployeeAbsence, Client
-)
-from .forms import (
-    BarbershopForm, BarbershopImageFormSet, UnitForm, UnitWorkDayFormSet,
-    EmployeeForm, EmployeeWorkDayFormSet, EmployeeAbsenceForm
+    Employee, EmployeeWorkDay, EmployeeAbsence
 )
 
-class BarbershopMixin:
-    """Mixin para views que precisam da barbearia"""
-    
-    def get_barbershop(self):
-        """Retorna a barbearia baseada no slug da URL"""
-        slug = self.kwargs.get('slug')
-        return get_object_or_404(Barbershop, slug=slug, is_active=True)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['barbershop'] = self.get_barbershop()
-        return context
+User = get_user_model()
 
-class BarbershopLandingView(BarbershopMixin, DetailView):
-    """Landing page pública da barbearia"""
-    model = Barbershop
-    template_name = 'barbershop/landing.html'
-    context_object_name = 'barbershop'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
+class BarbershopForm(forms.ModelForm):
+    """Form para editar configurações da barbearia"""
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        barbershop = self.object
-        
-        # Imagens para banner/galeria
-        context['banner_images'] = barbershop.images.filter(
-            is_banner=True, 
-            active=True
-        ).order_by('order')
-        
-        context['gallery_images'] = barbershop.images.filter(
-            is_banner=False,
-            active=True
-        ).order_by('order')[:6]  # Máximo 6 na galeria
-        
-        # Unidades com horários
-        context['units'] = barbershop.units.filter(
-            is_active=True
-        ).prefetch_related('work_days')
-        
-        return context
+    class Meta:
+        model = Barbershop
+        fields = [
+            'name', 'logo', 'about', 'instagram', 
+            'whatsapp', 'facebook'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome da sua barbearia'
+            }),
+            'about': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Conte um pouco sobre sua barbearia...'
+            }),
+            'instagram': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '@suabarbearia'
+            }),
+            'whatsapp': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '(11) 99999-9999'
+            }),
+            'facebook': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'facebook.com/suabarbearia'
+            }),
+            'logo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            })
+        }
 
-class BarbershopAdminDashboardView(LoginRequiredMixin, BarbershopMixin, View):
-    """Dashboard administrativo da barbearia"""
-    template_name = 'barbershop/admin/dashboard.html'
+class BarbershopImageForm(forms.ModelForm):
+    """Form para upload de imagens da galeria"""
     
-    def get(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
+    class Meta:
+        model = BarbershopImage
+        fields = ['image', 'title', 'order', 'is_banner', 'active']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Título da imagem (opcional)'
+            }),
+            'order': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0
+            }),
+            'is_banner': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+# FormSet para múltiplas imagens
+BarbershopImageFormSet = inlineformset_factory(
+    Barbershop, 
+    BarbershopImage, 
+    form=BarbershopImageForm,
+    extra=3,
+    can_delete=True
+)
+
+class UnitForm(forms.ModelForm):
+    """Form para criar/editar unidades"""
+    
+    class Meta:
+        model = Unit
+        fields = ['name', 'address', 'latitude', 'longitude', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: Unidade Centro'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Endereço completo com CEP'
+            }),
+            'latitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': 'any',
+                'placeholder': 'Latitude (opcional)'
+            }),
+            'longitude': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': 'any',
+                'placeholder': 'Longitude (opcional)'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+class UnitWorkDayForm(forms.ModelForm):
+    """Form para horários de funcionamento da unidade"""
+    
+    class Meta:
+        model = UnitWorkDay
+        fields = ['day_of_week', 'start_time', 'end_time', 'is_closed']
+        widgets = {
+            'day_of_week': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'start_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'end_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'is_closed': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+# FormSet para dias da semana
+UnitWorkDayFormSet = inlineformset_factory(
+    Unit,
+    UnitWorkDay,
+    form=UnitWorkDayForm,
+    extra=7,  # 7 dias da semana
+    max_num=7,
+    can_delete=False
+)
+
+class EmployeeForm(forms.ModelForm):
+    """Form para adicionar/editar funcionários"""
+    
+    # Campos adicionais para criar usuário
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nome'
+        }),
+        label='Nome'
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Sobrenome'
+        }),
+        label='Sobrenome'
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'email@exemplo.com'
+        })
+    )
+    cpf = forms.CharField(
+        max_length=14,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '000.000.000-00'
+        })
+    )
+    phone = forms.CharField(
+        max_length=15,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '(11) 99999-9999'
+        }),
+        label='Telefone'
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Senha para acesso'
+        }),
+        label='Senha'
+    )
+    
+    class Meta:
+        model = Employee
+        fields = [
+            'unit', 'role', 'commission_service', 
+            'commission_product', 'uses_pot', 'is_active'
+        ]
+        widgets = {
+            'unit': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'role': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'commission_service': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'step': 0.01,
+                'placeholder': '0.00'
+            }),
+            'commission_product': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'step': 0.01,
+                'placeholder': '0.00'
+            }),
+            'uses_pot': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        barbershop = kwargs.pop('barbershop', None)
+        super().__init__(*args, **kwargs)
         
-        # Verificar se o usuário tem permissão (dono ou funcionário)
-        if not self.has_permission(request.user, barbershop):
-            messages.error(request, 'Você não tem permissão para acessar esta barbearia.')
-            return redirect('user:home')
+        if barbershop:
+            self.fields['unit'].queryset = barbershop.units.filter(is_active=True)
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Este email já está em uso.')
+        return email
+    
+    def clean_cpf(self):
+        cpf = self.cleaned_data['cpf']
+        if User.objects.filter(cpf=cpf).exists():
+            raise forms.ValidationError('Este CPF já está cadastrado.')
+        return cpf
+    
+    def save(self, commit=True):
+        # Criar o usuário primeiro
+        user = User.objects.create_user(
+            username=self.cleaned_data['cpf'],  # CPF como username
+            email=self.cleaned_data['email'],
+            cpf=self.cleaned_data['cpf'],
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name'],
+            phone=self.cleaned_data['phone'],
+            password=self.cleaned_data['password'],
+            tipo_usuario='funcionario'
+        )
         
-        context = {
-            'barbershop': barbershop,
-            'units': barbershop.units.filter(is_active=True),
-            'employees': Employee.objects.filter(
+        # Criar o employee
+        employee = super().save(commit=False)
+        employee.user = user
+        
+        if commit:
+            employee.save()
+        
+        return employee
+
+class EmployeeWorkDayForm(forms.ModelForm):
+    """Form para horários de trabalho do funcionário"""
+    
+    class Meta:
+        model = EmployeeWorkDay
+        fields = ['day_of_week', 'start_time', 'end_time', 'is_working']
+        widgets = {
+            'day_of_week': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'start_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'end_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'is_working': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+
+# FormSet para dias de trabalho do funcionário
+EmployeeWorkDayFormSet = inlineformset_factory(
+    Employee,
+    EmployeeWorkDay,
+    form=EmployeeWorkDayForm,
+    extra=7,
+    max_num=7,
+    can_delete=False
+)
+
+class EmployeeAbsenceForm(forms.ModelForm):
+    """Form para registrar ausências"""
+    
+    class Meta:
+        model = EmployeeAbsence
+        fields = ['employee', 'date', 'absence_type', 'reason', 'end_date']
+        widgets = {
+            'employee': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'absence_type': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Motivo da ausência (opcional)'
+            }),
+            'end_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'placeholder': 'Para férias/licenças longas'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        barbershop = kwargs.pop('barbershop', None)
+        super().__init__(*args, **kwargs)
+        
+        if barbershop:
+            self.fields['employee'].queryset = Employee.objects.filter(
                 unit__barbershop=barbershop,
                 is_active=True
-            ).select_related('user', 'unit'),
-        }
-        
-        return render(request, self.template_name, context)
-    
-    def has_permission(self, user, barbershop):
-        """Verifica se o usuário tem permissão para acessar a barbearia"""
-        # É o dono?
-        if barbershop.owner_user == user:
-            return True
-        
-        # É funcionário?
-        try:
-            employee = user.employee_profile
-            return employee.unit.barbershop == barbershop and employee.is_active
-        except:
-            return False
+            )
 
-class BarbershopSettingsView(LoginRequiredMixin, BarbershopMixin, View):
-    """Configurações da barbearia (Minha Barbearia)"""
-    template_name = 'barbershop/admin/settings.html'
+class BarbershopEmployeeLoginForm(forms.Form):
+    """Form de login específico para funcionários da barbearia"""
     
-    def get(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        # Só o dono pode acessar configurações
-        if barbershop.owner_user != request.user:
-            messages.error(request, 'Apenas o dono pode acessar as configurações.')
-            return redirect('barbershop:dashboard', slug=barbershop.slug)
-        
-        context = {
-            'barbershop': barbershop,
-            'barbershop_form': BarbershopForm(instance=barbershop),
-            'units': barbershop.units.all(),
-        }
-        
-        return render(request, self.template_name, context)
+    cpf = forms.CharField(
+        max_length=14,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '000.000.000-00',
+            'autofocus': True
+        }),
+        label='CPF'
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Sua senha'
+        }),
+        label='Senha'
+    )
     
-    def post(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        if barbershop.owner_user != request.user:
-            messages.error(request, 'Apenas o dono pode editar as configurações.')
-            return redirect('barbershop:dashboard', slug=barbershop.slug)
-        
-        form = BarbershopForm(request.POST, request.FILES, instance=barbershop)
-        
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Configurações atualizadas com sucesso!')
-            return redirect('barbershop:settings', slug=barbershop.slug)
-        
-        context = {
-            'barbershop': barbershop,
-            'barbershop_form': form,
-            'units': barbershop.units.all(),
-        }
-        
-        return render(request, self.template_name, context)
-
-class UnitManagementView(LoginRequiredMixin, BarbershopMixin, View):
-    """Gerenciamento de unidades"""
-    template_name = 'barbershop/admin/units.html'
+    def __init__(self, *args, **kwargs):
+        self.barbershop = kwargs.pop('barbershop', None)
+        super().__init__(*args, **kwargs)
+        self.user = None
     
-    def get(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
+    def clean(self):
+        cpf = self.cleaned_data.get('cpf')
+        password = self.cleaned_data.get('password')
         
-        if barbershop.owner_user != request.user:
-            messages.error(request, 'Apenas o dono pode gerenciar unidades.')
-            return redirect('barbershop:dashboard', slug=barbershop.slug)
+        if cpf and password:
+            from django.contrib.auth import authenticate
+            self.user = authenticate(cpf=cpf, password=password)
+            
+            if self.user is None:
+                raise forms.ValidationError("CPF ou senha inválidos.")
+            
+            # Verificar se é funcionário desta barbearia
+            if self.barbershop:
+                try:
+                    employee = self.user.employee_profile
+                    if (employee.unit.barbershop != self.barbershop or 
+                        not employee.is_active):
+                        raise forms.ValidationError(
+                            "Você não tem permissão para acessar esta barbearia."
+                        )
+                except:
+                    # Verificar se é o dono
+                    if self.barbershop.owner_user != self.user:
+                        raise forms.ValidationError(
+                            "Você não tem permissão para acessar esta barbearia."
+                        )
         
-        context = {
-            'barbershop': barbershop,
-            'units': barbershop.units.all().prefetch_related('work_days'),
-            'unit_form': UnitForm(),
-        }
-        
-        return render(request, self.template_name, context)
-
-class UnitCreateView(LoginRequiredMixin, BarbershopMixin, View):
-    """Criar nova unidade"""
+        return self.cleaned_data
     
-    def post(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        if barbershop.owner_user != request.user:
-            messages.error(request, 'Apenas o dono pode criar unidades.')
-            return redirect('barbershop:dashboard', slug=barbershop.slug)
-        
-        form = UnitForm(request.POST)
-        
-        if form.is_valid():
-            unit = form.save(commit=False)
-            unit.barbershop = barbershop
-            unit.save()
-            messages.success(request, f'Unidade "{unit.name}" criada com sucesso!')
-        else:
-            messages.error(request, 'Erro ao criar unidade. Verifique os dados.')
-        
-        return redirect('barbershop:units', slug=barbershop.slug)
-
-class EmployeeManagementView(LoginRequiredMixin, BarbershopMixin, View):
-    """Gerenciamento de funcionários"""
-    template_name = 'barbershop/admin/employees.html'
-    
-    def get(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        # Só dono ou gerente pode gerenciar funcionários
-        if not self.can_manage_employees(request.user, barbershop):
-            messages.error(request, 'Você não tem permissão para gerenciar funcionários.')
-            return redirect('barbershop:dashboard', slug=barbershop.slug)
-        
-        context = {
-            'barbershop': barbershop,
-            'employees': Employee.objects.filter(
-                unit__barbershop=barbershop
-            ).select_related('user', 'unit').order_by('user__first_name'),
-            'employee_form': EmployeeForm(),
-        }
-        
-        # Filtrar unidades da barbearia no form
-        context['employee_form'].fields['unit'].queryset = barbershop.units.filter(is_active=True)
-        
-        return render(request, self.template_name, context)
-    
-    def can_manage_employees(self, user, barbershop):
-        """Verifica se pode gerenciar funcionários"""
-        if barbershop.owner_user == user:
-            return True
-        
-        try:
-            employee = user.employee_profile
-            return (employee.unit.barbershop == barbershop and 
-                   employee.role in ['gerente', 'dono'] and 
-                   employee.is_active)
-        except:
-            return False
-
-class EmployeeCreateView(LoginRequiredMixin, BarbershopMixin, View):
-    """Criar novo funcionário"""
-    
-    def post(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        # Verificação de permissão seria aqui
-        form = EmployeeForm(request.POST)
-        
-        if form.is_valid():
-            employee = form.save()
-            messages.success(request, f'Funcionário "{employee.user.get_full_name()}" adicionado!')
-        else:
-            messages.error(request, 'Erro ao adicionar funcionário.')
-        
-        return redirect('barbershop:employees', slug=barbershop.slug)
-
-class EmployeeAvailabilityView(LoginRequiredMixin, BarbershopMixin, View):
-    """Gerenciar disponibilidade dos barbeiros (página das imagens)"""
-    template_name = 'barbershop/admin/availability.html'
-    
-    def get(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        context = {
-            'barbershop': barbershop,
-            'barbers': Employee.objects.filter(
-                unit__barbershop=barbershop,
-                role='barbeiro',
-                is_active=True
-            ).select_related('user').prefetch_related('work_days'),
-            'absences': EmployeeAbsence.objects.filter(
-                employee__unit__barbershop=barbershop
-            ).order_by('-date')[:10],  # Últimas 10 ausências
-        }
-        
-        return render(request, self.template_name, context)
-
-class AbsenceCreateView(LoginRequiredMixin, BarbershopMixin, View):
-    """Registrar ausência de funcionário"""
-    
-    def post(self, request, *args, **kwargs):
-        barbershop = self.get_barbershop()
-        
-        form = EmployeeAbsenceForm(request.POST)
-        
-        if form.is_valid():
-            absence = form.save(commit=False)
-            absence.created_by = request.user
-            absence.save()
-            messages.success(request, 'Ausência registrada com sucesso!')
-        else:
-            messages.error(request, 'Erro ao registrar ausência.')
-        
-        return redirect('barbershop:availability', slug=barbershop.slug)
-
-# Views para AJAX
-@require_http_methods(["POST"])
-@login_required
-def toggle_employee_status(request, slug, employee_id):
-    """Ativar/desativar funcionário via AJAX"""
-    barbershop = get_object_or_404(Barbershop, slug=slug)
-    employee = get_object_or_404(Employee, id=employee_id, unit__barbershop=barbershop)
-    
-    # Verificar permissão
-    if barbershop.owner_user != request.user:
-        return JsonResponse({'success': False, 'message': 'Sem permissão'})
-    
-    employee.is_active = not employee.is_active
-    employee.save()
-    
-    return JsonResponse({
-        'success': True,
-        'is_active': employee.is_active,
-        'message': f'Funcionário {"ativado" if employee.is_active else "desativado"}'
-    })
-
-@require_http_methods(["GET"])
-def barbershop_public_site(request, slug):
-    """Site público da barbearia (/<slug>/web/)"""
-    barbershop = get_object_or_404(Barbershop, slug=slug, is_active=True)
-    
-    context = {
-        'barbershop': barbershop,
-        'banner_images': barbershop.images.filter(is_banner=True, active=True).order_by('order'),
-        'gallery_images': barbershop.images.filter(is_banner=False, active=True).order_by('order'),
-        'units': barbershop.units.filter(is_active=True).prefetch_related('work_days'),
-    }
-    
-    return render(request, 'barbershop/public/site.html', context)
+    def get_user(self):
+        return self.user
