@@ -8,10 +8,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('apps.user.urls', namespace='user')),
-    
-    # URLs da barbearia - IMPORTANTE: deve vir por último
-    # para não conflitar com outras URLs
-    path('', include('apps.barbershop.urls', namespace='barbershop')),
 ]
 
 # Servir arquivos de media em desenvolvimento

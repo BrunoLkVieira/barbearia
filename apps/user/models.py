@@ -7,6 +7,12 @@ class User(AbstractUser):
     phone = models.CharField(max_length=15, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     photo = models.ImageField(upload_to='users/photos/', blank=True, null=True)
+    username = models.CharField(
+        max_length=150,
+        unique=False,   # ❌ Desliga a unicidade
+        blank=True,     # ✅ Permite valor vazio no formulário
+        null=True       # ✅ Permite valor nulo no banco (opcional, mas útil)
+    )
 
     tipo_usuario = models.CharField(
         choices=[

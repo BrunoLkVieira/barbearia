@@ -8,6 +8,15 @@ from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+
+
+
+
+
+
 
 class UserRegisterView(View):
     def get(self, request):
@@ -25,26 +34,18 @@ class UserRegisterView(View):
 
 
 
-
-
 class UserLoginView(View):
-    def get(self, request):
-        form = UserLoginForm()
-        return render(request, 'user/login.html', {'form': form})
-
     def post(self, request):
-        form = UserLoginForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            if not user.email_verified:
-                messages.warning(request, 'Verifique seu e-mail para acessar.')
-                return redirect('user:login')
-            login(request, user)
-            return redirect('user:home')
-        return render(request, 'user/login.html', {'form': form})
+        cpf = request.POST.get('cpf')
+        password = request.POST.get('password')
+        user = authenticate(request, cpf=cpf, password=password )
+        login(request, user)
+        return redirect("user:home")
+
+    def get(self, request):
+        # só para teste
+        return render(request, 'user/login.html')
     
-
-
 
 
 
