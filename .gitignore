@@ -136,3 +136,10 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# Banco local
+db.sqlite3
+
+# Arquivos compilados
+__pycache__/
+*.pyc
