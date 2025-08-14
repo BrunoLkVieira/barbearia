@@ -1,19 +1,29 @@
 from django.contrib import admin
-
-# Register your models here.
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
+from .forms import UserCreationForm, UserChangeForm
 
-@admin.register(User)
-class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'cpf', 'is_active', 'is_staff')
-    list_filter = ('is_staff', 'is_superuser', 'is_active')
-    search_fields = ('username', 'email', 'cpf')
-    
+
+class UserAdmin(BaseUserAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+
+    list_display = ('cpf', 'email', 'nome', 'tipo_usuario', 'is_staff', 'is_superuser')
+    list_filter = ('tipo_usuario', 'is_staff', 'is_superuser')
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        ('Informações Pessoais', {'fields': ('first_name', 'last_name', 'email', 'cpf', 'phone', 'photo')}),
+        (None, {'fields': ('cpf', 'password')}),
+        ('Informações pessoais', {'fields': ('email', 'nome', 'tipo_usuario')}),
         ('Permissões', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Datas Importantes', {'fields': ('last_login', 'date_joined')}),
     )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('cpf', 'email', 'nome', 'tipo_usuario', 'password1', 'password2'),
+        }),
+    )
+    search_fields = ('cpf', 'email', 'nome')
+    ordering = ('cpf',)
+    filter_horizontal = ('groups', 'user_permissions')
+
+
+admin.site.register(User, UserAdmin)

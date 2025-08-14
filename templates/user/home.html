@@ -1,7 +1,7 @@
 {% extends "user/base.html" %}
 
 {% block content %}
-<h1>Bem-vindo, {{ request.user.first_name }} {{ request.user.last_name }}!</h1>
+<h1>Bem-vindo, {{ request.user.nome }}!</h1>
 
 {% if request.user.is_authenticated %}
     <p>Você está logado.</p>

@@ -71,6 +71,9 @@ body {
     font-size: 1rem;
 }
 
+
+
+
 #loginForm{
     padding: 0 25px;
 }
@@ -244,4 +247,30 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 5px;
+    margin: 10px 0;
+    font-size: 14px;
+    text-align: center;
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffecb5;
 }

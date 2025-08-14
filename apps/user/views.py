@@ -1,21 +1,12 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.utils import timezone
+from django.contrib.auth import login, logout, authenticate
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 from .models import User
 from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
-
-
-
-
-
 
 
 class UserRegisterView(View):
@@ -26,37 +17,53 @@ class UserRegisterView(View):
     def post(self, request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.cpf = user.cpf.replace('.', '').replace('-', '')
+            user.save()
             send_verification_email(request, user)
             messages.success(request, 'Registro realizado! Verifique seu e-mail.')
             return redirect('user:login')
         return render(request, 'user/register.html', {'form': form})
 
 
-
 class UserLoginView(View):
-    def post(self, request):
-        cpf = request.POST.get('cpf')
-        password = request.POST.get('password')
-        user = authenticate(request, cpf=cpf, password=password )
-        login(request, user)
-        return redirect("user:home")
-
     def get(self, request):
-        # só para teste
-        return render(request, 'user/login.html')
-    
+        form = UserLoginForm()
+        return render(request, 'user/login.html', {'form': form})
+
+    def post(self, request):
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            cpf = form.cleaned_data['cpf'].replace('.', '').replace('-', '')
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=cpf, password=password)
+
+            if user is not None:
+                if user.tipo_usuario == 'dono' or user.tipo_usuario == 'funcionario':
+                    login(request, user)
+                    return redirect("user:home")
+                else:
+                    messages.error(request, "Você não é um funcionário de nenhuma barbearia")
+            else:
+                messages.error(request, "CPF ou senha inválidos")
+        else:
+            messages.error(request, "Preencha todos os campos corretamente.")
+
+        return render(request, 'user/login.html', {'form': form})
+
 
 
 
 class UserLogoutView(View):
     def get(self, request):
         logout(request)
-        return redirect('user:register')
-    
+        return redirect('user:login')
+
+
 class HomeView(View):
     def get(self, request):
         return render(request, 'user/home.html')
+
 
 class VerifyEmailView(View):
     def get(self, request, uidb64, token):
@@ -71,8 +78,7 @@ class VerifyEmailView(View):
                 return redirect('user:login')
             else:
                 messages.error(request, 'Token inválido ou expirado.')
-                return redirect('user:register')
-
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             messages.error(request, 'Ocorreu um erro ao verificar o e-mail.')
-            return redirect('user:register')
+        return redirect('user:register')
+ 

@@ -1,39 +1,39 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 
-class User(AbstractUser):
-    email = models.EmailField(unique=True)
-    cpf = models.CharField(max_length=14, unique=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
-    birth_date = models.DateField(blank=True, null=True)
-    photo = models.ImageField(upload_to='users/photos/', blank=True, null=True)
-    username = models.CharField(
-        max_length=150,
-        unique=False,   # ❌ Desliga a unicidade
-        blank=True,     # ✅ Permite valor vazio no formulário
-        null=True       # ✅ Permite valor nulo no banco (opcional, mas útil)
-    )
+class UserManager(BaseUserManager):
+    def create_user(self, cpf, password=None, **extra_fields):
+        if not cpf:
+            raise ValueError('O CPF é obrigatório')
+        cpf = cpf.replace('.', '').replace('-', '')  # remove formatação
+        user = self.model(cpf=cpf, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
+    def create_superuser(self, cpf, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(cpf, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+    cpf = models.CharField(max_length=11, unique=True)
+    email = models.EmailField(unique=True)
+    nome = models.CharField(max_length=150)
     tipo_usuario = models.CharField(
-        choices=[
-            ('cliente', 'Cliente'),
-            ('funcionario', 'Funcionário'),
-            ('dono', 'Dono da Barbearia')
-        ],
         max_length=20,
+        choices=[('dono', 'Dono'), ('cliente', 'Cliente'),('funcionario', 'Funcionário')],
         default='cliente'
     )
-
     email_verified = models.BooleanField(default=False)
-    verification_token = models.CharField(max_length=100, blank=True, null=True)
-    verification_sent_at = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+
+    objects = UserManager()
 
     USERNAME_FIELD = 'cpf'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['email', 'nome']
 
     def __str__(self):
-        return self.get_full_name() or self.email
-
-    class Meta:
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
+        return self.nome

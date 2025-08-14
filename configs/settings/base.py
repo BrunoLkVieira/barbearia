@@ -43,16 +43,16 @@ INSTALLED_APPS = [
     'apps.user',
     'widget_tweaks',
     
+    
 ]
 
 # Backends de autenticação personalizados
 AUTHENTICATION_BACKENDS = [
-    'apps.user.backends.EmailOrCPFBackend',  # Permite login com email ou CPF
-    'apps.user.backends.CPFBackend',         # Login específico por CPF
     'django.contrib.auth.backends.ModelBackend',  # Backend padrão
 ]
 
 AUTH_USER_MODEL='user.User'
+
 # Configurações de autenticação
 LOGIN_URL = '/user/login/'
 LOGIN_REDIRECT_URL = '/'
