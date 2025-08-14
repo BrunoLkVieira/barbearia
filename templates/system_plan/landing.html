@@ -1,0 +1,407 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbly Barber - Sistema de Agendamento Profissional</title>
+    <link rel="shortcut icon" href="{% static 'system_plan/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+   
+    <link rel="stylesheet" href="{% static 'system_plan/css/Desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'system_plan/css/Desktop/modal.css' %}">
+
+    <link rel="stylesheet" href="{% static 'system_plan/css/Mobile/style.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+</head>
+
+<style>
+    /* Ajustes para as setas de navegação */
+    .swiper-button-next, 
+    .swiper-button-prev {
+        color: var(--accent);
+        background: rgba(255, 255, 255, 0.8);
+        width: 40px; /* Tamanho reduzido */
+        height: 40px; /* Tamanho reduzido */
+        border-radius: 50%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: var(--transition);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .swiper-button-next::after, 
+    .swiper-button-prev::after {
+        font-size: 1.2rem; /* Tamanho reduzido do ícone */
+        font-weight: bold;
+        color: var(--accent); /* Cor laranja para combinar */
+    }
+
+    /* Ajustes para a paginação */
+    .swiper-pagination-bullet {
+        background: var(--primary); /* Cor azul padrão */
+        opacity: 0.5;
+        width: 10px; /* Tamanho ligeiramente reduzido */
+        height: 10px; /* Tamanho ligeiramente reduzido */
+        transition: var(--transition);
+    }
+
+    .swiper-pagination-bullet-active {
+        background: var(--accent); /* Cor laranja para o bullet ativo */
+        opacity: 1;
+        transform: scale(1.2); /* Efeito sutil de destaque */
+    }
+
+    @media (max-width: 821px) {
+        .swiper-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+
+        .swiper-button-next, 
+        .swiper-button-prev {
+            display: none;
+        }
+
+        .swiper {
+            width: 100%;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+    }
+</style>
+<body>
+    <!-- Header Modernizado -->
+    <header class="landing-header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Orbly Barber" class="logo-image">
+                <div class="logo-content">
+                    <h1>Orbly <span>Barber</span></h1>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#features">Recursos</a>
+                <a href="#plans">Planos</a>
+                <a href="#tutorials">Tutoriais</a>
+                <a href="#screenshots">Cliente</a>
+                <a href="#contact">Contato</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section Modernizada -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Revolucione sua Barbearia</h1>
+                <p>O sistema de agendamento perfeito para barbearias. Gerencie clientes, funcionários e agendamentos com eficiência e estilo.</p>
+                <div class="hero-btns">
+                    <a href="#plans" class="btn btn-accent">Conhecer Planos</a>
+                    <a href="#contact" class="btn">Fale Conosco</a>
+                </div>
+            </div>
+            
+            <div class="features-grid" id="features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Agendamento Online</h3>
+                    <p>Seus clientes agendam a qualquer hora, de qualquer lugar</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Relatórios Avançados</h3>
+                    <p>Acompanhe o desempenho do seu negócio em tempo real</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Gestão de Equipe</h3>
+                    <p>Controle agenda e desempenho dos seus barbeiros</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Planos Modernizados -->
+    <section id="plans">
+        <div class="container">
+            <h2>Nossos Planos</h2>
+            <p class="text-center">
+                Escolha o plano ideal para o tamanho da sua barbearia. Todos os planos incluem suporte 24/7 e atualizações gratuitas.
+            </p>
+            
+            <div class="plan-toggle">
+                <button class="toggle-btn active" data-period="semester">Semestral (20% OFF)</button>
+                <button class="toggle-btn" data-period="monthly">Mensal</button>
+            </div>
+        
+            <div class="plans-container" id="plans-container">
+                <!-- Plano 1 -->
+                <div class="plan-card">
+                    <h3>Básico</h3>
+                    <div class="price" data-monthly="55" data-semester="45" data-period="por mês"></div>
+                    <div class="total-price"></div>
+                    <div class="diference"></div>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Até 2 funcionários por filial</li>
+                        <li><i class="fas fa-check-circle"></i> Máximo de 1 filial</li>
+                    </ul>
+                    <a href="#" class="btn-plan" onclick="openModal()">Assinar Plano</a>
+                </div>
+            
+                <!-- Plano 2 (Popular) -->
+                <div class="plan-card active">
+                    <div class="popular-badge">POPULAR</div>
+                    <h3>Intermediário</h3>
+                    <div class="price" data-monthly="90" data-semester="75" data-period="por mês"></div>
+                    <div class="total-price"></div>
+                    <div class="diference"></div>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Até 4 funcionários por filial</li>
+                        <li><i class="fas fa-check-circle"></i> Máximo de 1 filial</li>
+                    </ul>
+                    <a href="#" class="btn-plan popular" onclick="openModal()">Assinar Plano</a>
+                </div>
+            
+                <!-- Plano 3 -->
+                <div class="plan-card">
+                    <h3>Profissional</h3>
+                    <div class="price" data-monthly="130" data-semester="110" data-period="por mês">R$ 130</div>
+                    <div class="total-price"></div>
+                    <div class="diference"></div>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Até 6 funcionários por filial</li>
+                        <li><i class="fas fa-check-circle"></i> Máximo de 2 filiais</li>
+                    </ul>
+                    <a href="#" class="btn-plan" onclick="openModal()">Assinar Plano</a>
+                </div>
+
+                <!-- Plano 4 -->
+                <div class="plan-card">
+                    <h3>Premium</h3>
+                    <div class="price" data-monthly="190" data-semester="170" data-period="por mês">R$ 190</div>
+                    <div class="total-price"></div>
+                    <div class="diference"></div>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Até 10 funcionários por filial</li>
+                        <li><i class="fas fa-check-circle"></i> Máximo de 3 filiais</li>
+                    </ul>
+                    <a href="#" class="btn-plan" onclick="openModal()">Assinar Plano</a>
+                </div>
+
+                <!-- Plano 5 -->
+                <div class="plan-card">
+                    <h3>Intergalático</h3>
+                    <div class="price" data-monthly="380" data-semester="340" data-period="por mês">R$ 380</div>
+                    <div class="total-price"></div>
+                    <div class="diference"></div>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> + 10 funcionários por filial</li>
+                        <li><i class="fas fa-check-circle"></i> Máximo de 5 filiais</li>
+                    </ul>
+                    <a href="#" class="btn-plan" onclick="openModal()">Assinar Plano</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Tutoriais Modernizados -->
+    <section id="tutorials">
+        <div class="container">
+            <h2>Como Funciona</h2>
+            <p class="text-center">
+                Veja como é fácil gerenciar sua barbearia com nosso sistema. Tutoriais rápidos para você dominar todas as funcionalidades.
+            </p>
+            
+            <div class="tutorials-container">
+                <div class="tutorials-grid">
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Criar Cliente em 1 Minuto</h4>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Agendar Serviços</h4>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Gerenciar Funcionários</h4>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Configurar Serviços</h4>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Gerar Relatórios</h4>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-video">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h4>Gerenciar Filiais</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Carrossel -->
+    <section id="screenshots" class="screenshots-section">
+        <div class="container">
+            <h2>Veja a Tela do Cliente</h2>
+            <p class="subtitle">Interface intuitiva e poderosa para gerenciar sua barbearia com eficiência</p>
+            
+            <div class="swiper mySwiper">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <img src="{% static 'system_plan/img/foto principal.png' %}" alt="Dashboard Orbly Barber">
+                    </div>
+                    <div class="swiper-slide">
+                        <img src="{% static 'system_plan/img/planos.png' %}" alt="Agendamento Orbly Barber">
+                    </div>
+                    <div class="swiper-slide">
+                        <img src="{% static 'system_plan/img/agendar.png' %}" alt="Clientes Orbly Barber">
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contato Modernizado -->
+    <section class="contact-section" id="contact">
+        <div class="container">
+            <h2>Pronto para Transformar sua Barbearia?</h2>
+            <p>Entre em contato conosco para tirar suas dúvidas sobre nossos planos e funcionalidades.</p>
+            
+            <div class="contact-buttons">
+                <a href="https://wa.me/5521967112404?text=Olá,%20quero%20falar%20sobre%20um%20projeto!" class="contact-btn" target="_blank">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=orblycode@gmail.com" class="contact-btn" target="_blank">
+                    <i class="fas fa-envelope"></i> orblycode@gmail.com
+                </a>
+                <a href="https://www.instagram.com/orblycode?igsh=MWVoc3k5cGk4cWFscQ==" class="contact-btn" target="_blank">
+                    <i class="fab fa-instagram"></i> @orblycode
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Modernizado -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-col">
+                    <h4>Orbly Barber</h4>
+                    <p>O sistema de gestão completo para barbearias e salões de beleza. Simplifique seu dia a dia e foque no que realmente importa: seus clientes.</p>
+                </div>
+                
+                <div class="footer-col">
+                    <h4>Suporte</h4>
+                    <ul>
+                        <li><a href="#"><i class="fas fa-chevron-right"></i> Central de Ajuda</a></li>
+                        <li><a href="#"><i class="fas fa-chevron-right"></i> Status do Sistema</a></li>
+                    </ul>
+                </div>
+                
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 Orbly Barber. Todos os direitos reservados. Desenvolvido por OrblyCode.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="modalContainer">
+        <div class="Modal-content">
+            <div class="Modal-header">
+                <h3><i class="fas fa-user-tie"></i> Cadastrar Conta</h3>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="Modal-body">
+               
+                <form id="editForm" method="post" action="">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Cliente</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" name="clientSearch" class="form-control" placeholder="Digite o nome do cliente...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+                
+                    <div class="form-group">
+                        <label for="barberSelect" class="form-label">Barbeiro</label>
+                        <select id="barberSelect" name="barberSelect" class="form-control">
+                            <option value="">Selecione um barbeiro</option>
+                            <option value="1">Raphael Matias (Cadeira 1)</option>
+                            <option value="2">Lucas Lopes (Cadeira 2)</option>
+                            <option value="3">Carlos Silva (Cadeira 3)</option>
+                        </select>
+                    </div>
+                
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editDate" class="form-label">Data</label>
+                            <input type="date" id="editDate" name="editDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTime" class="form-label">Hora</label>
+                            <input type="time" id="editTime" name="editTime" class="form-control">
+                        </div>
+                    </div>
+                
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </form>
+                
+            </div>
+            <div class="Modal-footer">
+                <button class="btnModal outline" onclick="cancelModal()">
+                    Cancelar
+                </button>
+                <button class="btnModal primary" >
+                    Salvar Agendamento
+                </button>
+            </div>
+        </div>        
+    </div>
+
+    <script src="{% static 'system_plan/js/script.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <script>
+        
+    </script>
+</body>
+</html>

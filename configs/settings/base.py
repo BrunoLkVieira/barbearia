@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 'django.contrib.sites',
     'apps.user',
+    'apps.system_plan',
     'widget_tweaks',
     
     
