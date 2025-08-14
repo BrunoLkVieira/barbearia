@@ -39,7 +39,7 @@ class UserLoginView(View):
             user = authenticate(request, username=cpf, password=password)
 
             if user is not None:
-                if user.tipo_usuario == 'dono' or user.tipo_usuario == 'funcionario':
+                if user.user_type == 'dono' or user.user_type == 'funcionario':
                     login(request, user)
                     return redirect("user:home")
                 else:

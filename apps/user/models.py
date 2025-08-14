@@ -20,8 +20,8 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     cpf = models.CharField(max_length=11, unique=True)
     email = models.EmailField(unique=True)
-    nome = models.CharField(max_length=150)
-    tipo_usuario = models.CharField(
+    name = models.CharField(max_length=150)
+    user_type = models.CharField(
         max_length=20,
         choices=[('dono', 'Dono'), ('cliente', 'Cliente'),('funcionario', 'Funcionário')],
         default='cliente'
@@ -33,7 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'cpf'
-    REQUIRED_FIELDS = ['email', 'nome']
+    REQUIRED_FIELDS = ['email', 'name']
 
     def __str__(self):
-        return self.nome
+        return self.name
