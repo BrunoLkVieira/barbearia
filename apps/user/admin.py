@@ -8,17 +8,17 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('cpf', 'email', 'name', 'user_type', 'is_staff', 'is_superuser')
+    list_display = ('cpf','name', 'last_name', 'email',  'phone', 'birth_date', 'user_type', 'is_staff', 'is_superuser')
     list_filter = ('user_type', 'is_staff', 'is_superuser')
     fieldsets = (
         (None, {'fields': ('cpf', 'password')}),
-        ('Informações pessoais', {'fields': ('email', 'name', 'user_type')}),
+        ('Informações pessoais', {'fields': ('email', 'name','last_name', 'phone', 'birth_date', 'user_type')}),
         ('Permissões', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('cpf', 'email', 'name', 'user_type', 'password1', 'password2'),
+            'fields': ('cpf', 'email', 'name','last_name', 'phone', 'birth_date', 'user_type', 'password1', 'password2'),
         }),
     )
     search_fields = ('cpf', 'email', 'name')

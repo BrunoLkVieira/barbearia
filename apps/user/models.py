@@ -21,6 +21,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     cpf = models.CharField(max_length=11, unique=True)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    birth_date = models.DateField(blank=True, null=True)
     user_type = models.CharField(
         max_length=20,
         choices=[('dono', 'Dono'), ('cliente', 'Cliente'),('funcionario', 'Funcionário')],
