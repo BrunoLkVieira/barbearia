@@ -351,57 +351,96 @@
             </div>
             <div class="Modal-body">
                
-                <form id="editForm" method="post" action="">
+                <form id="editForm" method="post" action="{% url 'user:register' %}">
                     {% csrf_token %}
+                    <!-- Campo de Nome -->
                     <div class="form-group">
-                        <label for="clientSearch" class="form-label">Cliente</label>
+                        <label for="clientSearch" class="form-label">Primeiro Nome</label>
                         <div class="search-container">
-                            <input type="text" id="clientSearch" name="clientSearch" class="form-control" placeholder="Digite o nome do cliente...">
+                            <input type="text" id="clientSearch" name='name' class="form-control" placeholder="Digite o seu primeiro nome..">
                             <div class="search-results" id="clientResults"></div>
                         </div>
                     </div>
-                
+                    
                     <div class="form-group">
-                        <label for="barberSelect" class="form-label">Barbeiro</label>
-                        <select id="barberSelect" name="barberSelect" class="form-control">
-                            <option value="">Selecione um barbeiro</option>
-                            <option value="1">Raphael Matias (Cadeira 1)</option>
-                            <option value="2">Lucas Lopes (Cadeira 2)</option>
-                            <option value="3">Carlos Silva (Cadeira 3)</option>
-                        </select>
+                        <label for="clientSearch" class="form-label" >Sobrenome</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" class="form-control" name='last_name' placeholder="Digite o seu sobrenome..">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
                     </div>
-                
+
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">CPF</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" class="form-control" name='cpf' placeholder="Digite o seu CPF...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">email</label>
+                        <div class="search-container">
+                            <input type="email" id="clientSearch" class="form-control" name='email' placeholder="Digite um email valido...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Celular</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" class="form-control" name='phone' placeholder="Digite o seu número celular...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+        
+                    <!-- Data de Nascimento -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="editDate" class="form-label">Data</label>
-                            <input type="date" id="editDate" name="editDate" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="editTime" class="form-label">Hora</label>
-                            <input type="time" id="editTime" name="editTime" class="form-control">
+                            <label for="editDate" class="form-label">Data de Nascimento</label>
+                            <input type="date" id="editDate" class="form-control" name="birth_date">
                         </div>
                     </div>
-                
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Senha</label>
+                        <div class="search-container">
+                            <input type="password" id="clientSearch" class="form-control" name="password1" placeholder="Digite uma senha...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Confirmar Senha</label>
+                        <div class="search-container">
+                            <input type="password" id="clientSearch" class="form-control" name="password2" placeholder="Confirme sua senha...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+                   <div class="Modal-footer">
+                        <button class="btnModal outline" onclick="cancelModal()" type="button">
+                            Cancelar
+                        </button>
+                        <button class="btnModal primary" type="submit" onclick="createAccount(event)">
+                            Criar Conta
+                        </button>
+                    </div>
                 </form>
                 
             </div>
-            <div class="Modal-footer">
-                <button class="btnModal outline" onclick="cancelModal()">
-                    Cancelar
-                </button>
-                <button class="btnModal primary" >
-                    Salvar Agendamento
-                </button>
-            </div>
+           
         </div>        
     </div>
 
     <script src="{% static 'system_plan/js/script.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
+    {% if messages %}
     <script>
-        
+        {% for message in messages %}
+            alert("{{ message|escapejs }}");
+        {% endfor %}
     </script>
+    {% endif %}
 </body>
 </html>

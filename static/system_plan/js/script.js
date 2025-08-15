@@ -93,11 +93,35 @@ function cancelModal(){
     document.body.style.overflow = '';
 }
 
-window.addEventListener('click', function (e) {
-    if (e.target === modalCadastro) {
-        closeModal();
+// window.addEventListener('click', function (e) {
+//     if (e.target === modalCadastro) {
+//         closeModal();
+//     }
+// });
+
+function createAccount(event) {
+    // Evita que o formulário seja enviado antes da validação
+    event.preventDefault();
+
+    let nome = document.querySelector("input[name='name']").value.trim();
+    let sobrenome = document.querySelector("input[name='last_name']").value.trim();
+    let email = document.querySelector("input[name='email']").value.trim();
+    let senha = document.querySelector("input[name='password1']").value.trim();
+    let senha2 = document.querySelector("input[name='password2']").value.trim();
+
+    if (!nome || !sobrenome || !email || !senha || !senha2) {
+        alert("Por favor, preencha todos os campos obrigatórios.");
+        return;
     }
-});
+
+    if (senha !== senha2) {
+        alert("As senhas não coincidem.");
+        return;
+    }
+
+    // Se passou na validação, envia o formulário
+    document.getElementById("editForm").submit();
+}
 
 // Inicialização do Swiper Cliente
 document.addEventListener('DOMContentLoaded', function() {

@@ -7,23 +7,60 @@ from django.contrib.auth.tokens import default_token_generator
 from .models import User
 from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
-
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 class UserRegisterView(View):
     def get(self, request):
-        form = UserRegistrationForm()
-        return render(request, 'user/register.html', {'form': form})
+        return render(request, 'user/register.html')
 
     def post(self, request):
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.cpf = user.cpf.replace('.', '').replace('-', '')
-            user.save()
-            send_verification_email(request, user)
-            messages.success(request, 'Registro realizado! Verifique seu e-mail.')
-            return redirect('user:login')
-        return render(request, 'user/register.html', {'form': form})
+        # origin = request.GET.get('origin', 'client') 
+        name = request.POST.get('name')
+        last_name = request.POST.get('last_name')
+        cpf = request.POST.get('cpf')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        birth_date = request.POST.get('birth_date')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+
+        # Validações básicas
+
+
+        cpf = cpf.replace('.', '').replace('-', '')
+
+        if User.objects.filter(cpf=cpf).exists():
+            messages.error(request, "CPF já registrado.")
+            return redirect('system_plan:landing_page')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "E-mail já registrado.")
+            return redirect('system_plan:landing_page')
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Digite um e-mail válido.")
+            return redirect('system_plan:landing_page')
+        # Criação do usuário
+        user = User(
+            name=name,
+            last_name=last_name,
+            cpf=cpf,
+            email=email,
+            phone=phone,
+            birth_date=birth_date,
+            # user_type=origin
+        )
+        user.set_password(password1)
+        user.save()
+
+        # Envio de verificação de e-mail
+        send_verification_email(request, user)
+
+        messages.success(request, "Registro realizado! Verifique seu e-mail.")
+        return redirect('user:login')
 
 
 class UserLoginView(View):
