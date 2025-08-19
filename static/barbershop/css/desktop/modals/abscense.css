@@ -1,0 +1,145 @@
+@media (min-width: 821px) {  
+    /* Modal de Férias */
+    .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    }
+
+    .modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 100%;
+    max-height: 100%;
+    max-width: 500px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalOpen 0.4s ease-out;
+    }
+
+    @keyframes modalOpen {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #2c3e50, #1a2a6c);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    }
+
+    .modal-header i{
+        color: #e67e22;
+    }
+
+    .modal-body {
+    padding: 25px;
+    }
+
+    .modal-section {
+    margin-bottom: 25px;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-title i{
+        color: #e67e22;
+    }
+
+    .barber-list {
+    display: grid;
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #eaecef;
+    border-radius: 8px;
+    }
+
+    .barber-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+    }
+
+    .barber-item:hover {
+    background-color: #edf2f7;
+    }
+
+    .barber-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .modal-barber-name {
+    flex: 1;
+    font-weight: 500;
+    color: #2c3e50;
+    }
+
+    .date-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    }
+
+    .date-group {
+    display: flex;
+    flex-direction: column;
+    }
+
+    .date-group label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    }
+
+    .date-group input {
+    padding: 12px;
+    border: 1px solid #d1d9e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #f8f9fa;
+    }
+
+    .modal-footer {
+    padding: 15px 25px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    border-top: 1px solid #eee;
+    }
+
+}

@@ -1,0 +1,176 @@
+@media (min-width: 821px) {   
+    body {
+         background-color: #f5f7fa;
+         color: #333;
+         display: flex;
+         flex-direction: column;
+         min-height: 100vh;
+     }
+ 
+ 
+     /* Main Content */
+     .main-content {
+         flex: 1;
+         padding: 15px;
+         display: flex;
+         flex-direction: column;
+         gap: 20px;
+     }
+ 
+     .section {
+         background-color: #ffffff;
+         border-radius: 12px;
+         padding: 20px;
+         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+     }
+ 
+     .section-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: 20px;
+         padding-bottom: 15px;
+         border-bottom: 1px solid #eaecef;
+     }
+ 
+     .section-title {
+         font-size: 1.4rem;
+         font-weight: 600;
+         color: #2c3e50;
+         display: flex;
+         align-items: center;
+         gap: 10px;
+     }
+ 
+     .section-title i{
+         color: #e67e22;
+     }
+ 
+     /* Tabela de Funcionários */
+     .employees-table {
+         width: 100%;
+         border-collapse: collapse;
+         margin-top: 20px;
+     }
+ 
+     .employees-table th, 
+     .employees-table td {
+         padding: 12px 15px;
+         text-align: left;
+         border-bottom: 1px solid #eaecef;
+     }
+ 
+     .employees-table th {
+         background-color: #f8f9fa;
+         font-weight: 600;
+         color: #2c3e50;
+         font-size: 0.95rem;
+     }
+ 
+     .employees-table tbody tr {
+         transition: all 0.2s ease;
+     }
+ 
+     .employees-table tbody tr:hover {
+         background-color: #f8f9fa;
+     }
+ 
+     .employee-avatar {
+         width: 35px;
+         height: 35px;
+         border-radius: 50%;
+         background: linear-gradient(135deg, #e67e22, #d35400);
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-weight: 600;
+         color: white;
+         font-size: 0.9rem;
+     }
+ 
+     .employee-name {
+         display: flex;
+         align-items: center;
+         gap: 10px;
+     }
+ 
+     .employee-type {
+         padding: 5px 10px;
+         border-radius: 20px;
+         font-size: 0.8rem;
+         font-weight: 500;
+         width: fit-content;
+     }
+ 
+     .type-barber {
+         background-color: #e8f5e9;
+         color: #2e7d32;
+     }
+ 
+     .type-cashier {
+         background-color: #e3f2fd;
+         color: #1565c0;
+     }
+ 
+     .type-owner {
+         background-color: #f3e5f5;
+         color: #7b1fa2;
+     }
+ 
+     .employee-actions {
+         display: flex;
+         gap: 10px;
+     }
+ 
+     .action-btn {
+         width: 32px;
+         height: 32px;
+         border-radius: 50%;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         cursor: pointer;
+         transition: all 0.3s ease;
+     }
+ 
+     .edit-btn {
+         background-color: #e3f2fd;
+         color: #1565c0;
+     }
+ 
+     .delete-btn {
+         background-color: #ffebee;
+         color: #c62828;
+     }
+ 
+     .action-btn:hover {
+         transform: scale(1.1);
+     }
+ 
+     .employees-table-container {
+         display: none;
+     }
+ 
+ 
+     /* Botão Novo Funcionário */
+     .add-employee-btn {
+         background: linear-gradient(135deg, #e67e22, #d35400);
+         color: white;
+         border: none;
+         padding: 10px 20px;
+         border-radius: 6px;
+         font-weight: 500;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+     }
+ 
+     .add-employee-btn:hover {
+         transform: translateY(-2px);
+     }
+ 
+     
+ }
