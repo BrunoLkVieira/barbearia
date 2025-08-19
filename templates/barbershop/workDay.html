@@ -1,24 +1,25 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Funcionamento - Barbearia Executiva</title>
-    <link rel="shortcut icon" href="../../img/logo.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="../../css/Desktop/style.css">
-    <link rel="stylesheet" href="../../css/Desktop/My Barbershop/agenda.css">
-
-    <link rel="stylesheet" href="../../css/Mobile/style.css">
-    <link rel="stylesheet" href="../../css/Mobile/6.My Barbershop/schedule.css">
     
-    <link rel="stylesheet" href="../../css/Desktop/Modals/6.My barbershop/vacation.css">
-    <link rel="stylesheet" href="../../css/Desktop/Modals/6.My barbershop/editCalendar.css">
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/workDay.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/workDay.css' %}">
 
-    <link rel="stylesheet" href="../../css/Mobile/Modals/6.My barbershop/vacation.css">
-    <link rel="stylesheet" href="../../css/Mobile/Modals/6.My barbershop/editCalendar.css">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/abscense.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/abscense.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/editCalendar.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
 
 </head>
 <body>
@@ -448,7 +449,7 @@
         </div>
     </div>
 
-    <script src="../../js/6.My Barbershop/agenda.js"></script>
-    <script src="../../js/script.js"></script>
+    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script src="{% static 'barbershop/js/workDay.js' %}"></script>
 </body>
 </html>
