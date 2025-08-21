@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # 'django.contrib.sites',
     'apps.user',
     'apps.system_plan',
+    'apps.barbershop',
     'widget_tweaks',
     
     

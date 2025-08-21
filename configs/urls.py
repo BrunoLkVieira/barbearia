@@ -9,6 +9,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('apps.user.urls', namespace='user')),
     path("", include("apps.system_plan.urls",namespace='system_plan')),
+    path("", include("apps.system_plan.urls",namespace='system_plan')),
+     path("", include("apps.barbershop.urls",namespace='barbershop')),
 
 ]
 
