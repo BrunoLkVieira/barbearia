@@ -43,7 +43,7 @@
     }
 
     .section-title i{
-        color: #e67e22;
+        color: #FF7A00;
     }
 
     /* Barbeiros List */
@@ -80,7 +80,7 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #e67e22, #d35400);
+        background: linear-gradient(135deg, #FF7A00, #d35400);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -124,7 +124,7 @@
     .edit-btn {
         width: 100%;
         padding: 8px;
-        background: #e67e22;
+        background: #FF7A00;
         color: white;
         border: none;
         border-radius: 6px;
@@ -222,7 +222,7 @@
         justify-content: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        border: 2px dashed #e67e22;
+        border: 2px dashed #FF7A00;
     }
 
     .add-day-off:hover {
@@ -233,7 +233,7 @@
     .add-day-off i {
         font-size: 2rem;
         margin-bottom: 10px;
-        color: #e67e22;
+        color: #FF7A00;
     }
 
 
