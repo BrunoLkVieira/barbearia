@@ -4,16 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unidades - Barbearia Executiva</title>
+    <title>Unidades - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unit.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newUnit.css' %}">
-
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unit.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newUnit.css' %}">
@@ -22,10 +19,14 @@
     <header>
         <div class="logo">
             <div class="logo-icon">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+                {% if barbershop.logo %}
+                    <img src="{{ barbershop.logo.url }}" alt="logo do sistema" class="logo-image">
+                {% else %}
+                    <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+                {% endif %}
             </div>
             <div class="logo-content">
-                <h1>Orbly Barber</h1>
+                <h1>{{ barbershop.name }}</h1>
                 <p>Sistema de agendamento profissional</p>
             </div>
         </div>
@@ -35,24 +36,24 @@
         </div>
         <div class="user-controls">
             <div class="user-profile" id="userProfile">
-                <div class="avatar">RM</div>
-                <div class="user-name">Raphael Matias</div>
+                <div class="avatar">{{ request.user.name|slice:":2"|upper }}</div>
+                <div class="user-name">{{ request.user.name }}</div>
                 <i class="fas fa-chevron-down" id="chevronIcon"></i>
                 
                 <div class="user-sidebar">
                     <div class="sidebar-header">
-                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-avatar">{{ request.user.name|slice:":2"|upper }}</div>
                         <div class="sidebar-user-info">
-                            <span class="sidebar-name">Raphael Matias</span>
-                            <span class="sidebar-email">raphael@barbearia.com</span>
+                            <span class="sidebar-name">{{ request.user.name }} {{ request.user.last_name }}</span>
+                            <span class="sidebar-email">{{ request.user.email }}</span>
                         </div>
                     </div>
                     <div class="sidebar-menu">
-                        <a href="../0.SideBar/profile.html" class="sidebar-item">
+                        <a href="" class="sidebar-item">
                             <i class="fas fa-user"></i>
                             <span>Meu Perfil</span>
                         </a>
-                        <a href="../../../index.html" class="sidebar-item">
+                        <a href="" class="sidebar-item">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Sair</span>
                         </a>
@@ -64,41 +65,38 @@
     
     <div class="nav-bar">
         <div class="nav-tabs">
-            <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href="../6.My Babershop/unit.html"><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+            <a href=" "><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href=" "><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="  "><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href=""><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
         </div>
         <div class="stats">
             <div class="unit-filter">
                 <select>
-                    <option>Unidade 1</option>
-                    <option>Unidade 2</option>
+                     {%for unit in barbershop.units.all %}
+                        <option>{{ unit.name }}</option>
+                    {% endfor %}
                     <option>Geral</option>
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">4</div>
+                <div class="stat-value">{{ barbershop.units.count }}</div>
                 <div class="stat-label">Unidades</div>
             </div>
-            <!-- <div class="stat-box">
-                <div class="stat-value">6</div>
-                <div class="stat-label">Dias úteis</div>
-            </div> -->
         </div>
     </div>
 
     <div class="pages-options-Container">
-        <a href="unit.html">
+        <a href="">
             <div class="page-option active"><i class="fas fa-store"></i> Unidades</div>
         </a>
-        <a href="funcionarios.html">
+        <a href="">
             <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
         </a>
-        <a href="agenda.html">
+        <a href="">
             <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
     </div>
@@ -125,56 +123,31 @@
                     <div>Ações</div>
                 </div>
 
-                <!-- Unidade 1 -->
-                <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-
-                        <div class="unit-info">
-                            <div class="unit-name">Matriz - Centro</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-
-                    <div class="unit-address">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Paulista, 1000 - São Paulo/SP</span>
-                    </div>
-
-                    <div class="unit-employees">
-                        <span>2</span>
-                    </div>
-
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Unidade 2 -->
+                {% for unit in barbershop.units.all %}
                 <div class="table-row">
                     <div class="unit-cell">
                         <div class="unit-icon">
                             <i class="fas fa-store"></i>
                         </div>
                         <div class="unit-info">
-                            <div class="unit-name">Shopping Iguatemi</div>
-                            <span class="unit-status status-active">Ativa</span>
+                            <div class="unit-name">{{ unit.name }}</div>
+                            {% if unit.is_active %}
+                                <span class="unit-status status-active">Ativa</span>
+                            {% else %}
+                                <span class="unit-status status-inactive">Inativa</span>
+                            {% endif %}
                         </div>
                     </div>
+
                     <div class="unit-address">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Brigadeiro Faria Lima, 2232 - São Paulo/SP</span>
+                        <span>{{ unit.street_address }}, {{ unit.number_address }} - CEP: {{ unit.cep_address }}</span>
                     </div>
+
                     <div class="unit-employees">
-                        <span>5</span>
+                        <span>{{ unit.employees.count }}</span>
                     </div>
+
                     <div class="unit-actions">
                         <div class="action-btn edit" title="Editar unidade">
                             <i class="fas fa-edit"></i>
@@ -184,198 +157,7 @@
                         </div>
                     </div>
                 </div>
-            
-                <!-- Unidade 3 -->
-                <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="unit-info">
-                            <div class="unit-name">Morumbi</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-                    <div class="unit-address">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Rua Professor Filadelfo Azevedo, 300 - São Paulo/SP</span>
-                    </div>
-                    <div class="unit-employees">
-                        <span>4</span>
-                    </div>
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Unidade 4 -->
-                <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="unit-info">
-                            <div class="unit-name">Moema</div>
-                            <span class="unit-status status-inactive">Em reforma</span>
-                        </div>
-                    </div>
-                    <div class="unit-address">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Ibirapuera, 2927 - São Paulo/SP</span>
-                    </div>
-                    <div class="unit-employees">
-                        <span>1</span>
-                    </div>
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-            
-                <!-- Unidade 5 -->
-                <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="unit-info">
-                            <div class="unit-name">Santana</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-                    <div class="unit-address">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Engenheiro Caetano Álvares, 1000 - São Paulo/SP</span>
-                    </div>
-                    <div class="unit-employees">
-                        <span>3</span>
-                    </div>
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="units-mobile-table-container">                
-               <!-- Funcionario 1 -->
-               <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        
-                        <div class="unit-info">
-                            <div class="unit-name">Matriz - Centro</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Unidade:</span>
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Paulista, 1000 São Paulo</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Funcionários:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-quantity type-good">2</div>
-                    </div>
-        
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-
-               <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        
-                        <div class="unit-info">
-                            <div class="unit-name">Matriz - Centro</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Unidade:</span>
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Paulista, 1000 São Paulo</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Funcionários:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-quantity type-good">2</div>
-                    </div>
-        
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-
-               <div class="table-row">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        
-                        <div class="unit-info">
-                            <div class="unit-name">Matriz - Centro</div>
-                            <span class="unit-status status-active">Ativa</span>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Unidade:</span>
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Av. Paulista, 1000 São Paulo</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Funcionários:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-quantity type-good">2</div>
-                    </div>
-        
-                    <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
-                            <i class="fas fa-edit"></i>
-                        </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-        
-
-              
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -383,10 +165,10 @@
     <footer>
         <div class="total-display">
             <div class="footer-first-row">
-                Total de unidades: <strong>6</strong>
+                Total de unidades: <strong>{{ barbershop.units.count }}</strong>
             </div>
             <div class="footer-second-row">
-                Ativos: <strong>5</strong>
+                    dfgsdfgdfsgdfgdsfgdgf
             </div>
         </div>
 
@@ -398,40 +180,71 @@
     </footer>
     
     <!-- Modal para Nova Unidade/Edição -->
-    <div class="modal-overlay" id="unitModal">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title" id="modalTitle"> 
-                    <i class="fas fa-store"></i>
-                    <span id="modalTitleHeader"></span>
-                </div>
-                <button class="close-btn" id="closeModal">
-                    <i class="fas fa-times"></i>
-                </button>
+    <!-- Modal para Nova Unidade/Edição -->
+<div class="modal-overlay" id="unitModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle"> 
+                <i class="fas fa-store"></i>
+                <span id="modalTitleHeader">Nova Unidade</span>
+            </div>
+            <button class="close-btn" id="closeModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Nome da Unidade -->
+            <div class="form-group">
+                <label class="form-label" for="unitName">
+                    <i class="fas fa-signature"></i> Nome da Unidade
+                </label>
+                <input type="text" class="form-control" id="unitName" placeholder="Ex: Matriz - Centro">
             </div>
 
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label" for="unitName">
-                        <i class="fas fa-signature"></i> Nome da Unidade
-                    </label>
-                    <input type="text" class="form-control" id="unitName" placeholder="Ex: Matriz - Centro">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="unitAddress">
-                        <i class="fas fa-map-marker-alt"></i> Endereço Completo
-                    </label>
-                    <input type="text" class="form-control" id="unitAddress" placeholder="Ex: Av. Paulista, 1000 - São Paulo/SP">
-                </div>
+            <!-- CEP -->
+            <div class="form-group">
+                <label class="form-label" for="unitCep">
+                    <i class="fas fa-map-pin"></i> CEP
+                </label>
+                <input type="text" class="form-control" id="unitCep" placeholder="00000-000">
             </div>
 
-            <div class="modal-footer">
-                <button class="btn-modal btn-cancel" id="cancelUnit">Cancelar</button>
-                <button class="btn-modal btn-save" id="saveUnit">Salvar Unidade</button>
+            <!-- Rua -->
+            <div class="form-group">
+                <label class="form-label" for="unitStreet">
+                    <i class="fas fa-road"></i> Rua
+                </label>
+                <input type="text" class="form-control" id="unitStreet" placeholder="Ex: Av. Paulista">
+            </div>
+
+            <!-- Número -->
+            <div class="form-group">
+                <label class="form-label" for="unitNumber">
+                    <i class="fas fa-hashtag"></i> Número
+                </label>
+                <input type="text" class="form-control" id="unitNumber" placeholder="Ex: 1000">
+            </div>
+
+            <!-- Status Ativo -->
+            <div class="form-group">
+                <label class="form-label" for="unitActive">
+                    <i class="fas fa-toggle-on"></i> Unidade Ativa
+                </label>
+                <select class="form-control" id="unitActive">
+                    <option value="True" selected>Sim</option>
+                    <option value="False">Não</option>
+                </select>
             </div>
         </div>
+
+        <div class="modal-footer">
+            <button class="btn-modal btn-cancel" id="cancelUnit">Cancelar</button>
+            <button class="btn-modal btn-save" id="saveUnit">Salvar Unidade</button>
+        </div>
     </div>
+</div>
+
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
