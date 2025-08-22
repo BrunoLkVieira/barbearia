@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "git": "git add . && git commit -m \"add: insercao com node \" && git push"
+    "git": "git add . && git commit -m \"add: insercao com node \" && git push",
+     "runserver": "\"python\" manage.py runserver"  
   },
   "repository": {
     "type": "git",
