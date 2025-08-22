@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - Barbearia Executiva</title>
-    <link rel="shortcut icon" href="../../img/logo.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -80,25 +80,21 @@
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">8</div>
-                <div class="stat-label">Planos</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value">R$ 2.150</div>
-                <div class="stat-label">Mensal</div>
+                <div class="stat-value">2</div>
+                <div class="stat-label">Produtos</div>
             </div>
         </div>
     </div>
 
     <div class="pages-options-Container">
-        <a href="planos.html">
-            <div class="page-option"><i class="fas fa-credit-card"></i> Planos</div>
-        </a>
         <a href="servicos.html">
             <div class="page-option"><i class="fas fa-scissors"></i> Serviços</div>
         </a>
         <a href="produtos.html">
             <div class="page-option active"><i class="fas fa-pump-soap"></i> Produtos</div>
+        </a>
+        <a href="planos.html">
+            <div class="page-option"><i class="fas fa-credit-card"></i> Planos</div>
         </a>
     </div>
     
@@ -200,6 +196,6 @@
     </div>
 
     <script src="../../js/3.Catalogo/produtos.js"></script>
-    <script src="../../js/script.js"></script>
+    <script src="{% static 'geral/js/script.js' %}"></script>
 </body>
 </html>

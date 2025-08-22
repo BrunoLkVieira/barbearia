@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"add: script de run \" && git push",
+    "git": "git add . && git commit -m \"refactor: ajuste caminhos produtos \" && git push",
     "pull": "git pull"
   },
   "repository": {
