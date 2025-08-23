@@ -43,7 +43,7 @@
     }
   
     .content-header h2 i {
-        color: #e67e22;
+        color: #FF7A00;
     }
   
 
@@ -129,7 +129,7 @@
     }
   
     .action-btn.edit { color: #3498db; }
-    .action-btn.history { color: #e67e22; }
+    .action-btn.history { color: #FF7A00; }
     .action-btn.delete { color: #e74c3c; }
   
   

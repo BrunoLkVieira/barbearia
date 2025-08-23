@@ -5,4 +5,4 @@ from django.shortcuts import render
 
 def landing_page(request):
     # return render(request, "system_plan/landing.html")
-    return render(request, "product/product.html")
+    return render(request, "plan/plans.html")
