@@ -26,7 +26,7 @@
                 {% endif %}
             </div>
             <div class="logo-content">
-                <h1>{{ barbershop.name }}</h1>
+                <h1>ORBLY BARBER</h1>
                 <p>Sistema de agendamento profissional</p>
             </div>
         </div>
@@ -36,16 +36,16 @@
         </div>
         <div class="user-controls">
             <div class="user-profile" id="userProfile">
-                <div class="avatar">{{ request.user.name|slice:":2"|upper }}</div>
-                <div class="user-name">{{ request.user.name }}</div>
+                <div class="avatar">{{ user.first_name|slice:":2"|upper }}</div>
+                <div class="user-name">{{ user.first_name }}</div>
                 <i class="fas fa-chevron-down" id="chevronIcon"></i>
                 
                 <div class="user-sidebar">
                     <div class="sidebar-header">
-                        <div class="sidebar-avatar">{{ request.user.name|slice:":2"|upper }}</div>
+                        <div class="sidebar-avatar">{{ user.first_name|slice:":2"|upper }}</div>
                         <div class="sidebar-user-info">
-                            <span class="sidebar-name">{{ request.user.name }} {{ request.user.last_name }}</span>
-                            <span class="sidebar-email">{{ request.user.email }}</span>
+                            <span class="sidebar-name">{{ user.first_name }} {{ user.last_name }}</span>
+                            <span class="sidebar-email">{{ user.email }}</span>
                         </div>
                     </div>
                     <div class="sidebar-menu">
@@ -76,14 +76,14 @@
         <div class="stats">
             <div class="unit-filter">
                 <select>
-                     {%for unit in barbershop.units.all %}
+                     {% for unit in units %}
                         <option>{{ unit.name }}</option>
                     {% endfor %}
                     <option>Geral</option>
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">{{ barbershop.units.count }}</div>
+                <div class="stat-value">{{ units.count }}</div>
                 <div class="stat-label">Unidades</div>
             </div>
         </div>
@@ -123,8 +123,13 @@
                     <div>Ações</div>
                 </div>
 
-                {% for unit in barbershop.units.all %}
-                <div class="table-row">
+                {% for unit in units %}
+                <div class="table-row" 
+                     data-id="{{ unit.id }}" 
+                     data-cep="{{ unit.cep_address }}" 
+                     data-street="{{ unit.street_address }}" 
+                     data-number="{{ unit.number_address }}" 
+                     data-active="{{ unit.is_active }}">
                     <div class="unit-cell">
                         <div class="unit-icon">
                             <i class="fas fa-store"></i>
@@ -152,9 +157,14 @@
                         <div class="action-btn edit" title="Editar unidade">
                             <i class="fas fa-edit"></i>
                         </div>
-                        <div class="action-btn delete" title="Excluir unidade">
-                            <i class="fas fa-trash"></i>
-                        </div>
+                        <form method="POST" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="unit_id" value="{{ unit.id }}">
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="action-btn delete" title="Excluir unidade">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -165,10 +175,10 @@
     <footer>
         <div class="total-display">
             <div class="footer-first-row">
-                Total de unidades: <strong>{{ barbershop.units.count }}</strong>
+                Total de unidades: <strong>{{ units.count }}</strong>
             </div>
             <div class="footer-second-row">
-                    dfgsdfgdfsgdfgdsfgdgf
+                dfgsdfgdfsgdfgdsfgdgf
             </div>
         </div>
 
@@ -179,12 +189,11 @@
         </div>
     </footer>
     
-    <!-- Modal para Nova Unidade/Edição -->
-    <!-- Modal para Nova Unidade/Edição -->
+<!-- Modal para Nova Unidade/Edição -->
 <div class="modal-overlay" id="unitModal">
     <div class="modal">
         <div class="modal-header">
-            <div class="modal-title" id="modalTitle"> 
+            <div class="modal-title"> 
                 <i class="fas fa-store"></i>
                 <span id="modalTitleHeader">Nova Unidade</span>
             </div>
@@ -193,58 +202,47 @@
             </button>
         </div>
 
-        <div class="modal-body">
-            <!-- Nome da Unidade -->
+        <!-- FORM FUNCIONAL -->
+        <form id="unitForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="unitId" name="unit_id">
+            <input type="hidden" id="formAction" name="action" value="create">
+
             <div class="form-group">
-                <label class="form-label" for="unitName">
-                    <i class="fas fa-signature"></i> Nome da Unidade
-                </label>
-                <input type="text" class="form-control" id="unitName" placeholder="Ex: Matriz - Centro">
+                <label for="unitName">Nome da Unidade</label>
+                <input type="text" id="unitName" name="name" required>
             </div>
 
-            <!-- CEP -->
             <div class="form-group">
-                <label class="form-label" for="unitCep">
-                    <i class="fas fa-map-pin"></i> CEP
-                </label>
-                <input type="text" class="form-control" id="unitCep" placeholder="00000-000">
+                <label for="unitCep">CEP</label>
+                <input type="text" id="unitCep" name="cep_address" required>
             </div>
 
-            <!-- Rua -->
             <div class="form-group">
-                <label class="form-label" for="unitStreet">
-                    <i class="fas fa-road"></i> Rua
-                </label>
-                <input type="text" class="form-control" id="unitStreet" placeholder="Ex: Av. Paulista">
+                <label for="unitStreet">Rua</label>
+                <input type="text" id="unitStreet" name="street_address" required>
             </div>
 
-            <!-- Número -->
             <div class="form-group">
-                <label class="form-label" for="unitNumber">
-                    <i class="fas fa-hashtag"></i> Número
-                </label>
-                <input type="text" class="form-control" id="unitNumber" placeholder="Ex: 1000">
+                <label for="unitNumber">Número</label>
+                <input type="text" id="unitNumber" name="number_address" required>
             </div>
 
-            <!-- Status Ativo -->
             <div class="form-group">
-                <label class="form-label" for="unitActive">
-                    <i class="fas fa-toggle-on"></i> Unidade Ativa
-                </label>
-                <select class="form-control" id="unitActive">
-                    <option value="True" selected>Sim</option>
+                <label for="unitActive">Unidade Ativa</label>
+                <select id="unitActive" name="is_active">
+                    <option value="True">Sim</option>
                     <option value="False">Não</option>
                 </select>
             </div>
-        </div>
 
-        <div class="modal-footer">
-            <button class="btn-modal btn-cancel" id="cancelUnit">Cancelar</button>
-            <button class="btn-modal btn-save" id="saveUnit">Salvar Unidade</button>
-        </div>
+            <div class="modal-footer">
+                <button type="button" id="cancelUnit">Cancelar</button>
+                <button type="submit" id="saveUnit">Salvar Unidade</button>
+            </div>
+        </form>
     </div>
 </div>
-
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>

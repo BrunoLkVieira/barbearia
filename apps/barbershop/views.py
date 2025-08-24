@@ -20,32 +20,36 @@ def UnitView(request):
     units = Unit.objects.filter(barbershop=barbershop)
 
     # Criar unidade
-    if request.method == "POST" and "create_unit" in request.POST:
+    if request.method == "POST" and request.POST.get("action") == "create":
         Unit.objects.create(
             name=request.POST.get("name"),
             cep_address=request.POST.get("cep_address"),
             street_address=request.POST.get("street_address"),
             number_address=request.POST.get("number_address"),
-            is_active=bool(request.POST.get("is_active")),
+            is_active=request.POST.get("is_active") == "True",
             barbershop=barbershop,
         )
-        return redirect("barbershop/unit.html")
+        return redirect("barbershop:units")
 
     # Editar unidade
-    if request.method == "POST" and "edit_unit" in request.POST:
+    if request.method == "POST" and request.POST.get("action") == "edit":
         unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
         unit.name = request.POST.get("name")
         unit.cep_address = request.POST.get("cep_address")
         unit.street_address = request.POST.get("street_address")
         unit.number_address = request.POST.get("number_address")
-        unit.is_active = bool(request.POST.get("is_active"))
+        unit.is_active = request.POST.get("is_active") == "True"
         unit.save()
-        return redirect("unit-page")
+        return redirect("barbershop:units")
 
     # Deletar unidade
-    if request.method == "POST" and "delete_unit" in request.POST:
+    if request.method == "POST" and request.POST.get("action") == "delete":
         unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
         unit.delete()
-        return redirect("barbershop/unit.html")
+        return redirect("barbershop:units")
 
-    return render(request, "barbershop/unit.html", {"units": units, "user": request.user})
+    return render(
+        request,
+        "barbershop/unit.html",
+        {"barbershop": barbershop, "units": units, "user": request.user},
+    )
