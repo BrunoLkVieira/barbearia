@@ -1,0 +1,340 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos de Assinatura - Barbearia Executiva</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'plan/css/desktop/plans.css' %}">
+
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'plan/css/mobile/plans.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="../0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="../../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+            <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="../3.Catalogo/planos.html"><div class="nav-tab active"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href="../6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    <option>Unidade 1</option>
+                    <option>Unidade 2</option>
+                    <option>Geral</option>
+                </select>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Planos</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pages-options-Container">
+        <a href="servicos.html">
+            <div class="page-option"><i class="fas fa-scissors"></i> Serviços</div>
+        </a>
+        <a href="produtos.html">
+            <div class="page-option"><i class="fas fa-pump-soap"></i> </i> Produtos</div>
+        </a>
+        <a href="plans.html">
+            <div class="page-option active"><i class="fas fa-credit-card"></i> </i> Planos</div>
+        </a>
+    </div>
+    
+    <div class="main-content">
+        <div class="plans-container">
+            <div class="existing-plans">
+                <div class="section-title">
+                    <i class="fas fa-list"></i>
+                    <span>Planos Existentes</span>
+                </div>
+                
+                <div class="plans-grid">
+                    <!-- Plano 1 -->
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <div class="plan-title">Plano Mensal Básico</div>
+                            <div class="plan-price">R$ 80,00<span>/mês</span></div>
+                        </div>
+
+                        <div class="plan-details">
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>1 corte por mês</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Estilo livre</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Manutenção de barba</span>
+                            </div>
+                        </div>
+                        
+                        <div class="plan-footer">
+                            <div class="plan-duration">
+                                <i class="fas fa-calendar"></i>
+                                <span>30 dias</span>
+                            </div>
+                            <div class="plan-actions">
+                                <button class="action-btn edit-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Plano 2 -->
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <div class="plan-title">Plano Trimestral Premium</div>
+                            <div class="plan-price">R$ 220,00<span>/trimestre</span></div>
+                        </div>
+                        <div class="plan-details">
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>4 cortes por trimestre</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Estilo premium</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Hidratação capilar</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Barba completa</span>
+                            </div>
+                        </div>
+                        <div class="plan-footer">
+                            <div class="plan-duration">
+                                <i class="fas fa-calendar"></i>
+                                <span>90 dias</span>
+                            </div>
+                            <div class="plan-actions">
+                                <button class="action-btn edit-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Plano 3 -->
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <div class="plan-title">Plano Anual Gold</div>
+                            <div class="plan-price">R$ 780,00<span>/ano</span></div>
+                        </div>
+                        <div class="plan-details">
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>24 cortes por ano</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Barba completa mensal</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Produtos exclusivos</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Prioridade de agendamento</span>
+                            </div>
+                        </div>
+                        <div class="plan-footer">
+                            <div class="plan-duration">
+                                <i class="fas fa-calendar"></i>
+                                <span>365 dias</span>
+                            </div>
+                            <div class="plan-actions">
+                                <button class="action-btn edit-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="new-plan-body">
+            <div class="content-header">
+                <h2><i class="fas fa-credit-card"></i> Cadastrar um Novo Plano</h2>
+            </div>
+            
+            <form class="plan-form">
+                <div class="form-group">
+                    <label for="planName">Nome do Plano</label>
+                    <input type="text" id="planName" placeholder="Ex: Plano Mensal Premium" value="Plano Executivo Gold">
+                </div>
+            
+                <div class="form-group">
+                    <label for="planPrice">Valor Mensal (R$)</label>
+                    <input type="number" id="planPrice" placeholder="Ex: 149.90" value="199.90" step="0.01">
+                </div>
+            
+                <div class="form-group">
+                    <label for="planDuration">Duração (meses)</label>
+                    <input type="number" id="planDuration" placeholder="Ex: 12" value="12">
+                </div>
+            
+                <div class="form-group">
+                    <label for="planFrequency">Frequência de Serviços</label>
+                    <select id="planFrequency">
+                        <option>1 vez por mês</option>
+                        <option selected>2 vezes por mês</option>
+                        <option>3 vezes por mês</option>
+                        <option>4 vezes por mês</option>
+                    </select>
+                </div>
+            
+                <div class="form-group full-width">
+                    <label>Serviços Inclusos</label>
+                    <div class="services-list">
+                        <div class="service-item">
+                            <input type="checkbox" id="corte" checked>
+                            <label for="corte">Corte Executivo</label>
+                        </div>
+                        <div class="service-item">
+                            <input type="checkbox" id="barba" checked>
+                            <label for="barba">Barba Completa</label>
+                        </div>
+                        <div class="service-item">
+                            <input type="checkbox" id="hidratacao">
+                            <label for="hidratacao">Hidratação Capilar</label>
+                        </div>
+                        <div class="service-item">
+                            <input type="checkbox" id="sobrancelha">
+                            <label for="sobrancelha">Design de Sobrancelha</label>
+                        </div>
+                        <div class="service-item">
+                            <input type="checkbox" id="massagem">
+                            <label for="massagem">Massagem Relaxante</label>
+                        </div>
+                        <div class="service-item">
+                            <input type="checkbox" id="tratamento">
+                            <label for="tratamento">Tratamento Capilar</label>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="form-group full-width">
+                    <label for="planDescription">Descrição</label>
+                    <textarea id="planDescription" placeholder="Descreva os benefícios do plano...">Plano premium que inclui dois cortes por mês e uma barba completa, com direito a produtos exclusivos da barbearia e prioridade de agendamento.</textarea>
+                </div>
+            </form>
+            
+            <div class="save-plan-container">
+                <button class="btn btn-save-plan" id="savePlanBtn">
+                    <i class="fas fa-save"></i> Salvar Plano
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="total-display">
+            <div class="footer-first-row-one-item">
+            Total de planos ativos:<strong> 3</strong>
+            </div>
+        </div>
+
+        <div class="buttons-display">
+            <div class="actions">
+                <button class="btn btn-primary" id="newPlanBtn">
+                    <i class="fas fa-plus"></i> Novo Plano
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2><i class="fas fa-check-circle"></i> Plano Salvo!</h2>
+            </div>
+            <div class="modal-body">
+                <p>O plano <strong>"Plano Executivo Gold"</strong> foi salvo com sucesso e está disponível para os clientes.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="modalCloseBtn">Fechar</button>
+                <button class="btn btn-primary" id="modalViewBtn">Ver Planos</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/3.Catalogo/planos.js"></script>
+    <script src="{% static 'geral/js/script.js' %}"></script>
+</body>
+</html>

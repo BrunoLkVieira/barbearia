@@ -19,6 +19,8 @@ def UnitView(request):
     barbershop = Barbershop.objects.filter(owner_user=request.user).first()
     units = Unit.objects.filter(barbershop=barbershop)
 
+    # Contagem de unidades ativas
+    active_units_count = units.filter(is_active=True).count()
     # Criar unidade
     if request.method == "POST" and request.POST.get("action") == "create":
         Unit.objects.create(
@@ -51,5 +53,5 @@ def UnitView(request):
     return render(
         request,
         "barbershop/unit.html",
-        {"barbershop": barbershop, "units": units, "user": request.user},
+        {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count },
     )

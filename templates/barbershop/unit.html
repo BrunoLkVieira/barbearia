@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unidades - {{ barbershop.name }}</title>
+    <title>{{ barbershop.name }} - Orbly Barber</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -36,8 +36,8 @@
         </div>
         <div class="user-controls">
             <div class="user-profile" id="userProfile">
-                <div class="avatar">{{ user.first_name|slice:":2"|upper }}</div>
-                <div class="user-name">{{ user.first_name }}</div>
+                <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                <div class="user-name">{{ user.name }} {{ user.last_name }}</div>
                 <i class="fas fa-chevron-down" id="chevronIcon"></i>
                 
                 <div class="user-sidebar">
@@ -74,14 +74,14 @@
             <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
         </div>
         <div class="stats">
-            <div class="unit-filter">
+            {% comment %} <div class="unit-filter">
                 <select>
                      {% for unit in units %}
                         <option>{{ unit.name }}</option>
                     {% endfor %}
                     <option>Geral</option>
                 </select>
-            </div>
+            </div> {% endcomment %}
             <div class="stat-box">
                 <div class="stat-value">{{ units.count }}</div>
                 <div class="stat-label">Unidades</div>
@@ -174,11 +174,9 @@
 
     <footer>
         <div class="total-display">
-            <div class="footer-first-row">
-                Total de unidades: <strong>{{ units.count }}</strong>
-            </div>
+           
             <div class="footer-second-row">
-                dfgsdfgdfsgdfgdsfgdgf
+                 Unidades Ativas: <strong>{{ active_units_count }}</strong>
             </div>
         </div>
 

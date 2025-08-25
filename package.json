@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "git": "git add . && git commit -m \"add: insercao com node \" && git push"
+    "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
+    "git": "git add . && git commit -m \" merge do frontend e add de variaveis no template units \" && git push",
+    "pull": "git pull"
   },
   "repository": {
     "type": "git",

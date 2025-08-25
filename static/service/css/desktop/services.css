@@ -1,0 +1,133 @@
+@media (min-width: 821px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: #f5f7fa;
+    }
+  
+  
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+  
+    .services-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        width: 100%;
+        min-height: 60vh;
+    }
+  
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eaecef;
+    }
+  
+    .content-header h2 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+  
+    .content-header h2 i {
+        color: #FF7A00;
+    }
+  
+    /* Services Table */
+    .services-table {
+      display: grid;
+      width: 100%;
+      gap: 10px;
+    }
+  
+    .services-header,
+    .service-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 10px 20px;
+      color: #2c3e50;
+      align-items: center;
+    }
+  
+    .services-header {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      color: #2c3e50;
+      border: 1px solid #eaecef;
+      border-radius: 8px;
+    }
+  
+    .service-row{
+      border-bottom: 1px solid #eaecef;
+    }
+  
+    .service-name {
+      font-weight: 500;
+    }
+  
+    .service-price {
+      font-weight: 600;
+      color: #27ae60;
+    }
+  
+    .service-duration {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2c3e50;
+    }
+  
+    .service-duration i {
+      color: #3498db;
+    }
+  
+    .service-actions {
+      display: flex;
+      justify-content: left;
+      gap: 8px;
+      margin-left: -.8rem;
+    }
+  
+    .action-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background-color: #f8f9fa;
+      border: 1px solid #eaecef;
+      transition: all 0.3s ease;
+    }
+  
+    .action-btn:hover {
+      background-color: #edf2f7;
+      transform: translateY(-3px);
+    }
+  
+    .action-btn.edit { color: #3498db; }
+    .action-btn.history { color: #FF7A00; }
+    .action-btn.delete { color: #e74c3c; }
+  
+  
+    .action-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+  
+  }
