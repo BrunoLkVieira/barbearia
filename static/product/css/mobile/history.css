@@ -1,0 +1,301 @@
+/* Responsive Design */
+@media (max-width: 820px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: #f5f7fa;
+        color: #333;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 10px;
+    }
+
+    .history-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .history-top-body{
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 15px;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 17px;
+        border-bottom: 1px solid #eaecef;
+    }
+
+    .content-header h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .content-header h2 i {
+        color: #e67e22;
+    }
+
+    /* Filters */
+    .filters-container {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #eaecef;
+        padding: 10px;
+        margin-bottom: 5px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.92rem;
+    }
+
+    .filter-group input, 
+    .filter-group select {
+        width: 100%;
+        padding: 8px 3px;
+        border: 1px solid #d1d9e0;
+        border-radius: 8px;
+        font-size: 0.92rem;
+    }
+
+    .filter-group input:focus, 
+    .filter-group select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        outline: none;
+    }
+
+
+
+    /* History Table */
+    .history-table {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border-collapse: collapse;
+
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .history-table thead {
+        display: none;
+    }
+
+    .history-table tbody{
+        max-height: 90vh;
+        padding: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        overflow-y: auto;
+        border-radius: 10px;
+        border: 1px solid #eaecef;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        background-color: #fff;
+    }
+
+    /* CADA AGENDAMENTO */
+    .history-table tr {
+        border-radius: 10px;
+        position: relative;        
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
+        
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        border: 1px solid #eaecef;
+        transition: all 0.3s ease;
+    }
+
+    .history-table td {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        border-bottom: 1px solid #eaecef;
+        color: #2c3e50;
+    }
+
+    .history-table td:last-child {
+        border-bottom: none;
+    }
+    
+    .history-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .history-table td.tr-header::before{
+        color: #ffffff;
+    }
+
+    .tr-header{
+        background-color: #1a2a4f;
+        border-radius: 10px 10px 0 0;
+        color: #ffffff;
+    }
+
+    .client-cell{
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #e67e22;
+    }
+
+    .client-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        font-size: 0.9rem;
+        background: #ecf0f1;
+        color: #e67e22;
+    }
+
+    .service-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .service-cell i {
+        color: #e67e22;
+    }
+
+    .date-time {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .payment-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .payment-info i {
+        color: #27ae60;
+    }
+
+
+    /* TELA PRODUTO */
+    .product-cell{
+        display: flex;
+        align-items: center;
+    }
+
+    .product-cell span{
+        margin-left: 5px;
+    }
+
+    .product-image{
+        color:#e67e22;
+    }
+
+    .quantity-td{
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+    }
+
+    .quantity-td i{
+        color: #e67e22;
+    }
+
+    .quantity-badge{
+        display: flex;
+    }
+
+    td.Valor{
+        color: #27ae60;
+    }
+
+    .status-badge {
+        width: 25%;
+        padding: 5px 1px;
+        margin-left: -.5rem;
+        border-radius: 20px;
+        font-size: 0.83rem;
+        font-weight: 500;
+        display: flex;
+        justify-content: center;
+    }
+
+    .status-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-pending {
+        background-color: #fff8e1;
+        color: #f57f17;
+    }
+
+    .status-cancelled {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .action-cell {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #eaecef;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background-color: #edf2f7;
+        transform: translateY(-3px);
+    }
+
+    .action-btn.edit, .action-btn.details { color: #3498db; }
+    .action-btn.delete { color: #e74c3c; }
+
+}
