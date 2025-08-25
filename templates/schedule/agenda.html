@@ -1,0 +1,639 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Executiva - Barbearia</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/agenda.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/finalizarServico.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/NovoAgendamento.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/NovoClinte.css' %}">
+
+
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/mobile/agenda.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/finalizarServico.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/NovoAgendamento.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/NovoClinte.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+              
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <!-- <a href="#" class="sidebar-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Configurações</span>
+                        </a> -->
+                        <a href="../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+            <a href="home.html"><div class="nav-tab active"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href="clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href="4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href="5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href="6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href="myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    <option>Unidade 1</option>
+                    <option>Unidade 2</option>
+                    <option>Geral</option>
+                </select>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Agendamentos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">R$ 420</div>
+                <div class="stat-label">Previsão</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="barbers">
+            <div class="section-title">
+                <i class="fas fa-user"></i>
+                <span>Barbeiros</span>
+            </div>
+            <div class="barber-list">
+                <div class="barber-card active">
+                    <div class="barber-avatar">GR</div>
+                    <div class="barber-info">
+                        <div class="barber-name">Geral</div>
+                        <div class="barber-specialty">Todos</div>
+                    </div>
+                </div>
+                <div class="barber-card">
+                    <div class="barber-avatar">RM</div>
+                    <div class="barber-info">
+                        <div class="barber-name">Raphael Matias</div>
+                    </div>
+                </div>
+                <div class="barber-card">
+                    <div class="barber-avatar">LL</div>
+                    <div class="barber-info">
+                        <div class="barber-name">Lucas Lopes</div>
+                    </div>
+                </div>
+                <div class="barber-card">
+                    <div class="barber-avatar">CS</div>
+                    <div class="barber-info">
+                        <div class="barber-name">Carlos Silva</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+         <div class="schedule">
+            <div class="agenda-header">
+                <div class="agenda-title">
+                    <div class="agenda-row">
+                        <i class="fas fa-calendar-days"></i>
+                        <h2>Agenda do Dia - </h2>
+                    </div>
+                    <p class="agenda-barber-name">
+                        Geral
+                    </p>                     
+                </div>
+                <div class="agenda-controls">
+                    <div class="time-filter">
+                        <select>
+                            <option>Hoje (16/06)</option>
+                            <option>(17/06)</option>
+                            <option>(18/06)</option>
+                            <option>(19/06)</option>
+                            <option>(20/06)</option>
+                            <option>(21/06)</option>
+                            <option>Próximos 7 dias</option>
+                        </select>
+                    </div>
+                    <button id="newAppointmentBtn" class="btnNewAppointment">
+                        <i class="fas fa-plus"></i> Novo Agendamento
+                    </button>
+                </div>
+            </div>
+            
+            <div class="schedule-header">
+                <div>Horário</div>
+                <div>Cliente e Serviços</div>
+                <div>Ações</div>
+            </div>
+            
+            <div class="schedule-container">
+                <div class="time-slot">
+                    <div class="time-info">
+                        <div class="order">1</div>
+                        <div class="time">9:00</div>
+                        <div class="duration">45 min</div>
+                    </div>
+                    <div class="client-info">
+                        <div class="client-header">
+                            <div class="client-name">
+                                <i class="fas fa-user"></i>
+                                João Silva
+                            </div>
+                        </div>
+                        <div class="service-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Plano:</div>
+                                <div class="detail-value">Corte Mensal</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Serviço:</div>
+                                <div class="detail-value">Corte Executivo</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Pagamento:</div>
+                                <div class="detail-value">
+                                    <span class="payment-status paid">Pago</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Contato:</div>
+                                <div class="detail-value">(11) 98765-4321</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <div class="action-btn" onclick="EditModal()">
+                            <i class="fas fa-edit"></i>
+                            <span>Editar</span>
+                        </div>
+                        <div class="action-btn finish-btn" onclick="openModal()">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Finalizar</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="time-slot">
+                    <div class="time-info">
+                        <div class="order">2</div>
+                        <div class="time">9:45</div>
+                        <div class="duration">30 min</div>
+                    </div>
+
+                    <div class="client-info">
+                        <div class="client-header">
+                            <div class="client-name">
+                                <i class="fas fa-user"></i>
+                                Pedro Oliveira
+                            </div>
+                        </div>
+                        <div class="service-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Plano:</div>
+                                <div class="detail-value">Corte Único</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Serviço:</div>
+                                <div class="detail-value">Corte Simples</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Pagamento:</div>
+                                <div class="detail-value">
+                                    <span class="payment-status paid">Pago</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Contato:</div>
+                                <div class="detail-value">(11) 99876-5432</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <div class="action-btn">
+                            <i class="fas fa-edit"></i>
+                            <span>Editar</span>
+                        </div>
+                        <div class="action-btn finish-btn" onclick="openModal()">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Finalizar</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time-slot">
+                    <div class="time-info">
+                        <div class="order">3</div>
+                        <div class="time">10:20</div>
+                        <div class="duration">30 min</div>
+                    </div>
+
+                    <div class="client-info">
+                        <div class="client-header">
+                            <div class="client-name">
+                                <i class="fas fa-user"></i>
+                                Pedro Oliveira
+                            </div>
+                        </div>
+                        <div class="service-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Plano:</div>
+                                <div class="detail-value">Corte Único</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Serviço:</div>
+                                <div class="detail-value">Corte Simples</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Pagamento:</div>
+                                <div class="detail-value">
+                                    <span class="payment-status paid">Pago</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Contato:</div>
+                                <div class="detail-value">(11) 99876-5432</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-actions">
+                        <div class="action-btn">
+                            <i class="fas fa-edit"></i>
+                            <span>Editar</span>
+                        </div>
+                        <div class="action-btn finish-btn" data-client="Pedro Oliveira">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Finalizar</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="total-display">
+            <div class="footer-first-row">
+                Total de agendamentos hoje: <strong> 28</strong>
+            </div>
+            <div class="footer-second-row">
+                Faturamento total de hoje: <strong>R$ 750,00</strong>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal de Finalização -->
+    <div class="endServiceModal-overlay" id="finishModal">
+        <div class="endServiceModal">
+            <div class="endServiceModal-header">
+                <h2><i class="fas fa-calendar-check"></i> Finalizar Serviço</h2>
+                <button class="close-btn" id="closeModal" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="endServiceModal-body">
+                <div class="section">
+                    <div class="modal-section-title">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Informações do Cliente</span>
+                    </div>
+                    <div class="client-info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Cliente</div>
+                            <div class="info-value" id="clientName">João Silva</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Data e Hora</div>
+                            <div class="info-value">16/06/2025 - 09:00</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Barbeiro</div>
+                            <div class="info-value">Raphael Matias</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Contato</div>
+                            <div class="info-value">(11) 98765-4321</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="endServiceSection">
+                    <div class="endServiceSection-title">
+                        <i class="fas fa-scissors"></i>
+                        <span>Serviços Realizados</span>
+                    </div>
+                    <div class="services-list">
+                        <div class="service-item">
+                            <div class="service-name">Corte Executivo</div>
+                            <div class="service-price">R$ 60,00</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-name">Hidratação Capilar</div>
+                            <div class="service-price">R$ 35,00</div>
+                        </div>
+                        <div class="service-item">
+                            <div class="service-name">Design de Sobrancelha</div>
+                            <div class="service-price">R$ 20,00</div>
+                        </div>
+                        <div class="total-row">
+                            <div>Total Serviços</div>
+                            <div>R$ 115,00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="endServiceSection">
+                    <div class="endServiceSection-title">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Informações para o Caixa</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-label">Realizou mais algum serviço?</div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="extraService">
+                            <label for="extraService">Sim, adicionar serviço extra</label>
+                        </div>
+                        <div id="extraServicesContainer" style="display: none; margin-top: 5px;">
+                            <select class="form-control">
+                                <option>Selecione um serviço extra</option>
+                                <option>Massagem Facial (R$ 40,00)</option>
+                                <option>Coloração de Cabelo (R$ 120,00)</option>
+                                <option>Tratamento Capilar (R$ 85,00)</option>
+                                <option>Pigmentação de Barba (R$ 70,00)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-label">Método de Pagamento</div>
+                        <div class="payment-options">
+                            <div class="payment-option cash" data-payment="cash">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Dinheiro</span>
+                            </div>
+                            <div class="payment-option card" data-payment="card">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Cartão</span>
+                            </div>
+                            <div class="payment-option pix" data-payment="pix">
+                                <i class="fas fa-qrcode"></i>
+                                <span>PIX</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-label">Comprou algum produto?</div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="productPurchase">
+                            <label for="productPurchase">Sim, adicionar produto</label>
+                        </div>
+                        <div id="productsContainer" style="display: none; margin-top: 15px;">
+                            <select class="form-control">
+                                <option>Selecione um produto</option>
+                                <option>Pomada Modeladora (R$ 45,00)</option>
+                                <option>Shampoo Antiqueda (R$ 65,00)</option>
+                                <option>Óleo para Barba (R$ 55,00)</option>
+                                <option>Gel para Cabelo (R$ 35,00)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="cashierName">
+                            Nome do Operador de Caixa
+                        </label>
+                        <input type="text" class="form-control" id="cashierName" placeholder="Digite seu nome">
+                    </div>
+                </div>
+            </div>
+            <div class="endServiceModal-footer">
+                <button class="btn-modal btn-cancel" onclick="cancelModal()">Cancelar</button>
+                <button class="btn-modal btn-confirm">Finalizar Serviço</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="appointmentModalContainer">
+        <div class="appointmentModal-content">
+            <div class="appointmentModal-header">
+                <h2><i class="fas fa-calendar-plus"></i> Novo Agendamento</h2>
+                <button class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="appointmentModal-body">
+                <form id="appointmentForm">
+                    <!-- Campo de Cliente -->
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Cliente</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" class="form-control" placeholder="Digite o nome do cliente...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+        
+                    <!-- Opção de Plano -->
+                    <div class="appointmentModal-form-group checkbox-container">
+                        <input type="checkbox" id="usePlan">
+                        <label for="usePlan">Usar plano de assinatura</label>
+                    </div>
+        
+                    <!-- Seleção de Barbeiro -->
+                    <div class="form-group">
+                        <label for="barberSelect" class="form-label">Barbeiro</label>
+                        <select id="barberSelect" class="form-control">
+                            <option value="">Selecione um barbeiro</option>
+                            <option value="1">Raphael Matias (Cadeira 1)</option>
+                            <option value="2">Lucas Lopes (Cadeira 2)</option>
+                            <option value="3">Carlos Silva (Cadeira 3)</option>
+                        </select>
+                    </div>
+        
+                    <!-- Seleção de Serviços -->
+                    <div class="appointmentModal-form-group">
+                        <label class="form-label">Serviços</label>
+                        <div class="services-grid" id="servicesContainer">
+                            <div class="service-option" data-id="1">
+                                <i class="fas fa-cut"></i><span>Corte Executivo</span>
+                            </div>
+                            <div class="service-option" data-id="2">
+                                <i class="fas fa-razor"></i><span>Barba Completa</span>
+                            </div>
+                            <div class="service-option" data-id="3">
+                                <i class="fas fa-spa"></i><span>Hidratação Capilar</span>
+                            </div>
+                            <div class="service-option" data-id="4">
+                                <i class="fas fa-eye"></i><span>Design de Sobrancelha</span>
+                            </div>
+                            <div class="service-option" data-id="5">
+                                <i class="fas fa-hand-sparkles"></i><span>Massagem Relaxante</span>
+                            </div>
+                            <div class="service-option" data-id="6">
+                                <i class="fas fa-pump-soap"></i><span>Tratamento Capilar</span>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Data e Hora -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointmentDate" class="form-label">Data</label>
+                            <input type="date" id="appointmentDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointmentTime" class="form-label">Hora</label>
+                            <input type="time" id="appointmentTime" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="appointmentModal-footer">
+                <button class="btnModal btnModal-outline" id="cancelAppointmentBtn">
+                    Cancelar
+                </button>
+                <button class="btnModal btnModal-primary" id="saveAppointmentBtn">
+                    Salvar Agendamento
+                </button>
+            </div>
+        </div>        
+    </div>
+
+    <div id="editServiceContainer">
+        <div class="editModal-content">
+            <div class="editModal-header">
+                <h2><i class="fas fa-pen"></i> Editar Agendamento</h2>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="editModal-body">
+                <form id="editForm">
+                    <!-- Campo de Cliente -->
+                    <div class="form-group">
+                        <label for="clientSearch" class="form-label">Cliente</label>
+                        <div class="search-container">
+                            <input type="text" id="clientSearch" class="form-control" placeholder="Digite o nome do cliente...">
+                            <div class="search-results" id="clientResults"></div>
+                        </div>
+                    </div>
+        
+                    <!-- Opção de Plano -->
+                    <div class="editModal-form-group checkbox-container">
+                        <input type="checkbox" id="usePlan">
+                        <label for="usePlan">Usar plano de assinatura</label>
+                    </div>
+        
+                    <!-- Seleção de Barbeiro -->
+                    <div class="form-group">
+                        <label for="barberSelect" class="form-label">Barbeiro</label>
+                        <select id="barberSelect" class="form-control">
+                            <option value="">Selecione um barbeiro</option>
+                            <option value="1">Raphael Matias (Cadeira 1)</option>
+                            <option value="2">Lucas Lopes (Cadeira 2)</option>
+                            <option value="3">Carlos Silva (Cadeira 3)</option>
+                        </select>
+                    </div>
+        
+                    <!-- Seleção de Serviços -->
+                    <div class="editModal-form-group">
+                        <label class="form-label">Serviços</label>
+                        <div class="services-grid" id="servicesContainer">
+                            <div class="service-option" data-id="1">
+                                <i class="fas fa-cut"></i><span>Corte Executivo</span>
+                            </div>
+                            <div class="service-option" data-id="2">
+                                <i class="fas fa-razor"></i><span>Barba Completa</span>
+                            </div>
+                            <div class="service-option" data-id="3">
+                                <i class="fas fa-spa"></i><span>Hidratação Capilar</span>
+                            </div>
+                            <div class="service-option" data-id="4">
+                                <i class="fas fa-eye"></i><span>Design de Sobrancelha</span>
+                            </div>
+                            <div class="service-option" data-id="5">
+                                <i class="fas fa-hand-sparkles"></i><span>Massagem Relaxante</span>
+                            </div>
+                            <div class="service-option" data-id="6">
+                                <i class="fas fa-pump-soap"></i><span>Tratamento Capilar</span>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Data e Hora -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editDate" class="form-label">Data</label>
+                            <input type="date" id="editDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTime" class="form-label">Hora</label>
+                            <input type="time" id="editTime" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="editModal-footer">
+                <button class="btnModal btnModal-outline" onclick="cancelEidtModal()">
+                    Cancelar
+                </button>
+                <button class="btnModal btnModal-primary" >
+                    Salvar Agendamento
+                </button>
+            </div>
+        </div>        
+    </div>
+
+
+    <script src="{% static 'schedule/js/agenda.js' %}"></script>
+    <script src="{% static 'geral/js/script.js' %}"></script>
+</body>
+</html>

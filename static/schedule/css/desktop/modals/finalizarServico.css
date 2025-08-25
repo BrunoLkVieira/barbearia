@@ -1,0 +1,295 @@
+@media (min-width: 821px) {
+    /* Modal Styles */
+    .endServiceModal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    .endServiceModal {
+        border-radius: 12px;
+        box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 550px;
+        max-height: 90vh;
+        transition: all 0.4s ease;
+    }
+
+    .endServiceModal-header {
+        background: linear-gradient(135deg, #2c3e50, #1a2a6c);
+        padding: 20px 30px;
+        border-radius: 12px 12px 0 0;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .endServiceModal-header h2 {
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .endServiceModal-header h2>i{
+        font-size: 1.4rem;
+        color: #e67e22;
+    }
+
+    .endServiceModal-body {
+        padding: 10px 15px;
+        max-height: 60vh;
+        overflow-y: auto;
+        background: white;
+    }
+
+    .endServiceSection {
+        margin-top: 10px;
+        margin-bottom: 30px;
+    }
+
+    .modal-section-title{
+        padding: 5px 0 10px;     
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 1px solid #eaecef;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+    }
+
+    .modal-section-title i{
+        color: #FF7A00 ;
+    }
+
+    .endServiceSection-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eaecef;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .endServiceSection-title i {
+        color: #FF7A00;
+    }
+
+    .client-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-weight: 500;
+        font-size: 1.1rem;
+        color: #2c3e50;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .services-list {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    .service-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 10px;
+        border-bottom: 1px solid #eaecef;
+    }
+
+    .service-item:last-child {
+        border-bottom: none;
+    }
+
+    .service-name {
+        font-weight: 500;
+    }
+
+    .service-price {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px solid #eaecef;
+        color: #2c3e50;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #FF7A00;
+        box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .checkbox-group input {
+        width: 20px;
+        height: 20px;
+    }
+
+    .payment-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .payment-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+        border: 2px solid #eaecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .payment-option.selected {
+        border-color: #FF7A00;
+        background-color: #fff5eb;
+    }
+
+    .payment-option i {
+        font-size: 2rem;
+        color: #3498db;
+        margin-bottom: 10px;
+    }
+
+    .payment-option .cash i { color: #27ae60; }
+    .payment-option .card i { color: #e74c3c; }
+    .payment-option .pix i { color: #2980b9; }
+
+    .payment-option span {
+        font-weight: 500;
+    }
+
+    .endServiceModal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        padding: 10px 20px;
+        border-top: 1px solid #eaecef;
+        background-color: white;
+        border-radius: 0 0 15px 15px;
+    }
+
+    .btn-modal {
+        padding: 12px 25px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 1rem;
+    }
+
+    .btn-cancel {
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #d1d9e0;
+    }
+
+    .btn-cancel:hover {
+        background-color: #eaecef;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, #FF7A00, #d35400);
+        color: white;
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+    }
+
+    .btn-confirm:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+
+    /* Scrollbar styling */
+    .schedule-container::-webkit-scrollbar,
+    .barber-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .schedule-container::-webkit-scrollbar-track,
+    .barber-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .schedule-container::-webkit-scrollbar-thumb,
+    .barber-list::-webkit-scrollbar-thumb {
+        background: #d1d9e0;
+        border-radius: 10px;
+    }
+
+    .schedule-container::-webkit-scrollbar-thumb:hover,
+    .barber-list::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+    }
+
+
+
+}
