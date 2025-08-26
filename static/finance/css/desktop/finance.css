@@ -1,0 +1,220 @@
+@media (min-width: 1025px) {   
+    body {
+        background-color: #f5f7fa;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 5px 15px;
+        display: flex;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+
+    /* Left Sidebar - Filtros */
+    .filters-sidebar {
+        width: 260px;
+        height: auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .section-title {
+        padding: 0 20px 15px;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 1px solid #eaecef;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+    }
+
+    .section-title i{
+        color: #e67e22;
+    }
+
+    .filter-group {
+        padding: 0 20px;
+        margin-bottom: 20px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.95rem;
+    }
+
+    .filter-group input, 
+    .filter-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d9e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background-color: #f8f9fa;
+    }
+
+    .filter-group input:focus, 
+    .filter-group select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        outline: none;
+    }
+    
+    .right-side-desktop{
+        background-color: bisque;
+        flex: 1;
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Finance Content */
+    .finance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .finance-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .finance-title i{
+        color: #e67e22;
+    }
+
+    .finance-controls {
+        display: flex;
+        gap: 15px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #2c3e50, #1a2a6c);
+        color: white;
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card-flex{
+        display: flex;
+        align-items: center;
+    }
+
+    .stat-card i {
+        font-size: 1.5rem;
+        color: #e67e22;
+    }
+
+    .stat-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-left: .4rem;
+    }
+
+    .stat-card .label {
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+
+     /* Area dos graficos Charts Grid */
+     .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        flex: 1;
+        border-radius: 15px;
+    }
+
+    .chart-card {
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f9fa;
+        border: 1px solid #eaecef;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .chart-header i{
+        color: #e67e22;
+    }
+
+    .chart-header h3 {
+        font-size: 1.02rem;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-container {
+        position: relative;
+        flex: 1;
+        width: 100%;
+    }
+}
+
+
+@media (min-width: 1300px) {   
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 10px;
+        flex: 1;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        height: 95%;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+
+
