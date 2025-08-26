@@ -9,6 +9,7 @@ from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from apps.barbershop.models import Barbershop
 
 class UserRegisterView(View):
     def get(self, request):
@@ -76,9 +77,21 @@ class UserLoginView(View):
             user = authenticate(request, username=cpf, password=password)
 
             if user is not None:
-                if user.user_type == 'dono' or user.user_type == 'funcionario':
+                if user.user_type == 'dono':
                     login(request, user)
+                    # Pega a barbearia do dono
+                    barbershop = Barbershop.objects.filter(owner_user=user).first()
+                    if barbershop:
+                        return redirect("barbershop:units", barbershop_slug=barbershop.slug)
+                    else:
+                        messages.error(request, "Você ainda não possui uma barbearia cadastrada.")
+                        return redirect("user:home")
+
+                elif user.user_type == 'funcionario':
+                    login(request, user)
+                    # aqui você pode decidir para onde redirecionar funcionário
                     return redirect("user:home")
+
                 else:
                     messages.error(request, "Você não é um funcionário de nenhuma barbearia")
             else:

@@ -4,5 +4,5 @@ from .views import UnitView
 app_name = "barbershop"
 
 urlpatterns = [
-    path('units/', UnitView, name='units'),
+    path('<slug:barbershop_slug>/units/', UnitView, name='units'),
 ]

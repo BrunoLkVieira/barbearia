@@ -42,9 +42,9 @@
                 
                 <div class="user-sidebar">
                     <div class="sidebar-header">
-                        <div class="sidebar-avatar">{{ user.first_name|slice:":2"|upper }}</div>
+                        <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
                         <div class="sidebar-user-info">
-                            <span class="sidebar-name">{{ user.first_name }} {{ user.last_name }}</span>
+                            <span class="sidebar-name">{{ user.name }} {{ user.last_name }}</span>
                             <span class="sidebar-email">{{ user.email }}</span>
                         </div>
                     </div>
