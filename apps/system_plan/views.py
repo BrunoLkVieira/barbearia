@@ -4,5 +4,4 @@ from django.shortcuts import render
 from django.shortcuts import render
 
 def landing_page(request):
-    # return render(request, "system_plan/landing.html")
-    return render(request, "barbershop/myWebsite.html")
+    return render(request, "system_plan/landing.html")

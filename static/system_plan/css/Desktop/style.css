@@ -437,57 +437,94 @@ h2::after {
     margin-bottom: 20px;
 }
 
-.tutorial-card {
-    border-radius: 20px;
-    overflow: hidden;
-    transition: var(--transition);
-    background-color: #fff;
-}
-
-.tutorial-card:hover {
-    transform: translateY(-10px);
-}
-
-.tutorial-video {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+.tutorials-steps {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 50px;
     position: relative;
-    overflow: hidden;
 }
 
-.tutorial-video::before {
+.tutorials-steps::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') center/cover;
-    opacity: 0.3;
+    bottom: 0;
+    left: 40px;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--accent), var(--primary-dark));
+    z-index: 1;
+    border-radius: 3px;
 }
 
-.tutorial-video i {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 4rem;
+.step-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--white);
+    border-radius: 15px;
+    padding: 10px;
+    box-shadow: var(--card-shadow);
+    position: relative;
     z-index: 2;
     transition: var(--transition);
-    cursor: pointer;
 }
 
-.tutorial-video i:hover {
-    transform: scale(1.1);
-    color: var(--accent);
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
-.tutorial-card h4 {
-    padding: 20px;
-    text-align: center;
-    color: var(--primary);
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--white);
+    border-radius: 50%;
+    font-weight: bold;
     font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-icon {
+    font-size: 1.7rem;
+    color: var(--accent);
+    margin-bottom: 15px;
+}
+
+.step-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: var(--primary);
+}
+
+.step-card p {
+    color: #555;
+    line-height: 1.3;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .tutorials-steps::before {
+        left: 20px;
+    }
+    
+    .step-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .step-number {
+        align-self: center;
+    }
 }
 
 
@@ -756,4 +793,3 @@ h2::after {
     opacity: 0.7;
     font-size: 0.9rem;
 }
-
