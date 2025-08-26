@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"add: tela meu perfil e adicao de css para login \" && git push",
+    "git": "git add . && git commit -m \"add: tela cliente e ajustes em outros caminhos \" && git push",
     "pull": "git pull"
   },
   "repository": {
