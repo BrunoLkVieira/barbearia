@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"add: tela performance\" && git push",
+    "git": "git add . && git commit -m \"add: tela meu web\" && git push",
     "pull": "git pull"
   },
   "repository": {
