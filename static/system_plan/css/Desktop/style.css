@@ -660,6 +660,81 @@ h2::after {
     font-size: 1.1rem;
 }
 
+
+
+/* secao de database */
+.compatibility-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+}
+
+.compatibility-text {
+    flex: 1;
+}
+
+.compatibility-image {
+    flex: 1;
+    text-align: center;
+}
+
+.compatibility-image img {
+    max-width: 100%;
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.compatibility-features {
+    margin: 30px 0;
+}
+
+.compatibility-feature {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.compatibility-feature i {
+    width: 30px;
+    height: 30px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 0.9rem;
+}
+
+.btn-support:hover {
+    background: var(--accent);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsividade */
+@media (max-width: 968px) {
+    .compatibility-content {
+        flex-direction: column;
+        text-align: left;
+    }
+    
+    .compatibility-feature {
+        justify-content: left;
+    }
+
+    #support-btn{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        font-size: .95rem;
+    }
+}
+
 /* Contato Modernizado */
 .contact-section {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
