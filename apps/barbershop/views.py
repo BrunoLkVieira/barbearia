@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Unit, Barbershop
+from .models import Unit, Barbershop, Employee
 
 def dono_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -60,3 +60,55 @@ def UnitView(request, barbershop_slug):
             "active_units_count": active_units_count,
         },
     )
+
+@login_required
+@dono_required
+def EmployeeView(request, barbershop_slug):
+    # pega barbearia do dono logado
+    barbershop = get_object_or_404(
+        Barbershop, slug=barbershop_slug, owner_user=request.user
+    )
+
+    # pega todas as unidades dessa barbearia
+    units = barbershop.units.all()
+
+    # lista de funcionários (só das unidades da barbearia)
+    employees = Employee.objects.filter(unit__barbershop=barbershop)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # criar funcionário
+        if action == "create":
+            user = User.objects.create_user(
+                username=request.POST.get("email"),  # ou pode ser outro identificador
+                email=request.POST.get("email"),
+                password=request.POST.get("password"),
+                first_name=request.POST.get("name")
+            )
+            Employee.objects.create(
+                user=user,
+                unit=Unit.objects.get(id=request.POST.get("unit_id")),
+                system_access=True if request.POST.get("system_access") == "on" else False
+            )
+
+        # editar funcionário
+        elif action == "edit":
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            emp.unit_id = request.POST.get("unit_id")
+            emp.system_access = True if request.POST.get("system_access") == "on" else False
+            emp.save()
+
+        # deletar funcionário
+        elif action == "delete":
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            emp.delete()
+
+        return redirect("employee", barbershop_slug=barbershop.slug)
+
+    context = {
+        "barbershop": barbershop,
+        "units": units,
+        "employees": employees,
+    }
+    return render(request, "barbershop/employee.html", context)

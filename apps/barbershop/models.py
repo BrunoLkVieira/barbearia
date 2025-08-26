@@ -33,3 +33,35 @@ class Unit(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.barbershop.name}"
+
+
+
+
+
+class Employee(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name="employees"
+    )
+    unit = models.ForeignKey(
+        Unit, 
+        on_delete=models.CASCADE,
+        related_name="employees"
+    )
+
+    commission_percentage = models.BooleanField(default=False)
+    service_commission_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+    product_commission_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True
+    )
+
+    can_manage_cashbox = models.BooleanField(default=False)
+    can_register_sell = models.BooleanField(default=False)
+    can_create_appointments = models.BooleanField(default=False)
+    system_access = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user} - {self.unit}"
