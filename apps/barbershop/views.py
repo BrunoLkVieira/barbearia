@@ -2,6 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Unit, Barbershop, Employee
+from decimal import Decimal, InvalidOperation
+import re
+
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .models import Barbershop, Unit, Employee
+
 
 def dono_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -61,54 +71,178 @@ def UnitView(request, barbershop_slug):
         },
     )
 
+User = get_user_model()
+
+def _to_bool(val: str) -> bool:
+    return str(val).lower() in ("on", "true", "1", "yes")
+
+def _to_decimal(val):
+    try:
+        if val in (None, "",):
+            return None
+        return Decimal(str(val).replace(",", "."))
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
 @login_required
 @dono_required
 def EmployeeView(request, barbershop_slug):
-    # pega barbearia do dono logado
+    # Barbershop do dono logado
     barbershop = get_object_or_404(
         Barbershop, slug=barbershop_slug, owner_user=request.user
     )
 
-    # pega todas as unidades dessa barbearia
+    # Unidades dessa barbearia
     units = barbershop.units.all()
 
-    # lista de funcionários (só das unidades da barbearia)
+    # Funcionários (somente das unidades da barbearia)
     employees = Employee.objects.filter(unit__barbershop=barbershop)
 
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # criar funcionário
+        # ---------- CREATE ----------
         if action == "create":
-            user = User.objects.create_user(
-                username=request.POST.get("email"),  # ou pode ser outro identificador
-                email=request.POST.get("email"),
-                password=request.POST.get("password"),
-                first_name=request.POST.get("name")
-            )
-            Employee.objects.create(
-                user=user,
-                unit=Unit.objects.get(id=request.POST.get("unit_id")),
-                system_access=True if request.POST.get("system_access") == "on" else False
+            # Dados do USER
+            raw_cpf = (request.POST.get("cpf") or "").strip()
+            cpf = re.sub(r"\D", "", raw_cpf)  # só dígitos
+            name = (request.POST.get("name") or "").strip()
+            last_name = (request.POST.get("last_name") or "").strip()
+            email = (request.POST.get("email") or "").strip()
+            phone = (request.POST.get("phone") or "").strip()
+
+            # Dados do EMPLOYEE
+            unit_id = request.POST.get("unit_id")
+            unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+
+            commission_percentage = _to_bool(request.POST.get("commission_percentage"))
+            service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
+            product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+            can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
+            can_register_sell = _to_bool(request.POST.get("can_register_sell"))
+            can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
+            system_access = _to_bool(request.POST.get("system_access"))
+
+            if not cpf:
+                return redirect("employee", barbershop_slug=barbershop.slug)
+
+            with transaction.atomic():
+                # Busca ou cria o usuário pelo CPF
+                user, created = User.objects.get_or_create(
+                    cpf=cpf,
+                    defaults={
+                        "email": email or None,
+                        "name": name or "",
+                        "last_name": last_name or "",
+                        "phone": phone or None,
+                        "user_type": "funcionario",
+                        "is_active": True,
+                    },
+                )
+                if created:
+                    user.set_unusable_password()
+                    user.save()
+                else:
+                    # Se usuário existente for dono, não altera user_type
+                    if getattr(user, "user_type", None) != "dono":
+                        user.user_type = "funcionario"
+                        user.save(update_fields=["user_type"])
+
+                # Cria o Employee (ou atualiza se já existir para a mesma unit)
+                employee, emp_created = Employee.objects.get_or_create(
+                    user=user,
+                    unit=unit,
+                    defaults={
+                        "commission_percentage": commission_percentage,
+                        "service_commission_percentage": service_commission_percentage,
+                        "product_commission_percentage": product_commission_percentage,
+                        "can_manage_cashbox": can_manage_cashbox,
+                        "can_register_sell": can_register_sell,
+                        "can_create_appointments": can_create_appointments,
+                        "system_access": system_access,
+                    },
+                )
+                if not emp_created:
+                    employee.commission_percentage = commission_percentage
+                    employee.service_commission_percentage = service_commission_percentage
+                    employee.product_commission_percentage = product_commission_percentage
+                    employee.can_manage_cashbox = can_manage_cashbox
+                    employee.can_register_sell = can_register_sell
+                    employee.can_create_appointments = can_create_appointments
+                    employee.system_access = system_access
+                    employee.save()
+
+        # ---------- EDIT ----------
+        elif action == "edit":
+            emp = get_object_or_404(
+                Employee,
+                id=request.POST.get("employee_id"),
+                unit__barbershop=barbershop,
             )
 
-        # editar funcionário
-        elif action == "edit":
-            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
-            emp.unit_id = request.POST.get("unit_id")
-            emp.system_access = True if request.POST.get("system_access") == "on" else False
+            if request.POST.get("unit_id"):
+                unit = get_object_or_404(
+                    Unit, id=request.POST.get("unit_id"), barbershop=barbershop
+                )
+                emp.unit = unit
+
+            if "commission_percentage" in request.POST:
+                emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
+            if "service_commission_percentage" in request.POST:
+                emp.service_commission_percentage = _to_decimal(
+                    request.POST.get("service_commission_percentage")
+                )
+            if "product_commission_percentage" in request.POST:
+                emp.product_commission_percentage = _to_decimal(
+                    request.POST.get("product_commission_percentage")
+                )
+            if "can_manage_cashbox" in request.POST:
+                emp.can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
+            if "can_register_sell" in request.POST:
+                emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
+            if "can_create_appointments" in request.POST:
+                emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
+            if "system_access" in request.POST:
+                emp.system_access = _to_bool(request.POST.get("system_access"))
+
             emp.save()
 
-        # deletar funcionário
+            # Atualiza dados do usuário
+            user = emp.user
+            changed_user_fields = []
+            if request.POST.get("name"):
+                user.name = request.POST.get("name").strip()
+                changed_user_fields.append("name")
+            if request.POST.get("last_name"):
+                user.last_name = request.POST.get("last_name").strip()
+                changed_user_fields.append("last_name")
+            if request.POST.get("email"):
+                user.email = request.POST.get("email").strip()
+                changed_user_fields.append("email")
+            if request.POST.get("phone"):
+                user.phone = request.POST.get("phone").strip()
+                changed_user_fields.append("phone")
+            if changed_user_fields:
+                user.save(update_fields=changed_user_fields)
+
+        # ---------- DELETE ----------
         elif action == "delete":
-            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            emp = get_object_or_404(
+                Employee,
+                id=request.POST.get("employee_id"),
+                unit__barbershop=barbershop,
+            )
             emp.delete()
 
-        return redirect("employee", barbershop_slug=barbershop.slug)
+        return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
+
+    # Contagem de funcionários ativos
+    employees_active_count = employees.filter(user__is_active=True).count()
 
     context = {
         "barbershop": barbershop,
         "units": units,
         "employees": employees,
+        "employees_active_count": employees_active_count,
     }
     return render(request, "barbershop/employee.html", context)
