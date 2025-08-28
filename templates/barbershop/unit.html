@@ -93,7 +93,7 @@
         <a href="">
             <div class="page-option active"><i class="fas fa-store"></i> Unidades</div>
         </a>
-        <a href="">
+        <a href="{% url 'barbershop:employee' barbershop_slug=barbershop.slug %}">
             <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
         </a>
         <a href="">
@@ -154,9 +154,25 @@
                     </div>
 
                     <div class="unit-actions">
-                        <div class="action-btn edit" title="Editar unidade">
+                        <div class="action-btn edit-btn"
+                            onclick="openEditEmployee(this)"
+                            data-id="{{ emp.id }}"
+                            data-name="{{ emp.user.name }}"
+                            data-lastname="{{ emp.user.last_name }}"
+                            data-email="{{ emp.user.email }}"
+                            data-phone="{{ emp.user.phone }}"
+                            data-cpf="{{ emp.user.cpf }}"
+                            data-unit="{{ emp.unit.id }}"
+                            data-active="{{ emp.user.is_active }}"
+                            data-service-commission="{{ emp.service_commission_percentage }}"
+                            data-product-commission="{{ emp.product_commission_percentage }}"
+                            data-can-cashbox="{{ emp.can_manage_cashbox }}"
+                            data-can-sell="{{ emp.can_register_sell }}"
+                            data-can-appointments="{{ emp.can_create_appointments }}"
+                            data-system-access="{{ emp.system_access }}">
                             <i class="fas fa-edit"></i>
                         </div>
+
                         <form method="POST" style="display:inline;">
                             {% csrf_token %}
                             <input type="hidden" name="unit_id" value="{{ unit.id }}">

@@ -9,7 +9,6 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    {# --- Estilos locais (mantidos) --- #}
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newEmployee.css' %}">
@@ -28,13 +27,53 @@
                 {% endif %}
             </div>
             <div class="logo-content">
-                <h1>{{ barbershop.name }}</h1>
+                <h1>Orbly Barber</h1>
                 <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                <div class="user-name">{{ user.name }} {{ user.last_name }}</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">{{ user.name }} {{ user.last_name }}</span>
+                            <span class="sidebar-email">{{ user.email }}</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
     
     <div class="nav-bar">
+        <div class="nav-tabs">
+            <a href=" "><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href=" "><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="  "><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href=""><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
         <div class="stats">
             <div class="unit-filter">
                 <select>
@@ -49,6 +88,17 @@
                 <div class="stat-label">Funcionários</div>
             </div>
         </div>
+    </div>
+    <div class="pages-options-Container">
+        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
+            <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
+        </a>
+        <a href="">
+            <div class="page-option active"><i class="fas fa-users-cog"></i> Funcionários</div>
+        </a>
+        <a href="">
+            <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
+        </a>
     </div>
 
     <div class="main-content">
@@ -96,14 +146,19 @@
                             <td>{{ emp.user.phone|default:"---" }}</td>
                             <td>
                                 <div class="employee-actions">
-                                    <form method="POST" style="display:inline;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="employee_id" value="{{ emp.id }}">
-                                        <input type="hidden" name="action" value="edit">
-                                        <button type="submit" class="action-btn edit-btn">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </form>
+                                    <!-- Botão Editar -->
+                                    <div class="action-btn edit"
+                                        data-id="{{ emp.id }}"
+                                        data-name="{{ emp.user.name }}"
+                                        data-lastname="{{ emp.user.last_name }}"
+                                        data-email="{{ emp.user.email }}"
+                                        data-phone="{{ emp.user.phone }}"
+                                        data-cpf="{{ emp.user.cpf }}"
+                                        data-unit="{{ emp.unit.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+
+                                    <!-- Botão Deletar -->
                                     <form method="POST" style="display:inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="employee_id" value="{{ emp.id }}">
@@ -142,6 +197,7 @@
             <form method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="employee_id" id="employeeId">
                 <div class="modal-header">
                     <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Funcionário</h2>
                     <button class="close-btn" onclick="closeEmployeeModal()" type="button">
