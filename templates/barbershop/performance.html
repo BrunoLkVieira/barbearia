@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desempenho - Barbearia Executiva</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/performance.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/performanceDetails.css' %}">
+
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/performance.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/performanceDetails.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="../0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="../../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+           <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab active"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href="../6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    <option>Unidade 1</option>
+                    <option>Unidade 2</option>
+                    <option>Geral</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="pages-options-Container">
+        <a href="Financeiro.html">
+            <div class="page-option"><i class="fas fa-dollar-sign"></i> Financeiro</div>
+        </a>
+        <a href="#">
+            <div class="page-option active"><i class="fas fa-chart-line"></i> Desempenho</div>
+        </a>
+    </div>
+    
+    <div class="main-content">
+        <!-- Filtros na barra lateral -->
+        <div class="filters-sidebar">
+            <div class="section-title">
+                <i class="fas fa-filter"></i>
+                <span>Filtros de Desempenho</span>
+            </div>
+            
+            <div class="filter-group">
+                <label for="barberFilter">Barbeiro</label>
+                <select id="barberFilter">
+                    <option value="">Todos os barbeiros</option>
+                    <option value="barber1">Raphael Matias</option>
+                    <option value="barber2">Lucas Lopes</option>
+                    <option value="barber3">Carlos Silva</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="dateStart">Data Início</label>
+                <input type="date" id="dateStart">
+            </div>
+            
+            <div class="filter-group">
+                <label for="dateEnd">Data Fim</label>
+                <input type="date" id="dateEnd">
+            </div>
+            
+            <div class="filter-group">
+                <button class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sync"></i> Aplicar Filtros
+                </button>
+            </div>
+        </div>
+        
+        <!-- Conteúdo de Desempenho -->
+        <div class="performance-content">
+            <div class="performance-header">
+                <div class="performance-title">
+                    <i class="fas fa-chart-line"></i> Desempenho dos Barbeiros
+                </div>
+                <!-- <div class="finance-controls">
+                    <button class="btn btn-outline">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                </div> -->
+            </div>
+            
+            <!-- Grid de Desempenho -->
+            <div class="performance-grid">
+                <!-- Barbeiro 1 -->
+                <div class="barber-card">
+                    <div class="barber-header">
+                        <div class="barber-avatar">RM</div>
+                        <div class="barber-info">
+                            <div class="barber-name">Raphael Matias</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-stats">
+                        <div class="stat-item">
+                            <div class="barber-stat-value">32</div>
+                            <div class="barber-stat-label">Serviços</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">18</div>
+                            <div class="barber-stat-label">Com planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">14</div>
+                            <div class="barber-stat-label">Sem planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">8</div>
+                            <div class="barber-stat-label">Produtos</div>
+                        </div>
+                    </div>
+                    
+                    <button class="details-btn" onclick="openDetails('rm')">
+                        <i class="fas fa-info-circle"></i> Ver Detalhes
+                    </button>
+                </div>
+                
+                <!-- Barbeiro 2 -->
+                <div class="barber-card">
+                    <div class="barber-header">
+                        <div class="barber-avatar">LL</div>
+                        <div class="barber-info">
+                            <div class="barber-name">Lucas Lopes</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-stats">
+                        <div class="stat-item">
+                            <div class="barber-stat-value">28</div>
+                            <div class="barber-stat-label">Serviços</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">15</div>
+                            <div class="barber-stat-label">Com planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">13</div>
+                            <div class="barber-stat-label">Sem planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">5</div>
+                            <div class="barber-stat-label">Produtos</div>
+                        </div>
+                    </div>
+                    
+                    <button class="details-btn" onclick="openDetails('ll')">
+                        <i class="fas fa-info-circle"></i> Ver Detalhes
+                    </button>
+                </div>
+                
+                <!-- Barbeiro 3 -->
+                <div class="barber-card">
+                    <div class="barber-header">
+                        <div class="barber-avatar">CS</div>
+                        <div class="barber-info">
+                            <div class="barber-name">Carlos Silva</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-stats">
+                        <div class="stat-item">
+                            <div class="barber-stat-value">24</div>
+                            <div class="barber-stat-label">Serviços</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">12</div>
+                            <div class="barber-stat-label">Com planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">12</div>
+                            <div class="barber-stat-label">Sem planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">7</div>
+                            <div class="barber-stat-label">Produtos</div>
+                        </div>
+                    </div>
+                    
+                    <button class="details-btn" onclick="openDetails('cs')">
+                        <i class="fas fa-info-circle"></i> Ver Detalhes
+                    </button>
+                </div>
+                
+                <!-- Barbeiro 4 -->
+                <div class="barber-card">
+                    <div class="barber-header">
+                        <div class="barber-avatar">MA</div>
+                        <div class="barber-info">
+                            <div class="barber-name">Marcos Almeida</div>
+                        </div>
+                    </div>
+                    
+                    <div class="performance-stats">
+                        <div class="stat-item">
+                            <div class="barber-stat-value">19</div>
+                            <div class="barber-stat-label">Serviços</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">8</div>
+                            <div class="barber-stat-label">Com planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">11</div>
+                            <div class="barber-stat-label">Sem planos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="barber-stat-value">3</div>
+                            <div class="barber-stat-label">Produtos</div>
+                        </div>
+                    </div>
+                    
+                    <button class="details-btn" onclick="openDetails('ma')">
+                        <i class="fas fa-info-circle"></i> Ver Detalhes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="total-display">
+            <div class="footer-first-row">
+                Total de serviços realizados: <strong>103</strong>
+            </div>
+            <div class="footer-second-row">
+                Total de produtos vendidos: <strong>23</strong>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <!-- <button class="btn btn-outline">
+                <i class="fas fa-print"></i> Imprimir
+            </button> -->
+            <button class="btn btn-primary">
+                <i class="fas fa-file-export"></i> Exportar Relatório
+            </button>
+        </div>
+    </footer>
+    
+    <!-- Modal de Detalhes -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user"></i> <span id="modalBarberName">Desempenho do Barbeiro</span></h2>
+                <button class="close-btn" onclick="closeDetails()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h3 class="modal-title"><i class="fas fa-scissors"></i> Serviços Realizados</h3>
+                    <div class="service-list" id="servicesList">
+                        <!-- Serviços serão preenchidos via JavaScript -->
+                    </div>
+                </div>
+                <div class="total">
+                    <span class="total-count">28</span>
+                </div>
+                
+                <div class="modal-section">
+                    <h3 class="modal-title"><i class="fas fa-shopping-bag"></i> Produtos Vendidos</h3>
+                    <div class="product-list" id="productsList">
+                        <!-- Produtos serão preenchidos via JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="closeDetailsModal" onclick="cancelDetails()">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script src="{% static 'barbershop/js/performance.js' %}"></script>
+</body>
+</html>

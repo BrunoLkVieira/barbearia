@@ -1,0 +1,252 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Site - Barbearia Executiva</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/myWebsite.css' %}">
+
+    <link rel="stylesheet" href="{% static 'geral/css/Mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/Mobile/myWebsite.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <!-- <a href="#" class="sidebar-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Configurações</span>
+                        </a> -->
+                        <a href="../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+           <a href="home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href="clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href="4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href="5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href="6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href="myWebsite.html"><div class="nav-tab active"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    <option>Unidade 1</option>
+                    <option>Unidade 2</option>
+                    <option>Geral</option>
+                </select>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Agendamentos</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">R$ 420</div>
+                <div class="stat-label">Previsão</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <!-- Editor de Landing Page -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-pen"></i> Editar Website
+                </div>
+                <div>
+                    <button class="btn-preview-Web">
+                        <i class="fas fa-eye"></i> Visualizar Site
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-container">
+                <div class="left-column">
+                    
+                    <div class="banner-section">
+                        <div class="banner-title">
+                            <h3><i class="fas fa-images"></i> Banner (Carrossel)</h3>
+                            <small>Arraste para reordenar</small>
+                        </div>
+
+                        <div class="banner-images">
+                            <div class="banner-image-container">
+                                <div class="banner-image">Banner Principal</div>
+                                <div class="banner-actions">
+                                    <div class="banner-action-btn move-btn">
+                                        <i class="fas fa-arrows-alt"></i>
+                                    </div>
+                                    <div class="banner-action-btn delete-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="banner-image-container">
+                                <div class="banner-image" style="background-color: #d0d0d0;">Segundo Banner</div>
+                                <div class="banner-actions">
+                                    <div class="banner-action-btn move-btn">
+                                        <i class="fas fa-arrows-alt"></i>
+                                    </div>
+                                    <div class="banner-action-btn delete-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="add-banner-btn">
+                                <i class="fas fa-plus-circle"></i> Adicionar Imagem
+                            </div>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="form-group">
+                        <label for="businessName"><i class="fas fa-signature"></i> Nome da Barbearia</label>
+                        <input type="text" id="businessName" class="form-control" value="Barbearia Executiva" placeholder="Nome do seu negócio">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="businessDescription"><i class="fas fa-align-left"></i> Descrição</label>
+                        <textarea id="businessDescription" class="form-control" placeholder="Descrição da sua barbearia">A Barbearia Executiva oferece os melhores serviços de barba, cabelo e cuidados masculinos. Profissionais qualificados e ambiente premium.</textarea>
+                    </div>
+                    
+                   
+                    <div class="form-group">
+                        <label><i class="fas fa-hashtag"></i> Redes Sociais</label>
+                        <div class="social-grid">
+                            <div class="social-input-group">
+                                <div class="social-icon" >
+                                    <i class="fab fa-instagram"></i>
+                                </div>
+                                <input type="text" class="form-control" placeholder="Instagram" value="">
+                            </div>
+                            
+                            <div class="social-input-group">
+                                <div class="social-icon">
+                                    <i class="fab fa-whatsapp"></i>
+                                </div>
+                                <input type="text" class="form-control" placeholder="(11) 98765-4321" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+                <div class="right-column">
+                    <div class="form-group">
+                        <label for="businessLogo"><i class="fas fa-crown"></i> Logo</label>
+                        <div class="image-preview-container">
+                            <div class="image-preview">
+                                <div class="image-preview-placeholder">Logo da Barbearia</div>
+                            </div>
+                            <button class="image-upload-btn">
+                                <i class="fas fa-upload"></i> Alterar Logo
+                            </button>
+                        </div>
+                    </div>
+                    
+                   
+                    <div class="form-group">
+                        <label for="aboutImage"><i class="fas fa-info-circle"></i> Imagem da Seção "Sobre"</label>
+                        <div class="image-preview-container">
+                            <div class="image-preview">
+                                <div class="image-preview-placeholder">Imagem da seção Sobre</div>
+                            </div>
+                            <button class="image-upload-btn">
+                                <i class="fas fa-upload"></i> Alterar Imagem
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="aboutText"><i class="fas fa-file-alt"></i> Texto Sobre</label>
+                        <textarea id="aboutText" class="form-control" placeholder="Conte um pouco sobre sua história">Fundada em 2010, a Barbearia Executiva nasceu da paixão por cuidar da aparência masculina. Nossa equipe de mestres barbeiros traz anos de experiência e dedicação para cada serviço.</textarea>
+                    </div>
+                    
+                   
+                    <div class="form-group">
+                        <label for="businessAddress"><i class="fas fa-map-marker-alt"></i> Endereço</label>
+                        <input type="text" id="businessAddress" class="form-control" value="Av. Paulista, 1000 - São Paulo/SP" placeholder="Endereço completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="businessMap"><i class="fas fa-map"></i> Mapa (Embed do Google Maps)</label>
+                        <textarea id="businessMap" class="form-control" placeholder="Cole o código embed do Google Maps aqui">&lt;iframe src=&quot;https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.097603354583!2d-46.65390548538327!3d-23.56506218468076!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1633021326785!5m2!1spt-BR!2sbr&quot; width=&quot;600&quot; height=&quot;450&quot; style=&quot;border:0;&quot; allowfullscreen=&quot;&quot; loading=&quot;lazy&quot;&gt;&lt;/iframe&gt;</textarea>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="actions-container">
+                <button class="btn btn-primary">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="total-display">
+            <div class="footer-first-row-one-item">
+                Última atualização: <strong>15 de Junho, 2025 às 14:30</strong>
+            </div>
+        </div>
+        <div class="actions">
+            <!-- <button class="btn btn-outline">
+                <i class="fas fa-history"></i> Histórico
+            </button> -->
+            <button class="btn btn-primary">
+                <i class="fas fa-cloud-upload-alt"></i> Publicar
+            </button>
+        </div>
+    </footer>
+
+    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script src="{% static 'barbershop/js/myWebsite.js' %}"></script>
+</body>
+</html>

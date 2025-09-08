@@ -4,18 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico de Produtos - Barbearia Executiva</title>
+    <title>Histórico - Barbearia Executiva</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'product/css/desktop/history.css' %}">
-    <link rel="stylesheet" href="{% static 'product/css/desktop/modals/productDetail.css' %}">
 
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'product/css/mobile/history.css' %}">
-    <link rel="stylesheet" href="{% static 'product/css/mobile/modals/productDetail.css' %}">
 </head>
 <body>
     <header>
@@ -91,20 +89,17 @@
     </div>
 
     <div class="pages-options-Container">
-        <a href="schedule.html">
-            <div class="page-option"><i class="fas fa-history"></i> Agendamentos</div>
-        </a>
+        <div class="page-option active"><i class="fas fa-history"></i> Agendamentos</div>
         <a href="productSold.html">
-            <div class="page-option active"><i class="fas fa-pump-soap"></i> Vendas</div>
+            <div class="page-option"><i class="fas fa-pump-soap"></i> Vendas</div>
         </a>
     </div>
     
     <div class="main-content">
         <div class="history-container">
-
             <div class="history-top-body">
                 <div class="content-header">
-                    <h2><i class="fas fa-box"></i> Histórico de Produtos Vendidos</h2>
+                    <h2><i class="fas fa-history"></i> Histórico de Agendamentos</h2>
                     <button class="btn btn-outline">
                         <i class="fas fa-filter"></i> Filtrar
                     </button>
@@ -116,23 +111,30 @@
                         <input type="date" id="dateFilter">
                     </div>
                     <div class="filter-group">
-                        <label for="productFilter">Produto</label>
-                        <select id="productFilter">
-                            <option value="">Todos os produtos</option>
-                            <option value="shampoo">Shampoo Antiqueda</option>
-                            <option value="gel">Gel Fixador</option>
-                            <option value="perfume">Perfume Masculino</option>
-                            <option value="pomada">Pomada Modeladora</option>
+                        <label for="barberFilter">Barbeiro</label>
+                        <select id="serviceFilter">
+                            <option value="">Todos</option>
+                            <option value="corte">Barbeiro 1</option>
+                            <option value="barba">Barbeiro 2</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label for="paymentFilter">Forma de Pagamento</label>
-                        <select id="paymentFilter">
-                            <option value="">Todas as formas</option>
-                            <option value="cash">Dinheiro</option>
-                            <option value="card">Cartão</option>
-                            <option value="pix">PIX</option>
-                            <option value="plan">Plano</option>
+                        <label for="serviceFilter">Serviço</label>
+                        <select id="serviceFilter">
+                            <option value="">Todos os serviços</option>
+                            <option value="corte">Corte Executivo</option>
+                            <option value="barba">Barba Completa</option>
+                            <option value="combo">Corte + Barba</option>
+                            <option value="hidratacao">Hidratação Capilar</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter">
+                            <option value="">Todos os status</option>
+                            <option value="completed">Realizado</option>
+                            <option value="pending">Pendente</option>
+                            <option value="cancelled">Cancelado</option>
                         </select>
                     </div>
                 </div>
@@ -142,91 +144,87 @@
                 <thead>
                     <tr>
                         <th>Cliente</th>
-                        <th>Produto</th>
-                        <th>Quantidade</th>
-                        <th>Valor</th>
-                        <th>Data</th>
+                        <th>Serviço</th>
+                        <th>Data e Hora</th>
+                        <th>Pagamento</th>
+                        <th>Status</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <tr data-payment="Cartão de Crédito" data-seller="Raphael Matias">
+                    <tr>
                         <td data-label="Cliente" class="tr-header">
                             <div class="client-cell">
                                 <div class="client-avatar">JS</div>
                                 <div>João Silva</div>
                             </div>
                         </td>
-                        <td data-label="Produto">
-                            <div class="product-cell">
-                                <div class="product-image">
-                                    <i class="fas fa-pump-soap"></i>
-                                </div>
-                                <span>Shampoo Antiqueda</span>
+                        <td data-label="Serviço">
+                            <div class="service-cell">
+                                <i class="fas fa-cut"></i>
+                                <span>Corte Executivo</span>
                             </div>
                         </td>
-                        <td data-label="Quantidade">
-                            <div class="quantity-td">
-                                <i class="fas fa-boxes"></i>
-                                <div class="quantity-badge">2</div>
-                            </div>
-                        </td>
-                        <td data-label="Valor">
-                            <div class="value-td">R$ 80,00</div>
-                        </td>
-                        <td data-label="Data">
+                        <td data-label="Data e Hora">
                             <div class="date-time">
                                 <div>18/07/2025</div>
                                 <div>14:30</div>
                             </div>
                         </td>
-                        <td data-label="Ações">
+                        <td data-label="Pagamento">
+                            <div class="payment-info">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Plano Mensal Premium</span>
+                            </div>
+                        </td>
+                        <td data-label="Status">
+                            <div class="status-badge status-completed">Realizado</div>
+                        </td>
+                        <td data-label="">
                             <div class="action-cell">
-                                <div class="action-btn edit" title="Detalhes" onclick="openModal()">
-                                    <i class="fas fa-eye"></i>
+                                <div class="action-btn edit">
+                                    <i class="fas fa-edit"></i>
                                 </div>
-                                <div class="action-btn delete" title="Excluir">
+                                <div class="action-btn delete">
                                     <i class="fas fa-trash"></i>
                                 </div>
                             </div>
                         </td>
                     </tr>
 
-                    <tr data-payment="PIX" data-seller="Raphael Matias">
+                    <tr>
                         <td data-label="Cliente" class="tr-header">
                             <div class="client-cell">
                                 <div class="client-avatar">PO</div>
                                 <div>Pedro Oliveira</div>
                             </div>
                         </td>
-                        <td data-label="Produto">
-                            <div class="product-cell">
-                                <div class="product-image">
-                                    <i class="fas fa-wind"></i>
-                                </div>
-                                <span>Gel Fixador</span>
+                        <td data-label="Serviço">
+                            <div class="service-cell">
+                                <i class="fas fa-scissors"></i>
+                                <span>Barba Completa</span>
                             </div>
                         </td>
-                        <td data-label="Quantidade">
-                            <div class="quantity-td">
-                                <i class="fas fa-boxes"></i>
-                                <div class="quantity-badge">12</div>
-                            </div>
-                        </td>
-                        <td data-label="Valor">
-                            <div class="value-td">R$ 80,00</div>
-                        </td>
-                        <td data-label="Data">
+                        <td data-label="Data e Hora">
                             <div class="date-time">
                                 <div>17/07/2025</div>
                                 <div>16:15</div>
                             </div>
                         </td>
+                        <td data-label="Pagamento">
+                            <div class="payment-info">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>R$ 40,00</span>
+                            </div>
+                        </td>
+                        <td data-label="Status">
+                            <div class="status-badge status-completed">Realizado</div>
+                        </td>
                         <td data-label="Ações">
                             <div class="action-cell">
-                                <div class="action-btn edit" onclick="openModal()">
-                                    <i class="fas fa-eye"></i>
+                                <div class="action-btn edit">
+                                    <i class="fas fa-edit"></i>
                                 </div>
                                 <div class="action-btn delete">
                                     <i class="fas fa-trash"></i>
@@ -235,40 +233,38 @@
                         </td>
                     </tr>
 
-                    <tr data-payment="Dinheiro" data-seller="Carlos Santos">
+                    <tr>
                         <td data-label="Cliente" class="tr-header">
                             <div class="client-cell">
                                 <div class="client-avatar">CS</div>
                                 <div>Carlos Santos</div>
                             </div>
                         </td>
-                        <td data-label="Produto">
-                            <div class="product-cell">
-                                <div class="product-image">
-                                    <i class="fas fa-spray-can"></i>
-                                </div>
-                                <span>Perfume Masculino</span>
+                        <td data-label="Serviço">
+                            <div class="service-cell">
+                                <i class="fas fa-cut"></i>
+                                <span>Corte + Barba</span>
                             </div>
                         </td>
-                        <td data-label="Quantidade">
-                            <div class="quantity-td">
-                                <i class="fas fa-boxes"></i>
-                                <div class="quantity-badge">6</div>
-                            </div>
-                        </td>
-                        <td data-label="Valor">
-                            <div class="value-td">R$ 80,00</div>
-                        </td>
-                        <td data-label="Data">
+                        <td data-label="Data e Hora">
                             <div class="date-time">
                                 <div>16/07/2025</div>
                                 <div>11:00</div>
                             </div>
                         </td>
+                        <td data-label="Pagamento">
+                            <div class="payment-info">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>R$ 85,00</span>
+                            </div>
+                        </td>
+                        <td data-label="Status">
+                            <div class="status-badge status-cancelled">Cancelado</div>
+                        </td>
                         <td data-label="Ações">
                             <div class="action-cell">
-                                <div class="action-btn edit" onclick="openModal()">
-                                    <i class="fas fa-eye"></i>
+                                <div class="action-btn edit">
+                                    <i class="fas fa-edit"></i>
                                 </div>
                                 <div class="action-btn delete">
                                     <i class="fas fa-trash"></i>
@@ -277,40 +273,38 @@
                         </td>
                     </tr>
 
-                    <tr data-payment="Cartão de Débito" data-seller="Raphael Matias">
+                    <tr>
                         <td data-label="Cliente" class="tr-header">
                             <div class="client-cell">
                                 <div class="client-avatar">MF</div>
                                 <div>Marcos Ferreira</div>
                             </div>
                         </td>
-                        <td data-label="Produto">
-                            <div class="product-cell">
-                                <div class="product-image">
-                                    <i class="fas fa-jar"></i>
-                                </div>
-                                <span>Pomada Modeladora</span>
+                        <td data-label="Serviço">
+                            <div class="service-cell">
+                                <i class="fas fa-spa"></i>
+                                <span>Hidratação Capilar</span>
                             </div>
                         </td>
-                        <td data-label="Quantidade">
-                            <div class="quantity-td">
-                                <i class="fas fa-boxes"></i>
-                                <div class="quantity-badge">9</div>
-                            </div>
-                        </td>
-                        <td data-label="Valor">
-                            <div class="value-td">R$ 80,00</div>
-                        </td>
-                        <td data-label="Data">
+                        <td data-label="Data e Hora">
                             <div class="date-time">
                                 <div>15/07/2025</div>
                                 <div>17:45</div>
                             </div>
-                        </td>                        
+                        </td>
+                        <td data-label="Pagamento">
+                            <div class="payment-info">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Plano Trimestral</span>
+                            </div>
+                        </td>
+                        <td data-label="Status">
+                            <div class="status-badge status-pending">Pendente</div>
+                        </td>
                         <td data-label="Ações">
                             <div class="action-cell">
-                                <div class="action-btn edit" onclick="openModal()">
-                                    <i class="fas fa-eye"></i>
+                                <div class="action-btn edit">
+                                    <i class="fas fa-edit"></i>
                                 </div>
                                 <div class="action-btn delete">
                                     <i class="fas fa-trash"></i>
@@ -318,7 +312,6 @@
                             </div>
                         </td>
                     </tr>
-
                 </tbody>
             </table>
             
@@ -329,9 +322,10 @@
         <div class="mobile-footer">
             <div class="total-display">
                 <div class="footer-first-row-one-item">
-                    Total de produtos vendidos: <strong>28</strong>
+                    Total de produtos vendidos: <strong>45</strong>
                 </div>
             </div>
+            
             <div class="pagination">
                 <button class="pagination-btn">
                     <i class="fas fa-chevron-left"></i>
@@ -348,66 +342,7 @@
         </div>
     </footer>
     
-    <!-- Container para modal externo -->
-    <div id="modal-container">
-        <div id="productDetailModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2><i class="fas fa-info-circle"></i> Detalhes da Venda</h2>
-                    <button class="close-btn" onclick="closeModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="modal-product-image">
-                        <i class="fas fa-pump-soap"></i>
-                    </div>
-                    
-                    <div class="modal-details-grid">
-                        <div>
-                            <div class="detail-label">Produto:</div>
-                            <div class="detail-value" id="modal-product">Shampoo Antiqueda</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Quantidade:</div>
-                            <div class="detail-value" id="modal-quantity">2</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Valor Unitário:</div>
-                            <div class="detail-value" id="modal-unit-price">R$ 40,00</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Valor Total:</div>
-                            <div class="detail-value" id="modal-total-price">R$ 80,00</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Data da Venda:</div>
-                            <div class="detail-value" id="modal-date">18/07/2025 às 14:30</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Cliente:</div>
-                            <div class="detail-value" id="modal-client">João Silva</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Forma de Pagamento:</div>
-                            <div class="detail-value" id="modal-payment">Cartão de Crédito</div>
-                        </div>
-                        <div>
-                            <div class="detail-label">Vendedor:</div>
-                            <div class="detail-value" id="modal-seller">Raphael Matias</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-outline" id="closeDetailModal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="{% static 'product/js/sold.js' %}"></script>
+    <script src="{% static 'schedule/js/agendamento.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
 </body>
 </html>

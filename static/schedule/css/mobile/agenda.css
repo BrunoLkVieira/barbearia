@@ -1,0 +1,348 @@
+@media (max-width: 820px) {
+    body {
+        background-color: #f5f7fa;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        color: #333;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    /* Main Content */
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 10px;
+        gap: 20px;
+    }
+    
+    /* Barbers Column */
+    .barbers {
+        width: 100%;
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .section-title {
+        padding: 0 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 1px solid #eaecef;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.2rem;
+    }
+
+    .section-title i{
+        margin-left: 10px;
+    }
+    
+    .barber-list {
+        padding: 0;
+        height: 10rem;
+        overflow-x: auto;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .barber-card {
+        display: flex;
+        align-items: center;
+        min-width: 7em;
+        height: 8em;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        background-color: #f8f9fa;
+    }
+    
+    .barber-card.active {
+        background-color: #fff5eb;
+        border-left: 3px solid #e67e22;
+        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.15);
+    }
+    
+    .barber-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        margin-right: 10px;
+        font-size: .8rem;
+    }
+    
+    .barber-info {
+        flex: 1;
+    }
+    
+    .barber-name {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 1px;
+        font-size: .8rem;
+    }
+    
+    .barber-specialty {
+        font-size: 0.8rem;
+        color: #7f8c8d;
+    }
+    
+    
+    /* Schedule Column */
+    .schedule {
+        flex: 1;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        height: calc(85vh - 115px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .agenda-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 95%;
+        margin-bottom: 8px;
+        margin: auto;
+        padding: 10px 0;
+
+        border-bottom: 1px solid #eaecef;
+    }
+    
+    .agenda-title {
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .agenda-row{
+        display: flex;
+        gap: 5px;
+        font-size: 1.1rem;
+    }
+
+    .agenda-row i{
+        color: #e67e22;
+        font-size: 1.2rem;
+        margin-top: 1px;
+    }
+
+    .agenda-title h2{
+        font-size: .9rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .agenda-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: end;
+    }
+    
+    .time-filter {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        justify-content: right;
+    }
+    
+    .time-filter select {
+        padding: 9px 6px;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        font-size: 0.95rem;
+        width: 90%;
+    }
+
+    .btnNewAppointment {
+        padding: 9px 6px;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;        
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        color: white;
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+        font-size: .68rem;
+        width: 90%;
+    }
+    
+    /* Corpinho do scroll de agendamentos */
+    .schedule-container {
+        overflow-y: auto;
+        max-height: 54vh;
+        display: flex;
+        flex-direction: column;
+        margin-top: 10px;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .schedule-header {
+        display: none;
+    }
+    
+    /* Schedule Each Item */
+    .time-slot {
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 12px;
+        border-radius: 10px;
+        margin-top: 5px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+        border: 1px solid #eaecef;
+        transition: all 0.3s ease;
+        gap: 15px;
+    }
+    
+    .time-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px;
+        background-color: #d1d9e0;
+        border-radius: 8px 8px 0 0;
+        background-color: #3498db;
+    }
+
+    .order{
+        color: #e8f5e9;
+        font-weight: 400;
+        font-size: 1.2rem;
+    }
+
+    .time {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .duration {
+        font-size: 0.85rem;
+        color: #fff;
+    }
+    
+    .client-info {
+        padding: 0 20px;
+    }
+    
+    .client-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .client-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .client-name i {
+        color: #3498db;
+    }
+    
+    .status.pending {
+        background-color: #fff8e1;
+        color: #f57f17;
+    }
+    
+    .service-details {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .detail-item {
+        display: flex;
+    }
+    
+    .detail-label {
+        width: 100px;
+        font-size: 0.8rem;
+        color: #000;
+    }
+    
+    .detail-value {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #2c3e50;
+    }
+    
+    .payment-status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .paid {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .not-paid {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    
+    .client-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        width: 45%;
+        gap: 8px;
+        padding: 8px 15px;
+        border-radius: 6px;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        font-size: .9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #eaecef;
+    }
+    
+    .action-btn i {
+        color: #e67e22;
+    }
+    
+    
+}

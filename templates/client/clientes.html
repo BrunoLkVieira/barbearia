@@ -1,0 +1,492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - Barbearia Executiva</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'client/css/desktop/client.css' %}">
+    <link rel="stylesheet" href="{% static 'client/css/desktop/modals/newClient.css' %}">
+
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'client/css/mobile/client.css' %}">
+    <link rel="stylesheet" href="{% static 'client/css/mobile/modals/newClient.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+            <a href="home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href="clientes.html"><div class="nav-tab active"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href="4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href="5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href="6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href="myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    <option>Unidade 1</option>
+                    <option>Unidade 2</option>
+                    <option>Geral</option>
+                </select>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">128</div>
+                <div class="stat-label">Clientes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">42</div>
+                <div class="stat-label">Fidelidade</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </div>
+            <button class="btn-new-client" onclick="openModal()">
+                <i class="fas fa-plus"></i> Novo Cliente
+            </button>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-input">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Pesquisar Cliente">
+                </div>
+                <button class="btn-search">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+            
+            <div class="filter-container">
+                <div class="filter-item">
+                    <label for="plan-filter">Plano</label>
+                    <select id="plan-filter">
+                        <option>Todos os planos</option>
+                        <option>Corte Mensal</option>
+                        <option>Barba Mensal</option>
+                        <option>Completo Mensal</option>
+                        <option>Sem plano</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="status-filter">Status</label>
+                    <select id="status-filter">
+                        <option>Todos os status</option>
+                        <option>Ativo</option>
+                        <option>Inativo</option>
+                        <option>Fidelidade</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="sort">Ordenar por</label>
+                    <select id="sort">
+                        <option>Mais recentes</option>
+                        <option>Nome (A-Z)</option>
+                        <option>Nome (Z-A)</option>
+                        <option>Última visita</option>
+                        <option>Mais serviços</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="clients-table-container">
+            <div class="table-header">
+                <div>Cliente</div>
+                <div>Contato</div>
+                <div>E-mail</div>
+                <div>Visitas</div>
+                <div>Última visita</div>
+                <div>Ações</div>
+            </div>
+            
+            <!-- Cliente 1 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">JS</div>
+                    <div class="client-info">
+                        <div class="client-name">João Silva</div>
+                        <div class="client-plan">
+                            <i class="fas fa-crown"></i>
+                            <span>Corte Mensal</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 98765-4321</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>joao.silva@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>24</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>15/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente 2 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">PO</div>
+                    <div class="client-info">
+                        <div class="client-name">Pedro Oliveira</div>
+                        <div class="client-plan">
+                            <i class="fas fa-crown"></i>
+                            <span>Completo Mensal</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 99876-5432</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>pedro.oliveira@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>18</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>14/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente 3 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">RS</div>
+                    <div class="client-info">
+                        <div class="client-name">Roberto Santos</div>
+                        <div class="client-plan">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Sem plano</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 98765-1234</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>roberto.santos@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>5</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>10/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente 4 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">LM</div>
+                    <div class="client-info">
+                        <div class="client-name">Lucas Mendes</div>
+                        <div class="client-plan">
+                            <i class="fas fa-crown"></i>
+                            <span>Premium</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 97654-3210</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>lucas.mendes@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>32</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>12/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente 5 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">AC</div>
+                    <div class="client-info">
+                        <div class="client-name">Antônio Costa</div>
+                        <div class="client-plan">
+                            <i class="fas fa-crown"></i>
+                            <span>Barba Mensal</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 99876-5432</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>antonio.costa@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>12</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>09/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cliente 6 -->
+            <div class="table-row">
+                <div class="client-cell">
+                    <div class="client-avatar">CS</div>
+                    <div class="client-info">
+                        <div class="client-name">Carlos Souza</div>
+                        <div class="client-plan">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Sem plano</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="client-phone">
+                    <span class="cell-label">Telefone:</span>
+                    <i class="fas fa-phone"></i>
+                    <span>(11) 94567-8901</span>
+                </div>
+                <div class="client-email">
+                    <span class="cell-label">E-mail:</span>
+                    <i class="fas fa-envelope"></i>
+                    <span>carlos.souza@email.com</span>
+                </div>
+                <div class="client-visits">
+                    <span class="cell-label">Visitas:</span>
+                    <i class="fas fa-calendar-check"></i>
+                    <span>8</span>
+                </div>
+                <div class="client-last-visit">
+                    <span class="cell-label">Última visita:</span>
+                    <i class="fas fa-clock"></i>
+                    <span>05/06/2025</span>
+                </div>
+                <div class="client-actions">
+                    <div class="action-btn edit" title="Editar cliente">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="action-btn history" title="Ver histórico">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-btn delete" title="Excluir cliente">
+                        <i class="fas fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="mobile-footer">
+            <div class="total-display">
+                <div class="footer-first-row-one-item">
+                    Exibindo <strong>6</strong> de <strong>128</strong>
+                    clientes
+                </div>
+            </div>
+            <div class="pagination">
+                <button class="pagination-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn">4</button>
+                <button class="pagination-btn">5</button>
+                <button class="pagination-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+    
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <!-- <span class="close">&times;</span> -->
+            <div class="modal-header">
+                <h2><i class="fas fa-scissors"></i> Novo Cliente</h2>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm">
+                    <div class="form-group">
+                        <label for="serviceName">Nome do Cliente</label>
+                        <input type="text" id="serviceName" placeholder="Ex: Corte Executivo">
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="servicePrice">tste</label>
+                        <input type="number" id="servicePrice" placeholder="Ex: 45.90" step="0.01">
+                    </div>
+        
+                    <div class="form-group">
+                        <label for="servicePrice">tste 2</label>
+                        <input type="number" id="servicePrice" placeholder="Ex: 45.90" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="closeModalBtn">Cancelar</button>
+                <button class="btn btn-primary" id="saveServiceBtn">Salvar Cliente</button>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script src="{% static 'client/js/client.js' %}"></script>
+</body>
+</html>

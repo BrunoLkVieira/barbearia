@@ -1,0 +1,298 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - Barbearia Executiva</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'user/css/desktop/myProfile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">RM</div>
+                <div class="user-name">Raphael Matias</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">Raphael Matias</span>
+                            <span class="sidebar-email">raphael@barbearia.com</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="../home.html" class="sidebar-item">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>Início</span>
+                        </a>
+                        <!-- <a href="0.SideBar/profile.html" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="#" class="sidebar-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Configurações</span>
+                        </a> -->
+                        <a href="../../index.html" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="main-content">
+        <div class="profile-sidebar">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                   RM
+                </div>
+                <div class="profile-name">Raphael Matias</div>
+                <div class="profile-role">Proprietário</div>
+            </div>
+            
+            <div class="profile-info">
+                <div class="info-item">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">raphael@barbearia.com</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Telefone:</div>
+                    <div class="info-value">(11) 98765-4321</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Cadastrado em:</div>
+                    <div class="info-value">15/03/2024</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Unidades:</div>
+                    <div class="info-value">2</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Funcionários:</div>
+                    <div class="info-value">6</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <i class="fas fa-crown"></i>
+                    <span>Plano de Assinatura</span>
+                </div>
+            </div>
+            
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-name">Plano 3</div>
+                    <div class="plan-price">R$ 110<small>/mês</small></div>
+                </div>
+                
+                <div class="plan-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">Funcionários</div>
+                            <div class="feature-value">Até 6 funcionários</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">Filiais</div>
+                            <div class="feature-value">Até 2 filiais</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">Método de Pagamento</div>
+                            <div class="feature-value">Cartão de Crédito</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">Dia de Vencimento</div>
+                            <div class="feature-value">Dia 15 de cada mês</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="plan-footer">
+                    <div class="plan-expiration">
+                        Próximo vencimento: <strong>15/07/2025</strong>
+                    </div>
+                    <div class="plan-actions">
+                        <button class="btn btn-outline">
+                            <i class="fas fa-sync-alt"></i> Alterar Plano
+                        </button>
+                        <button class="btn btn-danger">
+                            <i class="fas fa-times-circle"></i> Cancelar Plano
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payment-info">
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Informações de Pagamento</span>
+                </div>
+                
+                <div class="payment-method">
+                    <div class="payment-icon">
+                        <i class="fab fa-cc-visa"></i>
+                    </div>
+                    <div class="payment-details">
+                        <div class="payment-type">Cartão de Crédito</div>
+                        <div class="payment-card">Visa •••• •••• •••• 1234</div>
+                    </div>
+                    <div class="payment-actions">
+                        <div class="action-btn" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="plans-comparison">
+                <div class="comparison-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Comparação de Planos</span>
+                </div>
+                
+                <table class="plans-table">
+                    <thead>
+                        <tr>
+                            <th>Recursos</th>
+                            <th>Plano 1</th>
+                            <th>Plano 2</th>
+                            <th>Plano 3</th>
+                            <th>Plano 4</th>
+                            <th>Plano 5</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="current-plan">
+                            <td class="plan-name-cell">Plano Atual</td>
+                            <td></td>
+                            <td></td>
+                            <td class="highlight">Plano 3</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Preço Mensal</td>
+                            <td>R$ 45</td>
+                            <td>R$ 75</td>
+                            <td>R$ 110</td>
+                            <td>R$ 170</td>
+                            <td>R$ 340</td>
+                        </tr>
+                        <tr>
+                            <td>Preço Anual</td>
+                            <td>R$ 540</td>
+                            <td>R$ 900</td>
+                            <td>R$ 1320</td>
+                            <td>R$ 2014</td>
+                            <td>R$ 4080</td>
+                        </tr>
+                        <tr>
+                            <td>Funcionários</td>
+                            <td>Até 2</td>
+                            <td>Até 4</td>
+                            <td>Até 6</td>
+                            <td>Até 10</td>
+                            <td>Ilimitados</td>
+                        </tr>
+                        <tr>
+                            <td>Filiais</td>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>Ilimitadas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simular seleção de plano
+        document.querySelectorAll('.plans-table td').forEach(cell => {
+            cell.addEventListener('click', function() {
+                if (this.cellIndex > 0) { // Não é a coluna de recursos
+                    const planName = this.parentElement.cells[0].textContent;
+                    if (planName === "Plano Atual") return;
+                    
+                    const planNum = this.cellIndex;
+                    const planPrices = ["R$ 45", "R$ 75", "R$ 110", "R$ 170", "R$ 340"];
+                    const planNames = ["Plano 1", "Plano 2", "Plano 3", "Plano 4", "Plano 5"];
+                    
+                    // Atualizar card de plano
+                    document.querySelector('.plan-name').textContent = planNames[planNum-1];
+                    document.querySelector('.plan-price').innerHTML = planPrices[planNum-1] + '<small>/mês</small>';
+                    
+                    // Atualizar destaque na tabela
+                    document.querySelectorAll('.plans-table .current-plan td').forEach(td => {
+                        td.classList.remove('highlight');
+                    });
+                    document.querySelector(`.plans-table tr:nth-child(1) td:nth-child(${planNum+1})`).classList.add('highlight');
+                    
+                    alert(`Plano alterado para ${planNames[planNum-1]}`);
+                }
+            });
+        });
+        
+        // Botão Cancelar Plano
+        document.querySelector('.btn-danger').addEventListener('click', function() {
+            if(confirm('Tem certeza que deseja cancelar seu plano? Todos os dados serão mantidos por 30 dias.')) {
+                alert('Plano cancelado com sucesso. Seus dados serão mantidos até 15/07/2025.');
+            }
+        });
+    </script>
+    <script src="{% static 'geral/js/script.js' %}"></script>
+</body>
+</html>

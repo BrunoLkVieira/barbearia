@@ -219,7 +219,9 @@ a{
     }
 
 
-
+    .mobile-sidebar{
+        display: none;
+    }
 
 
 

@@ -1,0 +1,311 @@
+
+@media (min-width: 821px) {
+    body {
+        background-color: #f5f7fa;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        color: #333;
+    }
+
+    /* Main Content - Clients Page */
+    .main-content {
+        flex: 1;
+        padding: 15px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .page-title i {
+        color: #e67e22;
+        font-size: 1.5rem;
+    }
+
+    .btn-new-client{
+        width: 8.3rem;
+        padding: 6px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: .9rem;
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        color: white;
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn {
+        padding: 10px 22px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        color: white;
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+    }
+
+    .btn-outline {
+        background-color: transparent;
+        border: 1px solid #e67e22;
+        color: #e67e22;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+
+    /* Clients Search and Filter */
+    .search-section {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
+
+    .search-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-input input {
+        width: 100%;
+        padding: 12px 15px 12px 45px;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input input:focus {
+        outline: none;
+        border-color: #e67e22;
+        box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+    }
+
+    .search-input i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #7f8c8d;
+    }
+
+    .btn-search{
+        padding: 7px 13px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: .83rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        color: white;
+        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+    }
+
+    .btn-search:hover{
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+
+    .filter-container {
+        display: flex;
+        gap: 15px;
+    }
+
+    .filter-item {
+        flex: 1;
+    }
+
+    .filter-item label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .filter-item select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;
+        font-size: 1rem;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+    }
+
+    /* Clients Table */
+    .clients-table-container {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .table-header {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 1.5fr 1fr 1fr 0.8fr;
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+        border-bottom: 1px solid #eaecef;
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr 1.5fr 1fr 1fr 0.8fr;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eaecef;
+        transition: all 0.3s ease;
+    }
+
+    .table-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    .client-cell {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .client-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        font-size: .9rem;
+        background: #ecf0f1;
+        color: #e67e22;
+    }
+
+    .client-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .client-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 3px;
+    }
+
+    .client-plan {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .client-plan i {
+        color: #e67e22;
+    }
+
+    .cell-label {
+        display: none;
+        font-weight: 600;
+        color: #7f8c8d;
+        margin-right: 10px;
+    }
+
+    .client-phone, .client-email, .client-visits, .client-last-visit {
+        display: flex;
+        align-items: center;
+        color: #2c3e50;
+    }
+
+    .client-phone i, .client-email i, .client-visits i, .client-last-visit i {
+        color: #e67e22;
+        margin-right: 8px;
+        min-width: 20px;
+    }
+
+    .client-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        border: 1px solid #eaecef;
+        color: #2c3e50;
+    }
+
+    .action-btn:hover {
+        background-color: #edf2f7;
+        transform: translateY(-3px);
+    }
+
+    .action-btn.edit {
+        color: #3498db;
+    }
+
+    .action-btn.history {
+        color: #e67e22;
+    }
+
+    .action-btn.delete {
+        color: #e74c3c;
+    }
+
+}
