@@ -9,6 +9,7 @@ from .forms import UserRegistrationForm, UserLoginForm
 from .utils.email_verification import send_verification_email
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from apps.barbershop.models import Barbershop, Employee 
 
 class UserRegisterView(View):
     def get(self, request):
@@ -63,6 +64,7 @@ class UserRegisterView(View):
         return redirect('user:login')
 
 
+
 class UserLoginView(View):
     def get(self, request):
         form = UserLoginForm()
@@ -76,9 +78,43 @@ class UserLoginView(View):
             user = authenticate(request, username=cpf, password=password)
 
             if user is not None:
-                if user.user_type == 'dono' or user.user_type == 'funcionario':
+                if user.user_type == 'dono':
+                    # pega a barbearia do dono
+                    barbershop = Barbershop.objects.filter(owner_user=user).first()
+
+                    if barbershop:
+                        if not barbershop.is_active:
+                            messages.error(request, "Sua barbearia está desativada. Entre em contato com o suporte.")
+                            return redirect("user:login")
+
+                        login(request, user)
+                        return redirect("barbershop:units", barbershop_slug=barbershop.slug)
+                    else:
+                        messages.error(request, "Você ainda não possui uma barbearia cadastrada.")
+                        return redirect("user:login")
+
+                elif user.user_type == 'funcionario':
+                    # pega vínculo do funcionário com a unidade
+                    employee = Employee.objects.filter(user=user).select_related("unit__barbershop").first()
+
+                    if not employee:
+                        messages.error(request, "Você não está vinculado a nenhuma unidade de barbearia.")
+                        return redirect("user:login")
+
+                    unit = employee.unit
+                    barbershop = unit.barbershop
+
+                    if not barbershop.is_active:
+                        messages.error(request, "A barbearia está desativada. Entre em contato com o administrador.")
+                        return redirect("user:login")
+
                     login(request, user)
-                    return redirect("user:home")
+                    # redireciona para a barbearia
+                    # a unidade do funcionário será controlada internamente no dashboard
+                    return redirect(
+                        "barbershop:units",  # visão da barbearia
+                        barbershop_slug=barbershop.slug
+                    )
                 else:
                     messages.error(request, "Você não é um funcionário de nenhuma barbearia")
             else:
@@ -87,6 +123,7 @@ class UserLoginView(View):
             messages.error(request, "Preencha todos os campos corretamente.")
 
         return render(request, 'user/login.html', {'form': form})
+
 
 
 

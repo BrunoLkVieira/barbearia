@@ -4,21 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Funcionários - Barbearia Executiva</title>
+    <title>Funcionários - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="../../css/Desktop/My Barbershop/funcionario.css">
-    <link rel="stylesheet" href="../../css/Desktop/Modals/6.My barbershop/newEmployee.css">
-
-    <link rel="stylesheet" href="../../css/Mobile/6.My Barbershop/funcionarios.css">
-    <link rel="stylesheet" href="../../css/Mobile/Modals/6.My barbershop/newEmployee.css">
 
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newEmployee.css' %}">
-    
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
@@ -27,7 +20,11 @@
     <header>
         <div class="logo">
             <div class="logo-icon">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+                {% if barbershop.logo %}
+                    <img src="{{ barbershop.logo.url }}" alt="logo do sistema" class="logo-image">
+                {% else %}
+                    <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+                {% endif %}
             </div>
             <div class="logo-content">
                 <h1>Orbly Barber</h1>
@@ -40,24 +37,24 @@
         </div>
         <div class="user-controls">
             <div class="user-profile" id="userProfile">
-                <div class="avatar">RM</div>
-                <div class="user-name">Raphael Matias</div>
+                <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                <div class="user-name">{{ user.name }} {{ user.last_name }}</div>
                 <i class="fas fa-chevron-down" id="chevronIcon"></i>
                 
                 <div class="user-sidebar">
                     <div class="sidebar-header">
-                        <div class="sidebar-avatar">RM</div>
+                        <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
                         <div class="sidebar-user-info">
-                            <span class="sidebar-name">Raphael Matias</span>
-                            <span class="sidebar-email">raphael@barbearia.com</span>
+                            <span class="sidebar-name">{{ user.name }} {{ user.last_name }}</span>
+                            <span class="sidebar-email">{{ user.email }}</span>
                         </div>
                     </div>
                     <div class="sidebar-menu">
-                        <a href="../0.SideBar/profile.html" class="sidebar-item">
+                        <a href="" class="sidebar-item">
                             <i class="fas fa-user"></i>
                             <span>Meu Perfil</span>
                         </a>
-                        <a href="../../../index.html" class="sidebar-item">
+                        <a href="" class="sidebar-item">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Sair</span>
                         </a>
@@ -69,47 +66,42 @@
     
     <div class="nav-bar">
         <div class="nav-tabs">
-            <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href="../6.My Babershop/agenda.html"><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+            <a href=" "><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href=" "><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href="  "><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href=""><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
         </div>
         <div class="stats">
             <div class="unit-filter">
                 <select>
-                    <option>Unidade 1</option>
-                    <option>Unidade 2</option>
+                    {% for unit in units %}
+                        <option>{{ unit.name }}</option>
+                    {% endfor %}
                     <option>Geral</option>
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">4</div>
-                <div class="stat-label">Barbeiros</div>
+                <div class="stat-value">0</div>
+                <div class="stat-label">Funcionários</div>
             </div>
-            <!-- <div class="stat-box">
-                <div class="stat-value">6</div>
-                <div class="stat-label">Dias úteis</div>
-            </div> -->
         </div>
     </div>
-
     <div class="pages-options-Container">
-        <a href="unit.html">
-            <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
+        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
+            <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
         </a>
-        <a href="funcionarios.html">
+        <a href="">
             <div class="page-option active"><i class="fas fa-users-cog"></i> Funcionários</div>
         </a>
-        <a href="agenda.html">
+        <a href="{% url 'barbershop:workday' barbershop_slug=barbershop.slug %}">
             <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
     </div>
-    
+
     <div class="main-content">
-        <!-- Tela de Funcionários -->
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
@@ -120,13 +112,12 @@
                 </button>
             </div>
             
-            <!-- Tabela para computador -->
+            <!-- Tabela desktop -->
             <table class="employees-table">
                 <thead>
                     <tr>
                         <th>Funcionário</th>
                         <th>Unidade</th>
-                        <th>Tipo</th>
                         <th>Status</th>
                         <th>Celular</th>
                         <th>Ações</th>
@@ -134,357 +125,150 @@
                 </thead>
 
                 <tbody>
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">RM</div>
-                                <div>Raphael Matias</div>
-                            </div>
-                        </td>
-                        <td>Unidade 1</td>
-                        <td>
-                            <div class="employee-type type-owner">Dono</div>
-                        </td>
-                        <td>Ativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
+                    {% for emp in employees %}
+                        <tr>
+                            <td>
+                                <div class="employee-name">
+                                    <div class="employee-avatar">
+                                        {{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}
+                                    </div>
+                                    <div>{{ emp.user.name }} {{ emp.user.last_name }}</div>
                                 </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                            <td>{{ emp.unit.name }}</td>
+                            <td>
+                                {% if emp.user.is_active %}
+                                    <span class="employee-type type-barber">Ativo</span>
+                                {% else %}
+                                    <span class="employee-type type-cashier">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ emp.user.phone|default:"---" }}</td>
+                            <td>
+                                <div class="employee-actions">
+                                    <!-- Botão Editar -->
+                                    <div class="action-btn edit"
+                                        data-id="{{ emp.id }}"
+                                        data-name="{{ emp.user.name }}"
+                                        data-lastname="{{ emp.user.last_name }}"
+                                        data-email="{{ emp.user.email }}"
+                                        data-phone="{{ emp.user.phone }}"
+                                        data-cpf="{{ emp.user.cpf }}"
+                                        data-unit="{{ emp.unit.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
 
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">LL</div>
-                                <div>Lucas Lopes</div>
-                            </div>
-                        </td>
-                        <td>Unidade 1</td>
-                        <td>
-                            <div class="employee-type type-barber">Barbeiro</div>
-                        </td>
-                        <td>Ativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
+                                    <!-- Botão Deletar -->
+                                    <form method="POST" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                        <input type="hidden" name="action" value="delete">
+                                        <button type="submit" class="action-btn delete-btn">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">CS</div>
-                                <div>Carlos Silva</div>
-                            </div>
-                        </td>
-                        <td>Unidade 2</td>
-                        <td>
-                            <div class="employee-type type-barber">Barbeiro</div>
-                        </td>
-                        <td>Ativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">MA</div>
-                                <div>Marcos Almeida</div>
-                            </div>
-                        </td>
-                        <td>Unidade 2</td>
-                        <td>
-                            <div class="employee-type type-barber">Barbeiro</div>
-                        </td>
-                        <td>Ativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">AM</div>
-                                <div>Ana Mendes</div>
-                            </div>
-                        </td>
-                        <td>Unidade 1</td>
-                        <td>
-                            <div class="employee-type type-cashier">Caixa</div>
-                        </td>
-                        <td>Ativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="employee-name">
-                                <div class="employee-avatar">RS</div>
-                                <div>Ricardo Souza</div>
-                            </div>
-                        </td>
-                        <td>Unidade 1</td>
-                        <td>
-                            <div class="employee-type type-barber">Barbeiro</div>
-                        </td>
-                        <td>Inativo</td>
-                        <td>21999999999</td>
-                        <td>
-                            <div class="employee-actions">
-                                <div class="action-btn edit-btn" onclick="openEmployeeModal('edit')">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete-btn">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center;">Nenhum funcionário cadastrado.</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
-
-            <!-- Tabela para celular -->
-            <div class="employees-table-container">
-                <div class="table-header">
-                    <div>Cliente</div>
-                    <div>Contato</div>
-                    <div>E-mail</div>
-                    <div>Visitas</div>
-                    <div>Última visita</div>
-                    <div>Ações</div>
-                </div>
-                
-                <!-- Funcionario 1 -->
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">JS</div>
-                        <div class="employee-info">
-                            <div class="employee-name">João Silva</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-owner">Dono</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">LG</div>
-                        <div class="employee-info">
-                            <div class="employee-name">Lucas Gomes</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-barber">Barbeiro</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">AM</div>
-                        <div class="employee-info">
-                            <div class="employee-name">Ana Mendes</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-cashier">Caixa</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-              
-            </div>
         </div>
     </div>
-    
     
     <footer>
         <div class="total-display">
             <div class="footer-first-row">
-                Total de funcionários: <strong>6</strong>
+                Total de funcionários: <strong>{{ employees.count }}</strong>
             </div>
             <div class="footer-second-row">
-                Ativos: <strong>5</strong>
+                Ativos: <strong>{{ employees|dictsort:"user.is_active"|length }}</strong>
             </div>
-        </div>
-
-        <div class="actions">
-            <button class="btn btn-outline">
-                <i class="fas fa-print"></i> Imprimir
-            </button>
         </div>
     </footer>
 
     <!-- Modal de Funcionário -->
     <div id="employeeModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Funcionário</h2>
-                <button class="close-btn" onclick="closeEmployeeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="employeeName">Nome Completo</label>
-                    <input type="text" id="employeeName" class="form-control" placeholder="Digite o nome completo">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <input type="hidden" name="employee_id" id="employeeId">
+                <div class="modal-header">
+                    <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Funcionário</h2>
+                    <button class="close-btn" onclick="closeEmployeeModal()" type="button">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="employeeCPF">CPF</label>
+                        <input type="text" name="cpf" id="employeeCPF" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeName">Nome</label>
+                        <input type="text" name="name" id="employeeName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeLastName">Sobrenome</label>
+                        <input type="text" name="last_name" id="employeeLastName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeEmail">Email</label>
+                        <input type="email" name="email" id="employeeEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="employeePhone">Telefone</label>
+                        <input type="tel" name="phone" id="employeePhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeUnit">Unidade</label>
+                        <select name="unit_id" id="employeeUnit" class="form-select" required>
+                            {% for unit in units %}
+                                <option value="{{ unit.id }}">{{ unit.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <!-- Configurações de funcionário -->
+                    <div class="form-group">
+                        <label><input type="checkbox" name="commission_percentage"> Comissão?</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceCommission">Comissão Serviço (%)</label>
+                        <input type="number" step="0.01" name="service_commission_percentage" id="serviceCommission" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCommission">Comissão Produto (%)</label>
+                        <input type="number" step="0.01" name="product_commission_percentage" id="productCommission" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="can_manage_cashbox"> Pode Gerenciar Caixa</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="can_register_sell"> Pode Registrar Venda</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="can_create_appointments"> Pode Criar Agendamentos</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" name="system_access"> Acesso ao Sistema</label>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="employeeEmail">Email</label>
-                    <input type="email" id="employeeEmail" class="form-control" placeholder="Digite o email">
+                <div class="modal-footer">
+                    <button class="btn btn-outline" type="button" onclick="closeEmployeeModal()">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-save"></i> Salvar Funcionário
+                    </button>
                 </div>
-                
-                <div class="form-group">
-                    <label for="employeePhone">Telefone</label>
-                    <input type="tel" id="employeePhone" class="form-control" placeholder="(00) 00000-0000">
-                </div>
-                
-                <div class="form-group">
-                    <label for="employeeType">Tipo de Funcionário</label>
-                    <select id="employeeType" class="form-select">
-                        <option value="">Selecione o tipo</option>
-                        <option value="barber">Barbeiro</option>
-                        <option value="cashier">Caixa</option>
-                        <option value="manager">Gerente</option>
-                        <option value="owner">Dono</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="employeeStatus">Status</label>
-                    <select id="employeeStatus" class="form-select">
-                        <option value="active">Ativo</option>
-                        <option value="inactive">Inativo</option>
-                        <option value="vacation">Férias</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="employeePassword">Senha</label>
-                    <input type="password" id="employeePassword" class="form-control" placeholder="Crie uma senha">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeEmployeeModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveEmployee()">
-                    <i class="fas fa-save"></i> Salvar Funcionário
-                </button>
-            </div>
+            </form>
         </div>
     </div>
-
-
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
