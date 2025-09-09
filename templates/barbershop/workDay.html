@@ -175,7 +175,7 @@
 
         <div class="buttons-display">
             <div class="actions">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAbsenceModal">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAbsenceModal" onclick="openVacationModal()">
                     <i class="fas fa-umbrella-beach"></i> Marcar Folga
                 </button>
             </div>
@@ -186,428 +186,6 @@
     <!-- ================== MODAIS ================== -->
 
     <!-- Modais Workday -->
-    {% for barber in employees %}
-        {% for wd in barber.workdays.all %}
-            <div class="modal fade" id="editWorkdayModal{{ barber.id }}{{ wd.weekday }}" tabindex="-1">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <form method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="edit_workday">
-                    <input type="hidden" name="employee_id" value="{{ barber.id }}">
-                    <input type="hidden" name="weekday" value="{{ wd.weekday }}">
-
-                    <div class="modal-header"><h5 class="modal-title">Editar Disponibilidade - {{ barber.name }}</h5></div>
-                    <div class="modal-body">
-                      <label>Início:</label>
-                      <input type="time" class="form-control" name="start_time" value="{{ wd.start_time|default_if_none:'' }}">
-                      <label>Fim:</label>
-                      <input type="time" class="form-control" name="end_time" value="{{ wd.end_time|default_if_none:'' }}">
-                      <label>Ativo:</label>
-                      <select name="is_active" class="form-control">
-                        <option value="True" {% if wd.is_active %}selected{% endif %}>Sim</option>
-                        <option value="False" {% if not wd.is_active %}selected{% endif %}>Não</option>
-                      </select>
-                    </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
-                  </form>
-                </div>
-              </div>
-            </div>
-        {% endfor %}
-    {% endfor %}
-
-    <!-- Criar Feriado -->
-    <div class="modal fade" id="createHolidayModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create_holiday">
-            <div class="modal-header"><h5 class="modal-title">Adicionar Feriado</h5></div>
-            <div class="modal-body">
-              <label>Unidade:</label>
-              <select name="unit_id" class="form-control">
-                {% for unit in units %}
-                  <option value="{{ unit.id }}">{{ unit.name }}</option>
-                {% endfor %}
-              </select>
-              <label>Data:</label>
-              <input type="date" class="form-control" name="date" required>
-              <label>Descrição:</label>
-              <input type="text" class="form-control" name="description">
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary">Adicionar</button></div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Editar / Deletar Feriado -->
-    {% for holiday in holidays %}
-      <div class="modal fade" id="editHolidayModal{{ holiday.id }}" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="edit_holiday">
-              <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
-              <div class="modal-header"><h5 class="modal-title">Editar Feriado</h5></div>
-              <div class="modal-body">
-                <label>Data:</label>
-                <input type="date" class="form-control" name="date" value="{{ holiday.date|date:'Y-m-d' }}">
-                <label>Descrição:</label>
-                <input type="text" class="form-control" name="description" value="{{ holiday.description }}">
-              </div>
-              <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal fade" id="deleteHolidayModal{{ holiday.id }}" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="delete_holiday">
-              <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
-              <div class="modal-body">Tem certeza que deseja excluir o feriado "{{ holiday.description }}"?</div>
-              <div class="modal-footer"><button type="submit" class="btn btn-danger">Excluir</button></div>
-            </form>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-
-    <!-- Criar Folga -->
-    <div class="modal fade" id="createAbsenceModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="create_absence">
-            <div class="modal-header"><h5 class="modal-title">Marcar Folga</h5></div>
-            <div class="modal-body">
-              <label>Funcionário:</label>
-              <select name="employee_id" class="form-control">
-                {% for barber in employees %}
-                  <option value="{{ barber.id }}">{{ barber.name }}</option>
-                {% endfor %}
-              </select>
-              <label>Data:</label>
-              <input type="date" class="form-control" name="date" required>
-              <label>Motivo:</label>
-              <input type="text" class="form-control" name="reason">
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary">Adicionar</button></div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Deletar Folga -->
-    {% for absence in absences %}
-      <div class="modal fade" id="deleteAbsenceModal{{ absence.id }}" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="delete_absence">
-              <input type="hidden" name="absence_id" value="{{ absence.id }}">
-              <div class="modal-body">Tem certeza que deseja excluir a folga de {{ absence.employee.name }} no dia {{ absence.date|date:"d/m/Y" }}?</div>
-              <div class="modal-footer"><button type="submit" class="btn btn-danger">Excluir</button></div>
-            </form>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-
-    <script src="{% static 'geral/js/script.js' %}"></script>
-    <script src="{% static 'barbershop/js/workDay.js' %}"></script>
-</body>
-</html>
-
-
-
-{% comment %} {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Funcionamento - Barbearia Executiva</title>
-    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
-    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
-    
-    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/workDay.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/workDay.css' %}">
-
-    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/abscense.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/abscense.css' %}">
-    
-    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/editCalendar.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
-
-</head>
-<body>
-    <header>
-        <div class="logo">
-            <div class="logo-icon">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
-            </div>
-            <div class="logo-content">
-                <h1>Orbly Barber</h1>
-                <p>Sistema de agendamento profissional</p>
-            </div>
-        </div>
-        <div class="date-display">
-            <i class="fas fa-calendar-alt"></i>
-            <span id="currentDate">Carregando data...</span>
-        </div>
-        <div class="user-controls">
-            <div class="user-profile" id="userProfile">
-                <div class="avatar">RM</div>
-                <div class="user-name">Raphael Matias</div>
-                <i class="fas fa-chevron-down" id="chevronIcon"></i>
-                
-                <div class="user-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-avatar">RM</div>
-                        <div class="sidebar-user-info">
-                            <span class="sidebar-name">Raphael Matias</span>
-                            <span class="sidebar-email">raphael@barbearia.com</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-menu">
-                        <a href="../0.SideBar/profile.html" class="sidebar-item">
-                            <i class="fas fa-user"></i>
-                            <span>Meu Perfil</span>
-                        </a>
-                        <a href="../../../index.html" class="sidebar-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Sair</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-    
-    <div class="nav-bar">
-        <div class="nav-tabs">
-            <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href="../6.My Babershop/agenda.html"><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
-        </div>
-        <div class="stats">
-            <div class="unit-filter">
-                <select>
-                    <option>Unidade 1</option>
-                    <option>Unidade 2</option>
-                    <option>Geral</option>
-                </select>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value">4</div>
-                <div class="stat-label">Barbeiros</div>
-            </div>
-            <!-- <div class="stat-box">
-                <div class="stat-value">6</div>
-                <div class="stat-label">Dias úteis</div>
-            </div> -->
-        </div>
-    </div>
-
-    <div class="pages-options-Container">
-        <a href="unit.html">
-            <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
-        </a>
-        <a href="funcionarios.html">
-            <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
-        </a>
-        <a href="agenda.html">
-            <div class="page-option active"><i class="fas fa-clock"></i> Funcionamento</div>
-        </a>
-    </div>
-    
-    <div class="main-content">
-        <!-- Disponibilidade de Barbeiros -->
-        <div class="section">
-            <div class="section-header">
-                <div class="section-title">
-                    <i class="fas fa-user-clock"></i> Disponibilidade de Barbeiros
-                </div>
-            </div>
-            
-            <div class="barbers-list">
-                <!-- Barbeiro 1 -->
-                <div class="barber-card">
-                    <div class="barber-info">
-                        <div class="barber-avatar">RM</div>
-                        <div>
-                            <div class="barber-name">Raphael Matias</div>
-                        </div>
-                    </div>
-                    <div class="available-days">
-                        <div class="day-badge">SEG</div>
-                        <div class="day-badge">TER</div>
-                        <div class="day-badge">QUA</div>
-                        <div class="day-badge">QUI</div>
-                        <div class="day-badge">SEX</div>
-                        <div class="day-badge">SÁB</div>
-                        <div class="day-badge off">DOM</div>
-                    </div>
-                    <button class="edit-btn" onclick="openEditModal()">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-                
-                <!-- Barbeiro 2 -->
-                <div class="barber-card">
-                    <div class="barber-info">
-                        <div class="barber-avatar">LL</div>
-                        <div>
-                            <div class="barber-name">Lucas Lopes</div>
-                        </div>
-                    </div>
-                    <div class="available-days">
-                        <div class="day-badge">SEG</div>
-                        <div class="day-badge">TER</div>
-                        <div class="day-badge off">QUA</div>
-                        <div class="day-badge off">QUI</div>
-                        <div class="day-badge">SEX</div>
-                        <div class="day-badge">SÁB</div>
-                        <div class="day-badge off">DOM</div>
-                    </div>
-                    <button class="edit-btn" onclick="openEditModal()">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-                
-                <!-- Barbeiro 3 -->
-                <div class="barber-card">
-                    <div class="barber-info">
-                        <div class="barber-avatar">CS</div>
-                        <div>
-                            <div class="barber-name">Carlos Silva</div>
-                        </div>
-                    </div>
-                    <div class="available-days">
-                        <div class="day-badge">SEG</div>
-                        <div class="day-badge">TER</div>
-                        <div class="day-badge">QUA</div>
-                        <div class="day-badge">QUI</div>
-                        <div class="day-badge">SEX</div>
-                        <div class="day-badge off">SÁB</div>
-                        <div class="day-badge off">DOM</div>
-                    </div>
-                    <button class="edit-btn" onclick="openEditModal()">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-                
-                <!-- Barbeiro 4 -->
-                <div class="barber-card">
-                    <div class="barber-info">
-                        <div class="barber-avatar">MA</div>
-                        <div>
-                            <div class="barber-name">Marcos Almeida</div>
-                        </div>
-                    </div>
-                    <div class="available-days">
-                        <div class="day-badge off">SEG</div>
-                        <div class="day-badge">TER</div>
-                        <div class="day-badge">QUA</div>
-                        <div class="day-badge">QUI</div>
-                        <div class="day-badge">SEX</div>
-                        <div class="day-badge">SÁB</div>
-                        <div class="day-badge off">DOM</div>
-                    </div>
-                    <button class="edit-btn" onclick="openEditModal()">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-header">
-                <div class="section-title">
-                    <i class="fas fa-calendar-times"></i> Dias de Não Funcionamento
-                </div>
-                <button class="btn btn-outline" id="addDayOff">
-                    <i class="fas fa-plus"></i> Adicionar Dia
-                </button>
-            </div>
-            
-            <div class="non-working-days">
-                <!-- Dia de folga 1 -->
-                <div class="day-off-card">
-                    <div class="day-off-actions">
-                        <button class="day-off-btn"><i class="fas fa-edit"></i></button>
-                        <button class="day-off-btn"><i class="fas fa-trash"></i></button>
-                    </div>
-                    <div class="day-off-date">01/01, 2026</div>
-                    <div class="day-off-reason">Ano Novo</div>
-                </div>
-                
-                <!-- Dia de folga 2 -->
-                <div class="day-off-card">
-                    <div class="day-off-actions">
-                        <button class="day-off-btn"><i class="fas fa-edit"></i></button>
-                        <button class="day-off-btn"><i class="fas fa-trash"></i></button>
-                    </div>
-                    <div class="day-off-date">25/12, 2025</div>
-                    <div class="day-off-reason">Natal</div>
-                </div>
-                
-                <!-- Dia de folga 3 -->
-                <div class="day-off-card">
-                    <div class="day-off-actions">
-                        <button class="day-off-btn"><i class="fas fa-edit"></i></button>
-                        <button class="day-off-btn"><i class="fas fa-trash"></i></button>
-                    </div>
-                    <div class="day-off-date">07/10, 2025</div>
-                    <div class="day-off-reason">Feriado Nacional</div>
-                </div>
-                
-                <!-- Botão para adicionar novo dia -->
-                <div class="add-day-off" id="addDayOffBtn">
-                    <i class="fas fa-plus-circle"></i>
-                    <div>Adicionar Dia</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-
-    <footer>
-        <div class="total-display">
-            <div class="footer-first-row-one-item">
-                Próximo dia de folga: <strong>12 de Outubro, 2025</strong>
-            </div>
-        </div>
-
-        <div class="buttons-display">
-            <div class="actions">
-                <button class="btn btn-primary" onclick="openVacationModal()">
-                    <i class="fas fa-umbrella-beach"></i> Marcar Folga
-                </button>
-            </div>
-        </div>
-
-    </footer>
-    
-
     <div id="editModal" class="edit-modal">
         <div class="edit-modal-content">
             <div class="edit-modal-header">
@@ -618,6 +196,7 @@
             </div>
 
             <div class="edit-modal-body">
+
                 <div class="barber-selector">
                     <div class="barber-selector-item active">
                         <div>Manhã</div>
@@ -628,100 +207,483 @@
                 </div>
                 
                 <div class="days-grid">
-                    <!-- Segunda -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">SEG</div>
-                        <div class="time-controls">
+                    <form method="POST" action="" class="edit-calendar-form">
+                        {%csrf_token%}
+                    
+                        <!-- Segunda -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SEG</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Terça -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">TER</div>
-                        <div class="time-controls">
+                    
+                        <!-- Terça -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">TER</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Quarta -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">QUA</div>
-                        <div class="time-controls">
+                    
+                        <!-- Quarta -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">QUA</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Quinta -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">QUI</div>
-                        <div class="time-controls">
+                    
+                        <!-- Quinta -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">QUI</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Sexta -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">SEX</div>
-                        <div class="time-controls">
+                    
+                        <!-- Sexta -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SEX</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Sábado -->
-                    <div class="day-edit active">
-                        <div class="day-abbreviation">SÁB</div>
-                        <div class="time-controls">
+                    
+                        <!-- Sábado -->
+                        <div class="day-edit active morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SÁB</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="09:00">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="18:00">
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                
-                    <!-- Domingo (inativo por padrão) -->
-                    <div class="day-edit off">
-                        <div class="day-abbreviation">DOM</div>
-                        <div class="time-controls">
+                    
+                        <!-- Domingo -->
+                        <div class="day-edit off morning">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">DOM</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                             <div class="time-input-group">
-                                <input type="time" class="time-input" value="00:00" disabled>
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
                                 <span class="time-divider">-</span>
-                                <input type="time" class="time-input" value="00:00" disabled>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
+
+
+                        <!-- Segunda  TARDE-->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SEG</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="12:30">12:30</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Terça -->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">TER</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Quarta -->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">QUA</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Quinta -->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">QUI</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Sexta -->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SEX</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Sábado -->
+                        <div class="day-edit active afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">SÁB</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- Domingo -->
+                        <div class="day-edit off afternoon">
+                            <div class="left-area-day">
+                                <div class="day-abbreviation">DOM</div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="time-input-group">
+                                <select class="time-input" name="start-time">
+                                    <option value="06:00">05:00</option>
+                                    <option value="06:00">06:00</option>
+                                    <option value="07:00" selected>07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="11:30">11:30</option>
+                                </select>
+                                <span class="time-divider">-</span>
+                                <select class="time-input" name="end-time">
+                                    <option value="07:00">07:00</option>
+                                    <option value="08:00">08:00</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00" selected>12:00</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </form>
                 </div>
-                
             </div>
             
             <div class="edit-modal-footer">
-                <button class="btn btn-outline">Cancelar</button>
+                <button class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
                 <button class="btn btn-primary">Salvar Alterações</button>
             </div>
         </div>
     </div>
 
+    <!-- Criar Feriado -->
+    <!-- Editar / Deletar Feriado -->
+    <!-- Criar Folga -->
     <div id="vacationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -780,8 +742,11 @@
             </div>
         </div>
     </div>
+    <!-- Deletar Folga -->
+
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
 </body>
-</html> {% endcomment %}
+</html>
+

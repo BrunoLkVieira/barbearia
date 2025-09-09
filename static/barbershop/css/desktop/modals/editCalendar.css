@@ -1,145 +1,265 @@
 @media (min-width: 821px) {  
-    /* Modal de Edição */
-    .edit-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
+           /* Modal Styles */
+        #editModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-    .edit-modal-content {
-        border-radius: 15px;
-        width: 100%;
-        max-height: 100%;
-        max-width: 600px;
-        overflow-y: auto;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        animation: modalOpen 0.4s ease-out;
-    }
+        .edit-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
 
-    @keyframes modalOpen {
-        from { transform: translateY(-30px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
+        .edit-modal.active .edit-modal-content {
+            transform: translate(-50%, -50%) scale(1);
+        }
 
-    .edit-modal-header {
-        padding: 15px;
-        background: linear-gradient(135deg, #2c3e50, #1a2a6c);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
+        .edit-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: linear-gradient(135deg, #2c3e50, #1a2a6c);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
 
-    .edit-modal-header i{
-        color: #FF7A00;
-    }
+        .edit-modal-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-    .edit-modal-body {
-        padding: 15px;
-        max-height: 60vh;
-        overflow-y: auto;
-        background: white;
-    }
+        .edit-modal-header h2 i {
+            color: #FF7A00;
+        }
 
-    .barber-selector {
-        width: 80%;
-        display: flex;
-        justify-content: space-around;
-        margin: auto;
-        margin-bottom: 20px;
-        overflow-x: auto;
-        padding-bottom: 10px;
-    }
+        .edit-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
 
-    .barber-selector-item {
-        max-width: 49px;
-        cursor: pointer;
-        text-align: center;
-        color: #d1d9e0;
-        transition: all .3s ease;
-    }
+        /* Period Selector */
+        .barber-selector {
+            display: flex;
+            background-color: #f0f2f5;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 25px;
+        }
 
-    .barber-selector-item.active {
-        border-bottom: 1px solid ;
-        color: #2c3e50;
-    }
+        .barber-selector-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            color: #7f8c8d;
+        }
 
-    .barber-selector-item:hover{
-        border-bottom: 1px solid ;
-        transform: translateY(-2px);
-    }   
+        .barber-selector-item.active {
+            background-color: white;
+            color: #2c3e50;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
 
-    .days-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 250px);
-        gap: 10px;
-        padding: 1rem;
-    }
+        .edit-calendar-form{
+            width: 750px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        }
 
-    .day-edit {
-        padding: 10px;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background-color: aqua;
-    }
+    
 
-    .day-edit.active {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-        font-weight: 500;
-    }
+        .day-edit {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+            gap: 8px;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
 
-    .day-edit.off {
-        background-color: #ffebee;
-        color: #c62828;
-    }
+        .day-edit.active {
+            background-color: white;
+            border-color: #e9ecef;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
 
-    .day-abbreviation {
-        font-weight: 600;
-        margin-bottom: 5px;
-    }
+        .day-edit.off {
+            opacity: 0.6;
+            border: 2px dashed #7f8c8d;
+        }
 
-    .time-controls {
-        margin-top: 10px;
-    }
+        .left-area-day{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 3px;
+        }
 
-    .time-input-group {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-    }
+        .day-abbreviation {
+            width: 40px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            text-align: center;
+        }
 
-    .time-input {
-        width: 50%;
-        padding: 5px;
-        border: 1px solid #d1d9e0;
-        border-radius: 4px;
-        font-size: 0.9rem;
-    }
+        .time-controls {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-    .time-divider {
-        font-size: 0.9rem;
-        color: #7f8c8d;
-    }
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
 
-    .edit-modal-footer {
-        padding: 15px 25px;
-        background: #f8f9fa;
-        display: flex;
-        justify-content: flex-end;
-        gap: 15px;
-        border-top: 1px solid #eee;
-    }
+        .time-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #FF7A00;
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+        }
+
+        .time-input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .time-divider {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Modal Footer */
+        .edit-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px 25px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eaecef;
+            border-radius: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #ddd;
+            color: #7f8c8d;
+        }
+
+        .btn-outline:hover {
+            background-color: #f5f5f5;
+            color: #2c3e50;
+        }
+
+        .btn-primary {
+            background-color: #FF7A00;
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 122, 0, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: #e06a00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 122, 0, 0.3);
+        }
 }
