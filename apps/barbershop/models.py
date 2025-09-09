@@ -3,22 +3,35 @@ from django.conf import settings
 from django.utils.text import slugify
 
 
+
 class Barbershop(models.Model):
     name = models.CharField(max_length=150)
     slug = models.SlugField(unique=True, blank=True)
     logo = models.ImageField(upload_to="barbershop_logos/", null=True, blank=True)
     about = models.TextField(null=True, blank=True)
     owner_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="barbershops"
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="barbershops"
     )
+    is_active = models.BooleanField(default=True)  # 🔥 nova flag
+
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
+        # gera slug sempre a partir do name
+        base_slug = slugify(self.name)
 
+        slug = base_slug
+        counter = 1
+        while Barbershop.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
 
+        self.slug = slug
         super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
+
 
 
 class Unit(models.Model):

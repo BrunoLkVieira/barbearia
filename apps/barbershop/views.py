@@ -12,21 +12,19 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Barbershop, Unit, Employee
 
-
-def dono_required(view_func):
+def owner_or_employee_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or getattr(request.user, "user_type", None) != "dono":
-            messages.error(request, "Acesso negado. Apenas donos podem acessar.")
-            return redirect("login")
+        if not request.user.is_authenticated or getattr(request.user, "user_type", None) not in ["dono", "funcionario"]:
+            messages.error(request,  "Acesso negado. Apenas donos ou funcionários podem acessar.")
+            return redirect("user:login")
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
 @login_required
-@dono_required
+@owner_or_employee_required
 def UnitView(request, barbershop_slug):
     # Só busca barbearia do usuário logado
-    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug, owner_user=request.user)
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
     units = Unit.objects.filter(barbershop=barbershop)
     active_units_count = units.filter(is_active=True).count()
@@ -85,11 +83,11 @@ def _to_decimal(val):
         return None
 
 @login_required
-@dono_required
+@owner_or_employee_required
 def EmployeeView(request, barbershop_slug):
     # Barbershop do dono logado
     barbershop = get_object_or_404(
-        Barbershop, slug=barbershop_slug, owner_user=request.user
+        Barbershop, slug=barbershop_slug
     )
 
     # Unidades dessa barbearia
@@ -124,7 +122,7 @@ def EmployeeView(request, barbershop_slug):
             system_access = _to_bool(request.POST.get("system_access"))
 
             if not cpf:
-                return redirect("employee", barbershop_slug=barbershop.slug)
+                return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
 
             with transaction.atomic():
                 # Busca ou cria o usuário pelo CPF
