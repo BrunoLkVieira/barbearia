@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
-
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Barbershop(models.Model):
@@ -49,8 +50,6 @@ class Unit(models.Model):
 
 
 
-
-
 class Employee(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -78,3 +77,116 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.unit}"
+    
+
+
+class UnitWorkDay(models.Model):
+    class Weekday(models.IntegerChoices):
+        SUNDAY = 0, _("Domingo")
+        MONDAY = 1, _("Segunda-feira")
+        TUESDAY = 2, _("Terça-feira")
+        WEDNESDAY = 3, _("Quarta-feira")
+        THURSDAY = 4, _("Quinta-feira")
+        FRIDAY = 5, _("Sexta-feira")
+        SATURDAY = 6, _("Sábado")
+
+    unit = models.ForeignKey("Unit", on_delete=models.CASCADE, related_name="work_days")
+    weekday = models.IntegerField(choices=Weekday.choices)
+    open_time = models.TimeField()
+    close_time = models.TimeField()
+    is_open = models.BooleanField(default=True)
+
+    
+
+    def __str__(self):
+        return f"{self.unit} - {self.get_weekday_display()}"
+
+
+
+class EmployeeWorkDay(models.Model):
+    class Weekday(models.IntegerChoices):
+        SUNDAY = 0, _("Domingo")
+        MONDAY = 1, _("Segunda-feira")
+        TUESDAY = 2, _("Terça-feira")
+        WEDNESDAY = 3, _("Quarta-feira")
+        THURSDAY = 4, _("Quinta-feira")
+        FRIDAY = 5, _("Sexta-feira")
+        SATURDAY = 6, _("Sábado")
+
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="work_days")
+    weekday = models.IntegerField(choices=Weekday.choices)
+
+    start_morning_work = models.TimeField(default="07:00")
+    end_morning_work = models.TimeField(default="12:00")
+    start_afternoon_work = models.TimeField(default="12:01")
+    end_afternoon_work = models.TimeField(default="17:00")
+
+    morning_available = models.BooleanField(default=False)
+    afternoon_available = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True)
+
+ 
+
+    def __str__(self):
+        return f"{self.employee} - {self.get_weekday_display()}"
+
+
+
+class EmployeeAbsence(models.Model):
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="absences")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.CharField(max_length=255, blank=True, null=True)
+
+    
+
+    def __str__(self):
+        return f"{self.employee} - {self.start_date} até {self.end_date}"
+
+
+
+class UnitHoliday(models.Model):
+    unit = models.ForeignKey("Unit", on_delete=models.CASCADE, related_name="holidays")
+    date = models.DateField()
+    name = models.CharField(max_length=100)
+
+ 
+
+    def __str__(self):
+        return f"{self.unit} - {self.name} ({self.date})"
+
+
+
+
+
+class Role(models.Model):
+    class Occupation(models.TextChoices):
+        BARBEIRO = "barbeiro", _("Barbeiro")
+        GERENTE = "gerente", _("Gerente")
+        CAIXA = "caixa", _("Caixa")
+
+    employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="roles")
+    occupation = models.CharField(max_length=20, choices=Occupation.choices)
+
+    
+
+    def __str__(self):
+        return f"{self.employee} - {self.get_occupation_display()}"
+
+
+class UnitMedia(models.Model):
+    class MediaType(models.TextChoices):
+        BANNER = "banner", _("Banner")
+        PHOTO = "photo", _("Foto")
+
+    unit = models.ForeignKey("Unit", on_delete=models.CASCADE, related_name="media")
+    media_type = models.CharField(max_length=10, choices=MediaType.choices)
+    image = models.ImageField(upload_to="unit_media/")
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+   
+
+    def __str__(self):
+        return f"{self.unit} - {self.get_media_type_display()} ({self.order})"
