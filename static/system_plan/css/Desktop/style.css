@@ -143,7 +143,11 @@ h2::after {
     position: relative;
 }
 
-.nav-menu a:hover {
+.nav-menu a:hover{
+    color: var(--accent);
+}
+
+.nav-menu a.active{
     color: var(--accent);
 }
 
@@ -158,7 +162,7 @@ h2::after {
     transition: var(--transition);
 }
 
-.nav-menu a:hover::after {
+.nav-menu a:hover::after, .nav-menu a.active::after{
     width: 100%;
 }
 

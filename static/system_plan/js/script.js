@@ -148,3 +148,33 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Swiper não foi carregado corretamente");
     }
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const headerHeight = document.querySelector(".landing-header")?.offsetHeight || 0;
+    const sections = document.querySelectorAll("[id]"); // pega todos os elementos que têm id
+    const navLinks = document.querySelectorAll(".nav-menu a");
+  
+    function setActiveLink() {
+      let current = null;
+  
+      sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= headerHeight + 15 && rect.bottom > headerHeight + 15) {
+          current = section.id;
+        }                          
+      });
+  
+      navLinks.forEach(link => {
+        link.classList.remove("active");
+        if (link.getAttribute("href") === "#" + current) {
+          link.classList.add("active");
+        }
+      });
+    }
+  
+    window.addEventListener("scroll", setActiveLink, { passive: true });
+    setActiveLink(); 
+  });
+  
+  
