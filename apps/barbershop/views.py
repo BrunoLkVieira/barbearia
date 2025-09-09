@@ -4,12 +4,11 @@ from django.contrib import messages
 from .models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
 from decimal import Decimal, InvalidOperation
 import re
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-
+from django.utils.timezone import now
 from .models import Barbershop, Unit, Employee
 
 def owner_or_employee_required(view_func):
@@ -307,7 +306,8 @@ def WorkDayView(request, barbershop_slug):
         return redirect("barbershop:workday", barbershop_slug=barbershop.slug)
 
     # Pega dados atuais
-    holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop)
+    holidays = UnitHoliday.objects.filter(date__gte=now().date()).order_by("date")
+    next_day_off = holidays.first().date if holidays.exists() else None
     absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop)
     workdays = EmployeeWorkDay.objects.filter(employee__unit__barbershop=barbershop)
 
@@ -316,6 +316,7 @@ def WorkDayView(request, barbershop_slug):
         "units": units,
         "employees": employees,
         "holidays": holidays,
+        "next_day_off": next_day_off,
         "absences": absences,
         "workdays": workdays,
     }

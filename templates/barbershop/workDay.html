@@ -4,6 +4,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funcionamento - {{ barbershop.name }}</title>
+    <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/workDay.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/workDay.css' %}">
+
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/abscense.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/abscense.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/editCalendar.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
+
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
+            </div>
+            <div class="logo-content">
+                <h1>Orbly Barber</h1>
+                <p>Sistema de agendamento profissional</p>
+            </div>
+        </div>
+        <div class="date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span id="currentDate">Carregando data...</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                <div class="user-name">{{ user.name }}</div>
+                <i class="fas fa-chevron-down" id="chevronIcon"></i>
+                
+                <div class="user-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                        <div class="sidebar-user-info">
+                            <span class="sidebar-name">{{ user.name }}</span>
+                            <span class="sidebar-email">{{ user.email }}</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-menu">
+                        <a href="" class="sidebar-item">
+                            <i class="fas fa-user"></i>
+                            <span>Meu Perfil</span>
+                        </a>
+                        <a href="" class="sidebar-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <div class="nav-tabs">
+            <a href=""><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            <a href=""><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
+            <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
+        </div>
+        <div class="stats">
+            <div class="unit-filter">
+                <select>
+                    {% for unit in units %}
+                        <option>{{ unit.name }}</option>
+                    {% endfor %}
+                    <option>Geral</option>
+                </select>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">{{ employees.count }}</div>
+                <div class="stat-label">Barbeiros</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="pages-options-Container">
+        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
+            <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
+        </a>
+        <a href="{% url 'barbershop:employee' barbershop_slug=barbershop.slug %}">
+            <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
+        </a>
+        <a href="">
+            <div class="page-option active"><i class="fas fa-clock"></i> Funcionamento</div>
+        </a>
+    </div>
+    
+    <div class="main-content">
+        <!-- Disponibilidade de Barbeiros -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-user-clock"></i> Disponibilidade de Barbeiros
+                </div>
+            </div>
+            
+            <div class="barbers-list">
+                {% for barber in employees %}
+                <div class="barber-card">
+                    <div class="barber-info">
+                        <div class="barber-avatar">{{ barber.user.name|slice:":1"|upper }}{{ barber.user.last_name|slice:":1"|upper }}</div>
+                        <div>
+                            <div class="barber-name">{{ barber.user.name }} {{ barber.user.last_name }}</div>
+                        </div>
+                    </div>
+                    <div class="available-days">
+                        {% for wd in workdays.all %}
+                            {% if wd.employee == barber %}
+                                <div class="day-badge {% if not wd.is_active %}off{% endif %}" 
+                                    data-bs-toggle="modal" data-bs-target="#editWorkdayModal{{ barber.id }}{{ wd.weekday }}">
+                                    {{ wd.get_weekday_display }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <button class="edit-btn" onclick="openEditModal()">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Dias de Não Funcionamento -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-calendar-times"></i> Dias de Não Funcionamento
+                </div>
+                <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal">
+                    <i class="fas fa-plus"></i> Adicionar Dia
+                </button>
+            </div>
+            
+            <div class="non-working-days">
+                {% for holiday in holidays %}
+                <div class="day-off-card">
+                    <div class="day-off-actions">
+                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#editHolidayModal{{ holiday.id }}"><i class="fas fa-edit"></i></button>
+                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#deleteHolidayModal{{ holiday.id }}"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}</div>
+                    <div class="day-off-reason">{{ holiday.name }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="total-display">
+            <div class="footer-first-row-one-item">
+                Próximo dia de folga: <strong>{{ next_day_off|date:"d \d\e F, Y" }}</strong>
+            </div>
+        </div>
+
+        <div class="buttons-display">
+            <div class="actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAbsenceModal">
+                    <i class="fas fa-umbrella-beach"></i> Marcar Folga
+                </button>
+            </div>
+        </div>
+    </footer>
+    
+
+    <!-- ================== MODAIS ================== -->
+
+    <!-- Modais Workday -->
+    {% for barber in employees %}
+        {% for wd in barber.workdays.all %}
+            <div class="modal fade" id="editWorkdayModal{{ barber.id }}{{ wd.weekday }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_workday">
+                    <input type="hidden" name="employee_id" value="{{ barber.id }}">
+                    <input type="hidden" name="weekday" value="{{ wd.weekday }}">
+
+                    <div class="modal-header"><h5 class="modal-title">Editar Disponibilidade - {{ barber.name }}</h5></div>
+                    <div class="modal-body">
+                      <label>Início:</label>
+                      <input type="time" class="form-control" name="start_time" value="{{ wd.start_time|default_if_none:'' }}">
+                      <label>Fim:</label>
+                      <input type="time" class="form-control" name="end_time" value="{{ wd.end_time|default_if_none:'' }}">
+                      <label>Ativo:</label>
+                      <select name="is_active" class="form-control">
+                        <option value="True" {% if wd.is_active %}selected{% endif %}>Sim</option>
+                        <option value="False" {% if not wd.is_active %}selected{% endif %}>Não</option>
+                      </select>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <!-- Criar Feriado -->
+    <div class="modal fade" id="createHolidayModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_holiday">
+            <div class="modal-header"><h5 class="modal-title">Adicionar Feriado</h5></div>
+            <div class="modal-body">
+              <label>Unidade:</label>
+              <select name="unit_id" class="form-control">
+                {% for unit in units %}
+                  <option value="{{ unit.id }}">{{ unit.name }}</option>
+                {% endfor %}
+              </select>
+              <label>Data:</label>
+              <input type="date" class="form-control" name="date" required>
+              <label>Descrição:</label>
+              <input type="text" class="form-control" name="description">
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary">Adicionar</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editar / Deletar Feriado -->
+    {% for holiday in holidays %}
+      <div class="modal fade" id="editHolidayModal{{ holiday.id }}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="edit_holiday">
+              <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
+              <div class="modal-header"><h5 class="modal-title">Editar Feriado</h5></div>
+              <div class="modal-body">
+                <label>Data:</label>
+                <input type="date" class="form-control" name="date" value="{{ holiday.date|date:'Y-m-d' }}">
+                <label>Descrição:</label>
+                <input type="text" class="form-control" name="description" value="{{ holiday.description }}">
+              </div>
+              <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="deleteHolidayModal{{ holiday.id }}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_holiday">
+              <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
+              <div class="modal-body">Tem certeza que deseja excluir o feriado "{{ holiday.description }}"?</div>
+              <div class="modal-footer"><button type="submit" class="btn btn-danger">Excluir</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Criar Folga -->
+    <div class="modal fade" id="createAbsenceModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_absence">
+            <div class="modal-header"><h5 class="modal-title">Marcar Folga</h5></div>
+            <div class="modal-body">
+              <label>Funcionário:</label>
+              <select name="employee_id" class="form-control">
+                {% for barber in employees %}
+                  <option value="{{ barber.id }}">{{ barber.name }}</option>
+                {% endfor %}
+              </select>
+              <label>Data:</label>
+              <input type="date" class="form-control" name="date" required>
+              <label>Motivo:</label>
+              <input type="text" class="form-control" name="reason">
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary">Adicionar</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deletar Folga -->
+    {% for absence in absences %}
+      <div class="modal fade" id="deleteAbsenceModal{{ absence.id }}" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_absence">
+              <input type="hidden" name="absence_id" value="{{ absence.id }}">
+              <div class="modal-body">Tem certeza que deseja excluir a folga de {{ absence.employee.name }} no dia {{ absence.date|date:"d/m/Y" }}?</div>
+              <div class="modal-footer"><button type="submit" class="btn btn-danger">Excluir</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script src="{% static 'barbershop/js/workDay.js' %}"></script>
+</body>
+</html>
+
+
+
+{% comment %} {% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Funcionamento - Barbearia Executiva</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
@@ -96,13 +428,13 @@
     </div>
 
     <div class="pages-options-Container">
-        <a href="{%  url 'barbershop:units' barbershop_slug=barbershop.slug %}">
+        <a href="unit.html">
             <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
         </a>
-        <a href="{%  url 'barbershop:employee' barbershop_slug=barbershop.slug %}">
+        <a href="funcionarios.html">
             <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
         </a>
-        <a href="">
+        <a href="agenda.html">
             <div class="page-option active"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
     </div>
@@ -452,4 +784,4 @@
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
 </body>
-</html>
+</html> {% endcomment %}

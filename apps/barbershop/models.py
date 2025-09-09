@@ -105,13 +105,13 @@ class UnitWorkDay(models.Model):
 
 class EmployeeWorkDay(models.Model):
     class Weekday(models.IntegerChoices):
-        SUNDAY = 0, _("Domingo")
-        MONDAY = 1, _("Segunda-feira")
-        TUESDAY = 2, _("Terça-feira")
-        WEDNESDAY = 3, _("Quarta-feira")
-        THURSDAY = 4, _("Quinta-feira")
-        FRIDAY = 5, _("Sexta-feira")
-        SATURDAY = 6, _("Sábado")
+        SUNDAY = 0, _("Dom")
+        MONDAY = 1, _("Seg")
+        TUESDAY = 2, _("Ter")
+        WEDNESDAY = 3, _("Qua")
+        THURSDAY = 4, _("Qui")
+        FRIDAY = 5, _("Sex")
+        SATURDAY = 6, _("Sab")
 
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="work_days")
     weekday = models.IntegerField(choices=Weekday.choices)
