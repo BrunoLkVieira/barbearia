@@ -96,7 +96,7 @@
         <a href="{% url 'barbershop:employee' barbershop_slug=barbershop.slug %}">
             <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
         </a>
-        <a href="">
+        <a href="{% url 'barbershop:workday' barbershop_slug=barbershop.slug %}">
             <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
     </div>

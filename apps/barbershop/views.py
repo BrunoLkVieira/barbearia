@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Unit, Barbershop, Employee
+from .models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
 from decimal import Decimal, InvalidOperation
 import re
 
@@ -244,3 +244,79 @@ def EmployeeView(request, barbershop_slug):
         "employees_active_count": employees_active_count,
     }
     return render(request, "barbershop/employee.html", context)
+
+
+@login_required
+@owner_or_employee_required
+def WorkDayView(request, barbershop_slug):
+    # Pega a barbearia
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+
+    # Pega todas as unidades e funcionários
+    units = barbershop.units.all()
+    employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
+
+    # Ações POST
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ---------- EDIT WORKDAY ----------
+        if action == "edit_workday":
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            weekday = int(request.POST.get("weekday"))
+            start = request.POST.get("start_time")
+            end = request.POST.get("end_time")
+            active = request.POST.get("is_active") == "True"
+
+            workday, _ = EmployeeWorkDay.objects.get_or_create(employee=emp, weekday=weekday)
+            workday.start_time = start or None
+            workday.end_time = end or None
+            workday.is_active = active
+            workday.save()
+            return redirect("barbershop:workday", barbershop_slug=barbershop.slug)
+
+        # ---------- HOLIDAY CRUD ----------
+        elif action == "create_holiday":
+            unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
+            UnitHoliday.objects.create(
+                unit=unit,
+                date=request.POST.get("date"),
+                description=request.POST.get("description"),
+            )
+        elif action == "edit_holiday":
+            holiday = get_object_or_404(UnitHoliday, id=request.POST.get("holiday_id"), unit__barbershop=barbershop)
+            holiday.date = request.POST.get("date")
+            holiday.description = request.POST.get("description")
+            holiday.save()
+        elif action == "delete_holiday":
+            holiday = get_object_or_404(UnitHoliday, id=request.POST.get("holiday_id"), unit__barbershop=barbershop)
+            holiday.delete()
+
+        # ---------- EMPLOYEE ABSENCE CRUD ----------
+        elif action == "create_absence":
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            EmployeeAbsence.objects.create(
+                employee=emp,
+                date=request.POST.get("date"),
+                reason=request.POST.get("reason"),
+            )
+        elif action == "delete_absence":
+            absence = get_object_or_404(EmployeeAbsence, id=request.POST.get("absence_id"), employee__unit__barbershop=barbershop)
+            absence.delete()
+
+        return redirect("barbershop:workday", barbershop_slug=barbershop.slug)
+
+    # Pega dados atuais
+    holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop)
+    absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop)
+    workdays = EmployeeWorkDay.objects.filter(employee__unit__barbershop=barbershop)
+
+    context = {
+        "barbershop": barbershop,
+        "units": units,
+        "employees": employees,
+        "holidays": holidays,
+        "absences": absences,
+        "workdays": workdays,
+    }
+    return render(request, "barbershop/workDay.html", context)
