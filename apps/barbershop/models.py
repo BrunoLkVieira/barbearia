@@ -37,6 +37,7 @@ class Barbershop(models.Model):
 
 class Unit(models.Model):
     name = models.CharField(max_length=150)
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
     cep_address = models.CharField(max_length=9)  # formato "00000-000"
     street_address = models.CharField(max_length=255)
     number_address = models.CharField(max_length=10)
@@ -44,6 +45,26 @@ class Unit(models.Model):
     barbershop = models.ForeignKey(
         Barbershop, on_delete=models.CASCADE, related_name="units"
     )
+    
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # cria slug único baseado no nome
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Unit.objects.filter(slug=slug, barbershop=self.barbershop).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["barbershop", "name"], name="unique_unit_name_per_barbershop")
+        ]
+
 
     def __str__(self):
         return f"{self.name} - {self.barbershop.name}"

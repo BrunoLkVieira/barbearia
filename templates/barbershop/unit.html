@@ -89,16 +89,56 @@
         </div>
     </div>
 
+
+    
     <div class="pages-options-Container">
-        <a href="">
-            <div class="page-option active"><i class="fas fa-store"></i> Unidades</div>
-        </a>
-        <a href="{% url 'barbershop:employee' barbershop_slug=barbershop.slug %}">
-            <div class="page-option"><i class="fas fa-users-cog"></i> Funcionários</div>
-        </a>
-        <a href="{% url 'barbershop:workday' barbershop_slug=barbershop.slug %}">
-            <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
-        </a>
+
+        {% if request.user.user_type == "dono" %}
+            <a href="">
+                <div class="page-option active"><i class="fas fa-store"></i> Unidades</div>
+            </a>
+        {% endif %}
+
+ 
+        {% if request.user.user_type != "funcionario" %}    
+            {% if request.user.user_type == "dono" %}
+                <!-- Dono pode ver geral -->
+                <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}">
+                    <div class="page-option "><i class="fas fa-store"></i> Funcionarios</div>
+                </a>
+            
+
+                {% elif request.user.user_type == "gerente" and gerente_unit  %}
+                    <!-- Gerente só vê a unidade dele -->
+                    <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
+                        <div class="page-option "><i class="fas fa-store"></i> Funcionarios</div>
+                    </a>
+            {% endif %}
+
+        {% endif %}
+
+
+
+        {% if request.user.user_type != "funcionario" %}    
+            {% if request.user.user_type == "dono" %}
+                <!-- Dono pode ver geral -->
+                <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}">
+                    <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
+                </a>
+            
+
+                {% elif request.user.user_type == "gerente" %}
+                    <!-- Gerente só vê a unidade dele -->
+                    <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
+                        <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
+                    </a>
+            {% endif %}
+
+        {% endif %}
+
+
+
+        
     </div>
     
     <div class="main-content">

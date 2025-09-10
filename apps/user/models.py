@@ -26,7 +26,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     birth_date = models.DateField(blank=True, null=True)
     user_type = models.CharField(
         max_length=20,
-        choices=[('dono', 'Dono'), ('cliente', 'Cliente'),('funcionario', 'Funcionário')],
+        choices=[('dono', 'Dono'), ('cliente', 'Cliente'),('gerente', 'Gerente'),('funcionario', 'Funcionário')],
         default='cliente'
     )
     email_verified = models.BooleanField(default=False)

@@ -79,50 +79,42 @@ class UserLoginView(View):
 
             if user is not None:
                 if user.user_type == 'dono':
-                    # pega a barbearia do dono
                     barbershop = Barbershop.objects.filter(owner_user=user).first()
-
-                    if barbershop:
-                        if not barbershop.is_active:
-                            messages.error(request, "Sua barbearia está desativada. Entre em contato com o suporte.")
-                            return redirect("user:login")
-
-                        login(request, user)
-                        return redirect("barbershop:units", barbershop_slug=barbershop.slug)
-                    else:
+                    if not barbershop:
                         messages.error(request, "Você ainda não possui uma barbearia cadastrada.")
                         return redirect("user:login")
+                    if not barbershop.is_active:
+                        messages.error(request, "Sua barbearia está desativada.")
+                        return redirect("user:login")
+                    login(request, user)
+                    return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
 
-                elif user.user_type == 'funcionario':
-                    # pega vínculo do funcionário com a unidade
+                elif user.user_type in ['funcionario', 'gerente']:
                     employee = Employee.objects.filter(user=user).select_related("unit__barbershop").first()
-
                     if not employee:
                         messages.error(request, "Você não está vinculado a nenhuma unidade de barbearia.")
                         return redirect("user:login")
 
                     unit = employee.unit
                     barbershop = unit.barbershop
-
                     if not barbershop.is_active:
-                        messages.error(request, "A barbearia está desativada. Entre em contato com o administrador.")
+                        messages.error(request, "A barbearia está desativada.")
                         return redirect("user:login")
 
                     login(request, user)
-                    # redireciona para a barbearia
-                    # a unidade do funcionário será controlada internamente no dashboard
-                    return redirect(
-                        "barbershop:units",  # visão da barbearia
-                        barbershop_slug=barbershop.slug
-                    )
+                    return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit.slug)
+
                 else:
-                    messages.error(request, "Você não é um funcionário de nenhuma barbearia")
+                    messages.error(request, "Acesso negado.")
+                    return redirect("user:login")
+
             else:
                 messages.error(request, "CPF ou senha inválidos")
         else:
             messages.error(request, "Preencha todos os campos corretamente.")
 
         return render(request, 'user/login.html', {'form': form})
+
 
 
 

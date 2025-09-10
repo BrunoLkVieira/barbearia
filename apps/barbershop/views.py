@@ -13,11 +13,27 @@ from .models import Barbershop, Unit, Employee
 
 def owner_or_employee_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or getattr(request.user, "user_type", None) not in ["dono", "funcionario"]:
-            messages.error(request,  "Acesso negado. Apenas donos ou funcionários podem acessar.")
+        if not request.user.is_authenticated or getattr(request.user, "user_type", None) not in ["dono", "funcionario", "gerente"]:
+            messages.error(request,  "Acesso negado. Apenas donos, funcionários ou gerentes podem acessar.")
             return redirect("user:login")
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+def get_user_unit_if_manager(user):
+    """
+    Retorna a unidade do gerente se o usuário for gerente,
+    senão None
+    """
+    try:
+        employee = user.employees.select_related("unit").get()
+        role = employee.roles.filter(occupation=Role.Occupation.GERENTE).first()
+        if role:
+            return employee.unit
+    except Employee.DoesNotExist:
+        return None
+    return None
+
 
 @login_required
 @owner_or_employee_required
@@ -27,6 +43,14 @@ def UnitView(request, barbershop_slug):
 
     units = Unit.objects.filter(barbershop=barbershop)
     active_units_count = units.filter(is_active=True).count()
+    gerente_unit = None
+    if request.user.user_type == "gerente":
+        employee = Employee.objects.filter(user=request.user).first()
+        
+        if employee:
+            gerente_unit = employee.unit
+    else:
+        gerente_unit = None
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -65,6 +89,7 @@ def UnitView(request, barbershop_slug):
             "units": units,
             "user": request.user,
             "active_units_count": active_units_count,
+            "gerente_unit": gerente_unit, 
         },
     )
 
@@ -83,17 +108,38 @@ def _to_decimal(val):
 
 @login_required
 @owner_or_employee_required
-def EmployeeView(request, barbershop_slug):
+def EmployeeView(request, barbershop_slug, unit_slug=None):
     # Barbershop do dono logado
-    barbershop = get_object_or_404(
-        Barbershop, slug=barbershop_slug
-    )
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
-    # Unidades dessa barbearia
-    units = barbershop.units.all()
+    # Verifica se o usuário é gerente e pega a unidade dele
+    gerente_unit = None
+    if request.user.user_type == "gerente":
+        employee = Employee.objects.filter(user=request.user).first()
+        
+        if employee:
+            gerente_unit = employee.unit
+    else:
+        gerente_unit = None
 
-    # Funcionários (somente das unidades da barbearia)
-    employees = Employee.objects.filter(unit__barbershop=barbershop)
+
+    unit = None
+
+    if gerente_unit:
+        # Usuário é gerente -> só vê a própria unidade
+        unit = gerente_unit
+        employees = Employee.objects.filter(unit=unit)
+        units = [unit]
+    else:
+        # Dono ou outro tipo de acesso
+        if unit_slug:
+            unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+            employees = Employee.objects.filter(unit=unit)
+        else:
+            employees = Employee.objects.filter(unit__barbershop=barbershop)
+        units = barbershop.units.all()
+
+    employees_active_count = employees.filter(user__is_active=True).count()
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -102,7 +148,7 @@ def EmployeeView(request, barbershop_slug):
         if action == "create":
             # Dados do USER
             raw_cpf = (request.POST.get("cpf") or "").strip()
-            cpf = re.sub(r"\D", "", raw_cpf)  # só dígitos
+            cpf = re.sub(r"\D", "", raw_cpf)
             name = (request.POST.get("name") or "").strip()
             last_name = (request.POST.get("last_name") or "").strip()
             email = (request.POST.get("email") or "").strip()
@@ -110,6 +156,11 @@ def EmployeeView(request, barbershop_slug):
 
             # Dados do EMPLOYEE
             unit_id = request.POST.get("unit_id")
+
+            # Se for gerente, força a unidade dele
+            if gerente_unit:
+                unit_id = gerente_unit.id
+
             unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
 
             commission_percentage = _to_bool(request.POST.get("commission_percentage"))
@@ -124,7 +175,6 @@ def EmployeeView(request, barbershop_slug):
                 return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
 
             with transaction.atomic():
-                # Busca ou cria o usuário pelo CPF
                 user, created = User.objects.get_or_create(
                     cpf=cpf,
                     defaults={
@@ -140,12 +190,10 @@ def EmployeeView(request, barbershop_slug):
                     user.set_unusable_password()
                     user.save()
                 else:
-                    # Se usuário existente for dono, não altera user_type
                     if getattr(user, "user_type", None) != "dono":
                         user.user_type = "funcionario"
                         user.save(update_fields=["user_type"])
 
-                # Cria o Employee (ou atualiza se já existir para a mesma unit)
                 employee, emp_created = Employee.objects.get_or_create(
                     user=user,
                     unit=unit,
@@ -177,22 +225,20 @@ def EmployeeView(request, barbershop_slug):
                 unit__barbershop=barbershop,
             )
 
-            if request.POST.get("unit_id"):
-                unit = get_object_or_404(
-                    Unit, id=request.POST.get("unit_id"), barbershop=barbershop
-                )
+            # Se for gerente, força a unidade dele
+            if gerente_unit:
+                emp.unit = gerente_unit
+            elif request.POST.get("unit_id"):
+                unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
                 emp.unit = unit
 
+            # Atualiza campos
             if "commission_percentage" in request.POST:
                 emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
             if "service_commission_percentage" in request.POST:
-                emp.service_commission_percentage = _to_decimal(
-                    request.POST.get("service_commission_percentage")
-                )
+                emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
             if "product_commission_percentage" in request.POST:
-                emp.product_commission_percentage = _to_decimal(
-                    request.POST.get("product_commission_percentage")
-                )
+                emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
             if "can_manage_cashbox" in request.POST:
                 emp.can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
             if "can_register_sell" in request.POST:
@@ -201,24 +247,15 @@ def EmployeeView(request, barbershop_slug):
                 emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
             if "system_access" in request.POST:
                 emp.system_access = _to_bool(request.POST.get("system_access"))
-
             emp.save()
 
             # Atualiza dados do usuário
             user = emp.user
             changed_user_fields = []
-            if request.POST.get("name"):
-                user.name = request.POST.get("name").strip()
-                changed_user_fields.append("name")
-            if request.POST.get("last_name"):
-                user.last_name = request.POST.get("last_name").strip()
-                changed_user_fields.append("last_name")
-            if request.POST.get("email"):
-                user.email = request.POST.get("email").strip()
-                changed_user_fields.append("email")
-            if request.POST.get("phone"):
-                user.phone = request.POST.get("phone").strip()
-                changed_user_fields.append("phone")
+            for field in ["name", "last_name", "email", "phone"]:
+                if request.POST.get(field):
+                    setattr(user, field, request.POST.get(field).strip())
+                    changed_user_fields.append(field)
             if changed_user_fields:
                 user.save(update_fields=changed_user_fields)
 
@@ -233,27 +270,35 @@ def EmployeeView(request, barbershop_slug):
 
         return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
 
-    # Contagem de funcionários ativos
-    employees_active_count = employees.filter(user__is_active=True).count()
-
     context = {
         "barbershop": barbershop,
         "units": units,
+        "unit": unit,
         "employees": employees,
         "employees_active_count": employees_active_count,
+        "gerente_unit": gerente_unit
     }
     return render(request, "barbershop/employee.html", context)
 
 
+
 @login_required
 @owner_or_employee_required
-def WorkDayView(request, barbershop_slug):
+def WorkDayView(request, barbershop_slug, unit_slug=None):
     # Pega a barbearia
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
     # Pega todas as unidades e funcionários
     units = barbershop.units.all()
     employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
+    gerente_unit = None
+    if request.user.user_type == "gerente":
+        employee = Employee.objects.filter(user=request.user).first()
+        
+        if employee:
+            gerente_unit = employee.unit
+    else:
+        gerente_unit = None
 
     # Ações POST
     if request.method == "POST":
@@ -319,5 +364,6 @@ def WorkDayView(request, barbershop_slug):
         "next_day_off": next_day_off,
         "absences": absences,
         "workdays": workdays,
+        "gerente_unit": gerente_unit,
     }
     return render(request, "barbershop/workDay.html", context)
