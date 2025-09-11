@@ -83,3 +83,22 @@ function closeVacationModal() {
 }
 
 // ========== MODAL DE FÉRIAS ==========
+
+    function openHolidayModal() {
+        document.getElementById('createHolidayModal').style.display = 'flex';
+    }
+    
+    function closeHolidayModal() {
+        document.getElementById('createHolidayModal').style.display = 'none';
+    }
+
+
+// ========== EDITAR MODAL DE FÉRIAS ==========
+
+    function editHolidayModal() {
+        document.getElementById('editHolidayModal').style.display = 'flex';
+    }
+    
+    function closeEditHolidayModal() {
+        document.getElementById('editHolidayModal').style.display = 'none';
+    }

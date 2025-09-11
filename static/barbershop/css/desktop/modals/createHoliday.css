@@ -1,0 +1,30 @@
+    .holiday-form{
+        width: 100%;
+    }
+
+    .holiday-modal-body{
+        max-height: 60vh;
+        overflow-y: auto;
+        background: white;
+    }
+
+    .holiday-modal-section{
+        margin-bottom: 5px;
+        padding: 15px;
+    }
+
+    .holiday-input {
+        width: 80%;
+        padding: 12px;
+        border: 1px solid #d1d9e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background-color: #f8f9fa;
+    }
+    
+    .single-date {
+        max-width: 250px;
+    }
+
+
+    

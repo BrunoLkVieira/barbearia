@@ -20,6 +20,8 @@
     
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/editCalendar.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/createHoliday.css' %}">
 
 </head>
 <body>
@@ -146,7 +148,7 @@
                 <div class="section-title">
                     <i class="fas fa-calendar-times"></i> Dias de Não Funcionamento
                 </div>
-                <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal">
+                <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal" onclick="openHolidayModal()">
                     <i class="fas fa-plus"></i> Adicionar Dia
                 </button>
             </div>
@@ -155,8 +157,12 @@
                 {% for holiday in holidays %}
                 <div class="day-off-card">
                     <div class="day-off-actions">
-                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#editHolidayModal{{ holiday.id }}"><i class="fas fa-edit"></i></button>
-                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#deleteHolidayModal{{ holiday.id }}"><i class="fas fa-trash"></i></button>
+                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#editHolidayModal{{ holiday.id }}" onclick="editHolidayModal()">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#deleteHolidayModal{{ holiday.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                     <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}</div>
                     <div class="day-off-reason">{{ holiday.name }}</div>
@@ -758,7 +764,79 @@
     </div>
 
     <!-- Criar Feriado -->
+    <div id="createHolidayModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-times"></i> Adicionar Dia de Não Funcionamento</h2>
+                <button class="close-btn" onclick="closeHolidayModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="holiday-modal-body">
+                <form action="POST" action="" class="holiday-form">
+                    {%csrf_token%}
+                    <div class="holiday-modal-section">
+                        <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
+                        <input type="text" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input">
+                    </div>
+                    
+                    <div class="holiday-modal-section">
+                        <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
+                        <div class="date-group single-date">
+                            <label>Selecione a data</label>
+                            <input type="date" id="holidayDate" value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeHolidayModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Dia</button>
+                    </div>
+                </form>
+                
+            </div>
+            
+        </div>
+    </div>
+
     <!-- Editar Feriado -->
+    <div id="editHolidayModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-times"></i> Editar Dia de Não Funcionamento</h2>
+                <button class="close-btn" onclick="closeHolidayModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="holiday-modal-body">
+                <form action="POST" action="" class="holiday-form">
+                    {%csrf_token%}
+                    <div class="holiday-modal-section">
+                        <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
+                        <input type="text" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input">
+                    </div>
+                    
+                    <div class="holiday-modal-section">
+                        <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
+                        <div class="date-group single-date">
+                            <label>Selecione a data</label>
+                            <input type="date" id="holidayDate" value="{{ today|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeEditHolidayModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Dia</button>
+                    </div>
+                </form>
+                
+            </div>
+            
+        </div>
+    </div>
+
     <!-- Criar Folga -->
     <div id="vacationModal" class="modal">
         <div class="modal-content">
