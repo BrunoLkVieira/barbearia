@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"add: modals de dias de nao funcionamento\" && git push",
+    "git": "git add . && git commit -m \"add: secao para listar folgas\" && git push",
     "pull": "git pull"
   },
   "repository": {
