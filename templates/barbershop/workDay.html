@@ -288,7 +288,7 @@
                             
                             <div class="time-input-group">
                                 <select class="time-input" name="start-time">
-                                    <option value="06:00">05:00</option>
+                                    <option value="05:00">05:00</option>
                                     <option value="06:00">06:00</option>
                                     <option value="07:00" selected>07:00</option>
                                     <option value="08:00">08:00</option>
@@ -321,7 +321,7 @@
 
                             <div class="time-input-group">
                                 <select class="time-input" name="start-time">
-                                    <option value="06:00">05:00</option>
+                                    <option value="05:00">05:00</option>
                                     <option value="06:00">06:00</option>
                                     <option value="07:00" selected>07:00</option>
                                     <option value="08:00">08:00</option>
@@ -353,7 +353,7 @@
                             </div>
                             <div class="time-input-group">
                                 <select class="time-input" name="start-time">
-                                    <option value="06:00">05:00</option>
+                                    <option value="05:00">05:00</option>
                                     <option value="06:00">06:00</option>
                                     <option value="07:00" selected>07:00</option>
                                     <option value="08:00">08:00</option>
@@ -386,7 +386,7 @@
 
                             <div class="time-input-group">
                                 <select class="time-input" name="start-time">
-                                    <option value="06:00">05:00</option>
+                                    <option value="05:00">05:00</option>
                                     <option value="06:00">06:00</option>
                                     <option value="07:00" selected>07:00</option>
                                     <option value="08:00">08:00</option>
@@ -418,7 +418,7 @@
                             </div>
                             <div class="time-input-group">
                                 <select class="time-input" name="start-time">
-                                    <option value="06:00">05:00</option>
+                                    <option value="05:00">05:00</option>
                                     <option value="06:00">06:00</option>
                                     <option value="07:00" selected>07:00</option>
                                     <option value="08:00">08:00</option>
@@ -758,7 +758,7 @@
     </div>
 
     <!-- Criar Feriado -->
-    <!-- Editar / Deletar Feriado -->
+    <!-- Editar Feriado -->
     <!-- Criar Folga -->
     <div id="vacationModal" class="modal">
         <div class="modal-content">
@@ -770,55 +770,57 @@
             </div>
 
             <div class="modal-body">
-                <div class="modal-section">
-                    <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
-                    <div class="barber-list" id="vacationBarbersList">
-                        <label class="barber-item">
-                            <input type="checkbox" checked>
-                            <div class="barber-avatar">LL</div>
-                            <div class="modal-barber-name">Lucas Lopes</div>
-                        </label>
-                        <label class="barber-item">
-                            <input type="checkbox">
-                            <div class="barber-avatar">RM</div>
-                            <div class="modal-barber-name">Raphael Matias</div>
-                        </label>
-                        <label class="barber-item">
-                            <input type="checkbox">
-                            <div class="barber-avatar">CS</div>
-                            <div class="modal-barber-name">Carlos Silva</div>
-                        </label>
-                        <label class="barber-item">
-                            <input type="checkbox">
-                            <div class="barber-avatar">MA</div>
-                            <div class="modal-barber-name">Marcos Almeida</div>
-                        </label>
+                <form action="POST" action="" class="absence-form">
+                    {%csrf_token%}
+                    <div class="modal-section">
+                        <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
+                        <div class="barber-list" id="vacationBarbersList">
+                            <label class="barber-item">
+                                <input type="checkbox" checked>
+                                <div class="barber-avatar">LL</div>
+                                <div class="modal-barber-name">Lucas Lopes</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">RM</div>
+                                <div class="modal-barber-name">Raphael Matias</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">CS</div>
+                                <div class="modal-barber-name">Carlos Silva</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">MA</div>
+                                <div class="modal-barber-name">Marcos Almeida</div>
+                            </label>
+                        </div>
+                    
                     </div>
                     
-                </div>
-                
-                <div class="modal-section">
-                    <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
-                    <div class="date-inputs">
-                        <div class="date-group">
-                            <label>Data de Início</label>
-                            <input type="date" id="vacationStart" value="2025-07-01">
-                        </div>
-                        <div class="date-group">
-                            <label>Data de Término</label>
-                            <input type="date" id="vacationEnd" value="2025-07-15">
+                    <div class="modal-section">
+                        <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
+                        <div class="date-inputs">
+                            <div class="date-group">
+                                <label>Data de Início</label>
+                                <input type="date" id="vacationStart" value="2025-07-01">
+                            </div>
+                            <div class="date-group">
+                                <label>Data de Término</label>
+                                <input type="date" id="vacationEnd" value="2025-07-15">
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button class="btn btn-outline">Cancelar</button>
-                <button class="btn btn-primary">Confirmar Férias</button>
-            </div>
+                                </div>
+                                
+                                <div class="modal-footer">
+                    <button class="btn btn-outline">Cancelar</button>
+                    <button class="btn btn-primary">Confirmar Férias</button>
+                                </div>
+                </form>
         </div>
     </div>
-    <!-- Deletar Folga -->
 
 
     <script src="{% static 'geral/js/script.js' %}"></script>
