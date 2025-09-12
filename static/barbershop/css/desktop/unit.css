@@ -20,6 +20,8 @@ body {
     background-color: #ffffff;
     border-radius: 12px;
     padding: 20px;
+    min-height: 62vh;
+    overflow-y: auto;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
@@ -65,6 +67,11 @@ body {
     background: linear-gradient(135deg, #e67e22, #d35400);
     color: white;
     box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+}
+
+.btn-new-unit:hover{
+    opacity: 0.9;
+    transform: translateY(-2px);
 }
 
 .units-mobile-table-container{
