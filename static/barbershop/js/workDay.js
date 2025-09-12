@@ -82,23 +82,37 @@ function closeVacationModal() {
     document.body.style.overflow = '';
 }
 
-// ========== MODAL DE FÉRIAS ==========
-
-    function openHolidayModal() {
-        document.getElementById('createHolidayModal').style.display = 'flex';
-    }
-    
-    function closeHolidayModal() {
-        document.getElementById('createHolidayModal').style.display = 'none';
-    }
-
-
 // ========== EDITAR MODAL DE FÉRIAS ==========
+const editVacationModal = document.getElementById('editVacationModal');
 
-    function editHolidayModal() {
-        document.getElementById('editHolidayModal').style.display = 'flex';
-    }
-    
-    function closeEditHolidayModal() {
-        document.getElementById('editHolidayModal').style.display = 'none';
-    }
+function openEditVacationModal() {
+    editVacationModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditVacationModal() {
+    editVacationModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+
+// ========== MODAL DE FERIADO DA BARBEARIA ==========
+
+function openHolidayModal() {
+    document.getElementById('createHolidayModal').style.display = 'flex';
+}
+
+function closeHolidayModal() {
+    document.getElementById('createHolidayModal').style.display = 'none';
+}
+
+
+// ========== EDITAR MODAL DE FERIADO DA BARBEARIA ==========
+
+function editHolidayModal() {
+    document.getElementById('editHolidayModal').style.display = 'flex';
+}
+
+function closeEditHolidayModal() {
+    document.getElementById('editHolidayModal').style.display = 'none';
+}

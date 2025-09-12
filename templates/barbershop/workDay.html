@@ -180,22 +180,29 @@
                 </div>
 
                 <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createAbsenceModal" onclick="openVacationModal()">
-                    <i class="fas fa-umbrella-beach"></i> Marcar Folga
+                    <i class="fas fa-plus"></i> Marcar Folga
                 </button>
             </div>
             
             <div class="non-working-days">
                 {% for holiday in holidays %}
-                <div class="day-off-card">
+                <div class="day-off-card blue-card">
                     <div class="day-off-actions">
-                        <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#editHolidayModal{{ holiday.id }}" onclick="editHolidayModal()">
+                        <button 
+                            class="day-off-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editHolidayModal{{ holiday.id }}" 
+                            onclick="openEditVacationModal()">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button class="day-off-btn" data-bs-toggle="modal" data-bs-target="#deleteHolidayModal{{ holiday.id }}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                    <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}</div>
+                    <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}
+                        <span>até</span>
+                    </div>
+                    <div class="end-absence-day">{{ holiday.date|date:"d/m/Y" }}</div>
                     <div class="day-off-reason">{{ holiday.name }}</div>
                 </div>
                 {% endfor %}
@@ -870,8 +877,8 @@
                 </button>
             </div>
 
-            <div class="modal-body">
-                <form action="POST" action="" class="absence-form">
+            <form action="POST" action="" class="absence-form">
+                <div class="modal-body">
                     {%csrf_token%}
                     <div class="modal-section">
                         <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
@@ -913,16 +920,78 @@
                             </div>
                         </div>
                     </div>
-                                </div>
+                </div>
                                 
-                                <div class="modal-footer">
-                    <button class="btn btn-outline">Cancelar</button>
-                    <button class="btn btn-primary">Confirmar Férias</button>
-                                </div>
-                </form>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeVacationModal()" type="button">Cancelar</button>
+                    <button class="btn btn-primary" type="button">Confirmar Férias</button>
+                </div>
+            </form>
         </div>
     </div>
+    
+    <!-- Editar Folga -->
+    <div id="editVacationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-umbrella-beach"></i> Editar Folga</h2>
+                <button class="close-btn" onclick="closeEditVacationModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
 
+            <form action="POST" action="" class="absence-form">
+                <div class="modal-body">
+                    {%csrf_token%}
+                    <div class="modal-section">
+                        <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
+                        <div class="barber-list" id="vacationBarbersList">
+                            <label class="barber-item">
+                                <input type="checkbox" checked>
+                                <div class="barber-avatar">LL</div>
+                                <div class="modal-barber-name">Lucas Lopes</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">RM</div>
+                                <div class="modal-barber-name">Raphael Matias</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">CS</div>
+                                <div class="modal-barber-name">Carlos Silva</div>
+                            </label>
+                            <label class="barber-item">
+                                <input type="checkbox">
+                                <div class="barber-avatar">MA</div>
+                                <div class="modal-barber-name">Marcos Almeida</div>
+                            </label>
+                        </div>
+                    
+                    </div>
+                    
+                    <div class="modal-section">
+                        <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
+                        <div class="date-inputs">
+                            <div class="date-group">
+                                <label>Data de Início</label>
+                                <input type="date" id="vacationStart" value="2025-07-01">
+                            </div>
+                            <div class="date-group">
+                                <label>Data de Término</label>
+                                <input type="date" id="vacationEnd" value="2025-07-15">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                                
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="closeEditVacationModal()" type="button">Cancelar</button>
+                    <button class="btn btn-primary" type="button">Confirmar Férias</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
