@@ -147,14 +147,15 @@
                             <td>
                                 <div class="employee-actions">
                                     <!-- Botão Editar -->
-                                    <div class="action-btn edit"
+                                    <div class="action-btn edit-btn"
                                         data-id="{{ emp.id }}"
                                         data-name="{{ emp.user.name }}"
                                         data-lastname="{{ emp.user.last_name }}"
                                         data-email="{{ emp.user.email }}"
                                         data-phone="{{ emp.user.phone }}"
                                         data-cpf="{{ emp.user.cpf }}"
-                                        data-unit="{{ emp.unit.id }}">
+                                        data-unit="{{ emp.unit.id }}"
+                                        onclick="openEmployeeModal('edit')">
                                         <i class="fas fa-edit"></i>
                                     </div>
 
@@ -207,23 +208,23 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="employeeCPF">CPF</label>
-                        <input type="text" name="cpf" id="employeeCPF" class="form-control" required>
+                        <input type="text" name="cpf" id="employeeCPF" class="form-control" placeholder="Digite seu CPF" required>
                     </div>
                     <div class="form-group">
                         <label for="employeeName">Nome</label>
-                        <input type="text" name="name" id="employeeName" class="form-control" required>
+                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" required>
                     </div>
                     <div class="form-group">
                         <label for="employeeLastName">Sobrenome</label>
-                        <input type="text" name="last_name" id="employeeLastName" class="form-control" required>
+                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" required>
                     </div>
                     <div class="form-group">
                         <label for="employeeEmail">Email</label>
-                        <input type="email" name="email" id="employeeEmail" class="form-control" required>
+                        <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="Digite o email" required>
                     </div>
                     <div class="form-group">
                         <label for="employeePhone">Telefone</label>
-                        <input type="tel" name="phone" id="employeePhone" class="form-control">
+                        <input type="tel" name="phone" id="employeePhone" class="form-control" placeholder="(00) 00000-0000">
                     </div>
                     <div class="form-group">
                         <label for="employeeUnit">Unidade</label>
@@ -240,11 +241,11 @@
                     </div>
                     <div class="form-group">
                         <label for="serviceCommission">Comissão Serviço (%)</label>
-                        <input type="number" step="0.01" name="service_commission_percentage" id="serviceCommission" class="form-control">
+                        <input type="number" step="0.01" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Digite a comissão por serviço">
                     </div>
                     <div class="form-group">
                         <label for="productCommission">Comissão Produto (%)</label>
-                        <input type="number" step="0.01" name="product_commission_percentage" id="productCommission" class="form-control">
+                        <input type="number" step="0.01" name="product_commission_percentage" id="productCommission" class="form-control" placeholder="Digite a comissão por produto">
                     </div>
                     <div class="form-group">
                         <label><input type="checkbox" name="can_manage_cashbox"> Pode Gerenciar Caixa</label>
