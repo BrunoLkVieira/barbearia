@@ -84,7 +84,7 @@
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">0</div>
+                <div class="stat-value">{{ employees.count }}</div>
                 <div class="stat-label">Funcionários</div>
             </div>
         </div>
@@ -142,7 +142,7 @@
                 <div class="section-title">
                     <i class="fas fa-users-cog"></i> Gerenciamento de Funcionários
                 </div>
-                <button class="add-employee-btn" onclick="openEmployeeModal()">
+                <button class="add-employee-btn">
                     <i class="fas fa-plus"></i> Novo Funcionário
                 </button>
             </div>
@@ -183,16 +183,26 @@
                                 <div class="employee-actions">
                                     <!-- Botão Editar -->
                                     <div class="action-btn edit-btn"
-                                        data-id="{{ emp.id }}"
-                                        data-name="{{ emp.user.name }}"
-                                        data-lastname="{{ emp.user.last_name }}"
-                                        data-email="{{ emp.user.email }}"
-                                        data-phone="{{ emp.user.phone }}"
-                                        data-cpf="{{ emp.user.cpf }}"
-                                        data-unit="{{ emp.unit.id }}"
-                                        onclick="openEmployeeModal('edit')">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
+     
+                                    data-id="{{ emp.id }}"
+                                    data-name="{{ emp.user.name }}"
+                                    data-lastname="{{ emp.user.last_name }}"
+                                    data-email="{{ emp.user.email }}"
+                                    data-phone="{{ emp.user.phone|default:'' }}"
+                                    data-cpf="{{ emp.user.cpf }}"
+                                    data-active="{{ emp.user.is_active|yesno:'true,false' }}"
+                                
+                                    data-unit="{{ emp.unit.id }}"
+                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                    data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
+                                    data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
+                                    data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
+                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                
+                                    <i class="fas fa-edit"></i>
+                                </div>
 
                                     <!-- Botão Deletar -->
                                     <form method="POST" style="display:inline;">
@@ -222,7 +232,7 @@
                 Total de funcionários: <strong>{{ employees.count }}</strong>
             </div>
             <div class="footer-second-row">
-                Ativos: <strong>{{ employees|dictsort:"user.is_active"|length }}</strong>
+                ativos: <strong>{{ employees|dictsort:"user.is_active"|length }}</strong>
             </div>
         </div>
     </footer>

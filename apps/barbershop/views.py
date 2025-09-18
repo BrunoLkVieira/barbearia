@@ -269,7 +269,21 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             )
             emp.delete()
 
-        return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
+        if gerente_unit:
+            return redirect("barbershop:employee_unit", 
+                            barbershop_slug=barbershop.slug, 
+                            unit_slug=gerente_unit.slug)
+
+        # Se o dono estava vendo uma unidade específica, mantém essa visão.
+        # A variável 'unit_slug' vem dos parâmetros da URL da página atual.
+        if unit_slug:
+            return redirect("barbershop:employee_unit", 
+                            barbershop_slug=barbershop.slug, 
+                            unit_slug=unit_slug)
+
+        # Caso contrário, redireciona para a visão geral de todos os funcionários.
+        return redirect("barbershop:employee_general", 
+                        barbershop_slug=barbershop.slug)
 
     context = {
         "barbershop": barbershop,

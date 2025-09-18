@@ -1,77 +1,119 @@
-// Funções para o modal de funcionário
-function openEmployeeModal(action = 'create') {
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ================================================================
+    //  COLE TODO O SEU CÓDIGO JAVASCRIPT ATUAL AQUI DENTRO
+    // ================================================================
+
+    // Funções para o modal de funcionário
     const modal = document.getElementById('employeeModal');
+    // Checagem de segurança: só continua se o modal existir na página
+    if (!modal) {
+        console.error("Elemento do modal não encontrado. Verifique o ID 'employeeModal'.");
+        return; 
+    }
+
     const modalTitle = document.getElementById('modalTitle');
+    const employeeForm = modal.querySelector('form');
+    const addEmployeeBtn = document.querySelector('.add-employee-btn');
+    const employeeTableBody = document.querySelector('.employees-table tbody');
 
-    if (action === 'create') {
-        modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
-    } else {
-        modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Funcionário';
+    function openEmployeeModal(employeeData = null) {
+        if (employeeData) {
+            // --- MODO EDIÇÃO ---
+            modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Funcionário';
+            
+            employeeForm.querySelector('input[name="action"]').value = 'edit';
+            employeeForm.querySelector('#employeeId').value = employeeData.id;
+            employeeForm.querySelector('#employeeCPF').value = employeeData.cpf;
+            employeeForm.querySelector('#employeeName').value = employeeData.name;
+            employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
+            employeeForm.querySelector('#employeeEmail').value = employeeData.email;
+            employeeForm.querySelector('#employeePhone').value = employeeData.phone;
+            employeeForm.querySelector('#employeeUnit').value = employeeData.unit;
+            employeeForm.querySelector('#serviceCommission').value = employeeData.serviceCommission || '';
+            employeeForm.querySelector('#productCommission').value = employeeData.productCommission || '';
+
+            employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
+            employeeForm.querySelector('input[name="can_manage_cashbox"]').checked = employeeData.canCashbox === 'true';
+            employeeForm.querySelector('input[name="can_register_sell"]').checked = employeeData.canSell === 'true';
+            employeeForm.querySelector('input[name="can_create_appointments"]').checked = employeeData.canAppointments === 'true';
+            employeeForm.querySelector('input[name="system_access"]').checked = employeeData.systemAccess === 'true';
+
+        } else {
+            // --- MODO CRIAÇÃO ---
+            modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
+            employeeForm.reset();
+            employeeForm.querySelector('input[name="action"]').value = 'create';
+            employeeForm.querySelector('#employeeId').value = '';
+        }
+
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
     }
 
-    modal.style.display = 'flex';
-    document.body.classList.add('modal-open'); // Impede scroll do fundo
-}
-
-function closeEmployeeModal() {
-    document.getElementById('employeeModal').style.display = 'none';
-    document.body.classList.remove('modal-open'); // Libera scroll do fundo
-}
-
-function saveEmployee() {
-    alert('Funcionário salvo com sucesso!');
-    closeEmployeeModal();
-}
-
-// Fechar modal ao clicar fora
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('employeeModal');
-    if (event.target === modal) {
-        closeEmployeeModal();
-    }
-});
-
-// Configurar máscara de telefone
-document.getElementById('employeePhone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-
-    if (value.length > 11) {
-        value = value.slice(0, 11);
+    function closeEmployeeModal() {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
     }
 
-    if (value.length > 10) {
-        value = value.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-    } else if (value.length > 6) {
-        value = value.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
-    } else if (value.length > 2) {
-        value = value.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
-    } else if (value.length > 0) {
-        value = value.replace(/^(\d*)$/, "($1");
+    // --- LÓGICA DE EVENTOS ---
+
+    // Botão "Novo Funcionário"
+    if (addEmployeeBtn) {
+        addEmployeeBtn.addEventListener('click', () => {
+            openEmployeeModal();
+        });
     }
 
-    e.target.value = value;
-});
+    // Botões de Edição (usando delegação de eventos)
+    if (employeeTableBody) {
+        employeeTableBody.addEventListener('click', function(event) {
+            const editButton = event.target.closest('.edit-btn');
+            if (!editButton) return;
 
-// Função para deletar funcionário
-document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (confirm('Tem certeza que deseja excluir este funcionário?')) {
-            const row = this.closest('tr');
-            row.style.opacity = '0.5';
-            setTimeout(() => {
-                row.remove();
-                updateFooterStats();
-            }, 300);
+            const employeeData = {
+                id: editButton.dataset.id,
+                name: editButton.dataset.name,
+                lastname: editButton.dataset.lastname,
+                email: editButton.dataset.email,
+                phone: editButton.dataset.phone,
+                cpf: editButton.dataset.cpf,
+                active: editButton.dataset.active,
+                unit: editButton.dataset.unit,
+                commissionPercentage: editButton.dataset.commissionPercentage,
+                serviceCommission: editButton.dataset.serviceCommission,
+                productCommission: editButton.dataset.productCommission,
+                canCashbox: editButton.dataset.canCashbox,
+                canSell: editButton.dataset.canSell,
+                canAppointments: editButton.dataset.canAppointments,
+                systemAccess: editButton.dataset.systemAccess,
+            };
+            
+            openEmployeeModal(employeeData);
+        });
+    }
+
+    // Botões de fechar o modal
+    const closeButton = modal.querySelector('.close-btn');
+    if(closeButton) {
+        // Seu HTML tem um onclick="", mas vamos garantir que funcione
+        closeButton.addEventListener('click', closeEmployeeModal);
+    }
+    
+    const cancelButton = modal.querySelector('.btn-outline');
+    if(cancelButton) {
+        // Seu HTML também tem um onclick="", garantindo aqui
+        cancelButton.addEventListener('click', closeEmployeeModal);
+    }
+
+    // Fechar modal ao clicar fora
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeEmployeeModal();
         }
     });
-});
 
-// Atualizar estatísticas no footer
-function updateFooterStats() {
-    const totalEmployees = document.querySelectorAll('.employees-table tbody tr').length;
-    const activeEmployees = Array.from(document.querySelectorAll('.employees-table tbody tr'))
-        .filter(row => row.cells[3].textContent === 'Ativo').length;
+    // O resto do seu JS (máscara de telefone, delete, etc.) pode continuar aqui...
+    // ...
 
-    document.querySelector('.total-display').innerHTML = 
-        `Total de funcionários: <strong>${totalEmployees}</strong> | Ativos: <strong>${activeEmployees}</strong>`;
-}
+}); // <-- NÃO ESQUEÇA DE FECHAR O EVENT LISTENER
