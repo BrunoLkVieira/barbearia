@@ -173,4 +173,33 @@
         opacity: 0.9;
         transform: translateY(-2px);
     }
+
+            /* Responsividade */
+            @media (max-width: 600px) {
+                .edit-modal-content {
+                    width: 95%;
+                    max-width: none;
+                }
+                
+                .days-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .time-input-group {
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                
+                .time-divider {
+                    display: none;
+                }
+                
+                .edit-modal-footer {
+                    flex-direction: column;
+                }
+                
+                .btn {
+                    width: 100%;
+                }
+            }
 }

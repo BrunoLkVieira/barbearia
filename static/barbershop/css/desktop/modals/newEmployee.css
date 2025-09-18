@@ -20,7 +20,6 @@
     }
 
     .modal-content {
-        background: white;
         border-radius: 15px;
         width: 100%;
         max-width: 500px;
@@ -28,6 +27,7 @@
         overflow-y: auto;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
         animation: modalOpen 0.4s ease-out;
+        overflow-y: hidden;
     }
 
     @keyframes modalOpen {
@@ -50,6 +50,9 @@
 
     .modal-body {
         padding: 25px;
+        height: 50vh;
+        overflow-y: auto;
+        background: white;
     }
 
     .form-group {
@@ -103,32 +106,4 @@
         border-top: 1px solid #eee;
     }
 
-    .btn {
-        padding: 10px 22px;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #e67e22, #d35400);
-        color: white;
-        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-    }
-
-    .btn-outline {
-        background-color: transparent;
-        border: 1px solid #e67e22;
-        color: #e67e22;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-    }
 }

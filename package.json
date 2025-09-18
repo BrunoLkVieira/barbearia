@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \" merge do frontend e add de variaveis no template units \" && git push",
+    "git": "git add . && git commit -m \"refactor: tela funcionarios \" && git push",
     "pull": "git pull"
   },
   "repository": {

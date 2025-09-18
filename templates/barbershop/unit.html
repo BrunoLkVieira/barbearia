@@ -194,7 +194,7 @@
                     </div>
 
                     <div class="unit-actions">
-                        <div class="action-btn edit-btn"
+                        <div class="action-btn edit"
                             onclick="openEditEmployee(this)"
                             data-id="{{ emp.id }}"
                             data-name="{{ emp.user.name }}"
@@ -243,60 +243,68 @@
         </div>
     </footer>
     
-<!-- Modal para Nova Unidade/Edição -->
-<div class="modal-overlay" id="unitModal">
-    <div class="modal">
-        <div class="modal-header">
-            <div class="modal-title"> 
-                <i class="fas fa-store"></i>
-                <span id="modalTitleHeader">Nova Unidade</span>
+    <!-- Modal para Nova Unidade/Edição -->
+    <div class="modal-overlay" id="unitModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"> 
+                    <i class="fas fa-store"></i>
+                    <span id="modalTitleHeader">Nova Unidade</span>
+                </div>
+                <button class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <button class="close-btn" id="closeModal">
-                <i class="fas fa-times"></i>
-            </button>
+
+            <!-- FORM FUNCIONAL -->
+            <form id="unitForm" method="POST">
+                {% csrf_token %}
+
+                <div class="modal-body">
+                    <input type="hidden" id="unitId" name="unit_id">
+                    <input type="hidden" id="formAction" name="action" value="create">
+                    <div class="form-group">
+                        <label for="unitName" class="form-label">
+                            <i class="fas fa-signature"></i> Nome da Unidade
+                        </label>
+                        <input type="text" id="unitName" name="name" class="form-control" placeholder="Ex: Matriz - Centro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitCep" class="form-label">
+                            <i class="fas fa-map"></i> CEP
+                        </label>
+                        <input type="text" id="unitCep" name="cep_address" class="form-control" placeholder="Ex: 12345-000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitStreet" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Rua
+                        </label>
+                        <input type="text" id="unitStreet" name="street_address" class="form-control" placeholder="Ex: Av. Paulista" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitNumber" class="form-label">
+                            <i class="fas fa-hashtag"></i> Número
+                        </label>
+                        <input type="text" id="unitNumber" name="number_address" class="form-control" placeholder="Ex: 1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitActive" class="form-label">Unidade Ativa</label>
+                        <select id="unitActive" name="is_active" class="form-option">
+                            <option value="True">Sim</option>
+                            <option value="False">Não</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelUnit" class="btn btn-outline">Cancelar</button>
+                    <button type="submit" id="saveUnit" class="btn btn-primary">Salvar Unidade</button>
+                </div>
+            </form>
         </div>
-
-        <!-- FORM FUNCIONAL -->
-        <form id="unitForm" method="POST">
-            {% csrf_token %}
-            <input type="hidden" id="unitId" name="unit_id">
-            <input type="hidden" id="formAction" name="action" value="create">
-
-            <div class="form-group">
-                <label for="unitName">Nome da Unidade</label>
-                <input type="text" id="unitName" name="name" required>
-            </div>
-
-            <div class="form-group">
-                <label for="unitCep">CEP</label>
-                <input type="text" id="unitCep" name="cep_address" required>
-            </div>
-
-            <div class="form-group">
-                <label for="unitStreet">Rua</label>
-                <input type="text" id="unitStreet" name="street_address" required>
-            </div>
-
-            <div class="form-group">
-                <label for="unitNumber">Número</label>
-                <input type="text" id="unitNumber" name="number_address" required>
-            </div>
-
-            <div class="form-group">
-                <label for="unitActive">Unidade Ativa</label>
-                <select id="unitActive" name="is_active">
-                    <option value="True">Sim</option>
-                    <option value="False">Não</option>
-                </select>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" id="cancelUnit">Cancelar</button>
-                <button type="submit" id="saveUnit">Salvar Unidade</button>
-            </div>
-        </form>
     </div>
-</div>
+
+
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
