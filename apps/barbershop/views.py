@@ -10,6 +10,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now
 from .models import Barbershop, Unit, Employee
+from django.db.models import Count
 
 def owner_or_employee_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -41,7 +42,7 @@ def UnitView(request, barbershop_slug):
     # Só busca barbearia do usuário logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
-    units = Unit.objects.filter(barbershop=barbershop)
+    units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees'))
     active_units_count = units.filter(is_active=True).count()
     gerente_unit = None
     if request.user.user_type == "gerente":

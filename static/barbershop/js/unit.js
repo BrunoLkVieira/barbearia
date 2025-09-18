@@ -41,17 +41,13 @@ cancelUnit.addEventListener('click', closeUnitModal);
 const saveUnit = document.getElementById('saveUnit');
 
 saveUnit.addEventListener('click', function() {
-    const unitName = document.getElementById('unitName').value;
-    const unitAddress = document.getElementById('unitAddress').value;
-    
-    if(!unitName || !unitAddress) {
-        alert('Por favor, preencha todos os campos');
-        return;
+    // Verificando se o formulário é válido antes de enviar
+    if (unitForm.checkValidity()) {
+        console.log("Formulário válido, enviando...");
+        // O formulário será enviado pelo clique no botão type="submit" no HTML
+    } else {
+        console.log("Formulário inválido, verifique os campos.");
     }
-    
-    // Aqui você pode adicionar a lógica para salvar a unidade
-    alert(`Unidade "${unitName}" salva com sucesso!`);
-    closeUnitModal();
 });
 
 // Botões de Editar
@@ -59,16 +55,20 @@ const editButtons = document.querySelectorAll('.action-btn.edit');
 
 editButtons.forEach(button => {
     button.addEventListener('click', function() {
-        const row = this.closest('.table-row');
-        const unitName = row.querySelector('.unit-name').textContent;
+        // 'this' é o botão que foi clicado
+        const unitData = {
+            id: this.dataset.id,
+            name: this.dataset.name,
+            cep: this.dataset.cep,
+            street: this.dataset.street,
+            number: this.dataset.number,
+            active: this.dataset.active
+        };
         
-        modalTitleHeader.textContent = 'Editar Unidade';
-        document.getElementById('unitName').value = unitName;
-        unitModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        // Chama a função principal do modal com os dados para edição
+        openUnitModal(unitData);
     });
 });
-
 // Botões de Excluir
 const deleteButtons = document.querySelectorAll('.action-btn.delete');
 

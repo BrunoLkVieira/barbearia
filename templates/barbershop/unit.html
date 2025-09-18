@@ -190,28 +190,20 @@
                     </div>
 
                     <div class="unit-employees">
-                        <span>0</span>
+                        <span>{{ unit.employee_count }}</span>
                     </div>
 
                     <div class="unit-actions">
                         <div class="action-btn edit"
-                            onclick="openEditEmployee(this)"
-                            data-id="{{ emp.id }}"
-                            data-name="{{ emp.user.name }}"
-                            data-lastname="{{ emp.user.last_name }}"
-                            data-email="{{ emp.user.email }}"
-                            data-phone="{{ emp.user.phone }}"
-                            data-cpf="{{ emp.user.cpf }}"
-                            data-unit="{{ emp.unit.id }}"
-                            data-active="{{ emp.user.is_active }}"
-                            data-service-commission="{{ emp.service_commission_percentage }}"
-                            data-product-commission="{{ emp.product_commission_percentage }}"
-                            data-can-cashbox="{{ emp.can_manage_cashbox }}"
-                            data-can-sell="{{ emp.can_register_sell }}"
-                            data-can-appointments="{{ emp.can_create_appointments }}"
-                            data-system-access="{{ emp.system_access }}">
+                            data-id="{{ unit.id }}"
+                            data-name="{{ unit.name }}"
+                            data-cep="{{ unit.cep_address }}"
+                            data-street="{{ unit.street_address }}"
+                            data-number="{{ unit.number_address }}"
+                            data-active="{{ unit.is_active|yesno:'True,False' }}">
                             <i class="fas fa-edit"></i>
                         </div>
+
 
                         <form method="POST" style="display:inline;">
                             {% csrf_token %}
