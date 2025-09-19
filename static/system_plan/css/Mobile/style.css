@@ -130,4 +130,31 @@
     .swiper-button-prev {
         display: none;
     }
+
+    .nav-menu.mobile{
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        width: 100%;
+        padding: 10px;
+        border-top: 2px solid var(--accent);
+        position: fixed;
+        bottom: 0;
+        z-index: 10;
+    }
+
+    .nav-menu.mobile a{
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .nav-menu.mobile a.active{
+        color: var(--accent);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: translateY(-4px);
+    }
+
 }
