@@ -49,11 +49,15 @@
      }
  
      /* Tabela de Funcionários */
-     .employees-table {
-         width: 100%;
-         border-collapse: collapse;
-         margin-top: 20px;
-     }
+    .employees-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+
+        max-height: 50vh;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+    }
  
      .employees-table th, 
      .employees-table td {

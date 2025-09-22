@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"add: adicao de scripts \" && git push",
+    "git": "git add . && git commit -m \"refactor: scroll se tiver muitas unidades ou funcionarios \" && git push",
     "pull": "git pull",
     "go to main": "git checkout main",
     "got to frontend": "git checkout frontend"
