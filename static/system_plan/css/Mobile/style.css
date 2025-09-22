@@ -142,6 +142,7 @@
         position: fixed;
         bottom: 0;
         z-index: 10;
+        border-radius: 15px 15px 0 0;
     }
 
     .nav-menu.mobile a{
