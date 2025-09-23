@@ -1,3 +1,7 @@
+
+
+
+
 <header>
     <div class="logo">
         <div class="logo-icon">
@@ -56,17 +60,17 @@
         <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
     </div>
     <div class="stats">
-        {% comment %} <div class="unit-filter">
+        <div class="unit-filter">
             <select>
                 {% for unit in units %}
                     <option>{{ unit.name }}</option>
                 {% endfor %}
                 <option>Geral</option>
             </select>
-        </div> {% endcomment %}
+        </div>
         <div class="stat-box">
-            <div class="stat-value">{{ units.count }}</div>
-            <div class="stat-label">Unidades</div>
+            <div class="stat-value">{{ employees.count }}</div>
+            <div class="stat-label">Funcionários</div>
         </div>
     </div>
 </div>

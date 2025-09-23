@@ -873,6 +873,6 @@ h2::after {
     font-size: 0.9rem;
 }
 
-.nav-menu-mobile{
+.nav-menu.mobile{
     display: none;
 }
