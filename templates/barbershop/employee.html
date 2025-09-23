@@ -19,6 +19,18 @@
 <body>
     {% include "geral/header.html" %}
     
+    <div class="nav-bar">
+        {% include "geral/nav.html" %}
+        <div class="nav-content">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value">{{ employees.count }}</div>
+                    <div class="stat-label">Funcionarios</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="pages-options-Container">
         <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
             <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
