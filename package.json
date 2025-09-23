@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"refactor: campos de criar plano novo\" && git push",
+    "git": "git add . && git commit -m \"refactor: ajuste plan-card\" && git push",
     "pull": "git pull",
     "go to main": "git checkout main",
     "got to frontend": "git checkout frontend"
