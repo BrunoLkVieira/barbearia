@@ -205,12 +205,62 @@
         border-color: #e67e22;
         transform: translateY(-2px);
     }
-    
-    .service-item input[type="checkbox"] {
-        width: auto;
+
+    .employee-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        font-size: 0.9rem;
     }
-    
-    /* botao salvar  */
+
+    .employee-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .service-item input[type="checkbox"] {
+        appearance: none;         
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 5px;
+        height: 5px;
+        border: 2px solid #d1d9e0;
+        padding: 10px;
+        border-radius: 50%;
+        background-color: #fff;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    .service-item input[type="checkbox"]:hover {
+        border-color: #e67e22;
+        box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+    }
+
+    .service-item input[type="checkbox"]:checked {
+        background-color: #e67e22;
+        border-color: #e67e22;
+    }
+
+    .service-item input[type="checkbox"]:checked::after {
+        content: "✓";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -52%);
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: white;
+    }
+
     .save-plan-container{
         width: 100%;
         display: flex;

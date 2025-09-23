@@ -202,7 +202,7 @@
                 </div>
             
                 <div class="form-group">
-                    <label for="planFrequency">Dias Disponiveis</label>
+                    <label for="available_weekdays">Dias Disponiveis</label>
                     <div class="form-days">
                         <div class="each-day">
                             <div class="day-abbreviation">SEG</div>
@@ -272,6 +272,40 @@
                         <option>Sem Limite</option>
                     </select>
                 </div>
+
+                <div class="form-group full-width">
+                    <label for="participating_barbers">Barbeiros que aceitam</label>
+                    <div class="services-list" id="participating_barbers">
+                      <label class="service-item">
+                        <input type="checkbox" name="participating_barbers[]" value="kaua">
+                        <div class="employee-avatar">
+                            {{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}KV
+                        </div>
+                        <div>{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                        Kaua Vieira
+                      </label>
+
+                      <label class="service-item">
+                        <input type="checkbox" name="participating_barbers[]" value="raphael">
+                        <div class="employee-avatar">
+                            {{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}RM
+                        </div>
+                        <div>{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                        Raphael Matias
+                      </label>
+
+                      <label class="service-item">
+                        <input type="checkbox" name="participating_barbers[]" value="lucas">
+                        <div class="employee-avatar">
+                            {{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}LG
+                        </div>
+                        <div>{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                        Lucas Gomes
+                      </label>
+                    </div>
+                </div>
+                  
+                  
             
                 <div class="form-group full-width">
                     <label>Serviços Inclusos</label>
