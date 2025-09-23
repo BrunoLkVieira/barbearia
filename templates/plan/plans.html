@@ -32,7 +32,7 @@
                     </select>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">{{ employees.count }}</div>
+                    <div class="stat-value">{{ plans.count }}4</div>
                     <div class="stat-label">Planos</div>
                 </div>
             </div>
@@ -189,7 +189,8 @@
                 <h2><i class="fas fa-credit-card"></i> Cadastrar um Novo Plano</h2>
             </div>
             
-            <form class="plan-form">
+            <form class="plan-form" method="POST">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="planName">Nome do Plano</label>
                     <input type="text" id="planName" placeholder="Ex: Plano Mensal Premium" value="Plano Executivo Gold">
@@ -201,8 +202,64 @@
                 </div>
             
                 <div class="form-group">
-                    <label for="planDuration">Duração (meses)</label>
-                    <input type="number" id="planDuration" placeholder="Ex: 12" value="12">
+                    <label for="planFrequency">Dias Disponiveis</label>
+                    <div class="form-days">
+                        <div class="each-day">
+                            <div class="day-abbreviation">SEG</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">TER</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">QUA</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">QUI</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">SEX</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">SAB</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="each-day">
+                            <div class="day-abbreviation">DOM</div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             
                 <div class="form-group">
@@ -212,6 +269,7 @@
                         <option selected>2 vezes por mês</option>
                         <option>3 vezes por mês</option>
                         <option>4 vezes por mês</option>
+                        <option>Sem Limite</option>
                     </select>
                 </div>
             

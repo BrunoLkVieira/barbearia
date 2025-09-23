@@ -113,6 +113,76 @@
         min-height: 100px;
     }
     
+    .form-days{
+       display: flex; 
+       gap: 10px;
+       padding: 5px 8px;
+       border: 1px solid #d1d9e0;
+       border-radius: 8px;
+       background-color: #fff;
+    }
+
+    .each-day{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+    }
+
+    .day-abbreviation {
+        width: 40px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #2c3e50;
+        text-align: center;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .3s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #e67e22;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+
     .services-list {
         display: grid;
         grid-template-columns: repeat(2, 1fr);

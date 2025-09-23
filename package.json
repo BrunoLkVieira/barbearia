@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"refactor: header separado \" && git push",
+    "git": "git add . && git commit -m \"refactor: dias da semana do plano\" && git push",
     "pull": "git pull",
     "go to main": "git checkout main",
     "got to frontend": "git checkout frontend"
