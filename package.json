@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"refactor: tela funcionarios \" && git push",
-    "pull": "git pull"
+    "git": "git add . && git commit -m \"refactor: ajuste plan-card\" && git push",
+    "pull": "git pull",
+    "go to main": "git checkout main",
+    "got to frontend": "git checkout frontend"
   },
   "repository": {
     "type": "git",

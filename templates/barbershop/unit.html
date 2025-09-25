@@ -1,4 +1,6 @@
+
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -16,75 +18,16 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newUnit.css' %}">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-icon">
-                {% if barbershop.logo %}
-                    <img src="{{ barbershop.logo.url }}" alt="logo do sistema" class="logo-image">
-                {% else %}
-                    <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
-                {% endif %}
-            </div>
-            <div class="logo-content">
-                <h1>Orbly Barber</h1>
-                <p>Sistema de agendamento profissional</p>
-            </div>
-        </div>
-        <div class="date-display">
-            <i class="fas fa-calendar-alt"></i>
-            <span id="currentDate">Carregando data...</span>
-        </div>
-        <div class="user-controls">
-            <div class="user-profile" id="userProfile">
-                <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
-                <div class="user-name">{{ user.name }} {{ user.last_name }}</div>
-                <i class="fas fa-chevron-down" id="chevronIcon"></i>
-                
-                <div class="user-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
-                        <div class="sidebar-user-info">
-                            <span class="sidebar-name">{{ user.name }} {{ user.last_name }}</span>
-                            <span class="sidebar-email">{{ user.email }}</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-menu">
-                        <a href="" class="sidebar-item">
-                            <i class="fas fa-user"></i>
-                            <span>Meu Perfil</span>
-                        </a>
-                        <a href="" class="sidebar-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Sair</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    {% include "geral/header.html" %}
     
     <div class="nav-bar">
-        <div class="nav-tabs">
-            <a href=" "><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href=" "><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="  "><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href=""><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href=""><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href=""><div class="nav-tab active"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href=""><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
-        </div>
-        <div class="stats">
-            {% comment %} <div class="unit-filter">
-                <select>
-                     {% for unit in units %}
-                        <option>{{ unit.name }}</option>
-                    {% endfor %}
-                    <option>Geral</option>
-                </select>
-            </div> {% endcomment %}
-            <div class="stat-box">
-                <div class="stat-value">{{ units.count }}</div>
-                <div class="stat-label">Unidades</div>
+        {% include "geral/nav.html" %}
+        <div class="nav-content">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value">{{ units.count }}</div>
+                    <div class="stat-label">Unidades</div>
+                </div>
             </div>
         </div>
     </div>
@@ -165,11 +108,11 @@
 
                 {% for unit in units %}
                 <div class="table-row" 
-                     data-id="{{ unit.id }}" 
-                     data-cep="{{ unit.cep_address }}" 
-                     data-street="{{ unit.street_address }}" 
-                     data-number="{{ unit.number_address }}" 
-                     data-active="{{ unit.is_active }}">
+                    data-id="{{ unit.id }}" 
+                    data-cep="{{ unit.cep_address }}" 
+                    data-street="{{ unit.street_address }}" 
+                    data-number="{{ unit.number_address }}" 
+                    data-active="{{ unit.is_active }}">
                     <div class="unit-cell">
                         <div class="unit-icon">
                             <i class="fas fa-store"></i>
@@ -222,9 +165,9 @@
 
     <footer>
         <div class="total-display">
-           
+        
             <div class="footer-second-row">
-                 Unidades Ativas: <strong>{{ active_units_count }}</strong>
+                Unidades Ativas: <strong>{{ active_units_count }}</strong>
             </div>
         </div>
 
@@ -296,9 +239,8 @@
         </div>
     </div>
 
-
-
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
+    
 </body>
 </html>
