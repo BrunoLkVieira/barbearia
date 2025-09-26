@@ -109,10 +109,56 @@ function closeHolidayModal() {
 
 // ========== EDITAR MODAL DE FERIADO DA BARBEARIA ==========
 
-function editHolidayModal() {
-    document.getElementById('editHolidayModal').style.display = 'flex';
-}
+// ===================================================================
+// CÓDIGO CORRIGIDO PARA EDITAR "DIAS DE NÃO FUNCIONAMENTO"
+// Cole este bloco no final do seu arquivo workDay.js
+// ===================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const editHolidayModalEl = document.getElementById('editHolidayModal');
+    const editHolidayForm = document.getElementById('editHolidayForm');
+    
+    // Verifica se os elementos do modal existem antes de adicionar os listeners
+    if (editHolidayModalEl && editHolidayForm) {
+        let currentEditingHolidayId = null;
 
-function closeEditHolidayModal() {
-    document.getElementById('editHolidayModal').style.display = 'none';
-}
+        // Função para ABRIR e POPULAR o modal de editar feriado
+        window.editHolidayModal = function(holidayId, name, date) {
+            currentEditingHolidayId = holidayId;
+            editHolidayModalEl.querySelector('input[name="name"]').value = name;
+            editHolidayModalEl.querySelector('input[name="date"]').value = date;
+            
+            editHolidayModalEl.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+
+        // Função para FECHAR o modal de editar feriado
+        window.closeEditHolidayModal = function() {
+            editHolidayModalEl.style.display = 'none';
+            document.body.style.overflow = '';
+        };
+
+        // Função para ENVIAR o formulário de edição
+        editHolidayForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Impede o envio padrão do formulário
+            
+            const formData = new FormData(this); // Pega os dados do formulário (name, date)
+            formData.append('action', 'edit_holiday');
+            formData.append('holiday_id', currentEditingHolidayId);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    // O CSRF token é pego do input no formulário
+                    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload(); // Recarrega a página se deu tudo certo
+                } else {
+                    alert('Ocorreu um erro ao salvar o feriado.');
+                }
+            });
+        });
+    }
+});
