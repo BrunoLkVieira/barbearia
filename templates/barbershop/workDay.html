@@ -87,13 +87,13 @@
                     <div class="available-days">
                         {% for wd in workdays.all %}
                             {% if wd.employee == barber %}
-                                <div class="day-badge {% if not wd.is_active %}off{% endif %}">
+                                <div class="day-badge {% if not wd.morning_available and not wd.afternoon_available %}off{% endif %}">
                                     {{ wd.get_weekday_display|slice:":3"|upper }}
                                 </div>
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <button class="edit-btn" onclick="openEditModal('{{ barber.id }}')">
+                    <button class="edit-btn" onclick="openEditModal({{ barber.id }})">
                         <i class="fas fa-edit"></i> Editar
                     </button>
                 </div>
@@ -202,545 +202,280 @@
                 </div>
                 
                 <div class="days-grid">
-                    <form method="POST" action="" class="edit-calendar-form">
+                    <form method="POST" action="" class="edit-calendar-form" id="editWorkdayForm">
                         {%csrf_token%}
+                        <input type="hidden" name="action" value="edit_workday">
+                        <input type="hidden" name="employee_id" id="formEmployeeId">
                     
-                        <!-- Segunda -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="1" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SEG</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_1">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_1">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="start_morning_work_1">
+                                    {% for time in time_options %}
+                                        <option value="{{ time }}">{{ time }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Terça -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="2" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">TER</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_2">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_2">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_2">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Quarta -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="3" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">QUA</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_3">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_3">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_3">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Quinta -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="4" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">QUI</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_4">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_4">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_4">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Sexta -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="5" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SEX</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_5">
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_5">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_5">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Sábado -->
-                        <div class="day-edit active morning">
+                        <div class="day-edit active morning" data-weekday="6" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SÁB</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_6">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_6">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_6">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Domingo -->
-                        <div class="day-edit off morning">
+                        <div class="day-edit off morning" data-weekday="0" data-period="morning">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">DOM</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)" name="is_active_0">
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="time-input-group">
-                                <select class="time-input" name="start-time">
-                                    <option value="05:00">05:00</option>
-                                    <option value="06:00">06:00</option>
-                                    <option value="07:00" selected>07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="11:30">11:30</option>
+                                <select class="time-input" name="start_morning_work_0">
+                                    <option value="05:00">05:00</option><option value="06:00">06:00</option><option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="11:30">11:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="end-time">
-                                    <option value="07:00">07:00</option>
-                                    <option value="08:00">08:00</option>
-                                    <option value="09:00">09:00</option>
-                                    <option value="10:00">10:00</option>
-                                    <option value="11:00">11:00</option>
-                                    <option value="12:00" selected>12:00</option>
+                                <select class="time-input" name="end_morning_work_0">
+                                    <option value="07:00">07:00</option><option value="08:00">08:00</option><option value="09:00">09:00</option><option value="10:00">10:00</option><option value="11:00">11:00</option><option value="12:00">12:00</option>
                                 </select>
                             </div>
                         </div>
-
-
-                        <!-- Segunda  TARDE-->
-                        <div class="day-edit active afternoon">
+                    
+                    
+                        <div class="day-edit active afternoon" data-weekday="1" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SEG</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_1">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_1">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Terça -->
-                        <div class="day-edit active afternoon">
+                        <div class="day-edit active afternoon" data-weekday="2" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">TER</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_2">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_2">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Quarta -->
-                        <div class="day-edit active afternoon">
+                        <div class="day-edit active afternoon" data-weekday="3" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">QUA</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_3">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_3">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Quinta -->
-                        <div class="day-edit active afternoon">
+                        <div class="day-edit active afternoon" data-weekday="4" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">QUI</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_4">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_4">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Sexta -->
-                        <div class="day-edit active afternoon">
+                        <div class="day-edit active afternoon" data-weekday="5" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SEX</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_5">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_5">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Sábado -->
-                        <div class="day-edit active afternoon">
+                        <div class="day-edit active afternoon" data-weekday="6" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">SÁB</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_6">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_6">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
                     
-                        <!-- Domingo -->
-                        <div class="day-edit off afternoon">
+                        <div class="day-edit off afternoon" data-weekday="0" data-period="afternoon">
                             <div class="left-area-day">
                                 <div class="day-abbreviation">DOM</div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" onchange="toggleDay(this)" name="is_active">
+                                    <input type="checkbox" onchange="handleToggleClick(this)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="time-input-group">
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00" selected>13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00">18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">22:30</option>
-                                    
+                                <select class="time-input" name="start_afternoon_work_0">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="22:30">22:30</option>
                                 </select>
                                 <span class="time-divider">-</span>
-                                <select class="time-input" name="">
-                                    <option value="12:30">12:30</option>
-                                    <option value="13:00">13:00</option>
-                                    <option value="14:00">14:00</option>
-                                    <option value="14:00">15:00</option>
-                                    <option value="14:00">16:00</option>
-                                    <option value="14:00">17:00</option>
-                                    <option value="14:00" selected>18:00</option>
-                                    <option value="14:00">19:00</option>
-                                    <option value="20:00">20:00</option>
-                                    <option value="21:00">21:00</option>
-                                    <option value="22:00">22:00</option>
-                                    <option value="22:30">23:00</option>
+                                <select class="time-input" name="end_afternoon_work_0">
+                                    <option value="12:30">12:30</option><option value="13:00">13:00</option><option value="14:00">14:00</option><option value="15:00">15:00</option><option value="16:00">16:00</option><option value="17:00">17:00</option><option value="18:00">18:00</option><option value="19:00">19:00</option><option value="20:00">20:00</option><option value="21:00">21:00</option><option value="22:00">22:00</option><option value="23:00">23:00</option>
                                 </select>
                             </div>
                         </div>
-
+                    
                     </form>
                 </div>
             </div>
@@ -874,5 +609,8 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
+    <script>
+        const workdaysData = {{ workdays_json|safe }};
+    </script>
 </body>
 </html>

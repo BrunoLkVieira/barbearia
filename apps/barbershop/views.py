@@ -318,31 +318,37 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
 
         # ---------- EDIT WORKDAY (LÓGICA ATUALIZADA COM OS NOMES CORRETOS) ----------
         if action == "edit_workday":
-            emp_id = request.POST.get("employee_id")
-            emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
+          emp_id = request.POST.get("employee_id")
+          emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
+          
+          for i in range(7):
+            is_active = request.POST.get(f'is_active_{i}') == 'on'
             
-            for i in range(7):
-                is_active = request.POST.get(f'is_active_{i}') == 'on'
-                
-                # Pega todos os 4 campos de tempo
-                start_morning = request.POST.get(f'start_morning_work_{i}')
-                end_morning = request.POST.get(f'end_morning_work_{i}')
-                start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
-                end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
+            start_morning = request.POST.get(f'start_morning_work_{i}')
+            end_morning = request.POST.get(f'end_morning_work_{i}')
+            start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
+            end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
 
-                workday, created = EmployeeWorkDay.objects.get_or_create(employee=emp, weekday=i)
-                
-                # Atualiza os campos corretos do modelo
-                workday.is_active = is_active
-                workday.morning_available = is_active # Simplificando: se o dia está ativo, os turnos estão disponíveis
-                workday.afternoon_available = is_active
+            # --- 💡 MODIFICAÇÃO AQUI 💡 ---
+            # Trocamos get_or_create por get, pois agora temos certeza que o registro já existe.
+            try:
+                workday = EmployeeWorkDay.objects.get(employee=emp, weekday=i)
+            except EmployeeWorkDay.DoesNotExist:
+                # Esta exceção não deve acontecer com a nova lógica de Sinais,
+                # mas é uma boa prática para evitar que o site quebre.
+                continue 
+            
+            workday.is_active = is_active
+            workday.morning_available = is_active 
+            workday.afternoon_available = is_active
 
-                workday.start_morning_work = start_morning if is_active and start_morning else None
-                workday.end_morning_work = end_morning if is_active and end_morning else None
-                workday.start_afternoon_work = start_afternoon if is_active and start_afternoon else None
-                workday.end_afternoon_work = end_afternoon if is_active and end_afternoon else None
-                
-                workday.save()
+            # A lógica de salvar 'None' continua correta, desde que o modelo permita
+            workday.start_morning_work = start_morning if is_active and start_morning else None
+            workday.end_morning_work = end_morning if is_active and end_morning else None
+            workday.start_afternoon_work = start_afternoon if is_active and start_afternoon else None
+            workday.end_afternoon_work = end_afternoon if is_active and end_afternoon else None
+            
+            workday.save()
 
             if unit_slug:
                 return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
@@ -397,17 +403,35 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
 
     # ---------- Preparando dados para o JS (CORRIGIDO COM NOMES DE CAMPOS REAIS) ----------
     workdays_data = {}
+    workdays_data = {}
     for emp in employees:
-        workdays_data[emp.id] = {
-            wd.weekday: {
-                'is_active': wd.is_active,
-                'start_morning_work': wd.start_morning_work.strftime('%H:%M') if wd.start_morning_work else '',
-                'end_morning_work': wd.end_morning_work.strftime('%H:%M') if wd.end_morning_work else '',
-                'start_afternoon_work': wd.start_afternoon_work.strftime('%H:%M') if wd.start_afternoon_work else '',
-                'end_afternoon_work': wd.end_afternoon_work.strftime('%H:%M') if wd.end_afternoon_work else ''
-            } for wd in workdays.filter(employee=emp)
-        }
+        emp_data = {}
+        # Garante que todos os dias da semana estejam no dicionário, mesmo que não haja registro
+        for i in range(7):
+            wd = workdays.filter(employee=emp, weekday=i).first()
+            if wd:
+                emp_data[i] = {
+                    'is_active': wd.is_active,
+                    'start_morning_work': wd.start_morning_work.strftime('%H:%M') if wd.start_morning_work else '',
+                    'end_morning_work': wd.end_morning_work.strftime('%H:%M') if wd.end_morning_work else '',
+                    'start_afternoon_work': wd.start_afternoon_work.strftime('%H:%M') if wd.start_afternoon_work else '',
+                    'end_afternoon_work': wd.end_afternoon_work.strftime('%H:%M') if wd.end_afternoon_work else '',
+                    # 👇 CAMPOS ADICIONADOS AQUI 👇
+                    'morning_available': wd.morning_available,
+                    'afternoon_available': wd.afternoon_available
+                }
+            else:
+                # Caso de segurança se o sinal falhar
+                emp_data[i] = {
+                    'is_active': False,
+                    'morning_available': False,
+                    'afternoon_available': False,
+                    'start_morning_work': '', 'end_morning_work': '',
+                    'start_afternoon_work': '', 'end_afternoon_work': ''
+                }
+        workdays_data[emp.id] = emp_data
 
+    time_options = [f"{h:02d}:{m:02d}" for h in range(24) for m in (0, 30)]
     context = {
         "barbershop": barbershop,
         "units": units,
@@ -416,6 +440,7 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "absences": absences,
         "workdays": workdays,
         "gerente_unit": gerente_unit,
+        "time_options": time_options,
         "workdays_json": json.dumps(workdays_data),
     }
     return render(request, "barbershop/workDay.html", context)

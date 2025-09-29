@@ -3,7 +3,8 @@ from django.conf import settings
 from django.utils.text import slugify
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Barbershop(models.Model):
     name = models.CharField(max_length=150)
@@ -137,13 +138,13 @@ class EmployeeWorkDay(models.Model):
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="work_days")
     weekday = models.IntegerField(choices=Weekday.choices)
 
-    start_morning_work = models.TimeField(default="07:00")
-    end_morning_work = models.TimeField(default="12:00")
-    start_afternoon_work = models.TimeField(default="12:01")
-    end_afternoon_work = models.TimeField(default="17:00")
+    start_morning_work = models.TimeField(default="07:00", null=True, blank=True)
+    end_morning_work = models.TimeField(default="12:00", null=True, blank=True)
+    start_afternoon_work = models.TimeField(default="12:30", null=True, blank=True)
+    end_afternoon_work = models.TimeField(default="23:00", null=True, blank=True)
 
-    morning_available = models.BooleanField(default=False)
-    afternoon_available = models.BooleanField(default=False)
+    morning_available = models.BooleanField(default=False, null=True, blank=True)
+    afternoon_available = models.BooleanField(default=False, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
 
@@ -211,3 +212,21 @@ class UnitMedia(models.Model):
 
     def __str__(self):
         return f"{self.unit} - {self.get_media_type_display()} ({self.order})"
+    
+
+
+
+@receiver(post_save, sender=Employee)
+def create_employee_work_days(sender, instance, created, **kwargs):
+    """
+    Este sinal é acionado sempre que um Employee é salvo.
+    Se o Employee estiver sendo CRIADO ('created' será True),
+    ele cria os 7 dias de trabalho padrão para ele.
+    """
+    if created:
+        for i in range(7):  # Loop de 0 (Domingo) a 6 (Sábado)
+            EmployeeWorkDay.objects.create(
+                employee=instance,
+                weekday=i,
+                # Os horários usarão os valores 'default' definidos no modelo
+            )
