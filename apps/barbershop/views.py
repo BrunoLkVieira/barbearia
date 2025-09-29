@@ -4,16 +4,13 @@ from django.contrib import messages
 from .models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
 from decimal import Decimal, InvalidOperation
 import re
-
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now
-from .models import Barbershop, Unit, Employee
 from django.db.models import Count
 import json 
-from django.utils.timezone import now
+
+
 
 def owner_or_employee_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -301,8 +298,12 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 
 
 
+
+# Em apps/barbershop/views.py
+
+
 @login_required
-@owner_or_employee_required
+@owner_or_employee_required # Certifique-se que seu decorator está definido corretamente
 def WorkDayView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     units = barbershop.units.all()
@@ -316,66 +317,70 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # ---------- EDIT WORKDAY (LÓGICA ATUALIZADA COM OS NOMES CORRETOS) ----------
+        # --- Bloco para editar a DISPONIBILIDADE (corrigido) ---
         if action == "edit_workday":
-          emp_id = request.POST.get("employee_id")
-          emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
-          
-          for i in range(7):
-            is_active = request.POST.get(f'is_active_{i}') == 'on'
+            emp_id = request.POST.get("employee_id")
+            emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
             
-            start_morning = request.POST.get(f'start_morning_work_{i}')
-            end_morning = request.POST.get(f'end_morning_work_{i}')
-            start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
-            end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
+            for i in range(7):
+                try:
+                    workday = EmployeeWorkDay.objects.get(employee=emp, weekday=i)
+                except EmployeeWorkDay.DoesNotExist:
+                    workday = EmployeeWorkDay(employee=emp, weekday=i)
 
-            # --- 💡 MODIFICAÇÃO AQUI 💡 ---
-            # Trocamos get_or_create por get, pois agora temos certeza que o registro já existe.
-            try:
-                workday = EmployeeWorkDay.objects.get(employee=emp, weekday=i)
-            except EmployeeWorkDay.DoesNotExist:
-                # Esta exceção não deve acontecer com a nova lógica de Sinais,
-                # mas é uma boa prática para evitar que o site quebre.
-                continue 
-            
-            workday.is_active = is_active
-            workday.morning_available = is_active 
-            workday.afternoon_available = is_active
+                morning_is_available = f'is_available_{i}_morning' in request.POST
+                afternoon_is_available = f'is_available_{i}_afternoon' in request.POST
 
-            # A lógica de salvar 'None' continua correta, desde que o modelo permita
-            workday.start_morning_work = start_morning if is_active and start_morning else None
-            workday.end_morning_work = end_morning if is_active and end_morning else None
-            workday.start_afternoon_work = start_afternoon if is_active and start_afternoon else None
-            workday.end_afternoon_work = end_afternoon if is_active and end_afternoon else None
-            
-            workday.save()
+                workday.morning_available = morning_is_available
+                workday.afternoon_available = afternoon_is_available
+                workday.is_active = morning_is_available or afternoon_is_available
 
+                start_morning = request.POST.get(f'start_morning_work_{i}')
+                end_morning = request.POST.get(f'end_morning_work_{i}')
+                start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
+                end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
+
+                workday.start_morning_work = start_morning if morning_is_available and start_morning else None
+                workday.end_morning_work = end_morning if morning_is_available and end_morning else None
+                workday.start_afternoon_work = start_afternoon if afternoon_is_available and start_afternoon else None
+                workday.end_afternoon_work = end_afternoon if afternoon_is_available and end_afternoon else None
+                
+                workday.save()
+
+            messages.success(request, f"Disponibilidade de {emp.user.name} atualizada com sucesso!")
+            # O redirect específico para esta action já está aqui, então o fluxo para.
             if unit_slug:
                 return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
             else:
                 return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
-
-        # ---------- HOLIDAY CRUD (CORRIGIDO PARA USAR 'name') ----------
+        
+        # ✅ CORREÇÃO: Bloco 'elif' para as OUTRAS actions (recolocado da versão antiga) ✅
         elif action == "create_holiday":
             unit_id = request.POST.get("unit_id")
             unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             UnitHoliday.objects.create(
                 unit=unit,
                 date=request.POST.get("date"),
-                name=request.POST.get("name"), # CORRIGIDO de 'description' para 'name'
+                name=request.POST.get("name"),
             )
+            messages.success(request, f"Feriado '{request.POST.get('name')}' adicionado com sucesso!")
+        
         elif action == "edit_holiday":
-            holiday = get_object_or_404(UnitHoliday, id=request.POST.get("holiday_id"), unit__barbershop=barbershop)
+            holiday_id = request.POST.get("holiday_id")
+            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
             holiday.date = request.POST.get("date")
-            holiday.name = request.POST.get("name") # CORRIGIDO de 'description' para 'name'
+            holiday.name = request.POST.get("name")
             holiday.save()
-        elif action == "delete_holiday":
-            holiday = get_object_or_404(UnitHoliday, id=request.POST.get("holiday_id"), unit__barbershop=barbershop)
-            holiday.delete()
+            messages.success(request, "Feriado atualizado com sucesso!")
 
-        # ---------- EMPLOYEE ABSENCE CRUD ----------
+        elif action == "delete_holiday":
+            holiday_id = request.POST.get("holiday_id")
+            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
+            holiday.delete()
+            messages.success(request, "Feriado excluído com sucesso!")
+
         elif action == "create_absence":
-            emp_ids = request.POST.getlist("employee_id") 
+            emp_ids = request.POST.getlist("employee_id")
             date_start = request.POST.get("date_start")
             date_end = request.POST.get("date_end")
             reason = request.POST.get("reason", "Folga agendada")
@@ -385,53 +390,48 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 EmployeeAbsence.objects.create(
                     employee=emp,
                     start_date=date_start,
-                    end_date=date_end,
+                    end_date=date_end if date_end else date_start, # Garante que end_date não seja vazio
                     reason=reason,
                 )
-        elif action == "delete_absence":
-            absence = get_object_or_404(EmployeeAbsence, id=request.POST.get("absence_id"), employee__unit__barbershop=barbershop)
-            absence.delete()
+            messages.success(request, f"Folga(s) agendada(s) com sucesso para {len(emp_ids)} funcionário(s).")
 
+        elif action == "delete_absence":
+            absence_id = request.POST.get("absence_id")
+            absence = get_object_or_404(EmployeeAbsence, id=absence_id, employee__unit__barbershop=barbershop)
+            absence.delete()
+            messages.success(request, "Folga excluída com sucesso!")
+
+        # ✅ CORREÇÃO: Redirect genérico no final para todas as actions que não têm um redirect próprio ✅
         if unit_slug:
             return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         else:
             return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
 
+    # O restante da view (lógica GET) continua igual
     holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
     absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, start_date__gte=now().date()).order_by("start_date")
-    workdays = EmployeeWorkDay.objects.filter(employee__unit__barbershop=barbershop)
+    workdays = EmployeeWorkDay.objects.filter(employee__in=employees).order_by('weekday')
 
-    # ---------- Preparando dados para o JS (CORRIGIDO COM NOMES DE CAMPOS REAIS) ----------
-    workdays_data = {}
     workdays_data = {}
     for emp in employees:
         emp_data = {}
-        # Garante que todos os dias da semana estejam no dicionário, mesmo que não haja registro
+        emp_workdays = workdays.filter(employee=emp)
         for i in range(7):
-            wd = workdays.filter(employee=emp, weekday=i).first()
+            wd = next((d for d in emp_workdays if d.weekday == i), None)
             if wd:
                 emp_data[i] = {
-                    'is_active': wd.is_active,
+                    'morning_available': wd.morning_available,
+                    'afternoon_available': wd.afternoon_available,
                     'start_morning_work': wd.start_morning_work.strftime('%H:%M') if wd.start_morning_work else '',
                     'end_morning_work': wd.end_morning_work.strftime('%H:%M') if wd.end_morning_work else '',
                     'start_afternoon_work': wd.start_afternoon_work.strftime('%H:%M') if wd.start_afternoon_work else '',
                     'end_afternoon_work': wd.end_afternoon_work.strftime('%H:%M') if wd.end_afternoon_work else '',
-                    # 👇 CAMPOS ADICIONADOS AQUI 👇
-                    'morning_available': wd.morning_available,
-                    'afternoon_available': wd.afternoon_available
                 }
             else:
-                # Caso de segurança se o sinal falhar
-                emp_data[i] = {
-                    'is_active': False,
-                    'morning_available': False,
-                    'afternoon_available': False,
-                    'start_morning_work': '', 'end_morning_work': '',
-                    'start_afternoon_work': '', 'end_afternoon_work': ''
-                }
+                emp_data[i] = { 'morning_available': False, 'afternoon_available': False, 'start_morning_work': '', 'end_morning_work': '', 'start_afternoon_work': '', 'end_afternoon_work': '' }
         workdays_data[emp.id] = emp_data
 
-    time_options = [f"{h:02d}:{m:02d}" for h in range(24) for m in (0, 30)]
+    time_options = [f"{h:02d}:{m:02d}" for h in range(5, 24) for m in (0, 30)]
     context = {
         "barbershop": barbershop,
         "units": units,

@@ -26,12 +26,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Inicializa a aba "Manhã" como ativa por padrão
-    document.querySelectorAll('.day-edit.afternoon').forEach(day => {
-        day.style.display = 'none';
-    });
     const morningSelector = document.querySelector('.barber-selector-item:first-child');
     if (morningSelector) {
         morningSelector.click();
+    } else {
+        // Se o seletor não for encontrado, garante a exibição correta como fallback
+        document.querySelectorAll('.day-edit.morning').forEach(day => day.style.display = 'flex');
+        document.querySelectorAll('.day-edit.afternoon').forEach(day => day.style.display = 'none');
     }
 
     // Lógica do modal de edição de feriados (código original preservado)
@@ -117,21 +118,10 @@ function handleToggleClick(checkboxElement) {
     // Atualiza o visual do período que foi clicado
     updatePeriodVisuals(weekday, period, isNowAvailable);
 
-    // Encontra o checkbox principal (o que é enviado no formulário, com o 'name')
-    const mainCheckbox = document.querySelector(`input[name="is_active_${weekday}"]`);
-    if (mainCheckbox) {
-        // Encontra o outro turno para saber se o dia inteiro está inativo
-        const otherPeriod = (period === 'morning') ? 'afternoon' : 'morning';
-        const otherDiv = document.querySelector(`.day-edit[data-weekday="${weekday}"][data-period="${otherPeriod}"]`);
-        const otherCheckbox = otherDiv ? otherDiv.querySelector('input[type="checkbox"]') : null;
-
-        // O dia só é "inativo" no geral se AMBOS os turnos estiverem desativados.
-        if (!isNowAvailable && otherCheckbox && !otherCheckbox.checked) {
-            mainCheckbox.checked = false;
-        } else {
-            mainCheckbox.checked = true;
-        }
-    }
+    // O checkbox principal (is_active_*) é um conceito simplificado demais.
+    // A lógica de envio agora é mais robusta e granular.
+    // O backend vai decidir se o dia está ativo com base na disponibilidade
+    // de manhã ou à tarde. Portanto, não precisamos mais manipular um checkbox "mestre".
 }
 
 
@@ -144,9 +134,11 @@ function openEditModal(employeeId) {
         return;
     }
 
+    // Preenche o ID do funcionário no campo hidden do formulário
     document.getElementById('formEmployeeId').value = employeeId;
     const employeeWorkdays = workdaysData[employeeId];
 
+    // Itera por todos os dias da semana (0=Dom a 6=Sáb)
     for (let i = 0; i < 7; i++) {
         const dayData = employeeWorkdays ? employeeWorkdays[i] : null;
         
@@ -154,26 +146,27 @@ function openEditModal(employeeId) {
         const afternoonDiv = document.querySelector(`.day-edit[data-weekday="${i}"][data-period="afternoon"]`);
         
         if (dayData) {
-            // Usa a lógica granular para ativar/desativar cada turno independentemente
+            // Atualiza o visual e os horários para o turno da MANHÃ
             updatePeriodVisuals(i, 'morning', dayData.morning_available);
-            updatePeriodVisuals(i, 'afternoon', dayData.afternoon_available);
-            
-            // Preenche os horários corretos para cada turno
             if (morningDiv) {
                 morningDiv.querySelector('[name^="start_morning_work"]').value = dayData.start_morning_work || '';
                 morningDiv.querySelector('[name^="end_morning_work"]').value = dayData.end_morning_work || '';
             }
+            
+            // Atualiza o visual e os horários para o turno da TARDE
+            updatePeriodVisuals(i, 'afternoon', dayData.afternoon_available);
             if (afternoonDiv) {
                 afternoonDiv.querySelector('[name^="start_afternoon_work"]').value = dayData.start_afternoon_work || '';
                 afternoonDiv.querySelector('[name^="end_afternoon_work"]').value = dayData.end_afternoon_work || '';
             }
         } else {
-            // Se, por algum motivo, não houver dados, desativa ambos os turnos
+            // Se, por algum motivo, não houver dados para o dia, desativa ambos os turnos
             updatePeriodVisuals(i, 'morning', false);
             updatePeriodVisuals(i, 'afternoon', false);
         }
     }
     
+    // Exibe o modal
     editModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
@@ -191,20 +184,14 @@ document.querySelectorAll('.barber-selector-item').forEach(item => {
         document.querySelectorAll('.barber-selector-item').forEach(i => i.classList.remove('active'));
         this.classList.add('active');
         
-        const isMorning = this.textContent.includes('Manhã');
-        
-        document.querySelectorAll('.day-edit').forEach(day => {
-            day.style.display = 'none';
-        });
+        const isMorning = this.textContent.trim() === 'Manhã';
         
         if (isMorning) {
-            document.querySelectorAll('.day-edit.morning').forEach(day => {
-                day.style.display = 'flex';
-            });
+            document.querySelectorAll('.day-edit.morning').forEach(day => day.style.display = 'flex');
+            document.querySelectorAll('.day-edit.afternoon').forEach(day => day.style.display = 'none');
         } else {
-            document.querySelectorAll('.day-edit.afternoon').forEach(day => {
-                day.style.display = 'flex';
-            });
+            document.querySelectorAll('.day-edit.morning').forEach(day => day.style.display = 'none');
+            document.querySelectorAll('.day-edit.afternoon').forEach(day => day.style.display = 'flex');
         }
     });
 });
