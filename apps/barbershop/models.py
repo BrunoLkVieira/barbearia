@@ -208,10 +208,12 @@ class Role(models.Model):
 class UnitMedia(models.Model):
     class MediaType(models.TextChoices):
         BANNER = "banner", _("Banner")
-        PHOTO = "photo", _("Foto")
+        HAIRSTYLE = "hairstyle", _("Foto de Corte de Cabelo")
+        SHOP_PHOTO = "shop_photo", _("Foto da Barbearia")
+        PRODUCT = "product", _("Foto de Produto")
 
     unit = models.ForeignKey("Unit", on_delete=models.CASCADE, related_name="media")
-    media_type = models.CharField(max_length=10, choices=MediaType.choices)
+    media_type = models.CharField(max_length=12, choices=MediaType.choices)
     image = models.ImageField(upload_to="unit_media/")
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
