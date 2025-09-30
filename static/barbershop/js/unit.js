@@ -77,10 +77,6 @@ deleteButtons.forEach(button => {
         const row = this.closest('.table-row');
         const unitName = row.querySelector('.unit-name').textContent;
         
-        if(confirm(`Tem certeza que deseja excluir a unidade "${unitName}"?`)) {
-            // Aqui você pode adicionar a lógica para excluir a unidade
-            alert(`Unidade "${unitName}" excluída com sucesso!`);
-            row.remove();
-        }
+       
     });
 });
