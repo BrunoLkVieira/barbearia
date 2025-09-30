@@ -11,15 +11,17 @@ class Barbershop(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     logo = models.ImageField(upload_to="barbershop_logos/", null=True, blank=True)
     about = models.TextField(null=True, blank=True)
+    foundation_date = models.DateField(null=True, blank=True)
+    
     owner_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
         related_name="barbershops"
     )
-    is_active = models.BooleanField(default=True)  # 🔥 nova flag
+    is_active = models.BooleanField(default=True) 
 
     def save(self, *args, **kwargs):
-        # gera slug sempre a partir do name
+    
         base_slug = slugify(self.name)
 
         slug = base_slug
