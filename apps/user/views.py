@@ -123,6 +123,8 @@ class UserLoginView(View):
 class UserLogoutView(View):
     def get(self, request):
         logout(request)
+        storage = messages.get_messages(request)
+        storage.used = True
         return redirect('user:login')
 
 
