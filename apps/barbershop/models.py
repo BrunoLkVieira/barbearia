@@ -39,9 +39,15 @@ class Barbershop(models.Model):
 class Unit(models.Model):
     name = models.CharField(max_length=150)
     slug = models.SlugField(max_length=160, unique=True, blank=True)
-    cep_address = models.CharField(max_length=9)  # formato "00000-000"
+    cep_address = models.CharField(max_length=9)  
     street_address = models.CharField(max_length=255)
     number_address = models.CharField(max_length=10)
+    neighborhood = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)         
+    state = models.CharField(max_length=2, null=True, blank=True)       
+    whatsapp_number = models.CharField(max_length=20, null=True, blank=True) 
+    instagram_link = models.URLField(max_length=200, null=True, blank=True) 
+
     is_active = models.BooleanField(default=True)
     barbershop = models.ForeignKey(
         Barbershop, on_delete=models.CASCADE, related_name="units"

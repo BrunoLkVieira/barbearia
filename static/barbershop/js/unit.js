@@ -14,6 +14,11 @@ function openUnitModal(editData = null) {
         document.getElementById('unitCep').value = editData.cep;
         document.getElementById('unitStreet').value = editData.street;
         document.getElementById('unitNumber').value = editData.number;
+        document.getElementById('unitNeighborhood').value = editData.neighborhood;
+        document.getElementById('unitCity').value = editData.city;
+        document.getElementById('unitState').value = editData.state;
+        document.getElementById('unitWhatsapp').value = editData.whatsapp;
+        document.getElementById('unitInstagram').value = editData.instagram;
         document.getElementById('unitActive').value = editData.active;
         document.getElementById('formAction').value = "edit";
     } else {
@@ -62,6 +67,11 @@ editButtons.forEach(button => {
             cep: this.dataset.cep,
             street: this.dataset.street,
             number: this.dataset.number,
+            neighborhood: this.dataset.neighborhood,
+            city: this.dataset.city,
+            state: this.dataset.state,
+            whatsapp: this.dataset.whatsapp,
+            instagram: this.dataset.instagram,
             active: this.dataset.active
         };
         

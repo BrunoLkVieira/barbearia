@@ -62,6 +62,11 @@ def UnitView(request, barbershop_slug):
                 cep_address=request.POST.get("cep_address"),
                 street_address=request.POST.get("street_address"),
                 number_address=request.POST.get("number_address"),
+                neighborhood=request.POST.get("neighborhood"),
+                city=request.POST.get("city"),
+                state=request.POST.get("state"),
+                whatsapp_number=request.POST.get("whatsapp_number"),
+                instagram_link=request.POST.get("instagram_link"),
                 is_active=request.POST.get("is_active") == "True",
                 barbershop=barbershop,
             )
@@ -73,6 +78,11 @@ def UnitView(request, barbershop_slug):
             unit.cep_address = request.POST.get("cep_address")
             unit.street_address = request.POST.get("street_address")
             unit.number_address = request.POST.get("number_address")
+            unit.neighborhood = request.POST.get("neighborhood")
+            unit.city = request.POST.get("city")
+            unit.state = request.POST.get("state")
+            unit.whatsapp_number = request.POST.get("whatsapp_number")
+            unit.instagram_link = request.POST.get("instagram_link")
             unit.is_active = request.POST.get("is_active") == "True"
             unit.save()
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)

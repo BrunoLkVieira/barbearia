@@ -112,6 +112,11 @@
                     data-cep="{{ unit.cep_address }}" 
                     data-street="{{ unit.street_address }}" 
                     data-number="{{ unit.number_address }}" 
+                    data-neighborhood="{{ unit.neighborhood|default:'' }}"
+                    data-city="{{ unit.city|default:'' }}"
+                    data-state="{{ unit.state|default:'' }}"
+                    data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
+                    data-instagram="{{ unit.instagram_link|default:'' }}"
                     data-active="{{ unit.is_active }}">
                     <div class="unit-cell">
                         <div class="unit-icon">
@@ -129,7 +134,7 @@
 
                     <div class="unit-address">
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ unit.street_address }}, {{ unit.number_address }} - CEP: {{ unit.cep_address }}</span>
+                        <span>{{ unit.street_address }}, {{ unit.number_address }} - {{ unit.neighborhood }}, {{ unit.city }}/{{ unit.state }} - CEP: {{ unit.cep_address }}</span>
                     </div>
 
                     <div class="unit-employees">
@@ -221,6 +226,26 @@
                             <i class="fas fa-hashtag"></i> Número
                         </label>
                         <input type="text" id="unitNumber" name="number_address" class="form-control" placeholder="Ex: 1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="unitNeighborhood" class="form-label"><i class="fas fa-map-signs"></i> Bairro</label>
+                        <input type="text" id="unitNeighborhood" name="neighborhood" class="form-control" placeholder="Ex: Copacabana">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitCity" class="form-label"><i class="fas fa-city"></i> Cidade</label>
+                        <input type="text" id="unitCity" name="city" class="form-control" placeholder="Ex: Rio de Janeiro">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitState" class="form-label"><i class="fas fa-flag-usa"></i> Estado (UF)</label>
+                        <input type="text" id="unitState" name="state" class="form-control" placeholder="Ex: RJ" maxlength="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitWhatsapp" class="form-label"><i class="fab fa-whatsapp"></i> WhatsApp</label>
+                        <input type="text" id="unitWhatsapp" name="whatsapp_number" class="form-control" placeholder="Ex: (21) 99999-8888">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitInstagram" class="form-label"><i class="fab fa-instagram"></i> Instagram Link</label>
+                        <input type="url" id="unitInstagram" name="instagram_link" class="form-control" placeholder="Ex: https://instagram.com/suabarbearia">
                     </div>
                     <div class="form-group">
                         <label for="unitActive" class="form-label">Unidade Ativa</label>
