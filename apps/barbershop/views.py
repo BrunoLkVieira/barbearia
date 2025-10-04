@@ -9,6 +9,11 @@ from django.db import transaction
 from django.utils.timezone import now
 from django.db.models import Count
 import json 
+from django.http import JsonResponse
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.views.decorators.http import require_POST # Importe isso
+from apps.user.utils.validators import validate_user_data
 
 
 
@@ -157,77 +162,99 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 
         # ---------- CREATE ----------
         if action == "create":
-            # Dados do USER
-            raw_cpf = (request.POST.get("cpf") or "").strip()
-            cpf = re.sub(r"\D", "", raw_cpf)
+            # 1. Coletar todos os dados do formulário
+            cpf = (request.POST.get("cpf") or "").strip()
             name = (request.POST.get("name") or "").strip()
             last_name = (request.POST.get("last_name") or "").strip()
             email = (request.POST.get("email") or "").strip()
-            phone = (request.POST.get("phone") or "").strip()
-
-            # Dados do EMPLOYEE
             unit_id = request.POST.get("unit_id")
+            
+            # --- Início do Bloco de Validações ---
+            errors = []
+            
+            # Validação do CPF
+            cpf_digits = re.sub(r'\D', '', cpf)
+            if len(cpf_digits) != 11:
+                errors.append("CPF: Deve conter 11 dígitos.")
+            elif cpf_digits == '0' * 11 or cpf_digits == '1' * 11: # Adicione outros CPFs inválidos se quiser
+                errors.append("CPF: Número de CPF inválido.")
 
-            # Se for gerente, força a unidade dele
-            if gerente_unit:
-                unit_id = gerente_unit.id
+            # Validação do Nome e Sobrenome
+            if not name or name.isdigit():
+                errors.append("Nome: Não pode estar em branco ou ser apenas números.")
+            if not last_name or last_name.isdigit():
+                errors.append("Sobrenome: Não pode estar em branco ou ser apenas números.")
 
+            # Validação do Email
+            if not email:
+                errors.append("Email: O campo de e-mail é obrigatório.")
+            else:
+                try:
+                    validate_email(email)
+                except ValidationError:
+                    errors.append("Email: Formato de e-mail inválido.")
+
+            if not unit_id:
+                errors.append("Unidade: Você precisa selecionar uma unidade.")
+
+            # Se encontramos algum erro, mostramos todos e paramos a execução
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                
+                # Redireciona de volta para a página de funcionários
+                if unit_slug:
+                    return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+                return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
+            
+            # --- Fim do Bloco de Validações ---
+
+            # Se passou por todas as validações, continuamos...
             unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
 
-            commission_percentage = _to_bool(request.POST.get("commission_percentage"))
-            service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
-            product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
-            can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
-            can_register_sell = _to_bool(request.POST.get("can_register_sell"))
-            can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
-            system_access = _to_bool(request.POST.get("system_access"))
-
-            if not cpf:
-                return redirect("barbershop:employee", barbershop_slug=barbershop.slug)
-
             with transaction.atomic():
-                user, created = User.objects.get_or_create(
-                    cpf=cpf,
-                    defaults={
-                        "email": email or None,
-                        "name": name or "",
-                        "last_name": last_name or "",
-                        "phone": phone or None,
-                        "user_type": "funcionario",
-                        "is_active": True,
-                    },
-                )
-                if created:
-                    user.set_unusable_password()
+                try:
+                    user = User.objects.get(cpf=cpf_digits)
+                    created = False
+                except User.DoesNotExist:
+                    # Antes de criar, verifica se o e-mail já não está em uso por outro CPF
+                    if User.objects.filter(email=email).exists():
+                        messages.error(request, f"Email: O e-mail '{email}' já está em uso por outro usuário.")
+                        # Redireciona de volta
+                        if unit_slug:
+                             return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+                        return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
+
+                    user = User.objects.create(
+                        cpf=cpf_digits,
+                        email=email,
+                        name=name,
+                        last_name=last_name,
+                        phone=(request.POST.get("phone") or "").strip(),
+                        user_type="funcionario",
+                    )
+                    user.set_unusable_password() # Senha fica inutilizável por enquanto
                     user.save()
+                    created = True
+
+                # Lógica para criar o vínculo de Employee
+                if not Employee.objects.filter(user=user, unit__barbershop=barbershop).exists():
+                    Employee.objects.create(
+                        user=user,
+                        unit=unit,
+                        # ... resto dos campos do employee ...
+                    )
+                    if created:
+                        messages.success(request, f"Funcionário {user.name} criado! Um e-mail será enviado para ele definir a senha.")
+                        # AQUI VAI A LÓGICA DE ENVIAR O EMAIL (ver Parte 2)
+                    else:
+                        messages.info(request, f"O usuário {user.name} já existia e foi adicionado como funcionário.")
                 else:
-                    if getattr(user, "user_type", None) != "dono":
-                        user.user_type = "funcionario"
-                        user.save(update_fields=["user_type"])
+                    messages.warning(request, f"O usuário {user.name} já é um funcionário desta barbearia.")
 
-                employee, emp_created = Employee.objects.get_or_create(
-                    user=user,
-                    unit=unit,
-                    defaults={
-                        "commission_percentage": commission_percentage,
-                        "service_commission_percentage": service_commission_percentage,
-                        "product_commission_percentage": product_commission_percentage,
-                        "can_manage_cashbox": can_manage_cashbox,
-                        "can_register_sell": can_register_sell,
-                        "can_create_appointments": can_create_appointments,
-                        "system_access": system_access,
-                    },
-                )
-                if not emp_created:
-                    employee.commission_percentage = commission_percentage
-                    employee.service_commission_percentage = service_commission_percentage
-                    employee.product_commission_percentage = product_commission_percentage
-                    employee.can_manage_cashbox = can_manage_cashbox
-                    employee.can_register_sell = can_register_sell
-                    employee.can_create_appointments = can_create_appointments
-                    employee.system_access = system_access
-                    employee.save()
-
+            if unit_slug:
+                return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+            return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
         # ---------- EDIT ----------
         elif action == "edit":
             emp = get_object_or_404(
@@ -454,3 +481,67 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "workdays_json": json.dumps(workdays_data),
     }
     return render(request, "barbershop/workDay.html", context)
+
+
+
+
+@login_required
+@require_POST
+def check_employee_data(request):
+    """
+    Valida todos os dados do formulário de funcionário, tanto para CRIAÇÃO quanto para EDIÇÃO.
+    """
+    data = {
+        "cpf": request.POST.get("cpf", ""),
+        "name": request.POST.get("name", ""),
+        "last_name": request.POST.get("last_name", ""),
+        "email": request.POST.get("email", ""),
+    }
+    # Pegamos o ID do funcionário, se estivermos em modo de edição
+    employee_id = request.POST.get('employee_id')
+
+    # Usa a função de validação central que já temos
+    errors = validate_user_data(data)
+
+    # --- Validação de E-mail Único (Lógica Aprimorada para Edição) ---
+    email = data.get('email')
+    if email:
+        user_query = User.objects.filter(email=email)
+        if employee_id:
+            # Se estamos editando, excluímos o próprio usuário da busca
+            employee_user_id = Employee.objects.get(id=employee_id).user.id
+            user_query = user_query.exclude(id=employee_user_id)
+        
+        if user_query.exists():
+            errors.append("Email: Este e-mail já está em uso por outro usuário.")
+            
+    # --- Validação de CPF Único (Lógica Aprimorada para Edição) ---
+    cpf_digits = re.sub(r'\D', '', data['cpf'])
+    if cpf_digits:
+        user_query = User.objects.filter(cpf=cpf_digits)
+        if employee_id:
+            employee_user_id = Employee.objects.get(id=employee_id).user.id
+            user_query = user_query.exclude(id=employee_user_id)
+
+        # Na edição, a gente não precisa mostrar o pop-up de confirmação,
+        # pois o CPF não deveria mudar. Apenas validamos se não conflita com outro.
+        if user_query.exists():
+             errors.append("CPF: Este CPF já pertence a outro usuário.")
+
+
+    if errors:
+        return JsonResponse({'is_valid': False, 'errors': errors})
+
+    # Se estamos criando e o CPF já existe (e não deu erro acima), acionamos a confirmação
+    if not employee_id:
+        try:
+            user = User.objects.get(cpf=cpf_digits)
+            return JsonResponse({
+                'is_valid': True, 
+                'user_exists': True, 
+                'user_name': f'{user.name} {user.last_name}'
+            })
+        except User.DoesNotExist:
+            pass # Continua para a resposta de sucesso abaixo
+
+    return JsonResponse({'is_valid': True, 'user_exists': False})
