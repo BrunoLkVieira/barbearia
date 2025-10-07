@@ -72,6 +72,28 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+// HEADER DINAMICO
+document.addEventListener("DOMContentLoaded", function() {
+    const currentUrl = window.location.pathname;
+    const navTabs = document.querySelectorAll(".nav-tabs a");
 
+    navTabs.forEach(link => {
+        const href = link.getAttribute("href")?.trim();
+        const tab = link.querySelector(".nav-tab");
+
+        if (!href || !tab) return;
+        tab.classList.remove("active");
+
+        if (
+            currentUrl.startsWith(href) ||
+            (
+                href.includes("barbershop/units") && 
+                (currentUrl.includes("/units") || currentUrl.includes("/funcionarios") || currentUrl.includes("/funcionamento"))
+            )
+        ) {
+            tab.classList.add("active");
+        }
+    });
+});
 
 

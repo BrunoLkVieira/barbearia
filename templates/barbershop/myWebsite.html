@@ -18,6 +18,19 @@
 <body>
     {% include "geral/header.html" %}
     
+    <div class="nav-bar">
+        {% include "geral/nav.html" %}
+        <div class="nav-content">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value">{{ active_units_count|default:0 }}</div>
+                    <div class="stat-label">Unidades</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
     <div class="main-content">
         <!-- Editor de Landing Page -->
         <div class="section">
