@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'apps.user',
     'apps.system_plan',
     'apps.barbershop',
+    'apps.product',
+    'apps.service',
     'widget_tweaks',
     
     

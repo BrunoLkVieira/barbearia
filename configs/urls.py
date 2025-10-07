@@ -14,7 +14,8 @@ urlpatterns = [
     path("", include("apps.system_plan.urls",namespace='system_plan')),
     path("", include("apps.system_plan.urls",namespace='system_plan')),
     path("", include("apps.barbershop.urls",namespace='barbershop')),
-
+    path('catalogo/', include('apps.product.urls', namespace='products')),
+    path('catalogo/', include('apps.service.urls', namespace='services')),
 ]
 
 # Servir arquivos de media em desenvolvimento
