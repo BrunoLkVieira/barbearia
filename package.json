@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"refactor: reajuste no header dinamico\" && git push",
+    "git": "git add . && git commit -m \"refactor: adicao de outros campos de foto\" && git push",
     "pull": "git pull",
     "go to main": "git checkout main",
     "got to frontend": "git checkout frontend"
