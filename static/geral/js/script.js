@@ -80,20 +80,25 @@ document.addEventListener("DOMContentLoaded", function() {
     navTabs.forEach(link => {
         const href = link.getAttribute("href")?.trim();
         const tab = link.querySelector(".nav-tab");
-
         if (!href || !tab) return;
+
         tab.classList.remove("active");
 
-        if (
-            currentUrl.startsWith(href) ||
-            (
-                href.includes("barbershop/units") && 
-                (currentUrl.includes("/units") || currentUrl.includes("/funcionarios") || currentUrl.includes("/funcionamento"))
-            )
-        ) {
+        // Detecta se a URL atual está em uma das seções da barbearia
+        const isBarbershopSection =
+            /\/unidades\/|\/funcionarios\/|\/funcionamento\//.test(currentUrl);
+
+        // Se for uma dessas rotas, "Minha Barbearia" deve ficar ativa
+        if (isBarbershopSection && href.includes("unidades")) {
+            tab.classList.add("active");
+        }
+        // Caso contrário, ativa a aba correspondente normalmente
+        else if (currentUrl.includes(href.replace(/^.*?:\/\//, ''))) {
             tab.classList.add("active");
         }
     });
 });
+
+
 
 
