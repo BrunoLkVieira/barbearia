@@ -484,27 +484,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
 
 
 @login_required
-@owner_or_employee_required
-def MyWebsiteView(request, barbershop_slug):
-    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-
-    units = Unit.objects.filter(barbershop=barbershop)
-
-    context = {
-        "barbershop": barbershop,
-        "barbershop_slug": barbershop_slug,
-        "units": units,
-        "active_units_count": units.filter(is_active=True).count(),
-    }
-
-    return render(request, "barbershop/myWebsite.html", context)
-
-
-
-
-
-
-@login_required
 @require_POST
 def check_employee_data(request):
     """
@@ -564,3 +543,20 @@ def check_employee_data(request):
             pass # Continua para a resposta de sucesso abaixo
 
     return JsonResponse({'is_valid': True, 'user_exists': False})
+
+
+@login_required
+@owner_or_employee_required
+def MyWebsiteView(request, barbershop_slug):
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+
+    units = Unit.objects.filter(barbershop=barbershop)
+
+    context = {
+        "barbershop": barbershop,
+        "barbershop_slug": barbershop_slug,
+        "units": units,
+        "active_units_count": units.filter(is_active=True).count(),
+    }
+
+    return render(request, "barbershop/myWebsite.html", context)

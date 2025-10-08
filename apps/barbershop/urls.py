@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UnitView, EmployeeView, WorkDayView, check_employee_data 
+from .views import UnitView, EmployeeView, WorkDayView, check_employee_data, MyWebsiteView
 
 app_name = "barbershop"
 
@@ -15,6 +15,7 @@ urlpatterns = [
     path('<slug:barbershop_slug>/funcionamento/', WorkDayView, name='workday_general'),
     path('<slug:barbershop_slug>/<slug:unit_slug>/funcionamento/', WorkDayView, name='workday_unit'),
 
-    path('check-employee-data/', check_employee_data, name='check_employee_data')
-    path('<slug:barbershop_slug>/funcionamento/', WorkDayView, name='workday'),
+    path('check-employee-data/', check_employee_data, name='check_employee_data'),
+    path('<slug:barbershop_slug>/website/', MyWebsiteView, name='myWebsite')
+    
 ]
