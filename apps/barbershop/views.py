@@ -483,6 +483,25 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     return render(request, "barbershop/workDay.html", context)
 
 
+@login_required
+@owner_or_employee_required
+def MyWebsiteView(request, barbershop_slug):
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+
+    units = Unit.objects.filter(barbershop=barbershop)
+
+    context = {
+        "barbershop": barbershop,
+        "barbershop_slug": barbershop_slug,
+        "units": units,
+        "active_units_count": units.filter(is_active=True).count(),
+    }
+
+    return render(request, "barbershop/myWebsite.html", context)
+
+
+
+
 
 
 @login_required

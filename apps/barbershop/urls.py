@@ -16,4 +16,5 @@ urlpatterns = [
     path('<slug:barbershop_slug>/<slug:unit_slug>/funcionamento/', WorkDayView, name='workday_unit'),
 
     path('check-employee-data/', check_employee_data, name='check_employee_data')
+    path('<slug:barbershop_slug>/funcionamento/', WorkDayView, name='workday'),
 ]
