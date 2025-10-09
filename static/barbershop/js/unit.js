@@ -90,3 +90,12 @@ deleteButtons.forEach(button => {
        
     });
 });
+
+ const cepInput = document.getElementById('unitCep');
+
+  cepInput.addEventListener('input', function() {
+    // Limita o valor a 8 dígitos
+    if (this.value.length > 8) {
+      this.value = this.value.slice(0, 8);
+    }
+  });
