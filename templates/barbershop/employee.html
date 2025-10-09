@@ -146,7 +146,7 @@
                                 </div>
 
                                     <!-- Botão Deletar -->
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');"">
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
                                         {% csrf_token %}
                                         <input type="hidden" name="employee_id" value="{{ emp.id }}">
                                         <input type="hidden" name="action" value="delete">
@@ -179,7 +179,7 @@
     </footer>
 
     <!-- Modal de Funcionário -->
-    <div id="employeeModal" class="modal">
+    <div id="employeeModal" class="modal" autocomplete="off">
         <div class="modal-content">
             <form method="POST" id="employeeForm">
                 {% csrf_token %}
@@ -194,24 +194,29 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="employeeCPF">CPF</label>
-                        <input type="text" name="cpf" id="employeeCPF" class="form-control" placeholder="Digite seu CPF" required>
+                        <input type="number" name="cpf" id="employeeCPF" class="form-control" placeholder="Digite seu CPF" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeName">Nome</label>
-                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" required>
+                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeLastName">Sobrenome</label>
-                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" required>
+                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeEmail">Email</label>
                         <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="Digite o email" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeePhone">Telefone</label>
-                        <input type="tel" name="phone" id="employeePhone" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="number" name="phone" id="employeePhone" class="form-control" placeholder="00000000000">
                     </div>
+
                     <div class="form-group">
                         <label for="employeeUnit">Unidade</label>
                         <select name="unit_id" id="employeeUnit" class="form-select" required>

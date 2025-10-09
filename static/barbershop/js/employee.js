@@ -163,19 +163,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const closeButton = modal.querySelector('.close-btn');
-    if (closeButton) {
-        closeButton.addEventListener('click', closeEmployeeModal);
-    }
+});
 
-    const cancelButton = modal.querySelector('.btn-outline');
-    if (cancelButton) {
-        cancelButton.addEventListener('click', closeEmployeeModal);
-    }
+// Limite no campo cpf
+const cpfInput = document.getElementById('employeeCPF');
 
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeEmployeeModal();
-        }
-    });
+cpfInput.addEventListener('input', function() {
+    if (this.value.length > 11) {
+    this.value = this.value.slice(0, 11);
+    }
+});
+
+// Limite campo telefone
+const cellInput = document.getElementById('employeePhone');
+
+cellInput.addEventListener('input', function() {
+    if (this.value.length > 11) {
+    this.value = this.value.slice(0, 11);
+    }
 });
