@@ -214,25 +214,4 @@
         transform: scale(1.1);
     }
 
-
-
-
-    .nav-tabs {
-        flex-wrap: wrap;
-    }
-    
-    .stats {
-        display: none;
-    }
-    
-    .page-actions {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 15px;
-    }
-    
-    .page-actions .btn {
-        width: 100%;
-        justify-content: center;
-    }
 }

@@ -28,7 +28,8 @@
     max-height: 90vh;
     overflow-y: auto;
     transform: translateY(20px);
-    transition: all 0.4s ease;
+    animation: modalOpen 0.4s ease-out;
+    overflow-y: hidden;
 }
 
 .modal-overlay.active .modal {
@@ -55,8 +56,10 @@
 }
 
 .modal-body {
-    padding: 30px;
-    background-color: white;
+    padding: 25px;
+        height: 50vh;
+        overflow-y: auto;
+        background: white;
 }
 
 .form-group {
