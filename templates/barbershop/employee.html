@@ -201,13 +201,35 @@
                         </div>
             
                         <div class="employee-actions">
-                            <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
+                            <div class="action-btn edit" 
+                                title="Editar employeee" 
+                                onclick="openEmployeeModal('edit')"
+                                data-id="{{ emp.id }}"
+                                data-name="{{ emp.user.name }}"
+                                data-lastname="{{ emp.user.last_name }}"
+                                data-email="{{ emp.user.email }}"
+                                data-phone="{{ emp.user.phone|default:'' }}"
+                                data-cpf="{{ emp.user.cpf }}"
+                                data-active="{{ emp.user.is_active|yesno:'true,false' }}"
+                                data-unit="{{ emp.unit.id }}"
+                                data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
+                                data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
+                                data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
+                                data-system-access="{{ emp.system_access|yesno:'true,false' }}">
                                 <i class="fas fa-edit"></i>
-                            </div>
-            
-                            <div class="action-btn delete" title="Excluir employeee">
-                                <i class="fas fa-trash"></i>
-                            </div>
+                            </div>                            
+
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                <input type="hidden" name="action" value="delete">
+                                <button type="submit" class="action-btn delete" title="Excluir funcionario">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 {% empty %}
