@@ -162,7 +162,8 @@
                          <div class="day-off-date">
                             {{ absence.start_date|date:"d/m/Y" }}
                             {% if absence.end_date and absence.end_date != absence.start_date %}
-                                até {{ absence.end_date|date:"d/m/Y" }}
+                                <span>até</span>
+                                <div class="end-absence-day">{{ absence.end_date|date:"d/m/Y" }}</div>
                             {% endif %}
                          </div>
                          <div class="day-off-reason">{{ absence.employee.user.name }}: {{ absence.reason }}</div>

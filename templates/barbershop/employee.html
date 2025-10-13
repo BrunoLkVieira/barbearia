@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newEmployee.css' %}">
+
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
@@ -26,6 +27,14 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
+                 <div class="unit-filter">
+                    <select>
+                        {% for unit in units %}
+                            <option>{{ unit.name }}</option>
+                        {% endfor %}
+                        <option>Geral</option>
+                    </select>
+                </div> 
                 <div class="stat-box">
                     <div class="stat-value">{{ employees.count }}</div>
                     <div class="stat-label">Funcionarios</div>
@@ -72,18 +81,13 @@
     </div>
 
 
-
-
-
-
-
     <div class="main-content">
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
                     <i class="fas fa-users-cog"></i> Gerenciamento de Funcionários
                 </div>
-                <button class="add-employee-btn">
+                <button class="add-employee-btn" onclick="openEmployeeModal()">
                     <i class="fas fa-plus"></i> Novo Funcionário
                 </button>
             </div>
@@ -123,30 +127,28 @@
                             <td>
                                 <div class="employee-actions">
                                     <!-- Botão Editar -->
-                                    <div class="action-btn edit-btn"
-     
-                                    data-id="{{ emp.id }}"
-                                    data-name="{{ emp.user.name }}"
-                                    data-lastname="{{ emp.user.last_name }}"
-                                    data-email="{{ emp.user.email }}"
-                                    data-phone="{{ emp.user.phone|default:'' }}"
-                                    data-cpf="{{ emp.user.cpf }}"
-                                    data-active="{{ emp.user.is_active|yesno:'true,false' }}"
-                                
-                                    data-unit="{{ emp.unit.id }}"
-                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                    data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
-                                    data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
-                                    data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
-                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
-                                
-                                    <i class="fas fa-edit"></i>
-                                </div>
+                                    <div class="action-btn edit-btn"     
+                                        data-id="{{ emp.id }}"
+                                        data-name="{{ emp.user.name }}"
+                                        data-lastname="{{ emp.user.last_name }}"
+                                        data-email="{{ emp.user.email }}"
+                                        data-phone="{{ emp.user.phone|default:'' }}"
+                                        data-cpf="{{ emp.user.cpf }}"
+                                        data-active="{{ emp.user.is_active|yesno:'true,false' }}"
+                                        data-unit="{{ emp.unit.id }}"
+                                        data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                        data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                        data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                        data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
+                                        data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
+                                        data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
+                                        data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                    
+                                        <i class="fas fa-edit"></i>
+                                    </div>
 
                                     <!-- Botão Deletar -->
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');"">
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
                                         {% csrf_token %}
                                         <input type="hidden" name="employee_id" value="{{ emp.id }}">
                                         <input type="hidden" name="action" value="delete">
@@ -164,6 +166,124 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <div class="employees-table-container">
+                <div class="table-header">
+                    <div>Cliente</div>
+                    <div>Contato</div>
+                    <div>E-mail</div>
+                    <div>Visitas</div>
+                    <div>Última visita</div>
+                    <div>Ações</div>
+                </div>
+                
+                <!-- Funcionario 1 -->
+                <div class="table-row">
+                    <div class="employee-cell">
+                        <div class="employee-avatar">JS</div>
+                        <div class="employee-info">
+                            <div class="employee-name">João Silva</div>
+                            <div class="employee-plan">
+                                <i class="fas fa-clock"></i>
+                                <span>Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="employee-phone">
+                        <span class="cell-label">Telefone:</span>
+                        <i class="fas fa-phone"></i>
+                        <span>(11) 98765-4321</span>
+                    </div>
+
+                    <div class="employee-role">
+                        <span class="cell-label">Cargo:</span>
+                        <i class="fas fa-user-tie"></i>
+                        <div class="employee-type type-owner">Dono</div>
+                    </div>
+        
+                    <div class="employee-actions">
+                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
+                            <i class="fas fa-edit"></i>
+                        </div>
+        
+                        <div class="action-btn delete" title="Excluir employeee">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-row">
+                    <div class="employee-cell">
+                        <div class="employee-avatar">LG</div>
+                        <div class="employee-info">
+                            <div class="employee-name">Lucas Gomes</div>
+                            <div class="employee-plan">
+                                <i class="fas fa-clock"></i>
+                                <span>Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="employee-phone">
+                        <span class="cell-label">Telefone:</span>
+                        <i class="fas fa-phone"></i>
+                        <span>(11) 98765-4321</span>
+                    </div>
+
+                    <div class="employee-role">
+                        <span class="cell-label">Cargo:</span>
+                        <i class="fas fa-user-tie"></i>
+                        <div class="employee-type type-barber">Barbeiro</div>
+                    </div>
+        
+                    <div class="employee-actions">
+                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
+                            <i class="fas fa-edit"></i>
+                        </div>
+        
+                        <div class="action-btn delete" title="Excluir employeee">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-row">
+                    <div class="employee-cell">
+                        <div class="employee-avatar">AM</div>
+                        <div class="employee-info">
+                            <div class="employee-name">Ana Mendes</div>
+                            <div class="employee-plan">
+                                <i class="fas fa-clock"></i>
+                                <span>Ativo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="employee-phone">
+                        <span class="cell-label">Telefone:</span>
+                        <i class="fas fa-phone"></i>
+                        <span>(11) 98765-4321</span>
+                    </div>
+
+                    <div class="employee-role">
+                        <span class="cell-label">Cargo:</span>
+                        <i class="fas fa-user-tie"></i>
+                        <div class="employee-type type-cashier">Caixa</div>
+                    </div>
+        
+                    <div class="employee-actions">
+                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
+                            <i class="fas fa-edit"></i>
+                        </div>
+        
+                        <div class="action-btn delete" title="Excluir employeee">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                    </div>
+                </div>
+              
+            </div>
         </div>
     </div>
     
@@ -179,7 +299,7 @@
     </footer>
 
     <!-- Modal de Funcionário -->
-    <div id="employeeModal" class="modal">
+    <div id="employeeModal" class="modal" autocomplete="off">
         <div class="modal-content">
             <form method="POST" id="employeeForm">
                 {% csrf_token %}
@@ -194,24 +314,29 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="employeeCPF">CPF</label>
-                        <input type="text" name="cpf" id="employeeCPF" class="form-control" placeholder="Digite seu CPF" required>
+                        <input type="number" name="cpf" id="employeeCPF" class="form-control" placeholder="Digite seu CPF" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeName">Nome</label>
-                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" required>
+                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeLastName">Sobrenome</label>
-                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" required>
+                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeeEmail">Email</label>
                         <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="Digite o email" required>
                     </div>
+
                     <div class="form-group">
                         <label for="employeePhone">Telefone</label>
-                        <input type="tel" name="phone" id="employeePhone" class="form-control" placeholder="(00) 00000-0000">
+                        <input type="number" name="phone" id="employeePhone" class="form-control" placeholder="00000000000">
                     </div>
+
                     <div class="form-group">
                         <label for="employeeUnit">Unidade</label>
                         <select name="unit_id" id="employeeUnit" class="form-select" required>
