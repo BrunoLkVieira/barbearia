@@ -44,13 +44,11 @@
     </div>
     
     <div class="pages-options-Container">
-
         {% if request.user.user_type == "dono" %}
             <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
                 <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
             </a>
         {% endif %}
-
 
         {% if request.user.user_type != "funcionario" %}    
             <a href="">
@@ -59,8 +57,6 @@
 
         {% endif %}
 
-
-
         {% if request.user.user_type != "funcionario" %}    
             {% if request.user.user_type == "dono" %}
                 <!-- Dono pode ver geral -->
@@ -68,16 +64,13 @@
                     <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
                 </a>
             
-
                 {% elif request.user.user_type == "gerente" %}
                     <!-- Gerente só vê a unidade dele -->
                     <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
                         <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
                     </a>
             {% endif %}
-
         {% endif %}
-      
     </div>
 
 
@@ -177,112 +170,51 @@
                     <div>Ações</div>
                 </div>
                 
-                <!-- Funcionario 1 -->
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">JS</div>
-                        <div class="employee-info">
-                            <div class="employee-name">João Silva</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
+                {% for emp in employees %}
+                    <!-- Funcionario 1 -->
+                    <div class="table-row">
+                        <div class="employee-cell">
+                            <div class="employee-avatar">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
+                            <div class="employee-info">
+                                <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                                <div class="employee-plan">
+                                    <i class="fas fa-clock"></i>
+                                    {% if emp.user.is_active %}
+                                        <span>Ativo</span>
+                                    {% else %}
+                                        <span>Inativo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="employee-phone">
+                            <span class="cell-label">Telefone:</span>
+                            <i class="fas fa-phone"></i>
+                            <span>{{ emp.user.phone|default:"---" }}</span>
+                        </div>
+
+                        <div class="employee-role">
+                            <span class="cell-label">Cargo:</span>
+                            <i class="fas fa-user-tie"></i>
+                            <div class="employee-type type-owner">Dono</div>
+                        </div>
+            
+                        <div class="employee-actions">
+                            <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
+                                <i class="fas fa-edit"></i>
+                            </div>
+            
+                            <div class="action-btn delete" title="Excluir employeee">
+                                <i class="fas fa-trash"></i>
                             </div>
                         </div>
                     </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-owner">Dono</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">LG</div>
-                        <div class="employee-info">
-                            <div class="employee-name">Lucas Gomes</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-barber">Barbeiro</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="table-row">
-                    <div class="employee-cell">
-                        <div class="employee-avatar">AM</div>
-                        <div class="employee-info">
-                            <div class="employee-name">Ana Mendes</div>
-                            <div class="employee-plan">
-                                <i class="fas fa-clock"></i>
-                                <span>Ativo</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="employee-phone">
-                        <span class="cell-label">Telefone:</span>
-                        <i class="fas fa-phone"></i>
-                        <span>(11) 98765-4321</span>
-                    </div>
-
-                    <div class="employee-role">
-                        <span class="cell-label">Cargo:</span>
-                        <i class="fas fa-user-tie"></i>
-                        <div class="employee-type type-cashier">Caixa</div>
-                    </div>
-        
-                    <div class="employee-actions">
-                        <div class="action-btn edit" title="Editar employeee" onclick="openEmployeeModal('edit')">
-                            <i class="fas fa-edit"></i>
-                        </div>
-        
-                        <div class="action-btn delete" title="Excluir employeee">
-                            <i class="fas fa-trash"></i>
-                        </div>
-                    </div>
-                </div>
-              
+                {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;">Nenhum funcionário cadastrado.</td>
+                    </tr>
+                {% endfor %}
             </div>
         </div>
     </div>
