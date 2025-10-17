@@ -178,7 +178,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        text-align: center;
         cursor: pointer;
+        color: #e67e22;
         transition: all 0.3s ease;
     }
 
