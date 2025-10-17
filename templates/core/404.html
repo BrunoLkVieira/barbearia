@@ -227,7 +227,8 @@
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="reportForm">
+                <form id="reportForm" autocomplete="off">
+                    <input type="hidden" id="error-type" value="404">
                     <div class="form-group">
                         <label for="user-email">Seu Email</label>
                         <input type="email" id="user-email" required placeholder="Seu email para contato">
@@ -245,44 +246,82 @@
         </div>
     </div>
     <script>
-        function reportError() {
-            alert("Obrigado por reportar o erro! Nossa equipe será notificada.");
-        }
-        // Abrir modal
-        document.querySelector('.btn').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('reportModal').style.display = 'block';
-        });
+    // Abrir modal
+    function openReportModal() {
+        document.getElementById('reportModal').style.display = 'block';
+    }
 
-        // Fechar modal
-        document.querySelectorAll('.close-modal').forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('reportModal').style.display = 'none';
-            });
-        });
-
-        // Enviar report
-        document.getElementById('submitReport').addEventListener('click', function() {
-            const userEmail = document.getElementById('user-email').value;
-            const errorMessage = document.getElementById('error-message').value;
-
-            if (!userEmail) {
-                alert('Por favor, preencha seu email.');
-                return;
-            }
-
-            const subject = 'Reportar Erro 404';
-            const body = `Olá, encontrei um erro 404 na página. Meu email é ${userEmail}. ${errorMessage ? `Mensagem: ${errorMessage}` : ''}`;
-
-            // Codificar para URL
-            const mailtoLink = `mailto:orblycode@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-            // Abrir o cliente de email
-            window.location.href = mailtoLink;
-            reportError()
-            // Fechar o modal
+    // Fechar modal
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
             document.getElementById('reportModal').style.display = 'none';
+            document.getElementById('reportForm').reset();
         });
+    });
+
+    // Enviar report
+    document.getElementById('submitReport').addEventListener('click', async function() {
+        const userEmail = document.getElementById('user-email').value;
+        const errorMessage = document.getElementById('error-message').value;
+        const errorType = document.getElementById('error-type').value; // Pega o tipo de erro
+
+        if (!userEmail) {
+            alert('Por favor, preencha seu email.');
+            return;
+        }
+
+        // Mostrar loading
+        this.innerHTML = 'Enviando...';
+        this.disabled = true;
+
+        try {
+            const response = await fetch('/report-error/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    email: userEmail,
+                    message: errorMessage,
+                    error_type: errorType, // Envia o tipo de erro
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status === 'success') {
+                alert('Obrigado por reportar o erro! Nossa equipe será notificada.');
+                document.getElementById('reportModal').style.display = 'none';
+                document.getElementById('reportForm').reset();
+            } else {
+                alert('Erro ao enviar: ' + (data.message || 'Tente novamente.'));
+            }
+        } catch (error) {
+            alert('Falha na conexão com o servidor.');
+            console.error('Erro:', error);
+        } finally {
+            // Restaurar botão
+            this.innerHTML = 'Enviar';
+            this.disabled = false;
+        }
+    });
+
+    // Função auxiliar para pegar CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
     </script>
 </body>
 </html>

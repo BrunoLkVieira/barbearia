@@ -16,6 +16,7 @@ urlpatterns = [
     path("", include("apps.barbershop.urls",namespace='barbershop')),
     path('catalogo/', include('apps.product.urls', namespace='products')),
     path('catalogo/', include('apps.service.urls', namespace='services')),
+     path('', include('apps.core.urls')),
 ]
 
 # Servir arquivos de media em desenvolvimento
