@@ -49,8 +49,17 @@ def report_error(request):
         "message": "Método não permitido"
     }, status=405)
 
+def error400(request, exception):
+    return render(request, 'core/400.html', status=400)
+
+def error403(request, exception):
+    return render(request, 'core/403.html', status=403)
+
 def error404(request, exception):
     return render(request, 'core/404.html', status=404)
 
 def error500(request):
     return render(request, 'core/500.html', status=500)
+
+def error503(request):
+    return render(request, 'core/503.html', status=503)

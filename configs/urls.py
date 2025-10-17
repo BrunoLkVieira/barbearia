@@ -5,7 +5,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from django.conf.urls import handler404, handler500
+from django.conf.urls import handler404, handler500, handler400, handler403
 from apps.core import views as core_views
 
 urlpatterns = [
@@ -23,5 +23,10 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+handler400 = core_views.error400
+handler403 = core_views.error403
 handler404 = core_views.error404
 handler500 = core_views.error500
+handler503 = core_views.error503
+
+
