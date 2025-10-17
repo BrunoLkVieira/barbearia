@@ -6,7 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from django.conf.urls import handler404, handler500
-from apps.core import views
+from apps.core import views as core_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,5 +22,5 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler404 = views.error404
-handler500 = views.error500
+handler404 = core_views.error404
+handler500 = core_views.error500

@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', cast=bool)
-
-ALLOWED_HOSTS = []
+# DEBUG = config('DEBUG', cast=bool)
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -171,6 +171,7 @@ USE_TZ = True     # Uso de timezone
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles' #python manage.py collectstatic
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]

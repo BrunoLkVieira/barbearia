@@ -253,9 +253,9 @@
     </footer>
 
     <!-- Modal de Funcionário -->
-    <div id="employeeModal" class="modal" autocomplete="off">
+    <div id="employeeModal" class="modal">
         <div class="modal-content">
-            <form method="POST" id="employeeForm">
+            <form method="POST" id="employeeForm" autocomplete="off">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
                 <input type="hidden" name="employee_id" id="employeeId">
