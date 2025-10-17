@@ -98,6 +98,7 @@
                     <tr>
                         <th>Funcionário</th>
                         <th>Unidade</th>
+                        <th>Cargo</th>
                         <th>Status</th>
                         <th>Celular</th>
                         <th>Ações</th>
@@ -116,9 +117,22 @@
                                 </div>
                             </td>
                             <td>{{ emp.unit.name }}</td>
+
+                            <td>
+                                {% for role in emp.roles.all %}
+                                    <span class="employee-type type-barber" style="margin-right: 4px; display: inline-block;">
+                                        {{ role.get_occupation_display }}
+                                    </span>
+                                {% empty %}
+                                    <span class="employee-type type-cashier">Nenhum</span>
+                                {% endfor %}
+                            </td>
+
+
+
                             <td>
                                 {% if emp.user.is_active %}
-                                    <span class="employee-type type-barber">Ativo</span>
+                                    <span class="employee-type<span class="employee-type type-barber" type-barber">Ativo</span>
                                 {% else %}
                                     <span class="employee-type type-cashier">Inativo</span>
                                 {% endif %}
@@ -127,28 +141,28 @@
                             <td>
                                 <div class="employee-actions">
                                     <!-- Botão Editar -->
-                                    <div class="action-btn edit-btn"     
-                                        data-id="{{ emp.id }}"
-                                        data-name="{{ emp.user.name }}"
-                                        data-lastname="{{ emp.user.last_name }}"
-                                        data-email="{{ emp.user.email }}"
-                                        data-phone="{{ emp.user.phone|default:'' }}"
-                                        data-cpf="{{ emp.user.cpf }}"
-                                        data-active="{{ emp.user.is_active|yesno:'true,false' }}"
-                                        data-unit="{{ emp.unit.id }}"
-                                        data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                        data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                        data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                        data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
-                                        data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
-                                        data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
-                                        data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                   <div class="action-btn edit-btn"
+                                    data-id="{{ emp.id }}"
+                                    data-name="{{ emp.user.name }}"
+                                    data-lastname="{{ emp.user.last_name }}"
+                                    data-email="{{ emp.user.email }}"
+                                    data-phone="{{ emp.user.phone|default:'' }}"
+                                    data-cpf="{{ emp.user.cpf }}"
+                                    data-unit="{{ emp.unit.id }}"
+                                    data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                     
-                                        <i class="fas fa-edit"></i>
-                                    </div>
+                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                    data-can-cashbox="{{ emp.can_manage_cashbox|yesno:'true,false' }}"
+                                    data-can-sell="{{ emp.can_register_sell|yesno:'true,false' }}"
+                                    data-can-appointments="{{ emp.can_create_appointments|yesno:'true,false' }}"
+                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                    <i class="fas fa-edit"></i>
+                                </div>
 
                                     <!-- Botão Deletar -->
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir este funcionário?');">
                                         {% csrf_token %}
                                         <input type="hidden" name="employee_id" value="{{ emp.id }}">
                                         <input type="hidden" name="action" value="delete">
@@ -344,6 +358,17 @@
                                 <option value="{{ unit.id }}">{{ unit.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Cargos (selecione um ou mais)</label>
+                        <div class="roles-checkbox-group">
+                            {% for value, display_name in role_choices %}
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="roles" value="{{ value }}"> {{ display_name }}
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
                 
                     <!-- Configurações de funcionário -->

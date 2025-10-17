@@ -181,3 +181,21 @@
  
      
  }
+
+ /* Em barbershop/css/desktop/modals/newEmployee.css */
+.roles-checkbox-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 5px;
+}

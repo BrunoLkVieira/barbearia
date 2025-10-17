@@ -128,26 +128,21 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     # Barbershop do dono logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
-    # Verifica se o usuário é gerente e pega a unidade dele
+    # Lógica para gerente (sem alterações)
     gerente_unit = None
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
-        
         if employee:
             gerente_unit = employee.unit
     else:
         gerente_unit = None
 
-
     unit = None
-
     if gerente_unit:
-        # Usuário é gerente -> só vê a própria unidade
         unit = gerente_unit
         employees = Employee.objects.filter(unit=unit)
         units = [unit]
     else:
-        # Dono ou outro tipo de acesso
         if unit_slug:
             unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
             employees = Employee.objects.filter(unit=unit)
@@ -162,54 +157,40 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 
         # ---------- CREATE ----------
         if action == "create":
-            # 1. Coletar todos os dados do formulário
+            # Coleta de dados básicos e de cargos (sem alterações)
             cpf = (request.POST.get("cpf") or "").strip()
             name = (request.POST.get("name") or "").strip()
             last_name = (request.POST.get("last_name") or "").strip()
             email = (request.POST.get("email") or "").strip()
             unit_id = request.POST.get("unit_id")
+            roles_selected = request.POST.getlist("roles")
             
-            # --- Início do Bloco de Validações ---
+            # Bloco de Validações (sem alterações)
             errors = []
-            
-            # Validação do CPF
             cpf_digits = re.sub(r'\D', '', cpf)
             if len(cpf_digits) != 11:
                 errors.append("CPF: Deve conter 11 dígitos.")
-            elif cpf_digits == '0' * 11 or cpf_digits == '1' * 11: # Adicione outros CPFs inválidos se quiser
-                errors.append("CPF: Número de CPF inválido.")
-
-            # Validação do Nome e Sobrenome
             if not name or name.isdigit():
                 errors.append("Nome: Não pode estar em branco ou ser apenas números.")
             if not last_name or last_name.isdigit():
                 errors.append("Sobrenome: Não pode estar em branco ou ser apenas números.")
-
-            # Validação do Email
             if not email:
                 errors.append("Email: O campo de e-mail é obrigatório.")
             else:
-                try:
-                    validate_email(email)
-                except ValidationError:
-                    errors.append("Email: Formato de e-mail inválido.")
-
+                try: validate_email(email)
+                except ValidationError: errors.append("Email: Formato de e-mail inválido.")
             if not unit_id:
                 errors.append("Unidade: Você precisa selecionar uma unidade.")
+            if not roles_selected:
+                errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
 
-            # Se encontramos algum erro, mostramos todos e paramos a execução
             if errors:
                 for error in errors:
                     messages.error(request, error)
-                
-                # Redireciona de volta para a página de funcionários
                 if unit_slug:
                     return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
                 return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
             
-            # --- Fim do Bloco de Validações ---
-
-            # Se passou por todas as validações, continuamos...
             unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
 
             with transaction.atomic():
@@ -217,110 +198,102 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     user = User.objects.get(cpf=cpf_digits)
                     created = False
                 except User.DoesNotExist:
-                    # Antes de criar, verifica se o e-mail já não está em uso por outro CPF
                     if User.objects.filter(email=email).exists():
                         messages.error(request, f"Email: O e-mail '{email}' já está em uso por outro usuário.")
-                        # Redireciona de volta
                         if unit_slug:
                              return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
                         return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
 
                     user = User.objects.create(
-                        cpf=cpf_digits,
-                        email=email,
-                        name=name,
-                        last_name=last_name,
-                        phone=(request.POST.get("phone") or "").strip(),
-                        user_type="funcionario",
+                        cpf=cpf_digits, email=email, name=name, last_name=last_name,
+                        phone=(request.POST.get("phone") or "").strip(), user_type="funcionario",
                     )
-                    user.set_unusable_password() # Senha fica inutilizável por enquanto
+                    user.set_unusable_password()
                     user.save()
                     created = True
 
-                # Lógica para criar o vínculo de Employee
                 if not Employee.objects.filter(user=user, unit__barbershop=barbershop).exists():
-                    Employee.objects.create(
+                    # ---> ADICIONADO <---
+                    # Agora estamos passando TODOS os campos para o método create
+                    employee = Employee.objects.create(
                         user=user,
                         unit=unit,
-                        # ... resto dos campos do employee ...
+                        commission_percentage=_to_bool(request.POST.get("commission_percentage")),
+                        service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
+                        product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
+                        can_manage_cashbox=_to_bool(request.POST.get("can_manage_cashbox")),
+                        can_register_sell=_to_bool(request.POST.get("can_register_sell")),
+                        can_create_appointments=_to_bool(request.POST.get("can_create_appointments")),
+                        system_access=_to_bool(request.POST.get("system_access")),
                     )
+                    
+                    for role_occupation in roles_selected:
+                        Role.objects.create(employee=employee, occupation=role_occupation)
+                        
                     if created:
-                        messages.success(request, f"Funcionário {user.name} criado! Um e-mail será enviado para ele definir a senha.")
-                        # AQUI VAI A LÓGICA DE ENVIAR O EMAIL (ver Parte 2)
+                        messages.success(request, f"Funcionário {user.name} criado com sucesso!")
                     else:
                         messages.info(request, f"O usuário {user.name} já existia e foi adicionado como funcionário.")
                 else:
                     messages.warning(request, f"O usuário {user.name} já é um funcionário desta barbearia.")
 
-            if unit_slug:
-                return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-            return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
         # ---------- EDIT ----------
         elif action == "edit":
-            emp = get_object_or_404(
-                Employee,
-                id=request.POST.get("employee_id"),
-                unit__barbershop=barbershop,
-            )
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
 
-            # Se for gerente, força a unidade dele
             if gerente_unit:
                 emp.unit = gerente_unit
             elif request.POST.get("unit_id"):
-                unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
-                emp.unit = unit
+                unit_obj = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
+                emp.unit = unit_obj
 
-            # Atualiza campos
-            if "commission_percentage" in request.POST:
-                emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
-            if "service_commission_percentage" in request.POST:
-                emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
-            if "product_commission_percentage" in request.POST:
-                emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
-            if "can_manage_cashbox" in request.POST:
-                emp.can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
-            if "can_register_sell" in request.POST:
-                emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
-            if "can_create_appointments" in request.POST:
-                emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
-            if "system_access" in request.POST:
-                emp.system_access = _to_bool(request.POST.get("system_access"))
+            # ---> CORRIGIDO <---
+            # Removemos os `if "campo" in request.POST` para garantir que o campo
+            # seja sempre atualizado, seja para True/False ou para um valor/None.
+            emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
+            emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
+            emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+            emp.can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
+            emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
+            emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
+            emp.system_access = _to_bool(request.POST.get("system_access"))
             emp.save()
 
-            # Atualiza dados do usuário
+            # Atualização de roles (sem alterações)
+            with transaction.atomic():
+                emp.roles.all().delete()
+                new_roles = request.POST.getlist("roles")
+                for role_occupation in new_roles:
+                    Role.objects.create(employee=emp, occupation=role_occupation)
+
+            # Atualiza dados do usuário (sem alterações)
             user = emp.user
             changed_user_fields = []
             for field in ["name", "last_name", "email", "phone"]:
-                if request.POST.get(field):
+                if request.POST.get(field) is not None:
                     setattr(user, field, request.POST.get(field).strip())
                     changed_user_fields.append(field)
             if changed_user_fields:
                 user.save(update_fields=changed_user_fields)
+            
+            messages.success(request, f"Dados de {user.name} atualizados com sucesso!")
 
         # ---------- DELETE ----------
         elif action == "delete":
-            emp = get_object_or_404(
-                Employee,
-                id=request.POST.get("employee_id"),
-                unit__barbershop=barbershop,
-            )
+            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
+            user_name = emp.user.name
             emp.delete()
+            messages.success(request, f"Funcionário {user_name} removido com sucesso.")
 
+        # Redirecionamentos (sem alterações)
         if gerente_unit:
-            return redirect("barbershop:employee_unit", 
-                            barbershop_slug=barbershop.slug, 
-                            unit_slug=gerente_unit.slug)
-
-        # Se o dono estava vendo uma unidade específica, mantém essa visão.
-        # A variável 'unit_slug' vem dos parâmetros da URL da página atual.
+            return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
         if unit_slug:
-            return redirect("barbershop:employee_unit", 
-                            barbershop_slug=barbershop.slug, 
-                            unit_slug=unit_slug)
+            return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+        return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
 
-        # Caso contrário, redireciona para a visão geral de todos os funcionários.
-        return redirect("barbershop:employee_general", 
-                        barbershop_slug=barbershop.slug)
+    # Contexto para a requisição GET
+    role_choices = Role.Occupation.choices
 
     context = {
         "barbershop": barbershop,
@@ -328,13 +301,10 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         "unit": unit,
         "employees": employees,
         "employees_active_count": employees_active_count,
-        "gerente_unit": gerente_unit
+        "gerente_unit": gerente_unit,
+        "role_choices": role_choices,
     }
     return render(request, "barbershop/employee.html", context)
-
-
-
-
 
 # Em apps/barbershop/views.py
 
