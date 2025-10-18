@@ -108,7 +108,74 @@
                 </div>
 
                 {% for unit in units %}
-                <div class="table-row" 
+                    <div class="table-row" 
+                        data-id="{{ unit.id }}" 
+                        data-cep="{{ unit.cep_address }}" 
+                        data-street="{{ unit.street_address }}" 
+                        data-number="{{ unit.number_address }}" 
+                        data-neighborhood="{{ unit.neighborhood|default:'' }}"
+                        data-city="{{ unit.city|default:'' }}"
+                        data-state="{{ unit.state|default:'' }}"
+                        
+                        data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
+                        data-instagram="{{ unit.instagram_link|default:'' }}"
+                        data-active="{{ unit.is_active }}">
+                        <div class="unit-cell">
+                            <div class="unit-icon">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="unit-info">
+                                <div class="unit-name">{{ unit.name }}</div>
+                                {% if unit.is_active %}
+                                    <span class="unit-status status-active">Ativa</span>
+                                {% else %}
+                                    <span class="unit-status status-inactive">Inativa</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="unit-address">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ unit.street_address }}, {{ unit.number_address }}</span>
+                        </div>
+
+                        <div class="unit-employees">
+                            <span>{{ unit.employee_count }}</span>
+                        </div>
+
+                        <div class="unit-actions">
+                            <div class="action-btn edit"
+                                data-id="{{ unit.id }}"
+                                data-name="{{ unit.name }}"
+                                data-cep="{{ unit.cep_address }}"
+                                data-street="{{ unit.street_address }}"
+                                data-number="{{ unit.number_address }}"
+                                data-neighborhood="{{ unit.neighborhood|default:'' }}"
+                                data-city="{{ unit.city|default:'' }}"
+                                data-state="{{ unit.state|default:'' }}"
+                                data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
+                                data-instagram="{{ unit.instagram_link|default:'' }}"
+                                data-active="{{ unit.is_active|yesno:'True,False' }}">
+                                <i class="fas fa-edit"></i>
+                            </div>
+
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                                {% csrf_token %}
+                                <input type="hidden" name="unit_id" value="{{ unit.id }}">
+                                <input type="hidden" name="action" value="delete">
+                                <button type="submit" class="action-btn delete" title="Excluir unidade">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="units-mobile-table-container">    
+                {% for unit in units %}
+                    <!-- Cada Funcionario -->
+                    <div class="table-row"
                     data-id="{{ unit.id }}" 
                     data-cep="{{ unit.cep_address }}" 
                     data-street="{{ unit.street_address }}" 
@@ -116,35 +183,38 @@
                     data-neighborhood="{{ unit.neighborhood|default:'' }}"
                     data-city="{{ unit.city|default:'' }}"
                     data-state="{{ unit.state|default:'' }}"
-                    
                     data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
                     data-instagram="{{ unit.instagram_link|default:'' }}"
                     data-active="{{ unit.is_active }}">
-                    <div class="unit-cell">
-                        <div class="unit-icon">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="unit-info">
-                            <div class="unit-name">{{ unit.name }}</div>
-                            {% if unit.is_active %}
+                     <div class="unit-cell">
+                         <div class="unit-icon">
+                             <i class="fas fa-store"></i>
+                         </div>
+                         
+                         <div class="unit-info">
+                             <div class="unit-name">{{ unit.name }}</div>
+                             {% if unit.is_active %}
                                 <span class="unit-status status-active">Ativa</span>
                             {% else %}
                                 <span class="unit-status status-inactive">Inativa</span>
                             {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="unit-address">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>{{ unit.street_address }}, {{ unit.number_address }}</span>
-                    </div>
-
-                    <div class="unit-employees">
-                        <span>{{ unit.employee_count }}</span>
-                    </div>
-
-                    <div class="unit-actions">
-                         <div class="action-btn edit"
+                         </div>
+                     </div>
+ 
+                     <div class="employee-phone">
+                         <span class="cell-label">Unidade:</span>
+                         <i class="fas fa-map-marker-alt"></i>
+                         <span>{{ unit.street_address }}, {{ unit.number_address }}</span>
+                     </div>
+ 
+                     <div class="employee-role">
+                         <span class="cell-label">Funcionários:</span>
+                         <i class="fas fa-user-tie"></i>
+                         <div class="employee-quantity type-good">{{ unit.employee_count }}</div>
+                     </div>
+         
+                     <div class="unit-actions">
+                         <div class="action-btn edit" title="Editar unidade" 
                             data-id="{{ unit.id }}"
                             data-name="{{ unit.name }}"
                             data-cep="{{ unit.cep_address }}"
@@ -157,9 +227,8 @@
                             data-instagram="{{ unit.instagram_link|default:'' }}"
                             data-active="{{ unit.is_active|yesno:'True,False' }}">
                             <i class="fas fa-edit"></i>
-                        </div>
-
-                       <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                         </div>
+                         <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
                             {% csrf_token %}
                             <input type="hidden" name="unit_id" value="{{ unit.id }}">
                             <input type="hidden" name="action" value="delete">
@@ -167,114 +236,10 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <div class="units-mobile-table-container">                
-                <!-- Funcionario 1 -->
-                <div class="table-row">
-                     <div class="unit-cell">
-                         <div class="unit-icon">
-                             <i class="fas fa-store"></i>
-                         </div>
-                         
-                         <div class="unit-info">
-                             <div class="unit-name">Matriz - Centro</div>
-                             <span class="unit-status status-active">Ativa</span>
-                         </div>
-                     </div>
- 
-                     <div class="employee-phone">
-                         <span class="cell-label">Unidade:</span>
-                         <i class="fas fa-map-marker-alt"></i>
-                         <span>Av. Paulista, 1000 São Paulo</span>
-                     </div>
- 
-                     <div class="employee-role">
-                         <span class="cell-label">Funcionários:</span>
-                         <i class="fas fa-user-tie"></i>
-                         <div class="employee-quantity type-good">2</div>
-                     </div>
-         
-                     <div class="unit-actions">
-                         <div class="action-btn edit" title="Editar unidade">
-                             <i class="fas fa-edit"></i>
-                         </div>
-                         <div class="action-btn delete" title="Excluir unidade">
-                             <i class="fas fa-trash"></i>
-                         </div>
                      </div>
                  </div>
  
-                <div class="table-row">
-                     <div class="unit-cell">
-                         <div class="unit-icon">
-                             <i class="fas fa-store"></i>
-                         </div>
-                         
-                         <div class="unit-info">
-                             <div class="unit-name">Matriz - Centro</div>
-                             <span class="unit-status status-active">Ativa</span>
-                         </div>
-                     </div>
- 
-                     <div class="employee-phone">
-                         <span class="cell-label">Unidade:</span>
-                         <i class="fas fa-map-marker-alt"></i>
-                         <span>Av. Paulista, 1000 São Paulo</span>
-                     </div>
- 
-                     <div class="employee-role">
-                         <span class="cell-label">Funcionários:</span>
-                         <i class="fas fa-user-tie"></i>
-                         <div class="employee-quantity type-good">2</div>
-                     </div>
-         
-                     <div class="unit-actions">
-                         <div class="action-btn edit" title="Editar unidade">
-                             <i class="fas fa-edit"></i>
-                         </div>
-                         <div class="action-btn delete" title="Excluir unidade">
-                             <i class="fas fa-trash"></i>
-                         </div>
-                     </div>
-                 </div>
- 
-                <div class="table-row">
-                     <div class="unit-cell">
-                         <div class="unit-icon">
-                             <i class="fas fa-store"></i>
-                         </div>
-                         
-                         <div class="unit-info">
-                             <div class="unit-name">Matriz - Centro</div>
-                             <span class="unit-status status-active">Ativa</span>
-                         </div>
-                     </div>
- 
-                     <div class="employee-phone">
-                         <span class="cell-label">Unidade:</span>
-                         <i class="fas fa-map-marker-alt"></i>
-                         <span>Av. Paulista, 1000 São Paulo</span>
-                     </div>
- 
-                     <div class="employee-role">
-                         <span class="cell-label">Funcionários:</span>
-                         <i class="fas fa-user-tie"></i>
-                         <div class="employee-quantity type-good">2</div>
-                     </div>
-         
-                     <div class="unit-actions">
-                         <div class="action-btn edit" title="Editar unidade">
-                             <i class="fas fa-edit"></i>
-                         </div>
-                         <div class="action-btn delete" title="Excluir unidade">
-                             <i class="fas fa-trash"></i>
-                         </div>
-                     </div>
-                 </div>
+               {% endfor %}
              </div>
         </div>
     </div>

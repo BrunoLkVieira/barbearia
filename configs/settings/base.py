@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', cast=bool)
-
-ALLOWED_HOSTS = []
+# DEBUG = config('DEBUG', cast=bool)
+DEBUG = True
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -171,6 +171,7 @@ USE_TZ = True     # Uso de timezone
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles' #python manage.py collectstatic
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
@@ -180,3 +181,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'orblycode@gmail.com'
+EMAIL_HOST_PASSWORD = 'mtbj yqpu snqb ubwv'  # senha de app do Gmail
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
