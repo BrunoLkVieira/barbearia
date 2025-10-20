@@ -1,5 +1,4 @@
-// Arquivo: static/barbershop/js/employee.js
-// VERSÃO CORRIGIDA
+// Arquivo: static/barbershop/js/employee.js - VERSÃO CORRIGIDA
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- SELETORES DE ELEMENTOS ---
@@ -8,48 +7,39 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Elemento do modal não encontrado. Verifique o ID 'employeeModal'.");
         return;
     }
+    
     const modalTitle = document.getElementById('modalTitle');
     const employeeForm = document.getElementById('employeeForm');
     const addEmployeeBtn = document.querySelector('.add-employee-btn');
-    const employeeTableBody = document.querySelector('.employees-table tbody');
-
-    // --- CONFIGURAÇÃO DA VERIFICAÇÃO ---
-    // Removi a lógica de verificação AJAX para simplificar, já que a validação principal está na view.
-    // O formulário agora será enviado diretamente.
-    if (employeeForm) {
-        employeeForm.addEventListener('submit', function(event) {
-            // Este listener agora apenas permite o envio. A validação real está na view.
-            // Se você tinha uma view AJAX /check-employee-data/, pode restaurar a lógica anterior.
-            // Mas para o problema de salvar, a view principal é o que importa.
-        });
-    }
 
     // --- FUNÇÕES DE CONTROLE DO MODAL ---
     
     function openEmployeeModal(employeeData = null) {
-        // Limpa todos os checkboxes de cargo sempre que o modal abrir.
-        employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
+        console.log('Abrindo modal com dados:', employeeData);
         
-        if (employeeData) {
+        // Limpa todos os checkboxes de cargo sempre que o modal abrir
+        if (employeeForm) {
+            employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+        
+        if (employeeData && employeeData.id) {
             // MODO EDIÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Funcionário';
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
-            employeeForm.querySelector('#employeeCPF').value = employeeData.cpf;
-            employeeForm.querySelector('#employeeName').value = employeeData.name;
-            employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
-            employeeForm.querySelector('#employeeEmail').value = employeeData.email;
-            employeeForm.querySelector('#employeePhone').value = employeeData.phone;
-            employeeForm.querySelector('#employeeUnit').value = employeeData.unit;
+            employeeForm.querySelector('#employeeCPF').value = employeeData.cpf || '';
+            employeeForm.querySelector('#employeeName').value = employeeData.name || '';
+            employeeForm.querySelector('#employeeLastName').value = employeeData.lastname || '';
+            employeeForm.querySelector('#employeeEmail').value = employeeData.email || '';
+            employeeForm.querySelector('#employeePhone').value = employeeData.phone || '';
+            employeeForm.querySelector('#employeeUnit').value = employeeData.unit || '';
             
-            const serviceComm = employeeData.serviceCommission || '';
-            const productComm = employeeData.productCommission || '';
-
             // Preenche comissões e permissões
-            employeeForm.querySelector('#serviceCommission').value = serviceComm.toString().replace(',', '.');
-            employeeForm.querySelector('#productCommission').value = productComm.toString().replace(',', '.');           
+            employeeForm.querySelector('#serviceCommission').value = employeeData.serviceCommission || '';
+            employeeForm.querySelector('#productCommission').value = employeeData.productCommission || '';
+            
             employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
             employeeForm.querySelector('input[name="can_manage_cashbox"]').checked = employeeData.canCashbox === 'true';
             employeeForm.querySelector('input[name="can_register_sell"]').checked = employeeData.canSell === 'true';
@@ -70,32 +60,38 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // MODO CRIAÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
-            employeeForm.reset(); // Limpa todos os campos
-            employeeForm.querySelector('input[name="action"]').value = 'create';
-            employeeForm.querySelector('#employeeId').value = '';
+            if (employeeForm) {
+                employeeForm.reset();
+                employeeForm.querySelector('input[name="action"]').value = 'create';
+                employeeForm.querySelector('#employeeId').value = '';
+            }
         }
+        
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
     }
+
+    window.openEmployeeModal = openEmployeeModal;
 
     window.closeEmployeeModal = function() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
     }
 
+    // Botão "Adicionar Funcionário"
     if (addEmployeeBtn) {
         addEmployeeBtn.addEventListener('click', () => {
             openEmployeeModal();
         });
     }
 
-    if (employeeTableBody) {
-        employeeTableBody.addEventListener('click', function(event) {
+    // Event delegation para botões de edição na tabela DESKTOP
+    const desktopTable = document.querySelector('.employees-table tbody');
+    if (desktopTable) {
+        desktopTable.addEventListener('click', function(event) {
             const editButton = event.target.closest('.edit-btn');
             if (!editButton) return;
 
-            // ---> PONTO CRÍTICO CORRIGIDO <---
-            // Monta o objeto com os nomes EXATOS (camelCase) que correspondem aos data-atributos.
             const employeeData = {
                 id: editButton.dataset.id,
                 name: editButton.dataset.name,
@@ -113,27 +109,77 @@ document.addEventListener('DOMContentLoaded', function() {
                 canAppointments: editButton.dataset.canAppointments,
                 systemAccess: editButton.dataset.systemAccess,
             };
+            
+            console.log('Dados do funcionário (desktop):', employeeData);
+            openEmployeeModal(employeeData);
+        });
+    }
+
+    // Event delegation para botões de edição na tabela MOBILE
+    const mobileTable = document.querySelector('.employees-table-container');
+    if (mobileTable) {
+        mobileTable.addEventListener('click', function(event) {
+            const editButton = event.target.closest('.edit');
+            if (!editButton) return;
+
+            const employeeData = {
+                id: editButton.dataset.id,
+                name: editButton.dataset.name,
+                lastname: editButton.dataset.lastname,
+                email: editButton.dataset.email,
+                phone: editButton.dataset.phone,
+                cpf: editButton.dataset.cpf,
+                unit: editButton.dataset.unit,
+                roles: editButton.dataset.roles,
+                commissionPercentage: editButton.dataset.commissionPercentage,
+                serviceCommission: editButton.dataset.serviceCommission,
+                productCommission: editButton.dataset.productCommission,
+                canCashbox: editButton.dataset.canCashbox,
+                canSell: editButton.dataset.canSell,
+                canAppointments: editButton.dataset.canAppointments,
+                systemAccess: editButton.dataset.systemAccess,
+            };
+            
+            console.log('Dados do funcionário (mobile):', employeeData);
             openEmployeeModal(employeeData);
         });
     }
 });
 
+// Funções auxiliares para validação de inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const cpfInput = document.getElementById('employeeCPF');
+    if(cpfInput) {
+        cpfInput.addEventListener('input', function() {
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+    }
 
-// Funções auxiliares no final (sem alterações)
-const cpfInput = document.getElementById('employeeCPF');
-if(cpfInput) {
-    cpfInput.addEventListener('input', function() {
-        if (this.value.length > 11) {
-            this.value = this.value.slice(0, 11);
+    const cellInput = document.getElementById('employeePhone');
+    if(cellInput) {
+        cellInput.addEventListener('input', function() {
+            if (this.value.length > 11) {
+                this.value = this.value.slice(0, 11);
+            }
+        });
+    }
+
+    // Estilizar cada cargo
+    const roleElements = document.querySelectorAll('.employee-type');
+    
+    roleElements.forEach(element => {
+        const text = element.textContent.trim().toLowerCase();
+        
+        if (text.includes('barbeiro')) {
+            element.classList.add('type-barber');
+        } else if (text.includes('gerente')) {
+            element.classList.add('type-manager');
+        } else if (text.includes('caixa')) {
+            element.classList.add('type-cashier');
+        } else {
+            element.classList.add('type-none');
         }
     });
-}
-
-const cellInput = document.getElementById('employeePhone');
-if(cellInput) {
-    cellInput.addEventListener('input', function() {
-        if (this.value.length > 11) {
-            this.value = this.value.slice(0, 11);
-        }
-    });
-}
+});

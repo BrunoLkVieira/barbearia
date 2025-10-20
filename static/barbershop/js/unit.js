@@ -60,7 +60,6 @@ const editButtons = document.querySelectorAll('.action-btn.edit');
 
 editButtons.forEach(button => {
     button.addEventListener('click', function() {
-        // 'this' é o botão que foi clicado
         const unitData = {
             id: this.dataset.id,
             name: this.dataset.name,
