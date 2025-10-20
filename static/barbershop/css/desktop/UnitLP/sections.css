@@ -1,0 +1,383 @@
+/* Sobre Section */
+.about {
+    background-color: white;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.section-title h2 {
+    font-size: 2.5rem;
+    color: var(--dark);
+    position: relative;
+    display: inline-block;
+    padding-bottom: 15px;
+}
+
+.section-title h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: var(--primary-color);
+}
+
+.about-content {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+}
+
+.about-text {
+    flex: 1;
+}
+
+.about-text h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dark);
+}
+
+.about-text p {
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.barbers {
+    margin-top: 30px;
+}
+
+.barber {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.barber-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--dark);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 15px;
+}
+
+.about-image {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.about-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Planos Section */
+.plans {
+    background-color: #f9f9f9;
+}
+
+.plans-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.plan-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    transition: var(--transition);
+}
+
+.plan-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.plan-header {
+    background: var(--dark);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.plan-header h3 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.plan-header .price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.plan-body {
+    padding: 30px;
+}
+
+.plan-body ul {
+    list-style: none;
+    margin-bottom: 30px;
+}
+
+.plan-body ul li {
+    margin-bottom: 10px;
+    position: relative;
+    padding-left: 25px;
+}
+
+.plan-body ul li::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+/* Localização Section */
+/* Adicione isso no seu CSS */
+.location {
+    background-color: #f8f9fa;
+    padding: 80px 0;
+}
+
+.section-title h2 {
+    color: #1a365d; /* Azul escuro */
+    font-size: 2.5rem;
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+.section-title h2 i {
+    margin-right: 15px;
+    color: #2c5282; /* Azul um pouco mais claro */
+}
+
+.location-container {
+    display: flex;
+    gap: 50px;
+    align-items: center;
+}
+
+.location-info {
+    flex: 1;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.location-info h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #1a365d;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.location-info h3 i {
+    color: #2c5282;
+}
+
+.location-info p {
+    color: #4a5568;
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hours {
+    margin: 30px 0;
+    padding: 20px 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.hours h4, .address h4, .contact-info h4 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #1a365d;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hours h4 i, .address h4 i, .contact-info h4 i {
+    color: #2c5282;
+}
+
+.hours ul {
+    list-style: none;
+    padding: 0;
+}
+
+.hours ul li {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    max-width: 350px;
+    color: #4a5568;
+}
+
+.hours ul li span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hours ul li span i {
+    color: #4299e1;
+}
+
+.closed {
+    color: #e53e3e;
+}
+
+.address {
+    margin: 30px 0;
+}
+
+.address p {
+    margin-bottom: 10px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.address p i {
+    color: #4299e1;
+    width: 20px;
+    text-align: center;
+}
+
+.contact-info {
+    margin-top: 30px;
+}
+
+.contact-info p {
+    margin-bottom: 10px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contact-info p i {
+    color: #4299e1;
+    width: 20px;
+    text-align: center;
+}
+
+.fab.fa-whatsapp {
+    color: #25D366 !important;
+}
+
+.map {
+    flex: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    height: 500px;
+}
+
+.map iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .location-container {
+        flex-direction: column;
+    }
+    
+    .location-info, .map {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .about-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .about-image {
+        order: -1; /* Coloca a imagem antes do texto */
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .about-text h3 {
+        font-size: 1.6rem;
+        text-align: center;
+    }
+    
+    .barber {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .barber-avatar {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .section-title h2 {
+        font-size: 2rem;
+    }
+}
+
+/* Ajustes para telas muito pequenas (360px ou menos) */
+@media (max-width: 360px) {
+    .about-text h3 {
+        font-size: 1.4rem;
+    }
+    
+    .about-text p {
+        font-size: 0.95rem;
+    }
+    
+    .barber {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .barber-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .section-title h2 {
+        font-size: 1.8rem;
+    }
+    
+    .section-title h2::after {
+        width: 60px;
+        height: 2px;
+    }
+}
