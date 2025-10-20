@@ -319,7 +319,19 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+                
+                    <div class="form-group">
+                        <label><input type="checkbox" name="commission_percentage"> Comissão?</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceCommission">Comissão Serviço (%)</label>
+                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Digite a comissão por serviço" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCommission">Comissão Produto (%)</label>
+                        <input type="number" name="product_commission_percentage" id="productCommission" class="form-control" placeholder="Digite a comissão por produto" max="100">
+                    </div>
+
                     <div class="form-group">
                         <label>Cargos (selecione um ou mais)</label>
                         <div class="roles-checkbox-group">
@@ -329,19 +341,6 @@
                             </label>
                             {% endfor %}
                         </div>
-                    </div>
-                
-                    <!-- Configurações de funcionário -->
-                    <div class="form-group">
-                        <label><input type="checkbox" name="commission_percentage"> Comissão?</label>
-                    </div>
-                    <div class="form-group">
-                        <label for="serviceCommission">Comissão Serviço (%)</label>
-                        <input type="number" step="0.01" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Digite a comissão por serviço">
-                    </div>
-                    <div class="form-group">
-                        <label for="productCommission">Comissão Produto (%)</label>
-                        <input type="number" step="0.01" name="product_commission_percentage" id="productCommission" class="form-control" placeholder="Digite a comissão por produto">
                     </div>
                     <div class="form-group">
                         <label><input type="checkbox" name="system_access"> Acesso ao Sistema</label>

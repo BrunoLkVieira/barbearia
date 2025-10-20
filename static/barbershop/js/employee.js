@@ -183,3 +183,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// nao liberar escrever sem o checkbox ligado
+const serviceCommission = document.getElementById('serviceCommission');
+if(serviceCommission) {
+    serviceCommission.addEventListener('input', function() {
+        if (this.value.length > 3) {
+            this.value = this.value.slice(0, 3);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const commissionCheckbox = document.querySelector('input[name="commission_percentage"]');
+    const serviceInput = document.getElementById('serviceCommission');
+    const productInput = document.getElementById('productCommission');
+    
+    function updateInputsState() {
+        if (commissionCheckbox && serviceInput && productInput) {
+            if (commissionCheckbox.checked) {
+                serviceInput.disabled = false;
+                productInput.disabled = false;
+            } else {
+                serviceInput.disabled = true;
+                productInput.disabled = true;
+            }
+        }
+    }
+    
+    const modal = document.getElementById('employeeModal');
+    if (modal) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (modal.style.display === 'flex') {
+                        updateInputsState();
+                    }
+                }
+            });
+        });
+        observer.observe(modal, { attributes: true });
+    }
+    
+    if (commissionCheckbox) {
+        commissionCheckbox.addEventListener('change', updateInputsState);
+    }
+});
+
+// Regra de negocio de cargos
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleciona todos os checkboxes de cargo
+    const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
+    const systemAccess = document.querySelector('input[name="system_access"]');
+    const canManageCashbox = document.querySelector('input[name="can_manage_cashbox"]');
+    const canRegisterSell = document.querySelector('input[name="can_register_sell"]');
+    const canCreateAppointments = document.querySelector('input[name="can_create_appointments"]');
+    
+    // Função para atualizar as permissões baseadas nos cargos selecionados
+    function updatePermissions() {
+        // Verifica quais cargos estão selecionados
+        const selectedRoles = Array.from(roleCheckboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+        
+        // Se nenhum cargo estiver selecionado, desabilita tudo
+        if (selectedRoles.length === 0) {
+            systemAccess.disabled = true;
+            canManageCashbox.disabled = true;
+            canRegisterSell.disabled = true;
+            canCreateAppointments.disabled = true;
+            
+            systemAccess.checked = false;
+            canManageCashbox.checked = false;
+            canRegisterSell.checked = false;
+            canCreateAppointments.checked = false;
+            return;
+        }
+        
+        // Habilita todos os checkboxes de permissão se algum cargo estiver selecionado
+        systemAccess.disabled = false;
+        canManageCashbox.disabled = false;
+        canRegisterSell.disabled = false;
+        canCreateAppointments.disabled = false;
+        
+        // Aplica as regras específicas para cada cargo
+        if (selectedRoles.includes('gerente')) {
+            systemAccess.checked = true;
+            canManageCashbox.checked = true;
+            canRegisterSell.checked = true;
+            canCreateAppointments.checked = true;
+        }
+        
+        else if(selectedRoles.includes('caixa')) {
+            systemAccess.checked = true;
+            canManageCashbox.checked = true;
+            canRegisterSell.checked = true;
+            canCreateAppointments.checked = false;
+        }
+        else if(selectedRoles.includes('barbeiro')){
+            systemAccess.checked = false;
+            canManageCashbox.checked = false;
+            canRegisterSell.checked = false;
+            canCreateAppointments.checked = false;
+        }
+    }
+    
+    roleCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updatePermissions);
+    });
+    
+    // Executa uma vez ao carregar para definir o estado inicial
+    updatePermissions();
+});

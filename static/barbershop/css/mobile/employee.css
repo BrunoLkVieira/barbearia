@@ -250,3 +250,19 @@
     }
 
  }
+ input:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkbox-label {
+    display: block;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
