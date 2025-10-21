@@ -1,5 +1,29 @@
 /* ===== MODAL DE REGISTRO ===== */
-.modal-register .register-modal-content {
+.modal-register .register-modal-content{
     max-width: 500px;
-    height: 760px;
+
+}
+
+.register-modal-content{
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    padding: 0;
+}
+
+.registerHeaderModal{
+    padding: 0px 10px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.registerHeaderModal h2{
+    color: white;
+}
+
+.modal-body-register{
+    max-height: 90vh;
+    overflow-y: auto;
 }

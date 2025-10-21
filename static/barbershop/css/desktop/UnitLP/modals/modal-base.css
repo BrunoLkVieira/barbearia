@@ -1,24 +1,25 @@
 /* ===== ESTILOS BASE DOS MODAIS ===== */
 .modal {
     display: none;
+    justify-content: center;
+    align-items: center;
     position: fixed;
     z-index: 1001;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: none;
     background-color: rgba(0,0,0,0.5);
     backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background-color: white;
-    margin: 10% auto;
-    padding: 20px 30px;
+    padding: 0px;
     border-radius: 10px;
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
     width: 90%;
+    max-height: 90vh;
     position: relative;
     animation: modalopen 0.4s;
 }
@@ -28,29 +29,43 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+.modal-header{
+    background: linear-gradient(135deg, #2c3e50, #1a2a6c);
+    display: flex;
+    justify-content: space-between;
+    padding-inline: 15px;
+    border-radius: 10px 10px 0 0;
+}
+
 .close-modal {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 1.8rem;
-    color: var(--gray);
+    font-size: 2rem;
+    color: #FF7A00;
     cursor: pointer;
+    width: 40px;
+    height: 40px;
     transition: var(--transition);
     border: none;
     background: transparent;
+    border-radius: 50%;
 }
 
 .close-modal:hover {
-    color: var(--dark);
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
 }
 
 .modal h2 {
-    color: var(--dark);
+    color: white;
     margin-bottom: 20px;
     text-align: center;
 }
 
 /* ===== COMPONENTES DE FORMULÁRIO ===== */
+.modal-body{
+    background-color: white;
+    padding: 25px 15px;
+}
+
 .form-group {
     margin-bottom: 20px;
 }
@@ -137,6 +152,16 @@
     display: flex;
     justify-content: center;
     margin-top: 20px;
+}
+
+.modal-footer{
+    display: block;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #eaecef;
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
 }
 
 /* ===== RESPONSIVIDADE ===== */

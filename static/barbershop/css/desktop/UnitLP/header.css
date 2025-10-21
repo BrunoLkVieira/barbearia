@@ -40,6 +40,10 @@ nav ul {
     color: white;
 }
 
+.login-btn i{
+    color: #FF7A00;
+}
+
 /* User Welcome Area */
 .user-welcome {
     position: relative;
@@ -63,8 +67,13 @@ nav ul {
 
 .welcome-text {
     font-weight: 600;
-    color: var(--dark);
+    color: var(--light-gray);
+    margin-top: .1rem;
     white-space: nowrap;
+}
+
+.user-name{
+    color: #FF7A00;
 }
 
 .quick-actions {

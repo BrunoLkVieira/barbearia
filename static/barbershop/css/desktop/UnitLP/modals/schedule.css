@@ -74,18 +74,6 @@
     margin: 10px 0;
 }
 
-/* Rodapé fixo */
-.modal-footer {
-    padding: 15px 0;
-    border-top: 1px solid #eee;
-    background: white;
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    justify-content: space-between;
-    z-index: 1;
-}
-
 /* Responsividade específica para o modal de agendamento */
 @media (max-width: 768px) {
     .modal-schedule .progress-indicator {
