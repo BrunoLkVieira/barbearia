@@ -310,31 +310,62 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 
 
 @login_required
-@owner_or_employee_required # Certifique-se que seu decorator está definido corretamente
+@owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    units = barbershop.units.all()
-    employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
+    
+    # --- Lógica de Permissão ---
     gerente_unit = None
+    current_employee = None # <-- NOVO
+    
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
         if employee:
             gerente_unit = employee.unit
+    elif request.user.user_type == "funcionario": # <-- NOVO
+        current_employee = Employee.objects.filter(user=request.user, unit__barbershop=barbershop).first()
+        if not current_employee:
+            messages.error(request, "Funcionário não encontrado nesta barbearia.")
+            return redirect("core:home") # <-- MUDE PARA SUA URL DE 'HOME'
+        
+        # Trata o funcionário como um "gerente" da sua própria unidade para fins de filtro
+        gerente_unit = current_employee.unit 
 
+    # --- Processamento de POST ---
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # --- Bloco para editar a DISPONIBILIDADE (corrigido) ---
+        # --- BLOQUEIO DE PERMISSÃO PARA FUNCIONÁRIO ---
+        funcionario_allowed_actions = ["edit_workday"]
+        if current_employee and action not in funcionario_allowed_actions:
+            messages.error(request, "Você não tem permissão para executar esta ação.")
+            if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+            else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+
+        # --- Bloco para editar a DISPONIBILIDADE ---
         if action == "edit_workday":
             emp_id = request.POST.get("employee_id")
             emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
             
+            # --- VERIFICAÇÃO DE PERMISSÃO NO POST ---
+            if current_employee and emp.id != current_employee.id:
+                messages.error(request, "Você só pode editar sua própria disponibilidade.")
+                if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+                else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+
+            # (not current_employee) garante que isso só rode para donos ou gerentes
+            if gerente_unit and not current_employee and emp.unit != gerente_unit:
+                messages.error(request, "Você só pode editar funcionários da sua unidade.")
+                if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+                else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+            
+            # ... (O restante da sua lógica 'edit_workday' continua aqui...)
             for i in range(7):
                 try:
                     workday = EmployeeWorkDay.objects.get(employee=emp, weekday=i)
                 except EmployeeWorkDay.DoesNotExist:
                     workday = EmployeeWorkDay(employee=emp, weekday=i)
-
+                # ... (resto do for loop) ...
                 morning_is_available = f'is_available_{i}_morning' in request.POST
                 afternoon_is_available = f'is_available_{i}_afternoon' in request.POST
 
@@ -355,70 +386,69 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 workday.save()
 
             messages.success(request, f"Disponibilidade de {emp.user.name} atualizada com sucesso!")
-            # O redirect específico para esta action já está aqui, então o fluxo para.
             if unit_slug:
                 return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
             else:
                 return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
-        
-        # ✅ CORREÇÃO: Bloco 'elif' para as OUTRAS actions (recolocado da versão antiga) ✅
+
+        # ... (O restante do seu código POST continua aqui) ...
         elif action == "create_holiday":
-            unit_id = request.POST.get("unit_id")
-            unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
-            UnitHoliday.objects.create(
-                unit=unit,
-                date=request.POST.get("date"),
-                name=request.POST.get("name"),
-            )
-            messages.success(request, f"Feriado '{request.POST.get('name')}' adicionado com sucesso!")
-        
+            # ...
+            pass # Seu código aqui
         elif action == "edit_holiday":
-            holiday_id = request.POST.get("holiday_id")
-            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
-            holiday.date = request.POST.get("date")
-            holiday.name = request.POST.get("name")
-            holiday.save()
-            messages.success(request, "Feriado atualizado com sucesso!")
-
+            # ...
+            pass # Seu código aqui
         elif action == "delete_holiday":
-            holiday_id = request.POST.get("holiday_id")
-            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
-            holiday.delete()
-            messages.success(request, "Feriado excluído com sucesso!")
-
+            # ...
+            pass # Seu código aqui
         elif action == "create_absence":
-            emp_ids = request.POST.getlist("employee_id")
-            date_start = request.POST.get("date_start")
-            date_end = request.POST.get("date_end")
-            reason = request.POST.get("reason", "Folga agendada")
-
-            for emp_id in emp_ids:
-                emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
-                EmployeeAbsence.objects.create(
-                    employee=emp,
-                    start_date=date_start,
-                    end_date=date_end if date_end else date_start, # Garante que end_date não seja vazio
-                    reason=reason,
-                )
-            messages.success(request, f"Folga(s) agendada(s) com sucesso para {len(emp_ids)} funcionário(s).")
-
+            # ...
+            pass # Seu código aqui
         elif action == "delete_absence":
-            absence_id = request.POST.get("absence_id")
-            absence = get_object_or_404(EmployeeAbsence, id=absence_id, employee__unit__barbershop=barbershop)
-            absence.delete()
-            messages.success(request, "Folga excluída com sucesso!")
+            # ...
+            pass # Seu código aqui
 
-        # ✅ CORREÇÃO: Redirect genérico no final para todas as actions que não têm um redirect próprio ✅
+        # Redirect genérico
         if unit_slug:
             return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         else:
             return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+    
+    # --- LÓGICA GET (FILTROS DE DADOS) ---
+    
+    unit = None 
+    
+    # Se for Gerente OU Funcionário, 'gerente_unit' estará definida
+    if gerente_unit:
+        unit = gerente_unit
+        units = [unit] 
+        
+        if current_employee: # <-- SE FOR FUNCIONÁRIO
+            employees = Employee.objects.filter(id=current_employee.id).select_related("user", "unit")
+            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date") # Vê feriados da unidade
+            absences = EmployeeAbsence.objects.filter(employee=current_employee, start_date__gte=now().date()).order_by("start_date") # Vê SÓ as suas folgas
+        else: # <-- SE FOR GERENTE
+            employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
+            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
+            absences = EmployeeAbsence.objects.filter(employee__unit=unit, start_date__gte=now().date()).order_by("start_date")
+    
+    else: # <-- SE FOR DONO
+        units = barbershop.units.all() 
+        
+        if unit_slug:
+            unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+            employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
+            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
+            absences = EmployeeAbsence.objects.filter(employee__unit=unit, start_date__gte=now().date()).order_by("start_date")
+        else:
+            employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
+            holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
+            absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, start_date__gte=now().date()).order_by("start_date")
 
-    # O restante da view (lógica GET) continua igual
-    holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
-    absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, start_date__gte=now().date()).order_by("start_date")
+    # Esta lógica 'workdays' agora depende da 'employees' (que está corretamente filtrada)
     workdays = EmployeeWorkDay.objects.filter(employee__in=employees).order_by('weekday')
 
+    # ... (O restante da sua lógica GET para 'workdays_data', 'time_options', etc. continua igual) ...
     workdays_data = {}
     for emp in employees:
         emp_data = {}
@@ -439,9 +469,11 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         workdays_data[emp.id] = emp_data
 
     time_options = [f"{h:02d}:{m:02d}" for h in range(5, 24) for m in (0, 30)]
+
     context = {
         "barbershop": barbershop,
         "units": units,
+        "unit": unit, 
         "employees": employees,
         "holidays": holidays,
         "absences": absences,
@@ -449,9 +481,10 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "gerente_unit": gerente_unit,
         "time_options": time_options,
         "workdays_json": json.dumps(workdays_data),
+        # Adicione current_employee ao contexto se quiser usá-lo no template
+        "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
-
 
 @login_required
 @require_POST

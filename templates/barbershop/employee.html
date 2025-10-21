@@ -27,14 +27,22 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
-                 <div class="unit-filter">
-                    <select>
-                        {% for unit in units %}
-                            <option>{{ unit.name }}</option>
-                        {% endfor %}
-                        <option>Geral</option>
-                    </select>
-                </div> 
+                {% if request.user.user_type == "dono" %}
+                    <div class="unit-filter">
+                        <select id="unitFilterSelect" 
+                                data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
+                                data-unit-url-template="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
+                            
+                            <option value="geral" {% if not unit %}selected{% endif %}>Geral</option>
+                            
+                            {% for u in units %}
+                                <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
+                                    {{ u.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
                 <div class="stat-box">
                     <div class="stat-value">{{ employees.count }}</div>
                     <div class="stat-label">Funcionarios</div>
@@ -363,5 +371,28 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const unitFilter = document.getElementById('unitFilterSelect');
+            
+            if (unitFilter) { // Só executa se o filtro existir (se for dono)
+                unitFilter.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    
+                    if (selectedValue === 'geral') {
+                        // Redireciona para a URL geral
+                        const generalUrl = this.dataset.generalUrl;
+                        window.location.href = generalUrl;
+                    } else {
+                        // Redireciona para a URL da unidade específica
+                        const urlTemplate = this.dataset.unitUrlTemplate;
+                        const unitUrl = urlTemplate.replace('__SLUG__', selectedValue);
+                        window.location.href = unitUrl;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

@@ -32,6 +32,23 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
+                {% if request.user.user_type == "dono" %}
+                    <div class="unit-filter">
+                        <select id="unitFilterSelect" 
+                                data-general-url="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"
+                                data-unit-url-template="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
+                            
+                            <option value="geral" {% if not unit %}selected{% endif %}>Geral</option>
+                            
+                            {% for u in units %}
+                                <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
+                                    {{ u.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+
                 <div class="stat-box">
                     <div class="stat-value">{{ employees.count }}</div>
                     <div class="stat-label">Funcionarios</div>
@@ -106,28 +123,32 @@
                 <div class="section-title">
                     <i class="fas fa-calendar-times"></i> Dias de Não Funcionamento
                 </div>
-                <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal" onclick="openHolidayModal()">
-                    <i class="fas fa-plus"></i> Adicionar Dia
-                </button>
+                {% if request.user.user_type != "funcionario" %}
+                    <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal" onclick="openHolidayModal()">
+                        <i class="fas fa-plus"></i> Adicionar Dia
+                    </button>
+                {% endif %}
             </div>
             
             <div class="non-working-days">
                 {% for holiday in holidays %}
                 <div class="day-off-card">
-                    <div class="day-off-actions">
-                        <button class="day-off-btn" 
-                                onclick="editHolidayModal('{{ holiday.id }}', '{{ holiday.name }}', '{{ holiday.date|date:"Y-m-d" }}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este dia?')">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete_holiday">
-                            <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
-                            <button type="submit" class="day-off-btn">
-                                <i class="fas fa-trash"></i>
+                    {% if request.user.user_type != "funcionario" %}
+                        <div class="day-off-actions">
+                            <button class="day-off-btn" 
+                                    onclick="editHolidayModal('{{ holiday.id }}', '{{ holiday.name }}', '{{ holiday.date|date:"Y-m-d" }}')">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
-                    </div>
+                            <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este dia?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_holiday">
+                                <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
+                                <button type="submit" class="day-off-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
                     <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}</div>
                     <div class="day-off-reason">{{ holiday.name }} ({{holiday.unit.name}})</div>
                 </div>
@@ -141,24 +162,28 @@
                     <i class="fas fa-umbrella-beach"></i> Folgas Agendadas
                 </div>
 
-                <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createAbsenceModal" onclick="openVacationModal()">
-                    <i class="fas fa-plus"></i> Marcar Folga
-                </button>
+                {% if request.user.user_type != "funcionario" %}
+                    <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createAbsenceModal" onclick="openVacationModal()">
+                        <i class="fas fa-plus"></i> Marcar Folga
+                    </button>
+                {% endif %}
             </div>
             
             <div class="non-working-days">
                  {% for absence in absences %}
                     <div class="day-off-card blue-card">
-                         <div class="day-off-actions">
-                             <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta folga?')">
-                                 {% csrf_token %}
-                                 <input type="hidden" name="action" value="delete_absence">
-                                 <input type="hidden" name="absence_id" value="{{ absence.id }}">
-                                 <button type="submit" class="day-off-btn">
-                                     <i class="fas fa-trash"></i>
-                                 </button>
-                             </form>
-                         </div>
+                        {% if request.user.user_type != "funcionario" %}
+                            <div class="day-off-actions">
+                                <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta folga?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_absence">
+                                    <input type="hidden" name="absence_id" value="{{ absence.id }}">
+                                    <button type="submit" class="day-off-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
                          <div class="day-off-date">
                             {{ absence.start_date|date:"d/m/Y" }}
                             {% if absence.end_date and absence.end_date != absence.start_date %}
@@ -278,123 +303,127 @@
         </div>
     </div>
 
-    <div id="createHolidayModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-calendar-times"></i> Adicionar Dia de Não Funcionamento</h2>
-                <button class="close-btn" onclick="closeHolidayModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <form method="POST" class="holiday-form" autocomplete="off">
-                {%csrf_token%}
-                <input type="hidden" name="action" value="create_holiday">
-                <div class="holiday-modal-body">
-                    <div class="holiday-modal-section">
-                        <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
-                        <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input" required>
-                    </div>
-                    
-                    <div class="holiday-modal-section">
-                        <h3 class="modal-title"><i class="fas fa-store"></i> Unidade</h3>
-                        <select name="unit_id" class="holiday-input" required>
-                            <option value="" disabled selected>Selecione a unidade</option>
-                            {% for unit in units %}
-                            <option value="{{ unit.id }}">{{ unit.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="holiday-modal-section">
-                        <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
-                        <input type="date" name="date" class="holiday-input" required>
-                    </div>
+    {% if request.user.user_type != "funcionario" %}
+        <div id="createHolidayModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-calendar-times"></i> Adicionar Dia de Não Funcionamento</h2>
+                    <button class="close-btn" onclick="closeHolidayModal()"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeHolidayModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Dia</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="editHolidayModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-calendar-times"></i> Editar Dia de Não Funcionamento</h2>
-                <button class="close-btn" onclick="closeEditHolidayModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="holiday-modal-body">
-                <form id="editHolidayForm" class="holiday-form" autocomplete="off">
+                <form method="POST" class="holiday-form" autocomplete="off">
                     {%csrf_token%}
-                    <div class="holiday-modal-section">
-                        <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
-                        <input type="text" name="name" class="holiday-input" required>
+                    <input type="hidden" name="action" value="create_holiday">
+                    <div class="holiday-modal-body">
+                        <div class="holiday-modal-section">
+                            <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
+                            <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input" required>
+                        </div>
+                        
+                        <div class="holiday-modal-section">
+                            <h3 class="modal-title"><i class="fas fa-store"></i> Unidade</h3>
+                            <select name="unit_id" class="holiday-input" required>
+                                <option value="" disabled selected>Selecione a unidade</option>
+                                {% for unit in units %}
+                                <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="holiday-modal-section">
+                            <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
+                            <input type="date" name="date" class="holiday-input" required>
+                        </div>
                     </div>
-                    
-                    <div class="holiday-modal-section">
-                        <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
-                        <input type="date" name="date" class="holiday-input" required>
-                    </div>
-                    
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" onclick="closeEditHolidayModal()">Cancelar</button>
+                        <button type="button" class="btn btn-outline" onclick="closeHolidayModal()">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Salvar Dia</button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
+      
 
-    <div id="vacationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-umbrella-beach"></i> Marcar Folga</h2>
-                <button class="close-btn" onclick="closeVacationModal()"><i class="fas fa-times"></i></button>
-            </div>
-
-            <form method="POST" class="absence-form" autocomplete="off">
-                {%csrf_token%}
-                <input type="hidden" name="action" value="create_absence">
-                <div class="modal-body">
-                    <div class="modal-section">
-                        <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
-                        <div class="barber-list" id="vacationBarbersList">
-                             {% for employee in employees %}
-                            <label class="barber-item">
-                                <input type="checkbox" name="employee_id" value="{{ employee.id }}">
-                                <div class="barber-avatar">{{ employee.user.name|slice:":1"|upper }}{{ employee.user.last_name|slice:":1"|upper }}</div>
-                                <div class="modal-barber-name">{{ employee.user.name }} {{ employee.user.last_name }}</div>
-                            </label>
-                            {% endfor %}
+        <div id="editHolidayModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-calendar-times"></i> Editar Dia de Não Funcionamento</h2>
+                    <button class="close-btn" onclick="closeEditHolidayModal()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="holiday-modal-body">
+                    <form id="editHolidayForm" class="holiday-form" autocomplete="off">
+                        {%csrf_token%}
+                        <div class="holiday-modal-section">
+                            <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
+                            <input type="text" name="name" class="holiday-input" required>
                         </div>
-                    </div>
+                        
+                        <div class="holiday-modal-section">
+                            <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
+                            <input type="date" name="date" class="holiday-input" required>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline" onclick="closeEditHolidayModal()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Dia</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-                    <div class="modal-section">
-                        <h3 class="modal-title"><i class="fas fa-comment-alt"></i> Motivo</h3>
-                        <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, consulta, etc." required>
+        <div id="vacationModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-umbrella-beach"></i> Marcar Folga</h2>
+                    <button class="close-btn" onclick="closeVacationModal()"><i class="fas fa-times"></i></button>
+                </div>
+
+                <form method="POST" class="absence-form" autocomplete="off">
+                    {%csrf_token%}
+                    <input type="hidden" name="action" value="create_absence">
+                    <div class="modal-body">
+                        <div class="modal-section">
+                            <h3 class="modal-title"><i class="fas fa-users"></i> Selecione o(s) Barbeiro(s)</h3>
+                            <div class="barber-list" id="vacationBarbersList">
+                                {% for employee in employees %}
+                                <label class="barber-item">
+                                    <input type="checkbox" name="employee_id" value="{{ employee.id }}">
+                                    <div class="barber-avatar">{{ employee.user.name|slice:":1"|upper }}{{ employee.user.last_name|slice:":1"|upper }}</div>
+                                    <div class="modal-barber-name">{{ employee.user.name }} {{ employee.user.last_name }}</div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="modal-section">
+                            <h3 class="modal-title"><i class="fas fa-comment-alt"></i> Motivo</h3>
+                            <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, consulta, etc." required>
+                        </div>
+                        
+                        <div class="modal-section">
+                            <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
+                            <div class="date-inputs">
+                                <div class="date-group">
+                                    <label>Data de Início</label>
+                                    <input type="date" name="date_start" id="vacationStart">
+                                </div>
+                                <div class="date-group">
+                                    <label>Data de Término</label>
+                                    <input type="date" name="date_end" id="vacationEnd">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="modal-section">
-                        <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
-                        <div class="date-inputs">
-                            <div class="date-group">
-                                <label>Data de Início</label>
-                                <input type="date" name="date_start" id="vacationStart">
-                            </div>
-                            <div class="date-group">
-                                <label>Data de Término</label>
-                                <input type="date" name="date_end" id="vacationEnd">
-                            </div>
-                        </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeVacationModal()" type="button">Cancelar</button>
+                        <button class="btn btn-primary" type="submit">Confirmar Folga</button>
                     </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-outline" onclick="closeVacationModal()" type="button">Cancelar</button>
-                    <button class="btn btn-primary" type="submit">Confirmar Folga</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
+
+    {% endif %}  
     
     {{ workdays_json|json_script:"workdays-data" }}
 
@@ -402,6 +431,29 @@
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
     <script>
         const workdaysData = {{ workdays_json|safe }};
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const unitFilter = document.getElementById('unitFilterSelect');
+            
+            if (unitFilter) { // Só executa se o filtro existir (se for dono)
+                unitFilter.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    
+                    if (selectedValue === 'geral') {
+                        // Redireciona para a URL geral
+                        const generalUrl = this.dataset.generalUrl;
+                        window.location.href = generalUrl;
+                    } else {
+                        // Redireciona para a URL da unidade específica
+                        const urlTemplate = this.dataset.unitUrlTemplate;
+                        const unitUrl = urlTemplate.replace('__SLUG__', selectedValue);
+                        window.location.href = unitUrl;
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
