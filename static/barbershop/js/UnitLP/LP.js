@@ -3,18 +3,8 @@ let loggedInUser = null;
 
 // Elementos DOM realmente necessários
 const DOM = {
-    loginHeaderLink: document.getElementById('loginHeaderLink'),
-    // Remova todas as outras referências a elementos de modal
+    loginHeaderLink: document.getElementById('loginHeaderLink')
 };
-
-// Configurações iniciais
-function init() {
-    // Event listeners
-    setupEventListeners();
-    
-    // Inicializar header
-    updateHeader();
-}
 
 // Configurar todos os event listeners
 function setupEventListeners() {
@@ -38,18 +28,6 @@ function smoothScroll(e) {
             top: targetElement.offsetTop - 80,
             behavior: 'smooth'
         });
-    }
-}
-
-// Efeito de rolagem no cabeçalho
-function headerScrollEffect() {
-    const header = document.querySelector('header');
-    if (window.scrollY > 100) {
-        header.style.background = 'var(--white)';
-        header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-    } else {
-        header.style.background = 'var(--white)';
-        header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
     }
 }
 
@@ -89,6 +67,3 @@ function showAlert(message, type = 'success') {
         }, 300);
     }, 3000);
 }
-
-// Inicializar
-document.addEventListener('DOMContentLoaded', init);

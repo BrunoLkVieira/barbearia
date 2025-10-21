@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ barbershop.name }}</title>
+    <title>{{ barbershop.name }} - Agendar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     <!-- styles -->
@@ -16,52 +16,57 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/about.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/footer.css' %}">
 
-    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/unitLP.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/modal-base.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/login.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/schedule.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/appointments.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/register.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/plans.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/user-plans.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/profile.css' %}">
 
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/mobileV.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/resp.css' %}">
-    
 </head>
 
 <body>
-<header>
-    <div class="container header-container">
-        <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Da barbearia" class="logo-img">
-
-        <nav>
-            <ul>
-                <li>
-                    <a href="#" id="loginHeaderLink" class="login-btn">
-                        <i class="fas fa-user"></i> Faça o Login
-                    </a>
-                    
-                    <div class="user-welcome" style="display: none;">
-                        <div class="user-avatar">
-                            <i class="fas fa-user-circle"></i>
+    <header>
+        <div class="container header-container">
+            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Da barbearia" class="logo-img">
+            <nav>
+                <ul>
+                    <li>
+                        <a href="#" id="loginHeaderLink" class="login-btn">
+                            <i class="fas fa-user"></i> Faça o Login
+                        </a>
+                        
+                        <div class="user-welcome" style="display: none;">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-info">
+                                <span class="welcome-text">Olá, Usuário</span>
+                            </div>
+                            <div class="quick-actions">
+                                <button class="quick-action" id="viewAppointmentsBtn">
+                                    <i class="fas fa-calendar-alt"></i> Meus Agendamentos
+                                </button>
+                                <button class="quick-action" id="viewPlansBtn">
+                                    <i class="fas fa-clipboard-list"></i> Meus Planos
+                                </button>
+                                <button class="quick-action" id="editProfileBtn">
+                                    <i class="fas fa-user-edit"></i> Editar Perfil
+                                </button>
+                                <button class="quick-action logout" id="logoutBtn">
+                                    <i class="fas fa-sign-out-alt"></i> Sair
+                                </button>
+                            </div>
                         </div>
-                        <div class="user-info">
-                            <span class="welcome-text">Olá, Usuário</span>
-                        </div>
-                        <div class="quick-actions">
-                            <button class="quick-action" id="viewAppointmentsBtn">
-                                <i class="fas fa-calendar-alt"></i> Meus Agendamentos
-                            </button>
-                            <button class="quick-action" id="viewPlansBtn">
-                                <i class="fas fa-clipboard-list"></i> Meus Planos
-                            </button>
-                            <button class="quick-action" id="editProfileBtn">
-                                <i class="fas fa-user-edit"></i> Editar Perfil
-                            </button>
-                            <button class="quick-action logout" id="logoutBtn">
-                                <i class="fas fa-sign-out-alt"></i> Sair
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-        </nav>
-    </div>
-</header>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
     <main>
         <section class="hero" id="home">
@@ -81,95 +86,93 @@
             <i class="fas fa-calendar-alt"></i>
         </a>
 
-        
-<section class="about-section" id="about">
-    <div class="container">
-        <!-- Cabeçalho -->
-        <div class="section-header">
-            <h2 class="section-title">SOBRE NÓS</h2>
-            <div class="divider"></div>
-            <p class="section-subtitle">Excelência em cuidados masculinos desde 2018</p>
-        </div>
-
-        <!-- Conteúdo Principal -->
-        <div class="about-content">
-            <div class="about-text">
-                <div class="text-block">
-                    <h3>Nossa Filosofia</h3>
-                    <p>Na Raphael BarberShop, acreditamos que um bom corte de cabelo ou barba pode transformar não apenas a aparência, mas também a confiança de um homem. Combinamos técnicas tradicionais com abordagens modernas para criar looks personalizados.</p>
+        <section class="about-section" id="about">
+            <div class="container">
+                <!-- Cabeçalho -->
+                <div class="section-header">
+                    <h2 class="section-title">SOBRE NÓS</h2>
+                    <div class="divider"></div>
+                    <p class="section-subtitle">Excelência em cuidados masculinos desde 2018</p>
                 </div>
 
+                <!-- Conteúdo Principal -->
+                <div class="about-content">
+                    <div class="about-text">
+                        <div class="text-block">
+                            <h3>Nossa Filosofia</h3>
+                            <p>Na Raphael BarberShop, acreditamos que um bom corte de cabelo ou barba pode transformar não apenas a aparência, mas também a confiança de um homem. Combinamos técnicas tradicionais com abordagens modernas para criar looks personalizados.</p>
+                        </div>
+
+                        
+                    </div>
+
+                    <!-- Imagem -->
+                    <div class="about-image">
+                        <div class="image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior da barbearia" loading="lazy">
+                        </div>
+                        <div class="experience-badge">
+                            <span>5+</span>
+                            <small>Anos de Experiência</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipe -->
+                <div class="team-section">
+                    <h3 class="team-title">Nossos Barbeiros</h3>
+                    <div class="team-grid">
+                        <div class="team-card">
+                            <div class="team-avatar" style="background-color: #1a2a3a;">RM</div>
+                            <div class="team-info">
+                                <h4>Rafael Matias</h4>
+                                <p class="specialty">Especialista em cortes clássicos</p>
+                                <p class="bio">Mais de 10 anos de experiência em técnicas tradicionais de barbearia.</p>
+                            </div>
+                        </div>
+                        <div class="team-card">
+                            <div class="team-avatar" style="background-color: #3a1a2a;">LL</div>
+                            <div class="team-info">
+                                <h4>Lucas Lopes</h4>
+                                <p class="specialty">Mestre em design de barba</p>
+                                <p class="bio">Especializado em estilos modernos e cuidados com barba.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="gallery-section">
+            <div class="section-title">
+                <h2>GALERIA</h2>
+                <p>Confira nossos trabalhos e produtos</p>
+            </div>
+            
+            <div class="btnArea">
+                <button class="btnFoto ativo" onclick="mostrarGaleria('cortes')">
+                    <i class="fas fa-cut"></i>
+                    <p class="btnText">CORTES</p>
+                </button>
                 
+                <button class="btnFoto" onclick="mostrarGaleria('produtos')">
+                    <i class="fas fa-shopping-bag"></i>
+                    <p class="btnText">PRODUTOS</p>
+                </button>
             </div>
-
-            <!-- Imagem -->
-            <div class="about-image">
-                <div class="image-wrapper">
-                    <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior da barbearia" loading="lazy">
-                </div>
-                <div class="experience-badge">
-                    <span>5+</span>
-                    <small>Anos de Experiência</small>
-                </div>
+            
+            <div class="carouselContainer">
+                <button class="arrow left" onclick="scrollCarousel(-1)">
+                    ‹
+                </button>
+                
+                <div class="carousel" id="carousel"></div>
+                
+                <button class="arrow right" onclick="scrollCarousel(1)">
+                    ›
+                </button>
             </div>
-        </div>
-
-        <!-- Equipe -->
-        <div class="team-section">
-            <h3 class="team-title">Nossos Barbeiros</h3>
-            <div class="team-grid">
-                <div class="team-card">
-                    <div class="team-avatar" style="background-color: #1a2a3a;">RM</div>
-                    <div class="team-info">
-                        <h4>Rafael Matias</h4>
-                        <p class="specialty">Especialista em cortes clássicos</p>
-                        <p class="bio">Mais de 10 anos de experiência em técnicas tradicionais de barbearia.</p>
-                    </div>
-                </div>
-                <div class="team-card">
-                    <div class="team-avatar" style="background-color: #3a1a2a;">LL</div>
-                    <div class="team-info">
-                        <h4>Lucas Lopes</h4>
-                        <p class="specialty">Mestre em design de barba</p>
-                        <p class="bio">Especializado em estilos modernos e cuidados com barba.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-         <section class="gallery-section">
-        <div class="section-title">
-            <h2>GALERIA</h2>
-            <p>Confira nossos trabalhos e produtos</p>
-        </div>
-        
-        <div class="btnArea">
-            <button class="btnFoto ativo" onclick="mostrarGaleria('cortes')">
-                <i class="fas fa-cut"></i>
-                <p class="btnText">CORTES</p>
-            </button>
-            
-            <button class="btnFoto" onclick="mostrarGaleria('produtos')">
-                <i class="fas fa-shopping-bag"></i>
-                <p class="btnText">PRODUTOS</p>
-            </button>
-        </div>
-        
-        <div class="carouselContainer">
-            <button class="arrow left" onclick="scrollCarousel(-1)">
-                ‹
-            </button>
-            
-            <div class="carousel" id="carousel"></div>
-            
-            <button class="arrow right" onclick="scrollCarousel(1)">
-                ›
-            </button>
-        </div>
-    </section>
+        </section>
 
         <section class="plans" id="plans">
             <div class="container">
@@ -190,7 +193,7 @@
                                 <li>Finalização com produtos premium</li>
                                 <li>Penteado final</li>
                             </ul>
-                            <a href="#" class="btn schedule-btn-C" style="margin-top: 36px;">Assinar</a>
+                            <a href="#" class="btn schedule-btn">Assinar</a>
                         </div>
                     </article>
                     
@@ -234,43 +237,42 @@
         </section>
 
         <section class="location" id="location">
-    <div class="container">
-        <div class="section-title">
-            <h2><i class="fas fa-map-marker-alt"></i> LOCALIZAÇÃO</h2>
-        </div>
-        <div class="location-container">
-            <div class="location-info">
-                <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
-                <p><i class="fas fa-info-circle"></i> Estamos localizados no coração de Tribobó, com fácil acesso e estacionamento próximo.</p>
-                
-                <div class="hours">
-                    <h4><i class="far fa-clock"></i> HORÁRIOS DE FUNCIONAMENTO</h4>
-                    <ul>
-                        <li><span><i class="far fa-calendar-alt"></i> Segunda a Sexta:</span> <span>09:00 - 19:00</span></li>
-                        <li><span><i class="far fa-calendar-alt"></i> Sábado:</span> <span>09:00 - 17:00</span></li>
-                        <li><span><i class="far fa-calendar-alt"></i> Domingo:</span> <span class="closed">Fechado</span></li>
-                    </ul>
+            <div class="container">
+                <div class="section-title">
+                    <h2><i class="fas fa-map-marker-alt"></i> LOCALIZAÇÃO</h2>
                 </div>
-                
-                <div class="address">
-                    <h4><i class="fas fa-map-pin"></i> ENDEREÇO</h4>
-                    <p><i class="fas fa-road"></i> Rua Retiro da Saudade, 6</p>
-                    <p><i class="fas fa-city"></i> Tribobó, São Gonçalo - RJ</p>
-                </div>
+                <div class="location-container">
+                    <div class="location-info">
+                        <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
+                        <p><i class="fas fa-info-circle"></i> Estamos localizados no coração de Tribobó, com fácil acesso e estacionamento próximo.</p>
+                        
+                        <div class="hours">
+                            <h4><i class="far fa-clock"></i> HORÁRIOS DE FUNCIONAMENTO</h4>
+                            <ul>
+                                <li><span><i class="far fa-calendar-alt"></i> Segunda a Sexta:</span> <span>09:00 - 19:00</span></li>
+                                <li><span><i class="far fa-calendar-alt"></i> Sábado:</span> <span>09:00 - 17:00</span></li>
+                                <li><span><i class="far fa-calendar-alt"></i> Domingo:</span> <span class="closed">Fechado</span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="address">
+                            <h4><i class="fas fa-map-pin"></i> ENDEREÇO</h4>
+                            <p><i class="fas fa-road"></i> Rua Retiro da Saudade, 6</p>
+                            <p><i class="fas fa-city"></i> Tribobó, São Gonçalo - RJ</p>
+                        </div>
 
+                    </div>
+                    
+                    <div class="map">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3676.6176517835875!2d-43.031728688300916!3d-22.853631179206065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x999aae2a1429e7%3A0x993934908db71553!2sR.%20Retiro%20da%20Saudade%2C%206%20-%20Tribob%C3%B3%2C%20S%C3%A3o%20Gon%C3%A7alo%20-%20RJ%2C%2024750-225!5e0!3m2!1spt-BR!2sbr!4v1752689841807!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização da Barbearia no mapa"></iframe>
+                    </div>
+                </div>
             </div>
-            
-            <div class="map">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3676.6176517835875!2d-43.031728688300916!3d-22.853631179206065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x999aae2a1429e7%3A0x993934908db71553!2sR.%20Retiro%20da%20Saudade%2C%206%20-%20Tribob%C3%B3%2C%20S%C3%A3o%20Gon%C3%A7alo%20-%20RJ%2C%2024750-225!5e0!3m2!1spt-BR!2sbr!4v1752689841807!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização da Barbearia no mapa"></iframe>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
     </main>
 
     <footer id="contact">
         <div class="container">
-              
             <div class="social-links">
                 <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                 <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
@@ -283,9 +285,9 @@
         </div>
     </footer>
 
-    <!-- Modais -->
-    <div class="modal" id="loginModal" aria-hidden="true" aria-labelledby="loginModalTitle">
-        <div class="modal-content login-modal">
+    <!-- Modal de Login -->
+    <div class="modal modal-login" id="loginModal" aria-hidden="true" aria-labelledby="loginModalTitle">
+        <div class="modal-content login-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="loginModalTitle">Login</h2>
             <form id="loginForm">
@@ -306,8 +308,9 @@
         </div>
     </div>
 
-    <div class="modal" id="registerModal" aria-hidden="true" aria-labelledby="registerModalTitle">
-        <div class="modal-content register-modal">
+    <!-- Modal de Registro -->
+    <div class="modal modal-register" id="registerModal" aria-hidden="true" aria-labelledby="registerModalTitle">
+        <div class="modal-content register-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="registerModalTitle">Criar Conta</h2>
             <form id="registerForm">
@@ -347,82 +350,84 @@
         </div>
     </div>
 
-<div class="modal" id="scheduleModal" aria-hidden="true" aria-labelledby="scheduleModalTitle">
-    <div class="modal-content schedule-modal">
-        <button class="close-modal" aria-label="Fechar modal">&times;</button>
-        <h2 id="scheduleModalTitle">Agendar Horário</h2>
-        
-        <div class="progress-indicator">
-            <div class="progress-step active" data-step="location">1. Local</div>
-            <div class="progress-step" data-step="barber">2. Barbeiro</div>
-            <div class="progress-step" data-step="service">3. Serviço</div>
-            <div class="progress-step" data-step="datetime">4. Data/Hora</div>
-            <div class="progress-step" data-step="confirm">5. Confirmar</div>
-        </div>
-        
-        <div class="step-content-container">
-            <div id="stepLocation" class="step-content active">
-                <div class="form-group">
-                    <label for="locationSelect">Barbearia/Unidade</label>
-                    <select id="locationSelect" required></select>
-                </div>
+    <!-- Modal de Agendamento -->
+    <div class="modal modal-schedule" id="scheduleModal" aria-hidden="true" aria-labelledby="scheduleModalTitle">
+        <div class="modal-content schedule-modal-content">
+            <button class="close-modal" aria-label="Fechar modal">&times;</button>
+            <h2 id="scheduleModalTitle">Agendar Horário</h2>
+            
+            <div class="progress-indicator">
+                <div class="progress-step active" data-step="location">1. Local</div>
+                <div class="progress-step" data-step="barber">2. Barbeiro</div>
+                <div class="progress-step" data-step="service">3. Serviço</div>
+                <div class="progress-step" data-step="datetime">4. Data/Hora</div>
+                <div class="progress-step" data-step="confirm">5. Confirmar</div>
             </div>
             
-            <div id="stepBarber" class="step-content">
-                <div id="barberCardsContainer"></div>
-                <select id="barberSelect" style="display: none;" required></select>
-            </div>
-            
-            <div id="stepService" class="step-content">
-                <div class="form-group">
-                    <label for="serviceSelect">Serviço</label>
-                    <select id="serviceSelect" required></select>
-                </div>
-            </div>
-            
-            <div id="stepDatetime" class="step-content">
-                <div class="form-group">
-                    <label for="appointmentDate">Data</label>
-                    <input type="date" id="appointmentDate" min="" required>
-                </div>
-                <div class="form-group">
-                    <label for="appointmentTime">Horário</label>
-                    <input type="time" id="appointmentTime" min="09:00" max="19:00" required>
-                </div>
-            </div>
-            
-            <div id="stepConfirm" class="step-content">
-                <h3>Resumo do Agendamento</h3>
-                <div class="appointment-summary">
-                    <p><strong>Local:</strong> <span id="summaryLocation"></span></p>
-                    <p><strong>Barbeiro:</strong> <span id="summaryBarber"></span></p>
-                    <p><strong>Serviço:</strong> <span id="summaryService"></span></p>
-                    <p><strong>Data e Hora:</strong> <span id="summaryDatetime"></span></p>
+            <div class="step-content-container">
+                <div id="stepLocation" class="step-content active">
+                    <div class="form-group">
+                        <label for="locationSelect">Barbearia/Unidade</label>
+                        <select id="locationSelect" required></select>
+                    </div>
                 </div>
                 
-                <div class="cancellation-policy">
-                    <h4>Política de Cancelamento:</h4>
-                    <ul>
-                        <li>Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência</li>
-                        <li>Faltas sem aviso prévio podem resultar em cobrança</li>
-                        <li>Para alterações, entre em contato com pelo menos 6 horas de antecedência</li>
-                    </ul>
-                    <label>
-                        <input type="checkbox" id="acceptPolicy" required> Eu li e concordo com as políticas
-                    </label>
+                <div id="stepBarber" class="step-content">
+                    <div id="barberCardsContainer"></div>
+                    <select id="barberSelect" style="display: none;" required></select>
+                </div>
+                
+                <div id="stepService" class="step-content">
+                    <div class="form-group">
+                        <label for="serviceSelect">Serviço</label>
+                        <select id="serviceSelect" required></select>
+                    </div>
+                </div>
+                
+                <div id="stepDatetime" class="step-content">
+                    <div class="form-group">
+                        <label for="appointmentDate">Data</label>
+                        <input type="date" id="appointmentDate" min="" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentTime">Horário</label>
+                        <input type="time" id="appointmentTime" min="09:00" max="19:00" required>
+                    </div>
+                </div>
+                
+                <div id="stepConfirm" class="step-content">
+                    <h3>Resumo do Agendamento</h3>
+                    <div class="appointment-summary">
+                        <p><strong>Local:</strong> <span id="summaryLocation"></span></p>
+                        <p><strong>Barbeiro:</strong> <span id="summaryBarber"></span></p>
+                        <p><strong>Serviço:</strong> <span id="summaryService"></span></p>
+                        <p><strong>Data e Hora:</strong> <span id="summaryDatetime"></span></p>
+                    </div>
+                    
+                    <div class="cancellation-policy">
+                        <h4>Política de Cancelamento:</h4>
+                        <ul>
+                            <li>Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência</li>
+                            <li>Faltas sem aviso prévio podem resultar em cobrança</li>
+                            <li>Para alterações, entre em contato com pelo menos 6 horas de antecedência</li>
+                        </ul>
+                        <label>
+                            <input type="checkbox" id="acceptPolicy" required> Eu li e concordo com as políticas
+                        </label>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="modal-footer">
-            <button class="btn prev-step" style="display: none;">Voltar</button>
-            <button class="btn next-step">Próximo</button>
+            
+            <div class="modal-footer">
+                <button class="btn prev-step" style="display: none;">Voltar</button>
+                <button class="btn next-step">Próximo</button>
+            </div>
         </div>
     </div>
-</div>
 
-    <div class="modal" id="plansModal" aria-hidden="true" aria-labelledby="plansModalTitle">
-        <div class="modal-content plans-modal">
+    <!-- Modal de Planos -->
+    <div class="modal modal-plans" id="plansModal" aria-hidden="true" aria-labelledby="plansModalTitle">
+        <div class="modal-content plans-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="plansModalTitle">Assinar Plano</h2>
             
@@ -442,49 +447,67 @@
                 <div class="payment-methods">
                     <h4>Método de Pagamento</h4>
                     
-                    <div class="payment-option selected" data-method="credit">
-                        <input type="radio" name="paymentMethod" id="creditCard" checked>
-                        <label for="creditCard">Cartão de Crédito</label>
+                    <div class="payment-options">
+                        <div class="payment-option selected" data-method="credit">
+                            <input type="radio" name="paymentMethod" id="creditCard" value="credit" checked>
+                            <label for="creditCard">Cartão de Crédito</label>
+                        </div>
+                        
+                        <div class="payment-option" data-method="pix">
+                            <input type="radio" name="paymentMethod" id="pix" value="pix">
+                            <label for="pix">PIX</label>
+                        </div>
                     </div>
                     
-                    <div class="payment-option" data-method="pix">
-                        <input type="radio" name="paymentMethod" id="pix">
-                        <label for="pix">PIX</label>
-                    </div>
-                    
-                    <div id="creditCardForm" class="payment-form">
+                    <div id="creditCardForm" class="payment-form active">
                         <div class="form-group">
                             <label for="cardNumber">Número do Cartão</label>
-                            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+                            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
                         </div>
                         <div class="form-group">
                             <label for="cardName">Nome no Cartão</label>
                             <input type="text" id="cardName" placeholder="Nome como no cartão">
                         </div>
                         <div class="form-group-row">
-                            <div class="form-group" style="flex: 1; margin-right: 15px;">
+                            <div class="form-group">
                                 <label for="cardExpiry">Validade</label>
-                                <input type="text" id="cardExpiry" placeholder="MM/AA">
+                                <input type="text" id="cardExpiry" placeholder="MM/AA" maxlength="5">
                             </div>
-                            <div class="form-group" style="flex: 1;">
+                            <div class="form-group">
                                 <label for="cardCvv">CVV</label>
-                                <input type="text" id="cardCvv" placeholder="123">
+                                <input type="text" id="cardCvv" placeholder="123" maxlength="3">
                             </div>
                         </div>
                     </div>
                     
-                    <div id="pixInfo" class="payment-form" style="display: none;">
-                        <p>Você receberá o QRCode para pagamento após confirmar o plano.</p>
+                    <div id="pixInfo" class="payment-form">
+                        <div class="pix-instructions">
+                            <p><strong>Pagamento via PIX</strong></p>
+                            <p>Você receberá o QR Code para pagamento após confirmar a assinatura.</p>
+                            <ul>
+                                <li>Pagamento instantâneo</li>
+                                <li>Sem taxas adicionais</li>
+                                <li>Confirmação imediata</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 
-                <button class="btn confirm-btn" id="confirmPlanBtn" style="margin-top: 1rem;">Próximo</button>
+                <div class="plan-confirmation">
+                    <label class="terms-checkbox">
+                        <input type="checkbox" id="acceptTerms" required>
+                        <span>Eu concordo com os <a href="#" class="terms-link">Termos de Serviço</a> e <a href="#" class="terms-link">Política de Privacidade</a></span>
+                    </label>
+                    
+                    <button class="btn confirm-btn" id="confirmPlanBtn">Confirmar Assinatura</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="appointmentsModal" aria-hidden="true" aria-labelledby="appointmentsModalTitle">
-        <div class="modal-content appointments-modal">
+    <!-- Modal de Agendamentos -->
+    <div class="modal modal-appointments" id="appointmentsModal" aria-hidden="true" aria-labelledby="appointmentsModalTitle">
+        <div class="modal-content appointments-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="appointmentsModalTitle">Meus Agendamentos</h2>
             <div class="appointments-list" id="appointmentsList">
@@ -496,8 +519,9 @@
         </div>
     </div>
 
-    <div class="modal" id="profileModal" aria-hidden="true" aria-labelledby="profileModalTitle">
-        <div class="modal-content profile-modal">
+    <!-- Modal de Perfil -->
+    <div class="modal modal-profile" id="profileModal" aria-hidden="true" aria-labelledby="profileModalTitle">
+        <div class="modal-content profile-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="profileModalTitle">Meu Perfil</h2>
             <div class="profile-info">
@@ -519,8 +543,9 @@
         </div>
     </div>
 
-    <div class="modal" id="userPlansModal" aria-hidden="true" aria-labelledby="userPlansModalTitle">
-        <div class="modal-content user-plans-modal">
+    <!-- Modal de Planos do Usuário -->
+    <div class="modal modal-user-plans" id="userPlansModal" aria-hidden="true" aria-labelledby="userPlansModalTitle">
+        <div class="modal-content user-plans-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
             <h2 id="userPlansModalTitle">Meus Planos</h2>
             <div class="plans-list" id="plansList">
@@ -535,7 +560,7 @@
     <script src="{% static 'barbershop/js/UnitLP/auth-system.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/modal-manager.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/schedule-modal.js' %}"></script>
-    <script src="{% static 'barbershop/js/UnitLP/plans-modals.js' %}"></script>
+    <script src="{% static 'barbershop/js/UnitLP/plans-modal.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/gallery.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/hero-carousel.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/LP.js' %}"></script>
