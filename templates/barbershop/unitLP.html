@@ -372,6 +372,7 @@
                 <h2 id="scheduleModalTitle">Agendar Horário</h2>
                 <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
+
             <div class="progress-indicator">
                 <div class="progress-step active" data-step="location">1. Local</div>
                 <div class="progress-step" data-step="barber">2. Barbeiro</div>
@@ -384,12 +385,47 @@
                 <div id="stepLocation" class="step-content active">
                     <div class="form-group">
                         <label for="locationSelect">Barbearia/Unidade</label>
-                        <select id="locationSelect" required></select>
+                        <select id="locationSelect" required>
+                            <option value="none">Selecione uma Unidade</option>
+                            <option value="tribobo">Tribobó - São Gonçalo</option>
+                            <option value="centro">Centro - São Gonçalo</option>
+                        </select>
                     </div>
                 </div>
                 
                 <div id="stepBarber" class="step-content">
-                    <div id="barberCardsContainer"></div>
+                    <h3 class="barber-selection-title">Escolha seu barbeiro</h3>
+                    <div class="barber-card">
+                        <div class="each-barber-card">
+                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                            <div class="barber-info">
+                                <h4>Santos</h4>
+                                <button class="select-barber-btn" data-id="${barber.id}">
+                                    <i class="fas fa-check"></i> Selecionar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="each-barber-card">
+                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                            <div class="barber-info">
+                                <h4>bruno Vieira</h4>
+                                <button class="select-barber-btn" data-id="${barber.id}">
+                                    <i class="fas fa-check"></i> Selecionar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="each-barber-card">
+                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                            <div class="barber-info">
+                                <h4>Luis Felipe</h4>
+                                <button class="select-barber-btn" data-id="${barber.id}">
+                                    <i class="fas fa-check"></i> Selecionar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <select id="barberSelect" style="display: none;" required></select>
                 </div>
                 
@@ -435,8 +471,8 @@
             </div>
             
             <div class="modal-footer">
-                <button class="btn prev-step" style="display: none;">Voltar</button>
-                <button class="btn next-step">Próximo</button>
+                <button class="btn-submit prev-step" style="display: none;">Voltar</button>
+                <button class="btn-submit next">Próximo</button>
             </div>
         </div>
     </div>

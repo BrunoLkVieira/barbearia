@@ -165,6 +165,7 @@
     justify-content: center;
     align-items: center;
     padding: 10px;
+    gap: 1rem;
     border-top: 1px solid #eaecef;
     background-color: #f8f9fa;
     border-radius: 0 0 10px 10px;

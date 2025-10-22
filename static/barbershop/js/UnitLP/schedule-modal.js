@@ -13,14 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Salvar conteúdo original para reset
-    const originalModalContent = scheduleModal.querySelector('.modal-content').innerHTML;
-
     // Dados da aplicação
-    const locations = [
-        { id: 'tribobo', name: 'Tribobó - São Gonçalo' },
-        { id: 'centro', name: 'Centro - São Gonçalo' }
-    ];
+
     
     const services = [
         { id: 'corte', name: 'Corte de Cabelo', price: 49.90 },
@@ -62,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('click', e => e.target === scheduleModal && closeModal());
 
         // Navegação entre passos
-        document.querySelectorAll('.next-step').forEach(btn => {
+        document.querySelectorAll('.next').forEach(btn => {
             btn.addEventListener('click', handleNextStep);
         });
 
@@ -145,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('barberCardsContainer');
         if (!container) return;
 
-        container.innerHTML = '<h3 class="barber-selection-title">Escolha seu barbeiro</h3>';
+        container.innerHTML = '';
         
         if (barbers.length === 0) {
             container.innerHTML += '<p class="no-barbers">Nenhum barbeiro disponível</p>';
@@ -198,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function openModal() {
         resetAppointment();
         showStep('location');
-        scheduleModal.style.display = 'block';
+        scheduleModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 
@@ -245,10 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const stepsOrder = ['location', 'barber', 'service', 'datetime', 'confirm'];
         const currentIndex = stepsOrder.indexOf(currentStep);
         const prevBtn = document.querySelector('.prev-step');
-        const nextBtn = document.querySelector('.next-step');
+        const nextBtn = document.querySelector('.next');
         
-        if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'inline-block' : 'none';
-        if (nextBtn) nextBtn.style.display = currentIndex < stepsOrder.length - 1 ? 'inline-block' : 'none';
+        if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'flex' : 'none';
+        if (nextBtn) nextBtn.style.display = currentIndex < stepsOrder.length - 1 ? 'flex' : 'none';
         
         if (currentIndex === stepsOrder.length - 1) {
             setupConfirmationButton();
