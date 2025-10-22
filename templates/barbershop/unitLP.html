@@ -307,7 +307,7 @@
                             <i class="fas fa-eye" style="margin-top: .5rem;"></i>
                         </button>
                     </div>
-                    <button type="submit" class="btn">Entrar</button>
+                    <button type="submit" class="btn-submit">Entrar</button>
                 </div>
             </form>
             <div class="modal-footer">
@@ -319,13 +319,13 @@
     <!-- Modal de Registro -->
     <div class="modal modal-register" id="registerModal" aria-hidden="true" aria-labelledby="registerModalTitle">
         <div class="modal-content register-modal-content">
-            <div class="registerHeaderModal">
-                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+            <div class="modal-header">
                 <h2 id="registerModalTitle">Criar Conta</h2>
+                <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
             <form id="registerForm" method="POST" autocomplete="off">
                 {% csrf_token %}
-                <div class="modal-body-register">
+                <div class="modal-body">
                     <div class="form-group">
                         <label for="registerName">Nome Completo</label>
                         <input type="text" id="registerName" required >
@@ -356,19 +356,22 @@
                             <i class="fas fa-eye" style="margin-top: .5rem;"></i>
                         </button>
                     </div>
-                    <button type="submit" class="btn">Registrar</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-submit">Registrar</button>
                 </div>
             </form>
-            <p class="modal-link">Já tem conta? <a href="#" id="showLogin">Faça login</a></p>
+            <!-- <p class="modal-link">Já tem conta? <a href="#" id="showLogin">Faça login</a></p> -->
         </div>
     </div>
 
     <!-- Modal de Agendamento -->
     <div class="modal modal-schedule" id="scheduleModal" aria-hidden="true" aria-labelledby="scheduleModalTitle">
         <div class="modal-content schedule-modal-content">
-            <button class="close-modal" aria-label="Fechar modal">&times;</button>
-            <h2 id="scheduleModalTitle">Agendar Horário</h2>
-            
+            <div class="modal-header">
+                <h2 id="scheduleModalTitle">Agendar Horário</h2>
+                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+            </div>
             <div class="progress-indicator">
                 <div class="progress-step active" data-step="location">1. Local</div>
                 <div class="progress-step" data-step="barber">2. Barbeiro</div>

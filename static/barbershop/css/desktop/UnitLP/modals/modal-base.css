@@ -33,7 +33,9 @@
     background: linear-gradient(135deg, #2c3e50, #1a2a6c);
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding-inline: 15px;
+    padding: 10px;
     border-radius: 10px 10px 0 0;
 }
 
@@ -56,14 +58,15 @@
 
 .modal h2 {
     color: white;
-    margin-bottom: 20px;
     text-align: center;
 }
 
 /* ===== COMPONENTES DE FORMULÁRIO ===== */
 .modal-body{
     background-color: white;
-    padding: 25px 15px;
+    padding: 20px 15px;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 .form-group {
@@ -113,23 +116,26 @@
     color: var(--dark);
 }
 
-.modal-link {
-    text-align: center;
-    margin-top: 20px;
-    color: #555;
-}
-
-.modal-link a {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.modal-link a:hover {
-    text-decoration: underline;
-}
-
 /* ===== BOTÕES ===== */
+.btn-submit {
+    display: flex;
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 12px;
+    margin: auto;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-submit:hover {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+}
+
 .btn-cancel,
 .btn-cancel-plan {
     background-color: #e74c3c;
@@ -155,13 +161,28 @@
 }
 
 .modal-footer{
-    display: block;
+    display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
     border-top: 1px solid #eaecef;
     background-color: #f8f9fa;
     border-radius: 0 0 10px 10px;
+}
+
+.modal-link {
+    text-align: center;
+    color: #555;
+}
+
+.modal-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.modal-link a:hover {
+    text-decoration: underline;
 }
 
 /* ===== RESPONSIVIDADE ===== */
