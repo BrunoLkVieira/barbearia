@@ -14,17 +14,76 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST # Importe isso
 from apps.user.utils.validators import validate_user_data
+from functools import wraps
+from django.core.exceptions import PermissionDenied
+
+
 
 
 
 def owner_or_employee_required(view_func):
+
     def wrapper(request, *args, **kwargs):
+
         if not request.user.is_authenticated or getattr(request.user, "user_type", None) not in ["dono", "funcionario", "gerente"]:
+
             messages.error(request,  "Acesso negado. Apenas donos, funcionários ou gerentes podem acessar.")
+
             return redirect("user:login")
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def owner_or_employee_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Você precisa estar logado para acessar esta página.")
+            return redirect("user:login") # Ajuste sua URL de login se necessário
+            
+        user_type = getattr(request.user, "user_type", None)
+        if user_type not in ["dono", "funcionario", "gerente"]:
+            messages.error(request, "Acesso negado.")
+            # Redireciona para uma página 'home' genérica
+            raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return wrapper
 
+
+# NOVO DECORADOR: Apenas "dono"
+def owner_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Você precisa estar logado para acessar esta página.")
+            return redirect("user:login")
+
+        user_type = getattr(request.user, "user_type", None)
+        if user_type != "dono":
+            messages.error(request, "Acesso negado. Apenas o dono pode acessar esta página.")
+            raise PermissionDenied
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+# NOVO DECORADOR: "dono" ou "gerente"
+def owner_or_gerente_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Você precisa estar logado para acessar esta página.")
+            return redirect("user:login")
+
+        user_type = getattr(request.user, "user_type", None)
+        if user_type not in ["dono", "gerente"]:
+            messages.error(request, "Acesso negado. Apenas donos ou gerentes podem acessar esta página.")
+            raise PermissionDenied
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 def get_user_unit_if_manager(user):
     """
@@ -42,7 +101,7 @@ def get_user_unit_if_manager(user):
 
 
 @login_required
-@owner_or_employee_required
+@owner_required
 def UnitView(request, barbershop_slug):
     # Só busca barbearia do usuário logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
@@ -123,7 +182,7 @@ def _to_decimal(val):
         return None
 
 @login_required
-@owner_or_employee_required
+@owner_or_gerente_required
 def EmployeeView(request, barbershop_slug, unit_slug=None):
     # Barbershop do dono logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
@@ -549,7 +608,7 @@ def check_employee_data(request):
 
 
 @login_required
-@owner_or_employee_required
+@owner_or_gerente_required
 def MyWebsiteView(request, barbershop_slug):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
