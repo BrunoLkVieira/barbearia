@@ -395,35 +395,41 @@
                 
                 <div id="stepBarber" class="step-content">
                     <h3 class="barber-selection-title">Escolha seu barbeiro</h3>
-                    <div class="barber-card">
-                        <div class="each-barber-card">
-                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                    <div class="barber-grid">
+                        <div class="barber-card">
                             <div class="barber-info">
-                                <h4>Santos</h4>
-                                <button class="select-barber-btn" data-id="${barber.id}">
-                                    <i class="fas fa-check"></i> Selecionar
-                                </button>
+                                <div class="employee-avatar">
+                                    JS
+                                </div>
+                                <h4>Joao Santos</h4>
                             </div>
+                            <button class="select-barber-btn" data-id="${barber.id}">
+                                <i class="fas fa-check"></i> Selecionar
+                            </button>
                         </div>
 
-                        <div class="each-barber-card">
-                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                        <div class="barber-card">
                             <div class="barber-info">
-                                <h4>bruno Vieira</h4>
-                                <button class="select-barber-btn" data-id="${barber.id}">
-                                    <i class="fas fa-check"></i> Selecionar
-                                </button>
+                                <div class="employee-avatar">
+                                    JS
+                                </div>
+                                <h4>Joao Santos</h4>
                             </div>
+                            <button class="select-barber-btn" data-id="${barber.id}">
+                                <i class="fas fa-check"></i> Selecionar
+                            </button>
                         </div>
 
-                        <div class="each-barber-card">
-                            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="${barber.name}" class="barber-photo">
+                        <div class="barber-card">
                             <div class="barber-info">
-                                <h4>Luis Felipe</h4>
-                                <button class="select-barber-btn" data-id="${barber.id}">
-                                    <i class="fas fa-check"></i> Selecionar
-                                </button>
+                                <div class="employee-avatar">
+                                    JS
+                                </div>
+                                <h4>Joao Santos</h4>
                             </div>
+                            <button class="select-barber-btn" data-id="${barber.id}">
+                                <i class="fas fa-check"></i> Selecionar
+                            </button>
                         </div>
                     </div>
                     <select id="barberSelect" style="display: none;" required></select>
@@ -432,7 +438,12 @@
                 <div id="stepService" class="step-content">
                     <div class="form-group">
                         <label for="serviceSelect">Serviço</label>
-                        <select id="serviceSelect" required></select>
+                        <select id="serviceSelect" required>
+                            <option value="none">Selecione um Servico</option>
+                            <option value="corte">Corte de Cabelo', 49.90</option>
+                            <option value="barba">Design de Barba', 35.00</option>
+                            <option value="completp">Corte + Barba', 79.90</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -557,7 +568,7 @@
         </div>
     </div>
 
-    <!-- Modal de Agendamentos -->
+    <!-- Modal de Agendamentos Sem Funcao -->
     <div class="modal modal-appointments" id="appointmentsModal" aria-hidden="true" aria-labelledby="appointmentsModalTitle">
         <div class="modal-content appointments-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
@@ -571,7 +582,7 @@
         </div>
     </div>
 
-    <!-- Modal de Perfil -->
+    <!-- Modal de Perfil Sem Funcao -->
     <div class="modal modal-profile" id="profileModal" aria-hidden="true" aria-labelledby="profileModalTitle">
         <div class="modal-content profile-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>
@@ -595,7 +606,7 @@
         </div>
     </div>
 
-    <!-- Modal de Planos do Usuário -->
+    <!-- Modal de Planos do Usuário Sem Funcao -->
     <div class="modal modal-user-plans" id="userPlansModal" aria-hidden="true" aria-labelledby="userPlansModalTitle">
         <div class="modal-content user-plans-modal-content">
             <button class="close-modal" aria-label="Fechar modal">&times;</button>

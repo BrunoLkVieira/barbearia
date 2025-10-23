@@ -1,197 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos do modal
     const scheduleModal = document.getElementById('scheduleModal');
-    const scheduleBtns = [
-        document.getElementById('heroScheduleBtn'),
-        document.getElementById('floatingScheduleBtn')
-    ].filter(Boolean);
+    const scheduleBtn = document.getElementById('heroScheduleBtn');
     const closeScheduleModal = scheduleModal?.querySelector('.close-modal');
     
     // Verificação inicial dos elementos
-    if (!scheduleModal || !closeScheduleModal) {
-        console.error('Elementos essenciais do modal não encontrados');
+    if (!scheduleModal || !closeScheduleModal || !scheduleBtn) {
+        console.error('Elementos não encontrados');
         return;
-    }
-
-    // Dados da aplicação
-
-    
-    const services = [
-        { id: 'corte', name: 'Corte de Cabelo', price: 49.90 },
-        { id: 'barba', name: 'Design de Barba', price: 35.00 },
-        { id: 'completo', name: 'Corte + Barba', price: 79.90 }
-    ];
-    
-    const barbers = [
-        { id: 'raphael', name: 'Raphael Matias', photo: './assets/img/barbeiro1.jpg' },
-        { id: 'marcos', name: 'Marcos Silva', photo: './assets/img/barbeiro2.jpg' }
-    ];
-
-    // Estado do agendamento
-    const appointment = {
-        location: null,
-        service: null,
-        barber: null,
-        date: null,
-        time: null
-    };
-
-    // Inicialização do sistema
-    function init() {
-        setupEventListeners();
-        populateDropdowns();
-        setDateLimits();
-        populateBarbers();
-    }
-
-    // Configuração dos listeners de eventos
-    function setupEventListeners() {
-        // Eventos de abertura do modal
-        scheduleBtns.forEach(btn => {
-            btn.addEventListener('click', openModal);
-        });
-
-        // Eventos de fechamento do modal
-        closeScheduleModal.addEventListener('click', closeModal);
-        window.addEventListener('click', e => e.target === scheduleModal && closeModal());
-
-        // Navegação entre passos
-        document.querySelectorAll('.next').forEach(btn => {
-            btn.addEventListener('click', handleNextStep);
-        });
-
-        document.querySelectorAll('.prev-step').forEach(btn => {
-            btn.addEventListener('click', handlePrevStep);
-        });
-
-        // Eventos de formulário
-        setupFormEventListeners();
-    }
-
-    function setupFormEventListeners() {
-        document.getElementById('locationSelect')?.addEventListener('change', e => {
-            appointment.location = e.target.value;
-            hideWarning('locationSelect');
-        });
-
-        document.getElementById('serviceSelect')?.addEventListener('change', e => {
-            appointment.service = e.target.value;
-            hideWarning('serviceSelect');
-        });
-
-        document.getElementById('appointmentDate')?.addEventListener('change', e => {
-            appointment.date = e.target.value;
-            hideWarning('appointmentDate');
-            updateAvailableTimes();
-        });
-
-        document.getElementById('appointmentTime')?.addEventListener('change', e => {
-            appointment.time = e.target.value;
-            hideWarning('appointmentTime');
-        });
-    }
-
-    // Funções de manipulação de UI
-    function showWarning(fieldId, message = 'Este campo é obrigatório') {
-        const field = document.getElementById(fieldId);
-        if (!field) return;
-        
-        hideWarning(fieldId);
-        
-        const warning = document.createElement('div');
-        warning.className = 'field-warning';
-        warning.textContent = message;
-        warning.id = `${fieldId}-warning`;
-        
-        field.parentNode.insertBefore(warning, field.nextSibling);
-        field.classList.add('field-error');
-        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    function hideWarning(fieldId) {
-        const warning = document.getElementById(`${fieldId}-warning`);
-        if (warning) warning.remove();
-        
-        const field = document.getElementById(fieldId);
-        if (field) field.classList.remove('field-error');
-    }
-
-    // Funções de população de dados
-    function populateDropdowns() {
-        populateSelect('locationSelect', locations, 'Selecione uma unidade');
-        populateSelect('serviceSelect', services, 'Selecione um serviço');
-    }
-
-    function populateSelect(id, items, placeholder) {
-        const select = document.getElementById(id);
-        if (!select) return;
-
-        select.innerHTML = `<option value="">${placeholder}</option>`;
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.id;
-            option.textContent = item.name + (item.price ? ` - R$ ${item.price.toFixed(2)}` : '');
-            select.appendChild(option);
-        });
-    }
-
-    function populateBarbers() {
-        const container = document.getElementById('barberCardsContainer');
-        if (!container) return;
-
-        container.innerHTML = '';
-        
-        if (barbers.length === 0) {
-            container.innerHTML += '<p class="no-barbers">Nenhum barbeiro disponível</p>';
-            return;
-        }
-
-        const barbersGrid = document.createElement('div');
-        barbersGrid.className = 'barbers-grid';
-        
-        barbers.forEach(barber => {
-            const barberCard = document.createElement('div');
-            barberCard.className = 'barber-card';
-            barberCard.innerHTML = `
-                <div class="barber-card-inner">
-                    <img src="${barber.photo}" alt="${barber.name}" class="barber-photo">
-                    <div class="barber-info">
-                        <h4>${barber.name}</h4>
-                        <button class="select-barber-btn" data-id="${barber.id}">
-                            <i class="fas fa-check"></i> Selecionar
-                        </button>
-                    </div>
-                </div>
-            `;
-            barbersGrid.appendChild(barberCard);
-        });
-
-        container.appendChild(barbersGrid);
-
-        // Configura seleção dos barbeiros
-        setupBarberSelection();
-    }
-
-    function setupBarberSelection() {
-        document.querySelectorAll('.select-barber-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const selectedBarberId = this.getAttribute('data-id');
-                appointment.barber = selectedBarberId;
-                
-                document.querySelectorAll('.barber-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                
-                this.closest('.barber-card').classList.add('selected');
-                hideWarning('barberCardsContainer');
-            });
-        });
     }
 
     // Controle do modal
     function openModal() {
-        resetAppointment();
-        showStep('location');
         scheduleModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
@@ -199,16 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal() {
         scheduleModal.style.display = 'none';
         document.body.style.overflow = 'auto';
-    }
-
-    function resetAppointment() {
-        Object.keys(appointment).forEach(key => {
-            appointment[key] = null;
-        });
-        
-        document.querySelectorAll('.barber-card').forEach(card => {
-            card.classList.remove('selected');
-        });
     }
 
     // Navegação entre passos
@@ -243,30 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'flex' : 'none';
         if (nextBtn) nextBtn.style.display = currentIndex < stepsOrder.length - 1 ? 'flex' : 'none';
-        
-        if (currentIndex === stepsOrder.length - 1) {
-            setupConfirmationButton();
-        } else {
-            removeConfirmationButton();
-        }
-    }
-
-    function setupConfirmationButton() {
-        if (!document.getElementById('confirmAppointmentBtn')) {
-            const confirmBtn = document.createElement('button');
-            confirmBtn.id = 'confirmAppointmentBtn';
-            confirmBtn.className = 'btn confirm-btn';
-            confirmBtn.textContent = 'Confirmar Agendamento';
-            confirmBtn.addEventListener('click', confirmAppointment);
-            
-            const footer = document.querySelector('.modal-footer');
-            if (footer) footer.appendChild(confirmBtn);
-        }
-    }
-
-    function removeConfirmationButton() {
-        const confirmBtn = document.getElementById('confirmAppointmentBtn');
-        if (confirmBtn) confirmBtn.remove();
     }
 
     function handleNextStep(e) {
@@ -275,15 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const stepsOrder = ['location', 'barber', 'service', 'datetime', 'confirm'];
         const currentIndex = stepsOrder.indexOf(currentStep);
         const nextStep = stepsOrder[currentIndex + 1];
-
-        if (!validateStep(currentStep)) {
-            return;
-        }
-
-        if (nextStep === 'confirm') {
-            updateSummary();
-        }
-
         showStep(nextStep);
     }
 
@@ -296,185 +73,48 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(prevStep);
     }
 
-    // Validações
-    function validateStep(step) {
-        const validations = {
-            location: () => validateField('location', 'locationSelect'),
-            barber: () => validateField('barber', 'barberCardsContainer', 'Selecione um barbeiro'),
-            service: () => validateField('service', 'serviceSelect'),
-            datetime: () => validateDateTime()
-        };
+    // Função para seleção de barbeiros
+    function setupBarberSelection() {
+        const barberCards = document.querySelectorAll('.barber-card');
         
-        return validations[step] ? validations[step]() : true;
-    }
-
-    function validateField(field, elementId, message = 'Este campo é obrigatório') {
-        if (!appointment[field]) {
-            showWarning(elementId, message);
-            return false;
-        }
-        return true;
-    }
-
-    function validateDateTime() {
-        let isValid = true;
-        
-        if (!appointment.date) {
-            showWarning('appointmentDate');
-            isValid = false;
-        }
-        
-        if (!appointment.time) {
-            showWarning('appointmentTime');
-            isValid = false;
-        } else {
-            const hour = parseInt(appointment.time.split(':')[0]);
-            if (hour < 9 || hour >= 19) {
-                showWarning('appointmentTime', 'Horário deve ser entre 09:00 e 19:00');
-                isValid = false;
-            }
-        }
-        
-        return isValid;
-    }
-
-    function validatePolicyAcceptance() {
-        const policyCheckbox = document.getElementById('acceptPolicy');
-        
-        if (policyCheckbox && !policyCheckbox.checked) {
-            return false;
-        }
-        
-        return true;
-    }
-
-    // Resumo e confirmação
-    function updateSummary() {
-        const fields = {
-            location: locations.find(l => l.id === appointment.location)?.name,
-            barber: barbers.find(b => b.id === appointment.barber)?.name,
-            service: services.find(s => s.id === appointment.service)?.name,
-            datetime: formatAppointmentDateTime()
-        };
-
-        Object.entries(fields).forEach(([key, value]) => {
-            const element = document.getElementById(`summary${key.charAt(0).toUpperCase() + key.slice(1)}`);
-            if (element) element.textContent = value || 'Não selecionado';
+        barberCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove a classe 'selected' de todos os barbeiros
+                barberCards.forEach(c => c.classList.remove('selected'));
+                
+                // Adiciona a classe 'selected' apenas ao barbeiro clicado
+                this.classList.add('selected');
+            });
         });
     }
 
-    function formatAppointmentDateTime() {
-        if (!appointment.date || !appointment.time) return 'Não selecionado';
-        
-        const date = new Date(appointment.date);
-        const formattedDate = date.toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
+    // Configuração dos listeners de eventos
+    function setupEventListeners() {
+        // Eventos de abertura do modal
+        scheduleBtn.addEventListener('click', openModal);
+
+        // Eventos de fechamento do modal
+        closeScheduleModal.addEventListener('click', closeModal);
+        window.addEventListener('click', e => e.target === scheduleModal && closeModal());
+
+        // Navegação entre passos
+        document.querySelectorAll('.next').forEach(btn => {
+            btn.addEventListener('click', handleNextStep);
         });
-        
-        return `${formattedDate} às ${appointment.time}`;
-    }
 
-    function confirmAppointment() {
-        if (!validatePolicyAcceptance()) {
-            return;
-        }
-
-        showConfirmation();
-    }
-
-    function showConfirmation() {
-        const modalContent = scheduleModal.querySelector('.modal-content');
-        
-        modalContent.innerHTML = `
-            <div class="confirmation-container">
-                <div class="confirmation-header">
-                    <i class="fas fa-check-circle confirmation-icon"></i>
-                    <h2>Agendamento Confirmado!</h2>
-                </div>
-                <div class="confirmation-body">
-                    ${generateConfirmationDetails()}
-                    <div class="confirmation-note">
-                        <p>Você receberá um e-mail de confirmação com os detalhes.</p>
-                    </div>
-                </div>
-                <div class="confirmation-footer">
-                    <button id="closeConfirmation" class="btn confirmation-btn">Fechar</button>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('closeConfirmation').addEventListener('click', () => {
-            closeModal();
-            resetModalContent();
+        document.querySelectorAll('.prev-step').forEach(btn => {
+            btn.addEventListener('click', handlePrevStep);
         });
+
+        // Seleção de barbeiros
+        setupBarberSelection();
     }
 
-    function generateConfirmationDetails() {
-        const details = {
-            Local: locations.find(l => l.id === appointment.location)?.name,
-            Barbeiro: barbers.find(b => b.id === appointment.barber)?.name,
-            Serviço: services.find(s => s.id === appointment.service)?.name,
-            'Data e Hora': formatAppointmentDateTime()
-        };
-
-        return Object.entries(details)
-            .filter(([_, value]) => value)
-            .map(([label, value]) => `
-                <div class="confirmation-detail">
-                    <span class="detail-label">${label}:</span>
-                    <span class="detail-value">${value}</span>
-                </div>
-            `).join('');
+    // Inicialização
+    function init() {
+        setupEventListeners();
+        showStep('location'); // Inicia no primeiro passo
     }
 
-    function resetModalContent() {
-        setTimeout(() => {
-            scheduleModal.querySelector('.modal-content').innerHTML = originalModalContent;
-            init();
-        }, 300);
-    }
-
-    // Funções para controle de datas e horários
-    function setDateLimits() {
-        const today = new Date();
-        const maxDate = new Date();
-        maxDate.setDate(today.getDate() + 7); // 7 dias no futuro
-        
-        const dateInput = document.getElementById('appointmentDate');
-        if (dateInput) {
-            dateInput.setAttribute('min', today.toISOString().split('T')[0]);
-            dateInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
-        }
-    }
-
-    function updateAvailableTimes() {
-        if (!appointment.date) return;
-        
-        const timeSelect = document.getElementById('appointmentTime');
-        if (!timeSelect) return;
-        
-        // Limpa opções existentes
-        timeSelect.innerHTML = '<option value="">Selecione um horário</option>';
-        
-        // Horários disponíveis (das 9h às 19h, a cada 30 minutos)
-        const availableTimes = [];
-        for (let hour = 9; hour < 19; hour++) {
-            availableTimes.push(`${hour.toString().padStart(2, '0')}:00`);
-            availableTimes.push(`${hour.toString().padStart(2, '0')}:30`);
-        }
-        
-        // Adiciona opções ao select
-        availableTimes.forEach(time => {
-            const option = document.createElement('option');
-            option.value = time;
-            option.textContent = time;
-            timeSelect.appendChild(option);
-        });
-    }
-
-    // Inicializar
     init();
 });
