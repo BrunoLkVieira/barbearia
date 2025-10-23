@@ -17,10 +17,14 @@
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
+
+    
     <style>.swal2-container {z-index: 9999;}</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+    
+
     {% include "geral/header.html" %}
     
     <div class="nav-bar">
@@ -277,7 +281,7 @@
     <!-- Modal de Funcionário -->
     <div id="employeeModal" class="modal">
         <div class="modal-content">
-            <form method="POST" id="employeeForm" autocomplete="off">
+            <form method="POST" id="employeeForm" autocomplete="off" data-check-url="{% url 'barbershop:check_employee_data' %}">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
                 <input type="hidden" name="employee_id" id="employeeId">
@@ -369,8 +373,33 @@
         </div>
     </div>
 
+
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
+
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+                {% for message in messages %}
+                    Toast.fire({
+                        icon: '{{ message.tags }}', 
+                        title: '{{ message }}'
+                    });
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

@@ -36,12 +36,21 @@
                 
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                        </div>
+
+                        {% if message.tags == 'error' %}
+                        
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+
+                        {% endif %}
+
                     {% endfor %}
                 {% endif %}
 
+
+
+        
 
 
                 <form id="loginForm"  method="post">

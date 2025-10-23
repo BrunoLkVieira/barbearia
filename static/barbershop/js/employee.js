@@ -1,5 +1,5 @@
 // Arquivo: static/barbershop/js/employee.js
-// VERSÃO CORRIGIDA
+// VERSÃO FINAL CORRIGIDA
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- SELETORES DE ELEMENTOS ---
@@ -14,20 +14,94 @@ document.addEventListener('DOMContentLoaded', function() {
     const employeeTableBody = document.querySelector('.employees-table tbody');
 
     // --- CONFIGURAÇÃO DA VERIFICAÇÃO ---
-    // Removi a lógica de verificação AJAX para simplificar, já que a validação principal está na view.
-    // O formulário agora será enviado diretamente.
     if (employeeForm) {
+        
+        // Pega a URL e o Token do formulário no HTML
+        const checkUrl = employeeForm.dataset.checkUrl;
+        const csrfToken = employeeForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
         employeeForm.addEventListener('submit', function(event) {
-            // Este listener agora apenas permite o envio. A validação real está na view.
-            // Se você tinha uma view AJAX /check-employee-data/, pode restaurar a lógica anterior.
-            // Mas para o problema de salvar, a view principal é o que importa.
+            
+            // Vamos interceptar o envio APENAS se for uma "criação"
+            const action = employeeForm.querySelector('input[name="action"]').value;
+            
+            if (action === 'create') {
+                
+                // 1. IMPEDE A PÁGINA DE RECARREGAR (e fechar o modal)
+                event.preventDefault(); 
+                
+                const formData = new FormData(employeeForm);
+
+                // 2. Envia os dados do formulário para a sua view de validação
+                fetch(checkUrl, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    
+                    if (data.is_valid) {
+                        // 3. SE VÁLIDO:
+                        
+                        if (data.user_exists) {
+                            // 3a. Usuário já existe, pede confirmação
+                            Swal.fire({
+                                title: 'Usuário Encontrado!',
+                                text: `O usuário ${data.user_name} já existe. Deseja adicioná-lo?`,
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Sim, adicionar',
+                                cancelButtonText: 'Cancelar'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Se confirmar, envia o formulário de verdade
+                                    employeeForm.submit(); 
+                                }
+                            });
+                        } else {
+                            // 3b. Usuário novo, envia o formulário de verdade
+                            employeeForm.submit();
+                        }
+
+                    } else {
+                        // 4. SE INVÁLIDO (O SEU ALERTA "PERFEITO")
+                        
+                        // Formata a lista de erros
+                        let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
+                        data.errors.forEach(error => {
+                            errorHtml += `<li>${error}</li>`;
+                        });
+                        errorHtml += '</ul>';
+
+                        // Mostra o alerta "perfeito":
+                        // - Centralizado
+                        // - Sem temporizador
+                        // - Listando os erros
+                        // - E O MODAL NÃO FECHA!
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erros Encontrados',
+                            html: errorHtml,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro no fetch:', error);
+                    Swal.fire('Erro!', 'Ocorreu um erro de conexão. Tente novamente.', 'error');
+                });
+            }
+            
+            // Se a 'action' for 'edit', este script não faz nada
+            // e deixa o formulário ser enviado normalmente.
         });
     }
 
     // --- FUNÇÕES DE CONTROLE DO MODAL ---
     
+    // A sua função (correta) de abrir o modal
     function openEmployeeModal(employeeData = null) {
-        // Limpa todos os checkboxes de cargo sempre que o modal abrir.
         employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
             checkbox.checked = false;
         });
@@ -47,16 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const serviceComm = employeeData.serviceCommission || '';
             const productComm = employeeData.productCommission || '';
 
-            // Preenche comissões e permissões
             employeeForm.querySelector('#serviceCommission').value = serviceComm.toString().replace(',', '.');
-            employeeForm.querySelector('#productCommission').value = productComm.toString().replace(',', '.');           
+            employeeForm.querySelector('#productCommission').value = productComm.toString().replace(',', '.');          
             employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
             employeeForm.querySelector('input[name="can_manage_cashbox"]').checked = employeeData.canCashbox === 'true';
             employeeForm.querySelector('input[name="can_register_sell"]').checked = employeeData.canSell === 'true';
             employeeForm.querySelector('input[name="can_create_appointments"]').checked = employeeData.canAppointments === 'true';
             employeeForm.querySelector('input[name="system_access"]').checked = employeeData.systemAccess === 'true';
             
-            // Preenche os cargos (roles)
             if (employeeData.roles) {
                 const rolesArray = employeeData.roles.split(','); 
                 rolesArray.forEach(roleValue => {
@@ -70,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // MODO CRIAÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
-            employeeForm.reset(); // Limpa todos os campos
+            employeeForm.reset(); 
             employeeForm.querySelector('input[name="action"]').value = 'create';
             employeeForm.querySelector('#employeeId').value = '';
         }
@@ -78,11 +150,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('modal-open');
     }
 
+    // A sua função (correta) de fechar o modal
     window.closeEmployeeModal = function() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
     }
 
+    // O seu código (correto) para os botões
     if (addEmployeeBtn) {
         addEmployeeBtn.addEventListener('click', () => {
             openEmployeeModal();
@@ -94,8 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const editButton = event.target.closest('.edit-btn');
             if (!editButton) return;
 
-            // ---> PONTO CRÍTICO CORRIGIDO <---
-            // Monta o objeto com os nomes EXATOS (camelCase) que correspondem aos data-atributos.
             const employeeData = {
                 id: editButton.dataset.id,
                 name: editButton.dataset.name,
@@ -118,8 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
-// Funções auxiliares no final (sem alterações)
+// Funções auxiliares (corretas)
 const cpfInput = document.getElementById('employeeCPF');
 if(cpfInput) {
     cpfInput.addEventListener('input', function() {

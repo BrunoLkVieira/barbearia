@@ -289,12 +289,12 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     for role_occupation in roles_selected:
                         Role.objects.create(employee=employee, occupation=role_occupation)
                         
-                    if created:
-                        messages.success(request, f"Funcionário {user.name} criado com sucesso!")
-                    else:
-                        messages.info(request, f"O usuário {user.name} já existia e foi adicionado como funcionário.")
-                else:
-                    messages.warning(request, f"O usuário {user.name} já é um funcionário desta barbearia.")
+                    # if created:
+                        # messages.success(request, f"Funcionário {user.name} criado com sucesso!")
+                    # else:
+                        # messages.info(request, f"O usuário {user.name} já existia e foi adicionado como funcionário.")
+                # else:
+                    # messages.warning(request, f"O usuário {user.name} já é um funcionário desta barbearia.")
 
         # ---------- EDIT ----------
         elif action == "edit":
