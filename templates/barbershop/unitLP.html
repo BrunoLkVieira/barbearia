@@ -272,17 +272,13 @@
         </section>
     </main>
 
-    <footer id="contact">
-        <div class="container">
-            <div class="social-links">
-                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            </div>
-            
-            <div class="copyright">
-                © 2025 Raphael BarberShop. Todos os direitos reservados.
-            </div>
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-whatsapp"></i></a>
+        </div>
+        <div class="copyright">
+            © 2025 OrblyCode. Todos os direitos reservados.
         </div>
     </footer>
 
@@ -491,13 +487,15 @@
     <!-- Modal de Planos -->
     <div class="modal modal-plans" id="plansModal" aria-hidden="true" aria-labelledby="plansModalTitle">
         <div class="modal-content plans-modal-content">
-            <button class="close-modal" aria-label="Fechar modal">&times;</button>
-            <h2 id="plansModalTitle">Assinar Plano</h2>
+            <div class="modal-header">
+                <h2 id="plansModalTitle">Assinar Plano</h2>
+                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+            </div>
             
-            <div class="plan-details">
+            <div class="modal-body">
                 <h3 id="selectedPlanName">Plano Mensal</h3>
                 <div class="price" id="selectedPlanPrice">R$120,00/mês</div>
-                
+            
                 <div class="plan-features">
                     <h4>Benefícios:</h4>
                     <ul id="selectedPlanFeatures">
@@ -506,22 +504,17 @@
                         <li>Produtos exclusivos</li>
                     </ul>
                 </div>
-                
+            
                 <div class="payment-methods">
                     <h4>Método de Pagamento</h4>
-                    
+            
                     <div class="payment-options">
                         <div class="payment-option selected" data-method="credit">
                             <input type="radio" name="paymentMethod" id="creditCard" value="credit" checked>
                             <label for="creditCard">Cartão de Crédito</label>
                         </div>
-                        
-                        <div class="payment-option" data-method="pix">
-                            <input type="radio" name="paymentMethod" id="pix" value="pix">
-                            <label for="pix">PIX</label>
-                        </div>
                     </div>
-                    
+            
                     <div id="creditCardForm" class="payment-form active">
                         <div class="form-group">
                             <label for="cardNumber">Número do Cartão</label>
@@ -542,7 +535,7 @@
                             </div>
                         </div>
                     </div>
-                    
+            
                     <div id="pixInfo" class="payment-form">
                         <div class="pix-instructions">
                             <p><strong>Pagamento via PIX</strong></p>
@@ -555,15 +548,14 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="plan-confirmation">
-                    <label class="terms-checkbox">
-                        <input type="checkbox" id="acceptTerms" required>
-                        <span>Eu concordo com os <a href="#" class="terms-link">Termos de Serviço</a> e <a href="#" class="terms-link">Política de Privacidade</a></span>
-                    </label>
-                    
-                    <button class="btn confirm-btn" id="confirmPlanBtn">Confirmar Assinatura</button>
-                </div>
+                <label class="terms-checkbox">
+                    <input type="checkbox" id="acceptTerms" required>
+                    <span>Eu concordo com os <a href="#" class="terms-link">Termos de Serviço</a> e <a href="#" class="terms-link">Política de Privacidade</a></span>
+                </label>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-submit confirm-btn" id="confirmPlanBtn">Confirmar Assinatura</button>
             </div>
         </div>
     </div>
