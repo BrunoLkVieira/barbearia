@@ -2,8 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Elementos do modal
     const scheduleModal = document.getElementById('scheduleModal');
     const scheduleBtn = document.getElementById('heroScheduleBtn');
+    const floatScheduleBtn = document.getElementById('floatScheduleButton');
     const closeScheduleModal = scheduleModal?.querySelector('.close-modal');
-    
+
+
     // Verificação inicial dos elementos
     if (!scheduleModal || !closeScheduleModal || !scheduleBtn) {
         console.error('Elementos não encontrados');
@@ -92,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEventListeners() {
         // Eventos de abertura do modal
         scheduleBtn.addEventListener('click', openModal);
+        floatScheduleBtn.addEventListener('click', openModal);
 
         // Eventos de fechamento do modal
         closeScheduleModal.addEventListener('click', closeModal);

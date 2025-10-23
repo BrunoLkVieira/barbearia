@@ -119,6 +119,9 @@
 /* ===== BOTÕES ===== */
 .btn-submit {
     display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
     background-color: var(--primary-color);
     color: #fff;
     padding: 12px;

@@ -32,12 +32,6 @@ function cancelModal(){
     document.body.style.overflow = '';
 }
 
-window.addEventListener('click', function (e) {
-    if (e.target === endServiceModal) {
-        closeModal();
-    }
-});
-
 
 
 // Eidtar Servico

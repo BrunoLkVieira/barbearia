@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/plans.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/user-plans.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/agendamentos.css' %}">
 
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/mobileV.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/resp.css' %}">
@@ -38,7 +39,7 @@
                 <ul>
                     <li>
                         <a href="#" id="loginHeaderLink" class="login-btn">
-                            <i class="fas fa-user"></i>Login
+                            <i class="fas fa-user"></i> Login
                         </a>
                         
                         <div class="user-welcome" style="display: none;">
@@ -49,7 +50,7 @@
                                 <span class="welcome-text">Olá, <span class="user-name">Usuário</span></span>
                             </div>
                             <div class="quick-actions">
-                                <button class="quick-action" id="viewAppointmentsBtn">
+                                <button class="quick-action" onclick="openAppointmentsModal()">
                                     <i class="fas fa-calendar-alt"></i> Meus Agendamentos
                                 </button>
                                 <button class="quick-action" id="viewPlansBtn">
@@ -83,7 +84,7 @@
             </div> 
         </section>
 
-        <a href="#" class="floating-btn" id="floatingScheduleBtn" aria-label="Agendar horário">
+        <a href="#" class="floating-btn" id="floatScheduleButton" aria-label="Agendar horário">
             <i class="fas fa-calendar-alt"></i>
         </a>
 
@@ -387,6 +388,9 @@
                             <option value="centro">Centro - São Gonçalo</option>
                         </select>
                     </div>
+                    <!-- <label>
+                        <input type="checkbox" id="acceptPolicy" required> Usar Seu Plano ?
+                    </label> -->
                 </div>
                 
                 <div id="stepBarber" class="step-content">
@@ -560,16 +564,190 @@
         </div>
     </div>
 
-    <!-- Modal de Agendamentos Sem Funcao -->
-    <div class="modal modal-appointments" id="appointmentsModal" aria-hidden="true" aria-labelledby="appointmentsModalTitle">
-        <div class="modal-content appointments-modal-content">
-            <button class="close-modal" aria-label="Fechar modal">&times;</button>
-            <h2 id="appointmentsModalTitle">Meus Agendamentos</h2>
-            <div class="appointments-list" id="appointmentsList">
-                <p>Você não possui agendamentos ainda.</p>
+    <!-- Modal de Agendamentos -->
+    <div class="modal modal-appointments" id="appointmentsModal">
+        <div class="modal-content ">
+            <div class="modal-header">
+                <h2 id="appointmentsModalTitle">Meus Agendamentos</h2>
+                <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
-            <div class="modal-actions">
-                <button class="btn" id="newAppointmentBtn">Novo Agendamento</button>
+            
+            <div class="modal-body">
+                <div class="appointments-grid">
+                    <!-- Agendamento 1 -->
+                    <div class="appointment-card realizado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">15</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">14:30</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Corte de Cabelo</div>
+                            <div class="service-price">R$ 49,90</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">RM</div>
+                                <span>Raphael Matias</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-realizado">Realizado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Tribobó - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Agendamento 2 -->
+                    <div class="appointment-card agendado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">20</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">10:00</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Corte</div>
+                            <div class="service-name">Barba</div>
+                            <div class="service-price">R$ 79,90</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">LL</div>
+                                <span>Lucas Lopes</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-agendado">Agendado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Centro - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Agendamento 3 -->
+                    <div class="appointment-card realizado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">08</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">16:00</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Design de Barba</div>
+                            <div class="service-price">R$ 35,00</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">RM</div>
+                                <span>Raphael Matias</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-realizado">Realizado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Tribobó - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Agendamento 4 -->
+                    <div class="appointment-card agendado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">25</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">11:30</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Corte de Cabelo</div>
+                            <div class="service-price">R$ 49,90</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">LL</div>
+                                <span>Lucas Lopes</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-agendado">Agendado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Centro - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Agendamento 5 -->
+                    <div class="appointment-card cancelado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">12</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">15:00</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Corte Social</div>
+                            <div class="service-price">R$ 45,00</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">RM</div>
+                                <span>Raphael Matias</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-cancelado">Cancelado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Tribobó - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Agendamento 6 -->
+                    <div class="appointment-card realizado">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <span class="date-day">05</span>
+                                <span class="date-month">Jan</span>
+                                <span class="date-year">2024</span>
+                            </div>
+                            <div class="appointment-time">13:15</div>
+                        </div>
+                
+                        <div class="appointment-details">
+                            <div class="service-name">Corte + Sobrancelha</div>
+                            <div class="service-price">R$ 65,00</div>
+                            <div class="barber-info">
+                                <div class="barber-avatar">LL</div>
+                                <span>Lucas Lopes</span>
+                            </div>
+                        </div>
+                
+                        <div class="appointment-footer">
+                            <div class="status-badge status-realizado">Realizado</div>
+                            <div class="location-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Centro - São Gonçalo
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-submit" onclick="openNewAppointment()"><i class="fa-solid fa-plus"></i> Novo Agendamento</button>
             </div>
         </div>
     </div>
@@ -619,5 +797,6 @@
     <script src="{% static 'barbershop/js/UnitLP/gallery.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/hero-carousel.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/LP.js' %}"></script>
+    <script src="{% static 'barbershop/js/UnitLP/agendamentos-Modal.js' %}"></script>
 </body>
 </html>
