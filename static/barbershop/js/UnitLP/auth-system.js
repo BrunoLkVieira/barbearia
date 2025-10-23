@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
             isLoggedIn = true;
             updateAuthUI();
             closeModal(loginModal);
-            alert('Login visual realizado');
         });
     }
 
@@ -59,13 +58,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fechar modais
+    // Fechar modais com botão X
     closeModalButtons.forEach(button => {
         button.addEventListener('click', function() {
             const modal = this.closest('.modal');
             closeModal(modal);
         });
     });
+
+    // *** REMOVIDO: Fechar modais clicando fora ***
+    // *** REMOVIDO: Fechar modais com tecla Escape ***
 
     // Atualiza a interface conforme estado
     function updateAuthUI() {
