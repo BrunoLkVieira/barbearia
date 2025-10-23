@@ -33,8 +33,22 @@
 
 <body>
     <header>
-        <div class="container header-container">
-            <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Da barbearia" class="logo-img">
+        <div class="header-container">
+            <div class="logo">
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Da barbearia" class="logo-img">
+                <div class="logo-content">
+                    <h1>Orbly Barber</h1>
+                    <div class="unit-filter">
+                        <select>
+                            {% for unit in units %}
+                                <option>{{ unit.name }}</option>
+                            {% endfor %}
+                            <option>Geral</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+    
             <nav>
                 <ul>
                     <li>

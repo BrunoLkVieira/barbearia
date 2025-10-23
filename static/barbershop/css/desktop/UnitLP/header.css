@@ -6,29 +6,63 @@ header {
     width: 100%;
     top: 0;
     z-index: 1000;
+    padding-block: 10px;
 }
 
 .header-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.3125rem 0;
+    padding-inline: 6%;
 }
 
-.logo-img {
-    height: 6rem;
-    width: auto;
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.3s ease;
 }
 
-.logo-img:hover {
+.logo:hover{
     transform: scale(1.05);
+}
+
+.logo-img {
+    width: 5.5rem;
+}
+
+.logo h1 {
+    font-weight: 600;
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.unit-filter {
+    display: flex;
+    align-items: center;
+}
+
+.unit-filter select {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background-color: #2c3e50;
+    color: #FF7A00;
+    font-size: 0.95rem;
+    min-width: 155px;
+    cursor: pointer;
+    padding: 10px 15px;
 }
 
 nav ul {
     display: flex;
     align-items: center;
     gap: 1.3rem;
+    transition: transform 0.3s ease;
+}
+
+nav ul:hover {
+    transform: scale(1.05);
 }
 
 .login-btn {

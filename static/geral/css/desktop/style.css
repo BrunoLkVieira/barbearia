@@ -50,11 +50,14 @@ a{
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0px;
+        transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+        transform: scale(1.02);
     }
 
     .logo-image{
-        width: 90px;
         width: 5.5rem;
     }
 
