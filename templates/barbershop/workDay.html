@@ -319,15 +319,19 @@
                             <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input" required>
                         </div>
                         
-                        <div class="holiday-modal-section">
-                            <h3 class="modal-title"><i class="fas fa-store"></i> Unidade</h3>
-                            <select name="unit_id" class="holiday-input" required>
-                                <option value="" disabled selected>Selecione a unidade</option>
-                                {% for unit in units %}
-                                <option value="{{ unit.id }}">{{ unit.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        {% if not unit %}
+                            <div class="holiday-modal-section">
+                                <h3 class="modal-title"><i class="fas fa-store"></i> Unidade</h3>
+                                <select name="unit_id" class="holiday-input" required>
+                                    <option value="" disabled selected>Selecione a unidade</option>
+                                    {% for u in units %}
+                                        <option value="{{ u.id }}">{{ u.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% else %}
+                            <input type="hidden" name="unit_id" value="{{ unit.id }}">
+                        {% endif %}
 
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>

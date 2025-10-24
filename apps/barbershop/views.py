@@ -450,22 +450,52 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             else:
                 return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
 
-        # ... (O restante do seu código POST continua aqui) ...
         elif action == "create_holiday":
-            # ...
-            pass # Seu código aqui
+            unit_id = request.POST.get("unit_id")
+            # Renomeado para 'unit_obj' para não conflitar com a variável 'unit' da lógica GET
+            unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+            UnitHoliday.objects.create(
+                unit=unit_obj,
+                date=request.POST.get("date"),
+                name=request.POST.get("name"),
+            )
+            messages.success(request, f"Feriado '{request.POST.get('name')}' adicionado com sucesso!")
+        
         elif action == "edit_holiday":
-            # ...
-            pass # Seu código aqui
+            holiday_id = request.POST.get("holiday_id")
+            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
+            holiday.date = request.POST.get("date")
+            holiday.name = request.POST.get("name")
+            holiday.save()
+            messages.success(request, "Feriado atualizado com sucesso!")
+
         elif action == "delete_holiday":
-            # ...
-            pass # Seu código aqui
+            holiday_id = request.POST.get("holiday_id")
+            holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
+            holiday.delete()
+            messages.success(request, "Feriado excluído com sucesso!")
+
         elif action == "create_absence":
-            # ...
-            pass # Seu código aqui
+            emp_ids = request.POST.getlist("employee_id")
+            date_start = request.POST.get("date_start")
+            date_end = request.POST.get("date_end")
+            reason = request.POST.get("reason", "Folga agendada")
+
+            for emp_id in emp_ids:
+                emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
+                EmployeeAbsence.objects.create(
+                    employee=emp,
+                    start_date=date_start,
+                    end_date=date_end if date_end else date_start, # Garante que end_date não seja vazio
+                    reason=reason,
+                )
+            messages.success(request, f"Folga(s) agendada(s) com sucesso para {len(emp_ids)} funcionário(s).")
+
         elif action == "delete_absence":
-            # ...
-            pass # Seu código aqui
+            absence_id = request.POST.get("absence_id")
+            absence = get_object_or_404(EmployeeAbsence, id=absence_id, employee__unit__barbershop=barbershop)
+            absence.delete()
+            messages.success(request, "Folga excluída com sucesso!")
 
         # Redirect genérico
         if unit_slug:
