@@ -1,0 +1,42 @@
+/* ===== MODAL DE PERFIL ===== */
+.modal-profile .profile-modal-content {
+    max-width: 500px;
+    height: 450px;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.profile-avatar {
+    font-size: 4rem;
+    margin-right: 20px;
+    color: var(--dark);
+}
+
+.profile-details h3 {
+    margin-bottom: 5px;
+    color: var(--dark);
+}
+
+.profile-details p {
+    color: #555;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-logout {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-logout:hover {
+    background-color: #c0392b;
+}

@@ -1,0 +1,27 @@
+/* ===== MODAL DE AGENDAMENTOS ===== */
+.modal-appointments .appointments-modal-content {
+    max-width: 500px;
+}
+
+.appointments-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.appointment-item {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.appointment-item h4 {
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.appointment-item p {
+    margin-bottom: 5px;
+    color: #555;
+}

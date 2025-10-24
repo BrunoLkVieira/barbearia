@@ -1,0 +1,10 @@
+/* ===== MODAL DE REGISTRO ===== */
+.modal-register .register-modal-content{
+    max-width: 500px;
+}
+
+.register-modal-content{
+    width: 100%;
+    max-width: 500px;
+    max-height: 90%;
+}

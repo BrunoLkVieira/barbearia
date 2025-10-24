@@ -1,0 +1,705 @@
+/* ===== ESTILOS BASE DOS MODAIS ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    position: relative;
+    animation: modalopen 0.4s;
+}
+
+@keyframes modalopen {
+    from { opacity: 0; transform: translateY(-50px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    color: var(--gray);
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    background: transparent;
+}
+
+.close-modal:hover {
+    color: var(--dark);
+}
+
+.modal h2 {
+    color: var(--dark);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* ===== COMPONENTES DE FORMULÁRIO ===== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: var(--transition);
+    
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 40px;
+    cursor: pointer;
+    color: var(--gray);
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+}
+
+.toggle-password:hover {
+    color: var(--dark);
+}
+
+.modal-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #555;
+}
+
+.modal-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.modal-link a:hover {
+    text-decoration: underline;
+}
+
+/* ===== MODAL DE PERFIL ===== */
+.profile-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.profile-avatar {
+    font-size: 4rem;
+    margin-right: 20px;
+    color: var(--dark);
+}
+
+.profile-details h3 {
+    margin-bottom: 5px;
+    color: var(--dark);
+}
+
+.profile-details p {
+    color: #555;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-logout {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-logout:hover {
+    background-color: #c0392b;
+}
+
+/* ===== MODAL DE AGENDAMENTOS ===== */
+.appointments-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.appointment-item {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.appointment-item h4 {
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.appointment-item p {
+    margin-bottom: 5px;
+    color: #555;
+}
+
+/* ===== MODAL DE PLANOS ===== */
+.plans-list {
+    margin: 20px 0;
+}
+
+.plan-item {
+    background: var(--light-gray);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.plan-item h4 {
+    margin-top: 0;
+    color: var(--primary);
+}
+
+/* ===== BOTÕES ===== */
+.btn-cancel,
+.btn-cancel-plan {
+    background-color: #e74c3c;
+    color: white;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-cancel:hover,
+.btn-cancel-plan:hover {
+    background-color: #c0392b;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* ===== MODAL DE AGENDAMENTO (MULTI-ETAPAS) ===== */
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.progress-step {
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: #666;
+    font-size: 14px;
+}
+
+.progress-step.active {
+    background-color: #f0f0f0;
+    color: #333;
+    font-weight: bold;
+}
+
+.progress-step.completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.step-content {
+    padding: 15px 0;
+    min-height: 200px;
+}
+
+.step-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.payment-options {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.payment-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.appointment-summary {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.appointment-summary p {
+    margin: 8px 0;
+}
+
+.cancellation-policy {
+    background-color: #fff8e1;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.cancellation-policy ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+/* ===== TAMANHOS ESPECÍFICOS PARA CADA MODAL ===== */
+.modal-content.login-modal{
+    max-width: 500px;
+    max-height: 360px;
+}
+
+
+
+
+.modal-content.register-modal{
+    max-width: 500px;
+    height: 760px;
+}
+.modal-content.profile-modal{
+    max-width: 500px;
+    height: 450px;
+}
+.modal-content.appointments-modal {
+    max-width: 500px;
+}
+
+.modal-content.schedule-modal {
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content.plans-modal{
+    max-width: 700px;
+    height: 83%;
+}
+.modal-content.user-plans-modal {
+    max-width: 700px;
+    height: 90%;
+}
+
+/* Container de conteúdo rolável */
+.step-content-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    margin: 10px 0;
+}
+
+/* Rodapé fixo */
+.modal-footer {
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+    background: white;
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 15px;
+    }
+    
+    .modal-content.schedule-modal,
+    .modal-content.plans-modal,
+    .modal-content.user-plans-modal {
+        max-width: 95%;
+    }
+    
+    .progress-indicator {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .progress-step {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+}
+
+
+/* Adicione ao seu arquivo modals.css */
+
+.confirmation-container {
+    padding: 20px;
+    text-align: center;
+    max-width: 100%;
+}
+
+.confirmation-header {
+    margin-bottom: 20px;
+}
+
+.confirmation-icon {
+    color: #28a745;
+    font-size: 50px;
+    margin-bottom: 15px;
+    animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.confirmation-body {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.confirmation-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #555;
+}
+
+.detail-value {
+    color: #333;
+}
+
+.confirmation-note {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+.confirmation-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.confirmation-btn:hover {
+    background-color: #218838;
+}
+
+
+
+
+
+/* Adicione isso ao seu arquivo modals.css */
+.field-warning {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    padding: 5px;
+    background-color: #fde8e8;
+    border-radius: 4px;
+}
+
+.field-error {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+/* Adicione transição suave para os campos */
+select, input {
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+
+
+
+/* Estilos para o passo de pagamento */
+.step-content {
+    width: 100%;
+    padding: 15px 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Estilos específicos para checkboxes e radios */
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.payment-options input[type="radio"],
+.payment-options input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+}
+
+/* Estilo para o checkbox "Usar meu plano ativo" */
+#usePlanToggle {
+    margin-right: 8px;
+    width: auto;
+}
+
+/* Mantendo seus estilos originais para inputs */
+.form-group input:not([type="radio"]):not([type="checkbox"]),
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+/* Estilos para seleção de barbeiros */
+.barber-selection-title {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.barbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.barber-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.barber-card.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+}
+
+.barber-card-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.barber-photo {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.barber-info {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.barber-info h4 {
+    margin: 0 0 10px;
+    color: #222;
+}
+
+.barber-rating {
+    color: #ffc107;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.barber-rating span {
+    margin-left: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.barber-bio {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.select-barber-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.3s;
+}
+
+.select-barber-btn:hover {
+    background: #0069d9;
+}
+
+.no-barbers {
+    color: #666;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Estilos para seleção de barbeiros */
+#barberCardsContainer {
+    padding: 15px;
+}
+
+.barber-selection-title {
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.barbers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.barber-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.barber-card.selected {
+    border: 2px solid #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.barber-photo {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.barber-info {
+    padding: 15px;
+}
+
+.barber-info h4 {
+    margin: 0 0 10px;
+    color: #222;
+}
+
+.barber-rating {
+    color: #ffc107;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.barber-bio {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.select-barber-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s;
+}
+
+.select-barber-btn:hover {
+    background: #0069d9;
+}
+
+.no-barbers {
+    color: #666;
+    text-align: center;
+    padding: 20px;
+}

@@ -1,0 +1,64 @@
+/* ===== MODAL DE PLANOS ===== */
+.modal-plans .plans-modal-content {
+    max-width: 700px;
+    height: 83%;
+}
+
+.plan-details {
+    margin-bottom: 20px;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 10px 0;
+}
+
+.plan-features {
+    margin: 20px 0;
+}
+
+.plan-features ul {
+    padding-left: 20px;
+}
+
+.plan-features li {
+    margin-bottom: 8px;
+}
+
+.payment-methods {
+    margin-top: 20px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.payment-option.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.payment-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.payment-form {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.form-group-row {
+    display: flex;
+    gap: 15px;
+}

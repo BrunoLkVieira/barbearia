@@ -622,3 +622,18 @@ def MyWebsiteView(request, barbershop_slug):
     }
 
     return render(request, "barbershop/myWebsite.html", context)
+
+
+def UnitLP(request, barbershop_slug):
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+
+    units = Unit.objects.filter(barbershop=barbershop)
+
+    context = {
+        "barbershop": barbershop,
+        "barbershop_slug": barbershop_slug,
+        "units": units,
+        "active_units_count": units.filter(is_active=True).count()
+    }
+
+    return render(request, "barbershop/unitLP.html", context)

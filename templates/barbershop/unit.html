@@ -275,7 +275,6 @@
             <!-- FORM FUNCIONAL -->
             <form id="unitForm" method="POST" autocomplete="off">
                 {% csrf_token %}
-
                 <div class="modal-body">
                     <input type="hidden" id="unitId" name="unit_id">
                     <input type="hidden" id="formAction" name="action" value="create">
@@ -342,7 +341,9 @@
 
                 <div class="modal-footer">
                     <button type="button" id="cancelUnit" class="btn btn-outline">Cancelar</button>
-                    <button type="submit" id="saveUnit" class="btn btn-primary">Salvar Unidade</button>
+                    <button type="submit" id="saveUnit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Unidade
+                    </button>
                 </div>
             </form>
         </div>

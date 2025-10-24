@@ -102,29 +102,44 @@
         text-transform: capitalize;
      }
  
-     .employee-type {
-         padding: 5px 10px;
-         border-radius: 20px;
-         font-size: 0.8rem;
-         font-weight: 500;
-         width: fit-content;
-     }
- 
-     .type-barber {
-         background-color: #e8f5e9;
-         color: #2e7d32;
-     }
- 
-     .type-cashier {
-         background-color: #e3f2fd;
-         color: #1565c0;
-     }
- 
-     .type-owner {
-         background-color: #f3e5f5;
-         color: #7b1fa2;
-     }
- 
+    .employee-type,
+    .employee-active {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        width: fit-content;
+    }
+
+    .type-barber,
+    .type-barbeiro {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .type-cashier,
+    .type-caixa {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .type-manager,
+    .type-gerente {
+        background-color: #fff3e0;
+        color: #ef6c00;
+    }
+
+    .type-none {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .type-owner {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+
      .employee-actions {
          display: flex;
          gap: 10px;

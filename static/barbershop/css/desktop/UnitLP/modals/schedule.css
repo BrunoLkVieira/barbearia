@@ -1,0 +1,197 @@
+/* ===== MODAL DE AGENDAMENTO ===== */
+.modal-schedule {
+    margin: auto;
+    display: none;
+    justify-content: center;
+}
+
+.modal-schedule .schedule-modal-content {
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px;
+    border-bottom: 1px solid #eee;
+    background-color: #f8f9fa;
+}
+
+.progress-step {
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: #666;
+    font-size: 14px;
+    cursor: not-allowed;
+}
+
+.progress-step.active {
+    background-color: #f0f0f0;
+    color: #333;
+    font-weight: bold;
+    cursor: default;
+}
+
+.progress-step.completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.step-content-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    background-color: white;
+}
+
+.step-content {
+    padding: 15px 0;
+    min-height: 200px;
+}
+
+/* Estilo para cada barbeiro */
+/* .barber-card{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.each-barber-card{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.barber-photo{
+    width: 8rem;
+} */
+
+.appointment-summary {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.appointment-summary p {
+    margin: 8px 0;
+}
+
+.cancellation-policy {
+    background-color: #fff8e1;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.cancellation-policy ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+
+
+/* Responsividade específica para o modal de agendamento */
+@media (max-width: 768px) {
+    .modal-schedule .progress-indicator {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .modal-schedule .progress-step {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+}
+
+/* Estilos para seleção de barbeiros */
+.barber-selection-title {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1.2rem;
+}
+
+.barber-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+}
+
+.barber-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.barber-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.barber-card.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+    background-color: #f8f9fa;
+}
+
+.barber-info {
+    padding: 15px 5px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    gap: 10px;
+}
+
+.employee-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.barber-info h4 {
+    color: #222;
+}
+
+.select-barber-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background 0.3s;
+}
+
+.select-barber-btn:hover {
+    background: #0069d9;
+}
+
+.no-barbers {
+    color: #666;
+    text-align: center;
+    padding: 20px;
+}
+
+

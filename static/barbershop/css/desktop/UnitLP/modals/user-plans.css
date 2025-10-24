@@ -1,0 +1,21 @@
+/* ===== MODAL DE PLANOS DO USUÁRIO ===== */
+.modal-user-plans .user-plans-modal-content {
+    max-width: 700px;
+    height: 90%;
+}
+
+.plans-list {
+    margin: 20px 0;
+}
+
+.plan-item {
+    background: var(--light-gray);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.plan-item h4 {
+    margin-top: 0;
+    color: var(--primary);
+}
