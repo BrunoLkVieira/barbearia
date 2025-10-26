@@ -25,16 +25,30 @@ function updatePlans(period) {
             diferencePriceEl.textContent = "";
         }
     });
+
 }
 
 
 
 // Evento de clique nos botões
-document.querySelectorAll('.toggle-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-        this.classList.add('active');
-        updatePlans(this.dataset.period);
+const toggleButtons = document.querySelectorAll('.toggle-btn');
+const toggleContainer = document.querySelector('.plan-toggle');
+
+toggleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Atualiza o botão ativo
+        toggleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Atualiza o plano (sua função existente)
+        updatePlans(btn.dataset.period);
+
+        // Move o fundo deslizante
+        if (btn.dataset.period === 'monthly') {
+            toggleContainer.classList.add('monthly');
+        } else {
+            toggleContainer.classList.remove('monthly');
+        }
     });
 });
 // Executa uma vez ao carregar a página para iniciar com "semester"
@@ -92,12 +106,6 @@ function cancelModal(){
     modalCadastro.style.display = 'none';
     document.body.style.overflow = '';
 }
-
-// window.addEventListener('click', function (e) {
-//     if (e.target === modalCadastro) {
-//         closeModal();
-//     }
-// });
 
 function createAccount(event) {
     // Evita que o formulário seja enviado antes da validação
