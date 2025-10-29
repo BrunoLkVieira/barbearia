@@ -173,14 +173,16 @@
     display: flex;
     gap: 50px;
     align-items: center;
+    margin-top: 2rem;
+    padding: 20px;
 }
 
 .location-info {
-    flex: 1;
-    background: white;
-    padding: 30px;
+    display: flex;
+    flex-direction: column;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    height: 500px;
 }
 
 .location-info h3 {
@@ -201,26 +203,29 @@
     line-height: 1.6;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    width: 90%;
 }
 
 .hours {
-    margin: 30px 0;
-    padding: 20px 0;
+    margin: 15px 0;
+    padding: 15px 0;
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.hours h4, .address h4, .contact-info h4 {
+.hours h4, .address h4 {
     font-size: 1.3rem;
-    margin-bottom: 15px;
     color: #1a365d;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.hours h4 i, .address h4 i, .contact-info h4 i {
+.hours h4 i, .address h4 i{
     color: #2c5282;
 }
 
@@ -252,15 +257,17 @@
 }
 
 .address {
-    margin: 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .address p {
-    margin-bottom: 10px;
     color: #4a5568;
     display: flex;
     align-items: center;
     gap: 10px;
+    font-size: .9rem;
 }
 
 .address p i {
@@ -269,33 +276,12 @@
     text-align: center;
 }
 
-.contact-info {
-    margin-top: 30px;
-}
-
-.contact-info p {
-    margin-bottom: 10px;
-    color: #4a5568;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.contact-info p i {
-    color: #4299e1;
-    width: 20px;
-    text-align: center;
-}
-
-.fab.fa-whatsapp {
-    color: #25D366 !important;
-}
-
 .map {
     flex: 1;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    background-color: #555;
     height: 500px;
 }
 
