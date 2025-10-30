@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "runserver": ".venv\\Scripts\\python.exe manage.py runserver",
-    "git": "git add . && git commit -m \"fix: ajuste LP de Contratar Unidades\" && git push",
+    "git": "git add . && git commit -m \"fix: campo de apenas um dia de folga\" && git push",
     "pull": "git pull",
     "go to main": "git checkout main",
     "got to frontend": "git checkout frontend"
