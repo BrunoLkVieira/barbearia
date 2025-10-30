@@ -313,6 +313,7 @@
     </div>
 
     {% if request.user.user_type != "funcionario" %}
+        <!--  Criar dias de nao funcionamento  -->
         <div id="createHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -344,7 +345,7 @@
 
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
-                            <input type="date" name="date" class="holiday-input" required>
+                            <input type="date" name="date" class="holiday-input" id="holidayDate" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -355,7 +356,7 @@
             </div>
         </div>
       
-
+        <!-- Editar dias de nao funcionamento -->
         <div id="editHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -384,6 +385,7 @@
             </div>
         </div>
 
+        <!-- Agendar folga -->
         <div id="vacationModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">

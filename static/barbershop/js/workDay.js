@@ -216,6 +216,41 @@ function closeVacationModal() {
     }
 }
 
+
+// ========== MODAL DE FERIADO DA BARBEARIA ==========
+function openHolidayModal() {
+    if (createHolidayModal) {
+        createHolidayModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeHolidayModal() {
+    if (createHolidayModal) {
+        createHolidayModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Verificacao Dias de nao funcionamento
+document.querySelector('.holiday-form').addEventListener('submit', function(event) {
+    const holidayDate = document.getElementById('holidayDate');
+    const [startYear, startMonth, startDay] = holidayDate.value.split('-').map(Number);
+    const holidayStart = new Date(startYear, startMonth - 1, startDay);
+
+    const now = new Date();
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Verifica se início é antes de currentday
+    if (holidayStart < currentDate) {
+        event.preventDefault();
+        alert('A data de início não pode ser anterior à data atual.');
+        return;
+    }
+})
+
+
+
 // ========== EDITAR MODAL DE FÉRIAS ==========
 function openEditVacationModal() {
     if (editVacationModal) {
@@ -231,19 +266,7 @@ function closeEditVacationModal() {
     }
 }
 
-// ========== MODAL DE FERIADO DA BARBEARIA ==========
-function openHolidayModal() {
-    if (createHolidayModal) {
-        createHolidayModal.style.display = 'flex';
-    }
-}
-
-function closeHolidayModal() {
-    if (createHolidayModal) {
-        createHolidayModal.style.display = 'none';
-    }
-}
-
+// Verificacoes de folga
 document.querySelector('.absence-form').addEventListener('submit', function(event) {
     const checkboxes = document.querySelectorAll('input[name="employee_id"]:checked');
     const startDateInput = document.getElementById('vacationStart');
@@ -272,7 +295,7 @@ document.querySelector('.absence-form').addEventListener('submit', function(even
         return;
     }
 
-    // 🔹 Verifica se início é antes de hoje
+    // Verifica se início é antes de currentday
     if (vacationStart < currentDate) {
         event.preventDefault();
         alert('A data de início não pode ser anterior à data atual.');
@@ -280,7 +303,7 @@ document.querySelector('.absence-form').addEventListener('submit', function(even
         return;
     }
 
-    // 🔹 Verifica se término é antes do início
+    // Verifica se término é antes do início
     if (vacationEnd < vacationStart) {
         event.preventDefault();
         alert('A data de término não pode ser anterior à data de início.');
