@@ -22,6 +22,9 @@
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    
+    <style>.swal2-container {z-index: 9999;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
@@ -409,11 +412,11 @@
                             <div class="date-inputs">
                                 <div class="date-group">
                                     <label>Data de Início</label>
-                                    <input type="date" name="date_start" id="vacationStart">
+                                    <input type="date" name="date_start" id="vacationStart" required>
                                 </div>
                                 <div class="date-group">
                                     <label>Data de Término</label>
-                                    <input type="date" name="date_end" id="vacationEnd">
+                                    <input type="date" name="date_end" id="vacationEnd" required>
                                 </div>
                             </div>
                         </div>
@@ -436,6 +439,30 @@
     <script>
         const workdaysData = {{ workdays_json|safe }};
     </script>
+
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+                {% for message in messages %}
+                    Toast.fire({
+                        icon: '{{ message.tags }}', 
+                        title: '{{ message }}'
+                    });
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

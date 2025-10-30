@@ -243,3 +243,48 @@ function closeHolidayModal() {
         createHolidayModal.style.display = 'none';
     }
 }
+
+document.querySelector('.absence-form').addEventListener('submit', function(event) {
+    const checkboxes = document.querySelectorAll('input[name="employee_id"]:checked');
+    const startDateInput = document.getElementById('vacationStart');
+    const endDateInput = document.getElementById('vacationEnd');
+
+    if (!startDateInput.value || !endDateInput.value) {
+        event.preventDefault();
+        alert('Por favor, selecione as datas de início e término.');
+        return;
+    }
+
+    const [startYear, startMonth, startDay] = startDateInput.value.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDateInput.value.split('-').map(Number);
+
+    // Cria datas locais SEM fuso horário e SEM hora
+    const vacationStart = new Date(startYear, startMonth - 1, startDay);
+    const vacationEnd = new Date(endYear, endMonth - 1, endDay);
+
+    const now = new Date();
+    const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // só dia atual
+
+    // Verifica se pelo menos um barbeiro foi selecionado
+    if (checkboxes.length === 0) {
+        event.preventDefault();
+        alert('Por favor, selecione pelo menos um barbeiro.');
+        return;
+    }
+
+    // 🔹 Verifica se início é antes de hoje
+    if (vacationStart < currentDate) {
+        event.preventDefault();
+        alert('A data de início não pode ser anterior à data atual.');
+        console.log('Debug:', {vacationStart, currentDate});
+        return;
+    }
+
+    // 🔹 Verifica se término é antes do início
+    if (vacationEnd < vacationStart) {
+        event.preventDefault();
+        alert('A data de término não pode ser anterior à data de início.');
+        return;
+    }
+});
+
