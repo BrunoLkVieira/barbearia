@@ -348,6 +348,8 @@ document.querySelectorAll('.barber-selector-item').forEach(item => {
 });
 
 
+
+
 // ============================================================
 // CÓDIGO ORIGINAL PARA OS OUTROS MODAIS (PRESERVADO)
 // ============================================================

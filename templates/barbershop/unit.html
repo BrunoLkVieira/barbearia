@@ -17,6 +17,11 @@
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unit.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newUnit.css' %}">
+
+    <style>.swal2-container {z-index: 9999;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="{% static 'geral/js/notification.js' %}"></script>
 </head>
 <body>
     {% include "geral/header.html" %}
@@ -159,11 +164,11 @@
                                 <i class="fas fa-edit"></i>
                             </div>
 
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                            <form method="POST" style="display:inline;" id="delete-unit-desktop-form-{{ unit.id }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="unit_id" value="{{ unit.id }}">
                                 <input type="hidden" name="action" value="delete">
-                                <button type="submit" class="action-btn delete" title="Excluir unidade">
+                                <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-desktop-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -228,11 +233,11 @@
                             data-active="{{ unit.is_active|yesno:'True,False' }}">
                             <i class="fas fa-edit"></i>
                          </div>
-                         <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.');">
+                         <form method="POST" style="display:inline;" id="delete-unit-mobile-form-{{ unit.id }}">
                             {% csrf_token %}
                             <input type="hidden" name="unit_id" value="{{ unit.id }}">
                             <input type="hidden" name="action" value="delete">
-                            <button type="submit" class="action-btn delete" title="Excluir unidade">
+                            <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-mobile-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
@@ -351,6 +356,19 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
+
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+                Toast.fire({
+                    icon: '{{ message.tags }}', 
+                    title: '{{ message }}'
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
     
 </body>
 </html>
