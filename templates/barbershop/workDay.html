@@ -22,6 +22,9 @@
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    
+    <style>.swal2-container {z-index: 9999;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
 
@@ -354,8 +357,11 @@
                     <button class="close-btn" onclick="closeEditHolidayModal()"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="holiday-modal-body">
-                    <form id="editHolidayForm" class="holiday-form" autocomplete="off">
-                        {%csrf_token%}
+                    <form id="editHolidayForm" method="POST" action="" class="holiday-form" autocomplete="off">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="edit_holiday">
+                        <input type="hidden" name="holiday_id" id="editHolidayId">
+                        
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
                             <input type="text" name="name" class="holiday-input" required>
@@ -436,7 +442,29 @@
     <script>
         const workdaysData = {{ workdays_json|safe }};
     </script>
-
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3500,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+            {% for message in messages %}
+                Toast.fire({
+                    icon: '{{ message.tags }}', 
+                    title: '{{ message }}'
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const unitFilter = document.getElementById('unitFilterSelect');
@@ -459,5 +487,8 @@
             }
         });
     </script>
+
+   
+    
 </body>
 </html>
