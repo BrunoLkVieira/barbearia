@@ -192,7 +192,13 @@
                             </div>
                         {% endif %}
                          <div class="day-off-date">
-                            {{ absence.start_date|date:"d/m/Y" }}
+                            {% if absence.start_date ==  absence.end_date %}
+                                <span>Apenas</span>
+                                <div class="end-absence-day">{{ absence.start_date|date:"d/m/Y" }}</div>
+                            {% else %}
+                                {{ absence.start_date|date:"d/m/Y" }}
+                            {% endif %}
+
                             {% if absence.end_date and absence.end_date != absence.start_date %}
                                 <span>até</span>
                                 <div class="end-absence-day">{{ absence.end_date|date:"d/m/Y" }}</div>
@@ -311,6 +317,7 @@
     </div>
 
     {% if request.user.user_type != "funcionario" %}
+        <!--  Criar dias de nao funcionamento  -->
         <div id="createHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -342,7 +349,7 @@
 
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
-                            <input type="date" name="date" class="holiday-input" required>
+                            <input type="date" name="date" class="holiday-input" id="holidayDate" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -353,7 +360,7 @@
             </div>
         </div>
       
-
+        <!-- Editar dias de nao funcionamento -->
         <div id="editHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -385,6 +392,7 @@
             </div>
         </div>
 
+        <!-- Agendar folga -->
         <div id="vacationModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -419,11 +427,11 @@
                             <div class="date-inputs">
                                 <div class="date-group">
                                     <label>Data de Início</label>
-                                    <input type="date" name="date_start" id="vacationStart">
+                                    <input type="date" name="date_start" id="vacationStart" required>
                                 </div>
                                 <div class="date-group">
                                     <label>Data de Término</label>
-                                    <input type="date" name="date_end" id="vacationEnd">
+                                    <input type="date" name="date_end" id="vacationEnd" required>
                                 </div>
                             </div>
                         </div>
@@ -446,29 +454,31 @@
     <script>
         const workdaysData = {{ workdays_json|safe }};
     </script>
+
     {% if messages %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3500,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
-            {% for message in messages %}
-                Toast.fire({
-                    icon: '{{ message.tags }}', 
-                    title: '{{ message }}'
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
                 });
-            {% endfor %}
-        });
-    </script>
+                {% for message in messages %}
+                    Toast.fire({
+                        icon: '{{ message.tags }}', 
+                        title: '{{ message }}'
+                    });
+                {% endfor %}
+            });
+        </script>
     {% endif %}
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const unitFilter = document.getElementById('unitFilterSelect');
