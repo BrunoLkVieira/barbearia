@@ -20,6 +20,8 @@
     
     <style>.swal2-container {z-index: 9999;}</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'geral/js/notification.js' %}"></script>
+
 </head>
 <body>
     
@@ -167,11 +169,11 @@
                                 </div>
 
                                     <!-- Botão Deletar -->
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir este funcionário?');">
+                                    <form method="POST" style="display:inline;" id="delete-employee-form-{{ emp.id }}">
                                         {% csrf_token %}
                                         <input type="hidden" name="employee_id" value="{{ emp.id }}">
                                         <input type="hidden" name="action" value="delete">
-                                        <button type="submit" class="action-btn delete-btn">
+                                        <button type="button" class="action-btn delete-btn" onclick="confirmDelete('delete-employee-form-{{ emp.id }}', 'Tem certeza que deseja excluir este funcionário?')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

@@ -367,7 +367,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 
 # Em apps/barbershop/views.py
 
-
 @login_required
 @owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
@@ -375,19 +374,18 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     
     # --- Lógica de Permissão ---
     gerente_unit = None
-    current_employee = None # <-- NOVO
+    current_employee = None
     
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
         if employee:
             gerente_unit = employee.unit
-    elif request.user.user_type == "funcionario": # <-- NOVO
+    elif request.user.user_type == "funcionario": 
         current_employee = Employee.objects.filter(user=request.user, unit__barbershop=barbershop).first()
         if not current_employee:
             messages.error(request, "Funcionário não encontrado nesta barbearia.")
             return redirect("core:home") # <-- MUDE PARA SUA URL DE 'HOME'
         
-        # Trata o funcionário como um "gerente" da sua própria unidade para fins de filtro
         gerente_unit = current_employee.unit 
 
     # --- Processamento de POST ---
@@ -397,9 +395,12 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         # --- BLOQUEIO DE PERMISSÃO PARA FUNCIONÁRIO ---
         funcionario_allowed_actions = ["edit_workday"]
         if current_employee and action not in funcionario_allowed_actions:
-            messages.error(request, "Você não tem permissão para executar esta ação.")
-            if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-            else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+            
+            # <--- MUDANÇA: Retorna JSON no erro ---
+            return JsonResponse({
+                'status': 'error',
+                'errors': ['Você não tem permissão para executar esta ação.']
+            }, status=403) # 403 = Proibido
 
         # --- Bloco para editar a DISPONIBILIDADE ---
         if action == "edit_workday":
@@ -408,23 +409,35 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             
             # --- VERIFICAÇÃO DE PERMISSÃO NO POST ---
             if current_employee and emp.id != current_employee.id:
-                messages.error(request, "Você só pode editar sua própria disponibilidade.")
-                if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-                else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+                # <--- MUDANÇA: Retorna JSON no erro ---
+                return JsonResponse({
+                    'status': 'error',
+                    'errors': ['Você só pode editar sua própria disponibilidade.']
+                }, status=403)
 
             # (not current_employee) garante que isso só rode para donos ou gerentes
             if gerente_unit and not current_employee and emp.unit != gerente_unit:
-                messages.error(request, "Você só pode editar funcionários da sua unidade.")
-                if unit_slug: return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-                else: return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+                # <--- MUDANÇA: Retorna JSON no erro ---
+                return JsonResponse({
+                    'status': 'error',
+                    'errors': ['Você só pode editar funcionários da sua unidade.']
+                }, status=403)
             
-            # ... (O restante da sua lógica 'edit_workday' continua aqui...)
+            # --- Lógica de Validação (Exemplo) ---
+            # Você pode adicionar validações aqui. Se falharem:
+            # errors = []
+            # if (algum_erro):
+            #     errors.append("Horário de início inválido.")
+            # if errors:
+            #     return JsonResponse({'status': 'error', 'errors': errors}, status=400)
+            # --- Fim da Validação ---
+
             for i in range(7):
                 try:
                     workday = EmployeeWorkDay.objects.get(employee=emp, weekday=i)
                 except EmployeeWorkDay.DoesNotExist:
                     workday = EmployeeWorkDay(employee=emp, weekday=i)
-                # ... (resto do for loop) ...
+                
                 morning_is_available = f'is_available_{i}_morning' in request.POST
                 afternoon_is_available = f'is_available_{i}_afternoon' in request.POST
 
@@ -444,15 +457,15 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 
                 workday.save()
 
-            messages.success(request, f"Disponibilidade de {emp.user.name} atualizada com sucesso!")
-            if unit_slug:
-                return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-            else:
-                return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+            # <--- MUDANÇA: Remove 'messages' e 'redirect', retorna JSON ---
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Disponibilidade de {emp.user.name} atualizada com sucesso!'
+            })
 
         elif action == "create_holiday":
+            # ... (seu código original - NÃO MUDA)
             unit_id = request.POST.get("unit_id")
-            # Renomeado para 'unit_obj' para não conflitar com a variável 'unit' da lógica GET
             unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             UnitHoliday.objects.create(
                 unit=unit_obj,
@@ -467,15 +480,23 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             holiday.date = request.POST.get("date")
             holiday.name = request.POST.get("name")
             holiday.save()
-            messages.success(request, "Feriado atualizado com sucesso!")
+            
+            # <--- MUDANÇA: Remove 'messages', retorna JSON ---
+            # (O 'workday.js' também usa fetch para este formulário)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Feriado atualizado com sucesso!'
+            })
 
         elif action == "delete_holiday":
+            # ... (seu código original - NÃO MUDA)
             holiday_id = request.POST.get("holiday_id")
             holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
             holiday.delete()
             messages.success(request, "Feriado excluído com sucesso!")
 
         elif action == "create_absence":
+            # ... (seu código original - NÃO MUDA)
             emp_ids = request.POST.getlist("employee_id")
             date_start = request.POST.get("date_start")
             date_end = request.POST.get("date_end")
@@ -486,37 +507,37 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 EmployeeAbsence.objects.create(
                     employee=emp,
                     start_date=date_start,
-                    end_date=date_end if date_end else date_start, # Garante que end_date não seja vazio
+                    end_date=date_end if date_end else date_start,
                     reason=reason,
                 )
             messages.success(request, f"Folga(s) agendada(s) com sucesso para {len(emp_ids)} funcionário(s).")
 
         elif action == "delete_absence":
+            # ... (seu código original - NÃO MUDA)
             absence_id = request.POST.get("absence_id")
             absence = get_object_or_404(EmployeeAbsence, id=absence_id, employee__unit__barbershop=barbershop)
             absence.delete()
             messages.success(request, "Folga excluída com sucesso!")
 
-        # Redirect genérico
+        # Redirect genérico (para actions que NÃO usam fetch)
         if unit_slug:
             return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         else:
             return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
     
-    # --- LÓGICA GET (FILTROS DE DADOS) ---
+    # --- LÓGICA GET (Sem alterações) ---
     
     unit = None 
     
-    # Se for Gerente OU Funcionário, 'gerente_unit' estará definida
     if gerente_unit:
         unit = gerente_unit
         units = [unit] 
         
-        if current_employee: # <-- SE FOR FUNCIONÁRIO
+        if current_employee:
             employees = Employee.objects.filter(id=current_employee.id).select_related("user", "unit")
-            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date") # Vê feriados da unidade
-            absences = EmployeeAbsence.objects.filter(employee=current_employee, start_date__gte=now().date()).order_by("start_date") # Vê SÓ as suas folgas
-        else: # <-- SE FOR GERENTE
+            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
+            absences = EmployeeAbsence.objects.filter(employee=current_employee, start_date__gte=now().date()).order_by("start_date")
+        else:
             employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
             absences = EmployeeAbsence.objects.filter(employee__unit=unit, start_date__gte=now().date()).order_by("start_date")
@@ -534,10 +555,8 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
             absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, start_date__gte=now().date()).order_by("start_date")
 
-    # Esta lógica 'workdays' agora depende da 'employees' (que está corretamente filtrada)
     workdays = EmployeeWorkDay.objects.filter(employee__in=employees).order_by('weekday')
 
-    # ... (O restante da sua lógica GET para 'workdays_data', 'time_options', etc. continua igual) ...
     workdays_data = {}
     for emp in employees:
         emp_data = {}
@@ -570,7 +589,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "gerente_unit": gerente_unit,
         "time_options": time_options,
         "workdays_json": json.dumps(workdays_data),
-        # Adicione current_employee ao contexto se quiser usá-lo no template
         "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
