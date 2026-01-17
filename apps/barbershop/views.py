@@ -16,7 +16,8 @@ from django.views.decorators.http import require_POST # Importe isso
 from apps.user.utils.validators import validate_user_data
 from functools import wraps
 from django.core.exceptions import PermissionDenied
-
+from django.db import IntegrityError 
+from datetime import datetime
 
 
 
@@ -99,61 +100,79 @@ def get_user_unit_if_manager(user):
         return None
     return None
 
-
 @login_required
 @owner_required
 def UnitView(request, barbershop_slug):
-    # Só busca barbearia do usuário logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-
     units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees'))
     active_units_count = units.filter(is_active=True).count()
+    
+    # Lógica do gerente simplificada
     gerente_unit = None
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
-        
         if employee:
             gerente_unit = employee.unit
-    else:
-        gerente_unit = None
 
     if request.method == "POST":
         action = request.POST.get("action")
+        name = request.POST.get("name")
 
+        # --- AÇÃO: CRIAR ---
         if action == "create":
-            Unit.objects.create(
-                name=request.POST.get("name"),
-                cep_address=request.POST.get("cep_address"),
-                street_address=request.POST.get("street_address"),
-                number_address=request.POST.get("number_address"),
-                neighborhood=request.POST.get("neighborhood"),
-                city=request.POST.get("city"),
-                state=request.POST.get("state"),
-                whatsapp_number=request.POST.get("whatsapp_number"),
-                instagram_link=request.POST.get("instagram_link"),
-                is_active=request.POST.get("is_active") == "True",
-                barbershop=barbershop,
-            )
+            # Verifica se já existe uma unidade com esse nome NESTA barbearia
+            if Unit.objects.filter(barbershop=barbershop, name=name).exists():
+                messages.error(request, f"A unidade '{name}' já existe nesta barbearia.")
+            else:
+                try:
+                    Unit.objects.create(
+                        name=name,
+                        cep_address=request.POST.get("cep_address"),
+                        street_address=request.POST.get("street_address"),
+                        number_address=request.POST.get("number_address"),
+                        neighborhood=request.POST.get("neighborhood"),
+                        city=request.POST.get("city"),
+                        state=request.POST.get("state"),
+                        whatsapp_number=request.POST.get("whatsapp_number"),
+                        instagram_link=request.POST.get("instagram_link"),
+                        is_active=request.POST.get("is_active") == "True",
+                        barbershop=barbershop,
+                    )
+                    messages.success(request, "Unidade cadastrada com sucesso!")
+                except Exception:
+                    messages.error(request, "Erro ao tentar cadastrar a unidade.")
+            
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
+        # --- AÇÃO: EDITAR ---
         if action == "edit":
-            unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
-            unit.name = request.POST.get("name")
-            unit.cep_address = request.POST.get("cep_address")
-            unit.street_address = request.POST.get("street_address")
-            unit.number_address = request.POST.get("number_address")
-            unit.neighborhood = request.POST.get("neighborhood")
-            unit.city = request.POST.get("city")
-            unit.state = request.POST.get("state")
-            unit.whatsapp_number = request.POST.get("whatsapp_number")
-            unit.instagram_link = request.POST.get("instagram_link")
-            unit.is_active = request.POST.get("is_active") == "True"
-            unit.save()
+            unit_id = request.POST.get("unit_id")
+            unit = get_object_or_404(Unit, pk=unit_id, barbershop=barbershop)
+            
+            # Verifica duplicidade ignorando a própria unidade que está sendo editada
+            if Unit.objects.filter(barbershop=barbershop, name=name).exclude(pk=unit_id).exists():
+                messages.error(request, f"Você já tem outra unidade chamada '{name}'.")
+            else:
+                unit.name = name
+                unit.cep_address = request.POST.get("cep_address")
+                unit.street_address = request.POST.get("street_address")
+                unit.number_address = request.POST.get("number_address")
+                unit.neighborhood = request.POST.get("neighborhood")
+                unit.city = request.POST.get("city")
+                unit.state = request.POST.get("state")
+                unit.whatsapp_number = request.POST.get("whatsapp_number")
+                unit.instagram_link = request.POST.get("instagram_link")
+                unit.is_active = request.POST.get("is_active") == "True"
+                unit.save()
+                messages.success(request, "Alterações salvas com sucesso!")
+                
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
+        # --- AÇÃO: DELETAR ---
         if action == "delete":
             unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
             unit.delete()
+            messages.success(request, "Unidade excluída com sucesso.")
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
     return render(
@@ -371,7 +390,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 @owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    
+    today = now().date()
     # --- Lógica de Permissão ---
     gerente_unit = None
     current_employee = None
@@ -464,17 +483,38 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             })
 
         elif action == "create_holiday":
-            # ... (seu código original - NÃO MUDA)
-            unit_id = request.POST.get("unit_id")
-            unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
-            UnitHoliday.objects.create(
-                unit=unit_obj,
-                date=request.POST.get("date"),
-                name=request.POST.get("name"),
-            )
-            messages.success(request, f"Feriado '{request.POST.get('name')}' adicionado com sucesso!")
-        
+            date_str = request.POST.get("date")
+            holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            # REGRA 1: Não permitir data retroativa
+            if holiday_date < today:
+                return JsonResponse({
+                    'status': 'error', 
+                    'errors': ['A data não pode ser anterior à data atual.']
+                }, status=400)
+            else:
+                unit_id = request.POST.get("unit_id")
+                unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+                
+                UnitHoliday.objects.create(
+                    unit=unit_obj,
+                    date=holiday_date,
+                    name=request.POST.get("name"),
+                )
+                
+                return JsonResponse({
+                    'status': 'success', 
+                    'message': f"Feriado '{request.POST.get('name')}' adicionado com sucesso!"
+                })
         elif action == "edit_holiday":
+            date_str = request.POST.get("date")
+            holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            if holiday_date < today:
+                return JsonResponse({
+                    'status': 'error', 
+                    'errors': ['Não é possível alterar para uma data retroativa.']
+                }, status=400)
             holiday_id = request.POST.get("holiday_id")
             holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
             holiday.date = request.POST.get("date")
@@ -483,9 +523,11 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             
             # <--- MUDANÇA: Remove 'messages', retorna JSON ---
             # (O 'workday.js' também usa fetch para este formulário)
+           
+
             return JsonResponse({
                 'status': 'success',
-                'message': 'Feriado atualizado com sucesso!'
+                'message': 'Feriado atualizado com sucesso'
             })
 
         elif action == "delete_holiday":
@@ -496,22 +538,30 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             messages.success(request, "Feriado excluído com sucesso!")
 
         elif action == "create_absence":
-            # ... (seu código original - NÃO MUDA)
-            emp_ids = request.POST.getlist("employee_id")
-            date_start = request.POST.get("date_start")
-            date_end = request.POST.get("date_end")
-            reason = request.POST.get("reason", "Folga agendada")
+            date_start_str = request.POST.get("date_start")
+            date_end_str = request.POST.get("date_end")
+            
+            start_date = datetime.strptime(date_start_str, '%Y-%m-%d').date()
+            # Se não enviar data fim, ela é igual a data início
+            end_date = datetime.strptime(date_end_str, '%Y-%m-%d').date() if date_end_str else start_date
 
-            for emp_id in emp_ids:
-                emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
-                EmployeeAbsence.objects.create(
-                    employee=emp,
-                    start_date=date_start,
-                    end_date=date_end if date_end else date_start,
-                    reason=reason,
-                )
-            messages.success(request, f"Folga(s) agendada(s) com sucesso para {len(emp_ids)} funcionário(s).")
-
+            # REGRA 1: Bloquear retroativo
+            if end_date < today:
+                messages.error(request, "Não é possível registrar uma folga que já terminou.")
+            elif end_date < start_date:
+                messages.error(request, "A data de término não pode ser anterior ao início.")
+            else:
+                emp_ids = request.POST.getlist("employee_id")
+                for emp_id in emp_ids:
+                    emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
+                    EmployeeAbsence.objects.create(
+                        employee=emp,
+                        start_date=start_date,
+                        end_date=end_date,
+                        reason=request.POST.get("reason", "Folga agendada"),
+                    )
+                messages.success(request, f"Folga(s) agendada(s) com sucesso!")
+        
         elif action == "delete_absence":
             # ... (seu código original - NÃO MUDA)
             absence_id = request.POST.get("absence_id")
@@ -536,11 +586,11 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         if current_employee:
             employees = Employee.objects.filter(id=current_employee.id).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee=current_employee, start_date__gte=now().date()).order_by("start_date")
+            absences = EmployeeAbsence.objects.filter(employee=current_employee, end_date__gte=today).order_by("start_date")
         else:
             employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit=unit, start_date__gte=now().date()).order_by("start_date")
+            absences = EmployeeAbsence.objects.filter(employee=current_employee, end_date__gte=today).order_by("start_date")
     
     else: # <-- SE FOR DONO
         units = barbershop.units.all() 
@@ -549,11 +599,11 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
             employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit=unit, start_date__gte=now().date()).order_by("start_date")
+            absences = EmployeeAbsence.objects.filter(employee__unit=unit,end_date__gte=today).order_by("start_date")
         else:
             employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, start_date__gte=now().date()).order_by("start_date")
+            absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop,end_date__gte=today).order_by("start_date")
 
     workdays = EmployeeWorkDay.objects.filter(employee__in=employees).order_by('weekday')
 

@@ -1,92 +1,40 @@
 // ===================================================================
-// ARQUIVO UNIFICADO E CORRIGIDO (MERGE FRONT + FEATURE)
+// ARQUIVO UNIFICADO: DISPONIBILIDADE + FERIADOS (CREATE/EDIT) + FOLGAS
 // ===================================================================
 
-// --- Declaração de constantes dos modais ---
-const editModal = document.getElementById('editModal');
-const editWorkdayForm = document.getElementById('editWorkdayForm');
-const vacationModal = document.getElementById('vacationModal');
-const editVacationModal = document.getElementById('editVacationModal');
-const createHolidayModal = document.getElementById('createHolidayModal');
-const editHolidayModalEl = document.getElementById('editHolidayModal');
-const editHolidayForm = document.getElementById('editHolidayForm');
-
-// --- Lógica a ser executada quando a página carregar ---
 document.addEventListener('DOMContentLoaded', function () {
     
-    // 1. Configuração do SweetAlert2 (Toasts)
+    // --- 1. Configuração Global de Notificações (Toasts) ---
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
         timer: 3500,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
-        }
+        timerProgressBar: true
     });
 
-    // 2. Lógica de salvar Disponibilidade (via FETCH para suportar o Toast)
-    if (editModal && editWorkdayForm) {
-        const saveButton = editModal.querySelector('.edit-modal-footer .btn-primary') || editModal.querySelector('.btn-primary');
-        
-        if (saveButton) {
-            saveButton.addEventListener('click', function() {
-                const formData = new FormData(editWorkdayForm);
-                const csrfToken = editWorkdayForm.querySelector('[name=csrfmiddlewaretoken]').value;
+    // --- 2. Função Auxiliar para Erros (Estilo "Erros Encontrados") ---
+    function showValidationErrors(errors) {
+        let errorHtml = '<ul style="text-align: left; list-style: disc; margin-left: 20px;">';
+        errors.forEach(err => errorHtml += `<li>${err}</li>`);
+        errorHtml += '</ul>';
 
-                fetch(window.location.href, { 
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-CSRFToken': csrfToken }
-                })
-                .then(response => response.json()) 
-                .then(data => {
-                    if (data.status === 'success') {
-                        closeEditModal();
-                        requestAnimationFrame(() => {
-                            setTimeout(() => {
-                                Toast.fire({ icon: 'success', title: data.message || 'Disponibilidade atualizada!' });
-                                setTimeout(() => window.location.reload(), 1500);
-                            }, 1); 
-                        });
-                    } else {
-                        // Trata erros de validação do servidor
-                        let errorHtml = '<ul style="text-align: left;">';
-                        if (data.errors) data.errors.forEach(err => errorHtml += `<li>${err}</li>`);
-                        else errorHtml += '<li>Erro desconhecido</li>';
-                        errorHtml += '</ul>';
-
-                        Swal.fire({ icon: 'error', title: 'Erro ao Salvar', html: errorHtml });
-                    }
-                })
-                .catch(err => {
-                    Swal.fire({ icon: 'error', title: 'Erro de conexão', text: 'Não foi possível salvar os dados.' });
-                });
-            });
-        }
+        Swal.fire({
+            title: 'Erros Encontrados',
+            html: errorHtml,
+            icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#7066e0'
+        });
     }
 
-    // 3. Inicializa a aba "Manhã" como ativa
-    const morningSelector = document.querySelector('.barber-selector-item:first-child');
-    if (morningSelector) {
-        morningSelector.click();
-    }
-
-    // 4. Lógica de Edição de Feriado (AJAX + Validação)
-    if (editHolidayModalEl && editHolidayForm) {
-        window.editHolidayModal = function(holidayId, name, date) {
-            const idField = document.getElementById('editHolidayId');
-            if(idField) idField.value = holidayId;
-            editHolidayModalEl.querySelector('input[name="name"]').value = name;
-            editHolidayModalEl.querySelector('input[name="date"]').value = date;
-            editHolidayModalEl.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        };
-
-        editHolidayForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    // --- 3. Lógica Unificada para Feriados / DNF (Criação e Edição) ---
+    // Isso impede a "tela branca" com JSON
+    const holidayForms = document.querySelectorAll('.holiday-form');
+    holidayForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            
             const formData = new FormData(this);
             const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
@@ -97,47 +45,113 @@ document.addEventListener('DOMContentLoaded', function () {
                     body: formData
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    // Fecha qualquer um dos dois modais
+                    closeHolidayModal();
                     closeEditHolidayModal();
-                    Toast.fire({ icon: 'success', title: 'Dia atualizado!' });
+                    
+                    Toast.fire({ icon: 'success', title: data.message });
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    const data = await response.json();
-                    Swal.fire({ icon: 'error', title: 'Erro', text: data.errors ? data.errors[0] : 'Erro ao salvar.' });
+                    // Captura o erro 400 da View e exibe no SweetAlert
+                    showValidationErrors(data.errors || ['Erro ao processar dados.']);
                 }
             } catch (error) {
-                Swal.fire({ icon: 'error', title: 'Erro de rede', text: error.message });
+                showValidationErrors(['Erro de comunicação com o servidor.']);
+            }
+        });
+    });
+
+    // --- 4. Validação: Folga (Absence) ---
+    const absenceForm = document.querySelector('.absence-form');
+    if (absenceForm) {
+        absenceForm.addEventListener('submit', function (e) {
+            const startVal = document.getElementById('vacationStart').value;
+            const endVal = document.getElementById('vacationEnd').value;
+            if (!startVal || !endVal) return;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = new Date(startVal + 'T00:00:00');
+            const endDate = new Date(endVal + 'T00:00:00');
+
+            let errors = [];
+            if (endDate < today) errors.push("Data Fim: A folga não pode terminar no passado.");
+            if (endDate < startDate) errors.push("Período: A data de término não pode ser anterior ao início.");
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                showValidationErrors(errors);
             }
         });
     }
 
-    // 5. Validações de Datas Retroativas (Recuperado do Front)
-    const holidayForm = document.querySelector('.holiday-form');
-    if (holidayForm) {
-        holidayForm.addEventListener('submit', function(event) {
-            const holidayDate = document.getElementById('holidayDate');
-            const [y, m, d] = holidayDate.value.split('-').map(Number);
-            const selected = new Date(y, m - 1, d);
-            const today = new Date();
-            today.setHours(0,0,0,0);
-
-            if (selected < today) {
-                event.preventDefault();
-                alert('A data não pode ser anterior à data atual.');
-            }
+    // --- 5. Lógica de Abas (Manhã / Tarde) ---
+    const tabs = document.querySelectorAll('.barber-selector-item');
+    tabs.forEach(item => {
+        item.addEventListener('click', function() {
+            tabs.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            const isMorning = this.textContent.trim() === 'Manhã';
+            document.querySelectorAll('.day-edit.morning').forEach(d => d.style.display = isMorning ? 'flex' : 'none');
+            document.querySelectorAll('.day-edit.afternoon').forEach(d => d.style.display = isMorning ? 'none' : 'flex');
         });
+    });
+    if (tabs[0]) tabs[0].click();
+
+    // --- 6. Salvamento de Disponibilidade (Barbeiros) ---
+    const editWorkdayForm = document.getElementById('editWorkdayForm');
+    if (editWorkdayForm) {
+        const saveBtn = document.querySelector('#editModal .btn-primary');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                const formData = new FormData(editWorkdayForm);
+                const csrfToken = editWorkdayForm.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(window.location.href, { 
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        closeEditModal();
+                        Toast.fire({ icon: 'success', title: data.message });
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showValidationErrors(data.errors);
+                    }
+                })
+                .catch(() => showValidationErrors(['Erro de conexão com o servidor.']));
+            });
+        }
     }
 });
 
-// --- Funções Globais de Controle de Modal ---
+// --- 7. Funções Globais de Controle de Modal (Escopo Global) ---
+
+function editHolidayModal(holidayId, name, date) {
+    const modal = document.getElementById('editHolidayModal');
+    const idField = document.getElementById('editHolidayId');
+    if (!modal) return;
+
+    if(idField) idField.value = holidayId;
+    modal.querySelector('input[name="name"]').value = name;
+    modal.querySelector('input[name="date"]').value = date;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
 
 function updatePeriodVisuals(weekday, period, isAvailable) {
     const periodDiv = document.querySelector(`.day-edit[data-weekday="${weekday}"][data-period="${period}"]`);
     if (!periodDiv) return;
-
     const checkbox = periodDiv.querySelector('input[type="checkbox"]');
     if (checkbox) checkbox.checked = isAvailable;
-
     const timeInputs = periodDiv.querySelectorAll('.time-input');
     if (isAvailable) {
         periodDiv.classList.replace('off', 'active');
@@ -150,14 +164,13 @@ function updatePeriodVisuals(weekday, period, isAvailable) {
 
 function handleToggleClick(checkboxElement) {
     const dayDiv = checkboxElement.closest('.day-edit');
-    if (dayDiv) {
-        updatePeriodVisuals(dayDiv.dataset.weekday, dayDiv.dataset.period, checkboxElement.checked);
-    }
+    if (dayDiv) updatePeriodVisuals(dayDiv.dataset.weekday, dayDiv.dataset.period, checkboxElement.checked);
 }
 
 function openEditModal(employeeId) {
-    if (!editWorkdayForm || typeof workdaysData === 'undefined') return;
-    document.getElementById('formEmployeeId').value = employeeId;
+    const formEmpId = document.getElementById('formEmployeeId');
+    if (!formEmpId || typeof workdaysData === 'undefined') return;
+    formEmpId.value = employeeId;
     const employeeWorkdays = workdaysData[employeeId];
 
     for (let i = 0; i < 7; i++) {
@@ -172,31 +185,13 @@ function openEditModal(employeeId) {
             }
         });
     }
-    editModal.style.display = 'flex';
+    document.getElementById('editModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
-function closeEditModal() {
-    if(editModal) { editModal.style.display = 'none'; document.body.style.overflow = ''; }
-}
-
-function closeEditHolidayModal() {
-    if(editHolidayModalEl) { editHolidayModalEl.style.display = 'none'; document.body.style.overflow = ''; }
-}
-
-// Lógica de abas (Manhã/Tarde)
-document.querySelectorAll('.barber-selector-item').forEach(item => {
-    item.addEventListener('click', function() {
-        document.querySelectorAll('.barber-selector-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-        const isMorning = this.textContent.trim() === 'Manhã';
-        document.querySelectorAll('.day-edit.morning').forEach(d => d.style.display = isMorning ? 'flex' : 'none');
-        document.querySelectorAll('.day-edit.afternoon').forEach(d => d.style.display = isMorning ? 'none' : 'flex');
-    });
-});
-
-// Modais Simples (Férias e Feriados)
-function openVacationModal() { vacationModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-function closeVacationModal() { vacationModal.style.display = 'none'; document.body.style.overflow = ''; }
-function openHolidayModal() { createHolidayModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-function closeHolidayModal() { createHolidayModal.style.display = 'none'; document.body.style.overflow = ''; }
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; document.body.style.overflow = ''; }
+function closeEditHolidayModal() { document.getElementById('editHolidayModal').style.display = 'none'; document.body.style.overflow = ''; }
+function openHolidayModal() { document.getElementById('createHolidayModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeHolidayModal() { document.getElementById('createHolidayModal').style.display = 'none'; document.body.style.overflow = ''; }
+function openVacationModal() { document.getElementById('vacationModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+function closeVacationModal() { document.getElementById('vacationModal').style.display = 'none'; document.body.style.overflow = ''; }
