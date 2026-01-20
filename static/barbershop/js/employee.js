@@ -1,5 +1,5 @@
 // Arquivo: static/barbershop/js/employee.js
-// VERSÃO FINAL CORRIGIDA
+// VERSÃO FINAL CORRIGIDA COM CURSOR DE BLOQUEIO
 
 document.addEventListener('DOMContentLoaded', function() {
     // --- SELETORES DE ELEMENTOS ---
@@ -12,26 +12,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalTitle = document.getElementById('modalTitle');
     const employeeForm = document.getElementById('employeeForm');
     const addEmployeeBtn = document.querySelector('.add-employee-btn');
-    const employeeTableBody = document.querySelector('.employees-table tbody');
+    const unitField = document.getElementById('employeeUnit');
+    const unitFilter = document.getElementById('unitFilterSelect');
+
+    // Função para impedir a abertura do select mantendo o cursor ativo
+    function preventSelectClick(e) {
+        e.preventDefault();
+        this.blur();
+        return false;
+    }
 
     // --- CONFIGURAÇÃO DA VERIFICAÇÃO ---
     if (employeeForm) {
-        
-        // Pega a URL e o Token do formulário no HTML
         const checkUrl = employeeForm.dataset.checkUrl;
         const csrfToken = employeeForm.querySelector('[name=csrfmiddlewaretoken]').value;
 
         employeeForm.addEventListener('submit', function(event) {
-            
-            // --- MODIFICAÇÃO: Intercepta o envio para QUALQUER ação (create ou edit) ---
             const action = employeeForm.querySelector('input[name="action"]').value;
-            
-            // 1. IMPEDE A PÁGINA DE RECARREGAR (garante que o modal não feche se houver erro)
             event.preventDefault(); 
             
             const formData = new FormData(employeeForm);
 
-            // 2. Envia os dados para a sua view de validação (independente de ser create ou edit)
             fetch(checkUrl, {
                 method: 'POST',
                 body: formData,
@@ -39,12 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                
                 if (data.is_valid) {
-                    // 3. SE VÁLIDO:
-                    
                     if (action === 'create' && data.user_exists) {
-                        // 3a. Caso de criação onde o usuário já existe no sistema global
                         Swal.fire({
                             title: 'Usuário Encontrado!',
                             text: `O usuário ${data.user_name} já existe. Deseja adicioná-lo?`,
@@ -52,20 +49,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             showCancelButton: true,
                             confirmButtonText: 'Sim, adicionar',
                             cancelButtonText: 'Cancelar',
-                            confirmButtonColor: '#7066e0' // Mantendo seu padrão de cores
+                            confirmButtonColor: '#7066e0'
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 employeeForm.submit(); 
                             }
                         });
                     } else {
-                        // 3b. Caso de edição ou criação de novo usuário
                         employeeForm.submit();
                     }
-
                 } else {
-                    // 4. SE INVÁLIDO (O SEU ALERTA "PERFEITO" - PADRONIZADO PARA AMBOS)
-                    
                     let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
                     data.errors.forEach(error => {
                         errorHtml += `<li>${error}</li>`;
@@ -96,11 +89,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- FUNÇÕES DE CONTROLE DO MODAL ---
     
     function openEmployeeModal(employeeData = null) {
-        console.log('Abrindo modal com dados:', employeeData);
-        
         const cpfField = employeeForm.querySelector('#employeeCPF');
        
-        // Limpa todos os checkboxes de cargo sempre que o modal abrir
+        // Reset de interações da unidade (limpa travas anteriores)
+        unitField.removeEventListener('mousedown', preventSelectClick);
+        unitField.style.backgroundColor = "";
+        unitField.style.cursor = "default";
+
         if (employeeForm) {
             employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
                 checkbox.checked = false;
@@ -113,21 +108,20 @@ document.addEventListener('DOMContentLoaded', function() {
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
             
-            // --- MODIFICAÇÃO: BLOQUEIA O CPF NA EDIÇÃO ---
             cpfField.value = employeeData.cpf;
             cpfField.readOnly = true; 
-            cpfField.style.backgroundColor = "#e9ecef"; // Visual de desabilitado
+            cpfField.style.backgroundColor = "#e9ecef"; 
             cpfField.style.cursor = "not-allowed";
 
             employeeForm.querySelector('#employeeName').value = employeeData.name;
             employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
             employeeForm.querySelector('#employeeEmail').value = employeeData.email;
             employeeForm.querySelector('#employeePhone').value = employeeData.phone;
-            employeeForm.querySelector('#employeeUnit').value = employeeData.unit;
+            unitField.value = employeeData.unit;
             
+            // Preenchimento de comissão e roles permanece igual...
             const serviceComm = employeeData.serviceCommission || '';
             const productComm = employeeData.productCommission || '';
-
             employeeForm.querySelector('#serviceCommission').value = serviceComm.toString().replace(',', '.');
             employeeForm.querySelector('#productCommission').value = productComm.toString().replace(',', '.');          
             employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
@@ -140,17 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rolesArray = employeeData.roles.split(','); 
                 rolesArray.forEach(roleValue => {
                     const checkbox = employeeForm.querySelector(`input[name="roles"][value="${roleValue.trim()}"]`);
-                    if (checkbox) {
-                        checkbox.checked = true;
-                    }
+                    if (checkbox) checkbox.checked = true;
                 });
             }
 
         } else {
             // MODO CRIAÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
-            
-            // --- MODIFICAÇÃO: LIBERA O CPF NA CRIAÇÃO ---
             cpfField.readOnly = false;
             cpfField.style.backgroundColor = ""; 
             cpfField.style.cursor = "text";
@@ -159,6 +149,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 employeeForm.reset();
                 employeeForm.querySelector('input[name="action"]').value = 'create';
                 employeeForm.querySelector('#employeeId').value = '';
+
+                // --- LÓGICA DE TRAVA COM CURSOR DE BLOQUEIO ---
+                if (unitFilter && unitFilter.value !== 'geral') {
+                    const selectedOption = unitFilter.options[unitFilter.selectedIndex];
+                    const filteredUnitId = selectedOption.dataset.unitId;
+
+                    if (filteredUnitId) {
+                        unitField.value = filteredUnitId;
+                        unitField.style.backgroundColor = "#e9ecef"; 
+                        unitField.style.cursor = "not-allowed";
+                        // Intercepta o clique para não abrir a lista, mas mantém o cursor ativo
+                        unitField.addEventListener('mousedown', preventSelectClick);
+                    }
+                }
             }
         }
         
@@ -167,96 +171,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.openEmployeeModal = openEmployeeModal;
-
-    // A sua função (correta) de fechar o modal
     window.closeEmployeeModal = function() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
     }
 
     if (addEmployeeBtn) {
-        addEmployeeBtn.addEventListener('click', () => {
-            openEmployeeModal();
-        });
+        addEmployeeBtn.addEventListener('click', () => openEmployeeModal());
     }
 
-    // Event delegation para botões de edição na tabela DESKTOP
-    const desktopTable = document.querySelector('.employees-table tbody');
-    if (desktopTable) {
-        desktopTable.addEventListener('click', function(event) {
-            const editButton = event.target.closest('.edit-btn');
-            if (!editButton) return;
-
-            const employeeData = {
-                id: editButton.dataset.id,
-                name: editButton.dataset.name,
-                lastname: editButton.dataset.lastname,
-                email: editButton.dataset.email,
-                phone: editButton.dataset.phone,
-                cpf: editButton.dataset.cpf,
-                unit: editButton.dataset.unit,
-                roles: editButton.dataset.roles,
-                commissionPercentage: editButton.dataset.commissionPercentage,
-                serviceCommission: editButton.dataset.serviceCommission,
-                productCommission: editButton.dataset.productCommission,
-                canCashbox: editButton.dataset.canCashbox,
-                canSell: editButton.dataset.canSell,
-                canAppointments: editButton.dataset.canAppointments,
-                systemAccess: editButton.dataset.systemAccess,
-            };
-            
-            openEmployeeModal(employeeData);
-        });
-    }
-
-    // Event delegation para botões de edição na tabela MOBILE
-    const mobileTable = document.querySelector('.employees-table-container');
-    if (mobileTable) {
-        mobileTable.addEventListener('click', function(event) {
-            const editButton = event.target.closest('.edit');
-            if (!editButton) return;
-
-            const employeeData = {
-                id: editButton.dataset.id,
-                name: editButton.dataset.name,
-                lastname: editButton.dataset.lastname,
-                email: editButton.dataset.email,
-                phone: editButton.dataset.phone,
-                cpf: editButton.dataset.cpf,
-                unit: editButton.dataset.unit,
-                roles: editButton.dataset.roles,
-                commissionPercentage: editButton.dataset.commissionPercentage,
-                serviceCommission: editButton.dataset.serviceCommission,
-                productCommission: editButton.dataset.productCommission,
-                canCashbox: editButton.dataset.canCashbox,
-                canSell: editButton.dataset.canSell,
-                canAppointments: editButton.dataset.canAppointments,
-                systemAccess: editButton.dataset.systemAccess,
-            };
-            
-            openEmployeeModal(employeeData);
-        });
-    }
+    const tableSelectors = ['.employees-table tbody', '.employees-table-container'];
+    tableSelectors.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.addEventListener('click', function(e) {
+                const btn = e.target.closest('.edit-btn') || e.target.closest('.edit');
+                if (btn) openEmployeeModal({...btn.dataset});
+            });
+        }
+    });
 });
 
-// --- RESTANTE DAS SUAS FUNÇÕES ORIGINAIS (MANTIDAS INTACTAS) ---
+// --- VALIDAÇÕES DE INPUT (MANTIDAS INTACTAS) ---
 
 document.addEventListener('DOMContentLoaded', function() {
     const cpfInput = document.getElementById('employeeCPF');
     if(cpfInput) {
         cpfInput.addEventListener('input', function() {
-            if (this.value.length > 11) {
-                this.value = this.value.slice(0, 11);
-            }
+            if (this.value.length > 11) this.value = this.value.slice(0, 11);
         });
     }
 
     const cellInput = document.getElementById('employeePhone');
     if(cellInput) {
         cellInput.addEventListener('input', function() {
-            if (this.value.length > 11) {
-                this.value = this.value.slice(0, 11);
-            }
+            if (this.value.length > 11) this.value = this.value.slice(0, 11);
         });
     }
 
