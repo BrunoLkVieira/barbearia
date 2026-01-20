@@ -116,13 +116,16 @@ def UnitView(request, barbershop_slug):
 
     if request.method == "POST":
         action = request.POST.get("action")
-        name = request.POST.get("name")
+        name = request.POST.get("name", "").strip()
 
         # --- AÇÃO: CRIAR ---
         if action == "create":
             # Verifica se já existe uma unidade com esse nome NESTA barbearia
             if Unit.objects.filter(barbershop=barbershop, name=name).exists():
-                messages.error(request, f"A unidade '{name}' já existe nesta barbearia.")
+                return JsonResponse({
+                    'is_valid': False, 
+                    'errors': [f"A unidade '{name}' já existe nesta barbearia."]
+                }, status=400)
             else:
                 try:
                     Unit.objects.create(
@@ -138,11 +141,11 @@ def UnitView(request, barbershop_slug):
                         is_active=request.POST.get("is_active") == "True",
                         barbershop=barbershop,
                     )
-                    messages.success(request, "Unidade cadastrada com sucesso!")
+                    return JsonResponse({'is_valid': True, 'message': 'Unidade cadastrada com sucesso!'})
                 except Exception:
-                    messages.error(request, "Erro ao tentar cadastrar a unidade.")
+                    return JsonResponse({'is_valid': False, 'errors': ['Erro interno ao salvar a unidade.']}, status=500)
             
-            return redirect("barbershop:units", barbershop_slug=barbershop.slug)
+          
 
         # --- AÇÃO: EDITAR ---
         if action == "edit":
@@ -151,7 +154,10 @@ def UnitView(request, barbershop_slug):
             
             # Verifica duplicidade ignorando a própria unidade que está sendo editada
             if Unit.objects.filter(barbershop=barbershop, name=name).exclude(pk=unit_id).exists():
-                messages.error(request, f"Você já tem outra unidade chamada '{name}'.")
+                return JsonResponse({
+                    'is_valid': False, 
+                    'errors': [f"Já existe outra unidade chamada '{name}'."]
+                }, status=400)
             else:
                 unit.name = name
                 unit.cep_address = request.POST.get("cep_address")
@@ -166,7 +172,7 @@ def UnitView(request, barbershop_slug):
                 unit.save()
                 messages.success(request, "Alterações salvas com sucesso!")
                 
-            return redirect("barbershop:units", barbershop_slug=barbershop.slug)
+            return JsonResponse({'is_valid': True, 'message': 'Alterações salvas com sucesso!'})
 
         # --- AÇÃO: DELETAR ---
         if action == "delete":
@@ -642,55 +648,50 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
-
 @login_required
 @require_POST
 def check_employee_data(request):
-    """
-    Valida todos os dados do formulário de funcionário, tanto para CRIAÇÃO quanto para EDIÇÃO.
-    """
     data = {
         "cpf": request.POST.get("cpf", ""),
         "name": request.POST.get("name", ""),
         "last_name": request.POST.get("last_name", ""),
         "email": request.POST.get("email", ""),
     }
-    # Pegamos o ID do funcionário, se estivermos em modo de edição
+    roles_selected = request.POST.getlist("roles")
     employee_id = request.POST.get('employee_id')
-
-    # Usa a função de validação central que já temos
+    
+    # 1. Validação básica de campos (Niterói utils)
     errors = validate_user_data(data)
 
-    # --- Validação de E-mail Único (Lógica Aprimorada para Edição) ---
+    # 2. Validação de Cargo (Obrigatório para o modal centralizado)
+    if not roles_selected:
+        errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
+
+    # 3. Validação de E-mail Único
     email = data.get('email')
     if email:
         user_query = User.objects.filter(email=email)
         if employee_id:
-            # Se estamos editando, excluímos o próprio usuário da busca
             employee_user_id = Employee.objects.get(id=employee_id).user.id
             user_query = user_query.exclude(id=employee_user_id)
-        
         if user_query.exists():
             errors.append("Email: Este e-mail já está em uso por outro usuário.")
             
-    # --- Validação de CPF Único (Lógica Aprimorada para Edição) ---
+    # 4. Validação de CPF Único
     cpf_digits = re.sub(r'\D', '', data['cpf'])
     if cpf_digits:
         user_query = User.objects.filter(cpf=cpf_digits)
         if employee_id:
             employee_user_id = Employee.objects.get(id=employee_id).user.id
             user_query = user_query.exclude(id=employee_user_id)
-
-        # Na edição, a gente não precisa mostrar o pop-up de confirmação,
-        # pois o CPF não deveria mudar. Apenas validamos se não conflita com outro.
         if user_query.exists():
              errors.append("CPF: Este CPF já pertence a outro usuário.")
 
-
+    # Se houver qualquer erro acima, retorna a lista para o SweetAlert centralizado
     if errors:
         return JsonResponse({'is_valid': False, 'errors': errors})
 
-    # Se estamos criando e o CPF já existe (e não deu erro acima), acionamos a confirmação
+    # 5. Se for CRIAÇÃO e CPF já existe (mas não deu erro no banco desta barbearia)
     if not employee_id:
         try:
             user = User.objects.get(cpf=cpf_digits)
@@ -700,7 +701,7 @@ def check_employee_data(request):
                 'user_name': f'{user.name} {user.last_name}'
             })
         except User.DoesNotExist:
-            pass # Continua para a resposta de sucesso abaixo
+            pass
 
     return JsonResponse({'is_valid': True, 'user_exists': False})
 

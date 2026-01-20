@@ -42,6 +42,59 @@ function closeUnitModal() {
 closeModal.addEventListener('click', closeUnitModal);
 cancelUnit.addEventListener('click', closeUnitModal);
 
+// --- BLOCO ADICIONADO PARA ACEITAR JSON E MOSTRAR ERROS CENTRALIZADOS ---
+if (unitForm) {
+    unitForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Impede o recarregamento da página
+
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_valid) {
+                // SUCESSO: Fecha modal e mostra notificação rápida
+                closeUnitModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: data.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+                // Recarrega para atualizar a lista de unidades
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                // ERRO: Mostra a lista centralizada (O modal de fundo NÃO fecha)
+                let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
+                data.errors.forEach(err => {
+                    errorHtml += `<li>${err}</li>`;
+                });
+                errorHtml += '</ul>';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erros Encontrados',
+                    html: errorHtml,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#7066e0'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            Swal.fire('Erro!', 'Ocorreu um erro de comunicação com o servidor.', 'error');
+        });
+    });
+}
+// -----------------------------------------------------------------------
+
 // Botão Salvar Unidade
 const saveUnit = document.getElementById('saveUnit');
 
@@ -49,7 +102,7 @@ saveUnit.addEventListener('click', function() {
     // Verificando se o formulário é válido antes de enviar
     if (unitForm.checkValidity()) {
         console.log("Formulário válido, enviando...");
-        // O formulário será enviado pelo clique no botão type="submit" no HTML
+        // O formulário será enviado pelo listener de 'submit' adicionado acima
     } else {
         console.log("Formulário inválido, verifique os campos.");
     }
@@ -78,6 +131,7 @@ editButtons.forEach(button => {
         openUnitModal(unitData);
     });
 });
+
 // Botões de Excluir
 const deleteButtons = document.querySelectorAll('.action-btn.delete');
 
@@ -85,16 +139,14 @@ deleteButtons.forEach(button => {
     button.addEventListener('click', function() {
         const row = this.closest('.table-row');
         const unitName = row.querySelector('.unit-name').textContent;
-        
-       
     });
 });
 
- const cepInput = document.getElementById('unitCep');
+const cepInput = document.getElementById('unitCep');
 
-  cepInput.addEventListener('input', function() {
+cepInput.addEventListener('input', function() {
     // Limita o valor a 8 dígitos
     if (this.value.length > 8) {
-      this.value = this.value.slice(0, 8);
+        this.value = this.value.slice(0, 8);
     }
-  });
+});

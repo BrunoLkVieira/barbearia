@@ -23,85 +23,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
         employeeForm.addEventListener('submit', function(event) {
             
-            // Vamos interceptar o envio APENAS se for uma "criação"
+            // --- MODIFICAÇÃO: Intercepta o envio para QUALQUER ação (create ou edit) ---
             const action = employeeForm.querySelector('input[name="action"]').value;
             
-            if (action === 'create') {
-                
-                // 1. IMPEDE A PÁGINA DE RECARREGAR (e fechar o modal)
-                event.preventDefault(); 
-                
-                const formData = new FormData(employeeForm);
-
-                // 2. Envia os dados do formulário para a sua view de validação
-                fetch(checkUrl, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-CSRFToken': csrfToken }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    
-                    if (data.is_valid) {
-                        // 3. SE VÁLIDO:
-                        
-                        if (data.user_exists) {
-                            // 3a. Usuário já existe, pede confirmação
-                            Swal.fire({
-                                title: 'Usuário Encontrado!',
-                                text: `O usuário ${data.user_name} já existe. Deseja adicioná-lo?`,
-                                icon: 'info',
-                                showCancelButton: true,
-                                confirmButtonText: 'Sim, adicionar',
-                                cancelButtonText: 'Cancelar'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    // Se confirmar, envia o formulário de verdade
-                                    employeeForm.submit(); 
-                                }
-                            });
-                        } else {
-                            // 3b. Usuário novo, envia o formulário de verdade
-                            employeeForm.submit();
-                        }
-
-                    } else {
-                        // 4. SE INVÁLIDO (O SEU ALERTA "PERFEITO")
-                        
-                        // Formata a lista de erros
-                        let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
-                        data.errors.forEach(error => {
-                            errorHtml += `<li>${error}</li>`;
-                        });
-                        errorHtml += '</ul>';
-
-                        // Mostra o alerta "perfeito":
-                        // - Centralizado
-                        // - Sem temporizador
-                        // - Listando os erros
-                        // - E O MODAL NÃO FECHA!
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erros Encontrados',
-                            html: errorHtml,
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro no fetch:', error);
-                    Swal.fire('Erro!', 'Ocorreu um erro de conexão. Tente novamente.', 'error');
-                });
-            }
+            // 1. IMPEDE A PÁGINA DE RECARREGAR (garante que o modal não feche se houver erro)
+            event.preventDefault(); 
             
-            // Se a 'action' for 'edit', este script não faz nada
-            // e deixa o formulário ser enviado normalmente.
+            const formData = new FormData(employeeForm);
+
+            // 2. Envia os dados para a sua view de validação (independente de ser create ou edit)
+            fetch(checkUrl, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                
+                if (data.is_valid) {
+                    // 3. SE VÁLIDO:
+                    
+                    if (action === 'create' && data.user_exists) {
+                        // 3a. Caso de criação onde o usuário já existe no sistema global
+                        Swal.fire({
+                            title: 'Usuário Encontrado!',
+                            text: `O usuário ${data.user_name} já existe. Deseja adicioná-lo?`,
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sim, adicionar',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#7066e0' // Mantendo seu padrão de cores
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                employeeForm.submit(); 
+                            }
+                        });
+                    } else {
+                        // 3b. Caso de edição ou criação de novo usuário
+                        employeeForm.submit();
+                    }
+
+                } else {
+                    // 4. SE INVÁLIDO (O SEU ALERTA "PERFEITO" - PADRONIZADO PARA AMBOS)
+                    
+                    let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
+                    data.errors.forEach(error => {
+                        errorHtml += `<li>${error}</li>`;
+                    });
+                    errorHtml += '</ul>';
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erros Encontrados',
+                        html: errorHtml,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#7066e0'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erro no fetch:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'Ocorreu um erro de conexão. Tente novamente.',
+                    confirmButtonColor: '#7066e0'
+                });
+            });
         });
     }
 
     // --- FUNÇÕES DE CONTROLE DO MODAL ---
     
-    // A sua função (correta) de abrir o modal
     function openEmployeeModal(employeeData = null) {
         console.log('Abrindo modal com dados:', employeeData);
         
@@ -120,10 +113,10 @@ document.addEventListener('DOMContentLoaded', function() {
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
             
-            // BLOQUEIA O CPF
+            // --- MODIFICAÇÃO: BLOQUEIA O CPF NA EDIÇÃO ---
             cpfField.value = employeeData.cpf;
             cpfField.readOnly = true; 
-            cpfField.style.backgroundColor = "#e9ecef"; // Cor cinza de desabilitado
+            cpfField.style.backgroundColor = "#e9ecef"; // Visual de desabilitado
             cpfField.style.cursor = "not-allowed";
 
             employeeForm.querySelector('#employeeName').value = employeeData.name;
@@ -156,6 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // MODO CRIAÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
+            
+            // --- MODIFICAÇÃO: LIBERA O CPF NA CRIAÇÃO ---
+            cpfField.readOnly = false;
+            cpfField.style.backgroundColor = ""; 
+            cpfField.style.cursor = "text";
+
             if (employeeForm) {
                 employeeForm.reset();
                 employeeForm.querySelector('input[name="action"]').value = 'create';
@@ -166,8 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
     }
-
-    window.openEmployeeModal = openEmployeeModal;
 
     window.openEmployeeModal = openEmployeeModal;
 
@@ -208,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 systemAccess: editButton.dataset.systemAccess,
             };
             
-            console.log('Dados do funcionário (desktop):', employeeData);
             openEmployeeModal(employeeData);
         });
     }
@@ -238,13 +234,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 systemAccess: editButton.dataset.systemAccess,
             };
             
-            console.log('Dados do funcionário (mobile):', employeeData);
             openEmployeeModal(employeeData);
         });
     }
 });
 
-// Funções auxiliares para validação de inputs
+// --- RESTANTE DAS SUAS FUNÇÕES ORIGINAIS (MANTIDAS INTACTAS) ---
+
 document.addEventListener('DOMContentLoaded', function() {
     const cpfInput = document.getElementById('employeeCPF');
     if(cpfInput) {
@@ -264,31 +260,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Estilizar cada cargo
     const roleElements = document.querySelectorAll('.employee-type');
-    
     roleElements.forEach(element => {
         const text = element.textContent.trim().toLowerCase();
-        
-        if (text.includes('barbeiro')) {
-            element.classList.add('type-barber');
-        } else if (text.includes('gerente')) {
-            element.classList.add('type-manager');
-        } else if (text.includes('caixa')) {
-            element.classList.add('type-cashier');
-        } else {
-            element.classList.add('type-none');
-        }
+        if (text.includes('barbeiro')) element.classList.add('type-barber');
+        else if (text.includes('gerente')) element.classList.add('type-manager');
+        else if (text.includes('caixa')) element.classList.add('type-cashier');
+        else element.classList.add('type-none');
     });
 });
 
-// nao liberar escrever sem o checkbox ligado
-const serviceCommission = document.getElementById('serviceCommission');
-if(serviceCommission) {
-    serviceCommission.addEventListener('input', function() {
-        if (this.value.length > 3) {
-            this.value = this.value.slice(0, 3);
-        }
+const serviceCommissionInput = document.getElementById('serviceCommission');
+if(serviceCommissionInput) {
+    serviceCommissionInput.addEventListener('input', function() {
+        if (this.value.length > 3) this.value = this.value.slice(0, 3);
     });
 }
 
@@ -299,13 +284,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateInputsState() {
         if (commissionCheckbox && serviceInput && productInput) {
-            if (commissionCheckbox.checked) {
-                serviceInput.disabled = false;
-                productInput.disabled = false;
-            } else {
-                serviceInput.disabled = true;
-                productInput.disabled = true;
-            }
+            const isDisabled = !commissionCheckbox.checked;
+            serviceInput.disabled = isDisabled;
+            productInput.disabled = isDisabled;
         }
     }
     
@@ -313,83 +294,49 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modal) {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    if (modal.style.display === 'flex') {
-                        updateInputsState();
-                    }
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && modal.style.display === 'flex') {
+                    updateInputsState();
                 }
             });
         });
         observer.observe(modal, { attributes: true });
     }
     
-    if (commissionCheckbox) {
-        commissionCheckbox.addEventListener('change', updateInputsState);
-    }
+    if (commissionCheckbox) commissionCheckbox.addEventListener('change', updateInputsState);
 });
 
-// Regra de negocio de cargos
 document.addEventListener('DOMContentLoaded', function() {
-    // Seleciona todos os checkboxes de cargo
     const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
     const systemAccess = document.querySelector('input[name="system_access"]');
     const canManageCashbox = document.querySelector('input[name="can_manage_cashbox"]');
     const canRegisterSell = document.querySelector('input[name="can_register_sell"]');
     const canCreateAppointments = document.querySelector('input[name="can_create_appointments"]');
     
-    // Função para atualizar as permissões baseadas nos cargos selecionados
     function updatePermissions() {
-        // Verifica quais cargos estão selecionados
-        const selectedRoles = Array.from(roleCheckboxes)
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value);
+        const selectedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         
-        // Se nenhum cargo estiver selecionado, desabilita tudo
         if (selectedRoles.length === 0) {
-            systemAccess.disabled = true;
-            canManageCashbox.disabled = true;
-            canRegisterSell.disabled = true;
-            canCreateAppointments.disabled = true;
-            
-            systemAccess.checked = false;
-            canManageCashbox.checked = false;
-            canRegisterSell.checked = false;
-            canCreateAppointments.checked = false;
+            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => {
+                el.disabled = true;
+                el.checked = false;
+            });
             return;
         }
         
-        // Habilita todos os checkboxes de permissão se algum cargo estiver selecionado
-        systemAccess.disabled = false;
-        canManageCashbox.disabled = false;
-        canRegisterSell.disabled = false;
-        canCreateAppointments.disabled = false;
+        [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.disabled = false);
         
-        // Aplica as regras específicas para cada cargo
         if (selectedRoles.includes('gerente')) {
-            systemAccess.checked = true;
-            canManageCashbox.checked = true;
-            canRegisterSell.checked = true;
-            canCreateAppointments.checked = true;
-        }
-        
-        else if(selectedRoles.includes('caixa')) {
+            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.checked = true);
+        } else if(selectedRoles.includes('caixa')) {
             systemAccess.checked = true;
             canManageCashbox.checked = true;
             canRegisterSell.checked = true;
             canCreateAppointments.checked = false;
-        }
-        else if(selectedRoles.includes('barbeiro')){
-            systemAccess.checked = false;
-            canManageCashbox.checked = false;
-            canRegisterSell.checked = false;
-            canCreateAppointments.checked = false;
+        } else if(selectedRoles.includes('barbeiro')){
+            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.checked = false);
         }
     }
     
-    roleCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updatePermissions);
-    });
-    
-    // Executa uma vez ao carregar para definir o estado inicial
+    roleCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updatePermissions));
     updatePermissions();
 });
