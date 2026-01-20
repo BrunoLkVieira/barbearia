@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function openEmployeeModal(employeeData = null) {
         console.log('Abrindo modal com dados:', employeeData);
         
+        const cpfField = employeeForm.querySelector('#employeeCPF');
+       
         // Limpa todos os checkboxes de cargo sempre que o modal abrir
         if (employeeForm) {
             employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
@@ -117,7 +119,13 @@ document.addEventListener('DOMContentLoaded', function() {
             modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Funcionário';
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
-            employeeForm.querySelector('#employeeCPF').value = employeeData.cpf;
+            
+            // BLOQUEIA O CPF
+            cpfField.value = employeeData.cpf;
+            cpfField.readOnly = true; 
+            cpfField.style.backgroundColor = "#e9ecef"; // Cor cinza de desabilitado
+            cpfField.style.cursor = "not-allowed";
+
             employeeForm.querySelector('#employeeName').value = employeeData.name;
             employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
             employeeForm.querySelector('#employeeEmail').value = employeeData.email;
