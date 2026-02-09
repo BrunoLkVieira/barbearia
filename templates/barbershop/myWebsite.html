@@ -16,36 +16,55 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/Mobile/myWebsite.css' %}">
     <style>
         /* Estilos para o drag & drop */
-.banner-images {
-    min-height: 100px;
-}
+        .banner-images {
+            min-height: 100px;
+        }
 
-.banner-image-container {
-    transition: all 0.3s ease;
-    cursor: grab;
-}
+        .banner-image-container {
+            transition: all 0.3s ease;
+            cursor: grab;
+        }
 
-.banner-image-container.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-}
+        .banner-image-container.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
 
-.banner-image-container.drag-over {
-    border: 2px dashed #FF7A00;
-    background-color: rgba(255, 122, 0, 0.1);
-}
+        .banner-image-container.drag-over {
+            border: 2px dashed #FF7A00;
+            background-color: rgba(255, 122, 0, 0.1);
+        }
 
-.banner-image-container:active {
-    cursor: grabbing;
-}
+        .banner-image-container:active {
+            cursor: grabbing;
+        }
 
-.move-btn {
-    cursor: grab;
-}
+        .move-btn {
+            cursor: grab;
+        }
 
-.move-btn:active {
-    cursor: grabbing;
-}
+        .move-btn:active {
+            cursor: grabbing;
+        }
+
+        .banner-image-container * {
+            pointer-events: none; /* Impede que ícones ou imagens interfiram no arrasto */
+        }
+
+        .banner-action-btn, .banner-actions {
+            pointer-events: auto; /* Permite clicar nos botões de excluir normalmente */
+        }
+
+        .banner-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Garante que o container se comporte como grid */
+            gap: 15px;
+        }
+
+        .banner-image-container.dragging {
+            opacity: 0; /* Deixa invisível o item original enquanto arrasta para não confundir o mouse */
+        }
+
     </style>
 </head>
 <body>
@@ -92,7 +111,7 @@
                                 <img  class="banner-image" src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Foto para o carrosel do site">
                                 <div class="banner-actions">
                                     <div class="banner-action-btn move-btn">
-                                        <i class="fas">1</i>
+                                        <i class="fas number-display">1</i>
                                     </div>
                                     <div class="banner-action-btn move-btn">
                                         <i class="fas fa-arrows-alt"></i>
@@ -107,7 +126,7 @@
                                 <img  class="banner-image" src="https://images.unsplash.com/photo-1520338661084-680395057c93?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Foto para o carrosel do site">
                                 <div class="banner-actions">
                                     <div class="banner-action-btn move-btn">
-                                        <i class="fas">2</i>
+                                        <i class="fas number-display">2</i>
                                     </div>
                                     <div class="banner-action-btn move-btn">
                                         <i class="fas fa-arrows-alt"></i>
@@ -122,7 +141,7 @@
                                 <img  class="banner-image" src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Foto para o carrosel do site">
                                 <div class="banner-actions">
                                     <div class="banner-action-btn move-btn">
-                                        <i class="fas">3</i>
+                                        <i class="fas number-display">3</i>
                                     </div>
                                     <div class="banner-action-btn move-btn">
                                         <i class="fas fa-arrows-alt"></i>
@@ -143,73 +162,70 @@
 
                     <div class="banner-section">
                         <div class="banner-title">
-                            <h3><i class="fas fa-images"></i> Cortes (Carrossel)</h3>
+                            <h3><i class="fas fa-cut"></i> Nossos Cortes</h3>
                             <small>Arraste para reordenar</small>
                         </div>
-
                         <div class="banner-images">
-                            <div class="banner-image-container" data-image-id="1">
-                                <div class="banner-image">Primeiro Corte</div>
+                            <div class="banner-image-container" data-image-id="c1">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400" alt="Corte 1">
                                 <div class="banner-actions">
-                                    <div class="banner-action-btn move-btn">
-                                        <i class="fas fa-arrows-alt"></i>
-                                    </div>
-                                    <div class="banner-action-btn delete-btn">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">1</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
                                 </div>
                             </div>
-                            <div class="banner-image-container" data-image-id="2">
-                                <div class="banner-image" style="background-color: #d0d0d0;">Segundo Corte</div>
+                            <div class="banner-image-container" data-image-id="c2">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1621605815841-db897c4733dd?w=400" alt="Corte 2">
                                 <div class="banner-actions">
-                                    <div class="banner-action-btn move-btn">
-                                        <i class="fas fa-arrows-alt"></i>
-                                    </div>
-                                    <div class="banner-action-btn delete-btn">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">2</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
                                 </div>
                             </div>
-                            <div class="add-banner-btn cortes">
-                                <i class="fas fa-plus-circle"></i> Adicionar Imagem
+                            <div class="banner-image-container" data-image-id="c3">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1593702288056-7927b442d0fa?w=400" alt="Corte 3">
+                                <div class="banner-actions">
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">3</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                </div>
                             </div>
+                            <div class="add-banner-btn cortes"><i class="fas fa-plus-circle"></i> Adicionar</div>
                         </div>
                     </div>
                     
-
                     <div class="banner-section">
                         <div class="banner-title">
-                            <h3><i class="fas fa-images"></i> Produtos (Carrossel)</h3>
+                            <h3><i class="fas fa-shopping-bag"></i> Produtos Recomendados</h3>
                             <small>Arraste para reordenar</small>
                         </div>
-
                         <div class="banner-images">
-                            <div class="banner-image-container" data-image-id="1">
-                                <div class="banner-image">Primeiro Produto</div>
+                            <div class="banner-image-container" data-image-id="p1">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1610431355431-7299a4155b9e?w=400" alt="Produto 1">
                                 <div class="banner-actions">
-                                    <div class="banner-action-btn move-btn">
-                                        <i class="fas fa-arrows-alt"></i>
-                                    </div>
-                                    <div class="banner-action-btn delete-btn">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">1</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
                                 </div>
                             </div>
-                            <div class="banner-image-container" data-image-id="2">
-                                <div class="banner-image" style="background-color: #d0d0d0;">Segundo Produto</div>
+                            <div class="banner-image-container" data-image-id="p2">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?w=400" alt="Produto 2">
                                 <div class="banner-actions">
-                                    <div class="banner-action-btn move-btn">
-                                        <i class="fas fa-arrows-alt"></i>
-                                    </div>
-                                    <div class="banner-action-btn delete-btn">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">2</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
                                 </div>
                             </div>
-                            <div class="add-banner-btn products">
-                                <i class="fas fa-plus-circle"></i> Adicionar Imagem
+                            <div class="banner-image-container" data-image-id="p3">
+                                <img class="banner-image" src="https://images.unsplash.com/photo-1590439471364-192aa70c0b53?w=400" alt="Produto 3">
+                                <div class="banner-actions">
+                                    <div class="banner-action-btn move-btn"><i class="fas number-display">3</i></div>
+                                    <div class="banner-action-btn move-btn"><i class="fas fa-arrows-alt"></i></div>
+                                    <div class="banner-action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                </div>
                             </div>
-                        </div>
+                                <div class="add-banner-btn products"><i class="fas fa-plus-circle"></i> Adicionar</div>
+                            </div>
                     </div>
                 </div>
                 
