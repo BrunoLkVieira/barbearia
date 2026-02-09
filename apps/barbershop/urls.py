@@ -11,12 +11,17 @@ urlpatterns = [
     path('<slug:barbershop_slug>/funcionarios/', EmployeeView, name='employee_general'),  # dono, visão geral
     path('<slug:barbershop_slug>/<slug:unit_slug>/funcionarios/', EmployeeView, name='employee_unit'),
 
+
+    path('check-employee-data/', check_employee_data, name='check_employee_data'),
+   
     # Funcionamento
     path('<slug:barbershop_slug>/funcionamento/', WorkDayView, name='workday_general'),
     path('<slug:barbershop_slug>/<slug:unit_slug>/funcionamento/', WorkDayView, name='workday_unit'),
 
-    path('check-employee-data/', check_employee_data, name='check_employee_data'),
+    
+    # Website   
     path('<slug:barbershop_slug>/website/', MyWebsiteView, name='myWebsite'),
+    path('<slug:barbershop_slug>/<slug:unit_slug>/website/', MyWebsiteView, name='myWebsite_unit'),
 
     # Landing page de cada unidade
     path('<slug:barbershop_slug>/agendar/', UnitLP, name='unitLP'),

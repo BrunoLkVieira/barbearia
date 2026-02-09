@@ -10,7 +10,7 @@ class Barbershop(models.Model):
     name = models.CharField(max_length=150)
     slug = models.SlugField(unique=True, blank=True)
     logo = models.ImageField(upload_to="barbershop_logos/", null=True, blank=True)
-    about = models.TextField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     foundation_date = models.DateField(null=True, blank=True)
     
     owner_user = models.ForeignKey(
@@ -46,7 +46,10 @@ class Unit(models.Model):
     number_address = models.CharField(max_length=10)
     neighborhood = models.CharField(max_length=100, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)         
-    state = models.CharField(max_length=2, null=True, blank=True)       
+    state = models.CharField(max_length=2, null=True, blank=True)    
+    about_text = models.TextField(null=True, blank=True)
+    about_image = models.ImageField(upload_to="about_units/", null=True, blank=True)
+    map_link = models.TextField(null=True, blank=True) 
     whatsapp_number = models.CharField(max_length=20, null=True, blank=True) 
     instagram_link = models.URLField(max_length=200, null=True, blank=True) 
 
@@ -57,6 +60,9 @@ class Unit(models.Model):
     
 
     def save(self, *args, **kwargs):
+        if self.street_address:
+            query = f"{self.street_address}, {self.number_address}, {self.neighborhood}, {self.city}, {self.state}"
+            self.map_link = f"https://maps.google.com/maps?q={query}&t=&z=15&ie=UTF8&iwloc=&output=embed"
         if not self.slug:
             # cria slug único baseado no nome
             base_slug = slugify(self.name)
