@@ -714,7 +714,7 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
     unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
 
     if request.method == "POST":
-        # A. Reordenação AJAX
+        # A. Reordenação AJAX (Drag & Drop)
         if request.content_type == 'application/json':
             data = json.loads(request.body)
             if data.get('action') == 'update_order':
@@ -724,7 +724,7 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
 
         action = request.POST.get("action")
 
-        # B. Salvar Informações
+        # B. Salvar Informações de Texto
         if action == "save_info":
             if not unit:
                 barbershop.name = request.POST.get("businessName")
@@ -738,11 +738,32 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
                 unit.instagram_link = request.POST.get("instagram")
                 unit.about_text = request.POST.get("aboutText")
                 if request.FILES.get("about_image"): unit.about_image = request.FILES.get("about_image")
-                unit.save() # O model gera o mapa sozinho aqui
+                unit.save()
             messages.success(request, "Alterações salvas!")
             return redirect(request.path)
-        
-        # ... manter actions add_media e delete_media ...
+
+        # C. ADICIONAR MÍDIA (CORREÇÃO AQUI)
+        elif action == "add_media":
+            m_type = request.POST.get("media_type")
+            img = request.FILES.get("image")
+            if unit and img:
+                # Pega a última ordem para não zerar
+                count = unit.media.filter(media_type=m_type).count()
+                UnitMedia.objects.create(
+                    unit=unit, 
+                    media_type=m_type, 
+                    image=img, 
+                    order=count + 1
+                )
+                messages.success(request, "Imagem adicionada com sucesso!")
+            return redirect(request.path)
+
+        # D. DELETAR MÍDIA
+        elif action == "delete_media":
+            media_id = request.POST.get("media_id")
+            UnitMedia.objects.filter(id=media_id).delete()
+            messages.success(request, "Imagem removida.")
+            return redirect(request.path)
 
     context = {
         "barbershop": barbershop, "unit": unit, "units": units,
