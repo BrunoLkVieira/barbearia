@@ -39,11 +39,13 @@
                 <div class="logo-content">
                     <h1>Orbly Barber</h1>
                     <div class="unit-filter">
-                        <select>
-                            {% for unit in units %}
-                                <option>{{ unit.name }}</option>
+                        <select onchange="location.href=this.value">
+                            {% for u in units %}
+                                <option value="{% url 'barbershop:unitLP_unit' barbershop.slug u.slug %}" 
+                                        {% if unit.id == u.id %}selected{% endif %}>
+                                    {{ u.name }}
+                                </option>
                             {% endfor %}
-                            <option>Geral</option>
                         </select>
                     </div>
                 </div>
@@ -87,13 +89,15 @@
     <main>
         <section class="hero" id="home">
             <div class="hero-carousel">
-                <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');" aria-hidden="true"></div>
-                <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1520338661084-680395057c93?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');" aria-hidden="true"></div>
-                <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');" aria-hidden="true"></div>
+                {% for b in banners %}
+                    <div class="hero-slide" style="background-image: url('{{ b.image.url }}');"></div>
+                {% empty %}
+                    <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1350');"></div>
+                {% endfor %}
             </div>
             <div class="container hero-content">
-                <h1>Nome da Barbearia</h1>
-                <p>Cortes premium exclusivos com os melhores barbeiros da região.</p>
+                <h1>{{ barbershop.name }} - {{ unit.name }}</h1>
+                <p>{{ barbershop.description|default:"Cortes premium exclusivos com os melhores barbeiros da região." }}</p>
                 <a href="#" class="btn" id="heroScheduleBtn">Agendar Horário</a>
             </div> 
         </section>
@@ -104,32 +108,31 @@
 
         <section class="about-section" id="about">
             <div class="container">
-                <!-- Cabeçalho -->
                 <div class="section-header">
                     <h2 class="section-title">SOBRE NÓS</h2>
                     <div class="divider"></div>
-                    <p class="section-subtitle">Excelência em cuidados masculinos desde 2018</p>
+                    {% if barbershop.foundation_date %}
+                        <p class="section-subtitle">No mercado desde {{ barbershop.foundation_date|date:"Y" }}</p>
+                    {% endif %}
                 </div>
 
                 <!-- Conteúdo Principal -->
                 <div class="about-content">
                     <div class="about-text">
                         <div class="text-block">
-                            <h3>Nossa Filosofia</h3>
-                            <p>Na Raphael BarberShop, acreditamos que um bom corte de cabelo ou barba pode transformar não apenas a aparência, mas também a confiança de um homem. Combinamos técnicas tradicionais com abordagens modernas para criar looks personalizados.</p>
+                            <h3>A Unidade {{ unit.name }}</h3>
+                            <p>{{ unit.about_text|default:"Bem-vindo à nossa barbearia." }}</p>
                         </div>
-
-                        
                     </div>
 
                     <!-- Imagem -->
                     <div class="about-image">
                         <div class="image-wrapper">
-                            <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior da barbearia" loading="lazy">
-                        </div>
-                        <div class="experience-badge">
-                            <span>5+</span>
-                            <small>Anos de Experiência</small>
+                            {% if unit.about_image %}
+                                <img src="{{ unit.about_image.url }}" alt="Sobre a {{ unit.name }}">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior">
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -162,7 +165,7 @@
         <section class="gallery-section">
             <div class="section-title">
                 <h2>GALERIA</h2>
-                <p>Confira nossos trabalhos e produtos</p>
+                <p>Confira nossos trabalhos e produtos em {{ unit.name }}</p>
             </div>
             
             <div class="btnArea">
@@ -178,15 +181,18 @@
             </div>
             
             <div class="carouselContainer">
-                <button class="arrow left" onclick="scrollCarousel(-1)">
-                    ‹
-                </button>
+                <button class="arrow left" onclick="scrollCarousel(-1)">‹</button>
                 
                 <div class="carousel" id="carousel"></div>
                 
-                <button class="arrow right" onclick="scrollCarousel(1)">
-                    ›
-                </button>
+                <button class="arrow right" onclick="scrollCarousel(1)">›</button>
+            </div>
+
+            <div id="data-cortes" style="display: none;">
+                {% for h in hairstyles %}<img src="{{ h.image.url }}">{% endfor %}
+            </div>
+            <div id="data-produtos" style="display: none;">
+                {% for p in products %}<img src="{{ p.image.url }}">{% endfor %}
             </div>
         </section>
 
@@ -260,7 +266,7 @@
                 <div class="location-container">
                     <div class="location-info">
                         <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
-                        <p><i class="fas fa-info-circle"></i> Estamos localizados no coração de Tribobó, com fácil acesso e estacionamento próximo.</p>
+                        <p><i class="fas fa-info-circle"></i> Estamos localizados no coração de {{ unit.city }}, com fácil acesso e estacionamento próximo.</p>
                         
                         <div class="hours">
                             <h4><i class="far fa-clock"></i> HORÁRIOS DE FUNCIONAMENTO</h4>
@@ -273,14 +279,16 @@
                         
                         <div class="address">
                             <h4><i class="fas fa-map-pin"></i> ENDEREÇO</h4>
-                            <p><i class="fas fa-road"></i> Rua Retiro da Saudade, 6</p>
-                            <p><i class="fas fa-city"></i> Tribobó, São Gonçalo - RJ</p>
+                            <p><i class="fas fa-road"></i> {{ unit.street_address }}, {{ unit.number_address }}</p>
+                            <p><i class="fas fa-city"></i> {{ unit.neighborhood }}, {{ unit.city }} - {{ unit.state }}</p>
                         </div>
 
                     </div>
                     
                     <div class="map">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3676.6176517835875!2d-43.031728688300916!3d-22.853631179206065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x999aae2a1429e7%3A0x993934908db71553!2sR.%20Retiro%20da%20Saudade%2C%206%20-%20Tribob%C3%B3%2C%20S%C3%A3o%20Gon%C3%A7alo%20-%20RJ%2C%2024750-225!5e0!3m2!1spt-BR!2sbr!4v1752689841807!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização da Barbearia no mapa"></iframe>
+                        {% if unit.map_link %}
+                        <iframe src="{{ unit.map_link }}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização da Barbearia no mapa"></iframe>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -289,8 +297,8 @@
 
     <footer>
         <div class="social-links">
-            <a href="#"><i class="fab fa-instagram"></i></a>
-            <a href="#"><i class="fab fa-whatsapp"></i></a>
+            {% if unit.instagram_link %}<a href="{{ unit.instagram_link }}"><i class="fab fa-instagram"></i> Instagram</a>{% endif %}
+            {% if unit.whatsapp_number %}<a href="https://wa.me/{{ unit.whatsapp_number }}"><i class="fab fa-whatsapp"></i> WhatsApp</a>{% endif %}
         </div>
         <div class="copyright">
             © 2025 OrblyCode. Todos os direitos reservados.

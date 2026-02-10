@@ -23,6 +23,8 @@ urlpatterns = [
     path('<slug:barbershop_slug>/website/', MyWebsiteView, name='myWebsite'),
     path('<slug:barbershop_slug>/<slug:unit_slug>/website/', MyWebsiteView, name='myWebsite_unit'),
 
-    # Landing page de cada unidade
+    # LP Geral (Pega a primeira unidade ativa por padrão)
     path('<slug:barbershop_slug>/agendar/', UnitLP, name='unitLP'),
+    # LP de uma Unidade específica
+    path('<slug:barbershop_slug>/agendar/<slug:unit_slug>/', UnitLP, name='unitLP_unit'),
 ]

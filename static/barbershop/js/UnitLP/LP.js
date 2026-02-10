@@ -1,69 +1,24 @@
-// Variável para armazenar usuário logado
-let loggedInUser = null;
+function updateHeaderDate() {
+    const dateEl = document.getElementById('currentDate');
+    if (dateEl) {
+        const now = new Date();
+        const options = { weekday: 'long', day: 'numeric', month: 'long' };
+        dateEl.textContent = now.toLocaleDateString('pt-BR', options);
+    }
+}
 
-// Elementos DOM realmente necessários
-const DOM = {
-    loginHeaderLink: document.getElementById('loginHeaderLink')
-};
-
-// Configurar todos os event listeners
-function setupEventListeners() {
-    // Scroll suave para links internos
+document.addEventListener('DOMContentLoaded', () => {
+    updateHeaderDate();
+    
+    // Smooth scroll para os links do menu
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', smoothScroll);
-    });
-    
-    // Efeito de rolagem no cabeçalho
-    window.addEventListener('scroll', headerScrollEffect);
-}
-
-// Scroll suave
-function smoothScroll(e) {
-    if(this.getAttribute('href') !== '#') {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-        
-        window.scrollTo({
-            top: targetElement.offsetTop - 80,
-            behavior: 'smooth'
+        anchor.addEventListener('click', function(e) {
+            const id = this.getAttribute('href');
+            if (id !== '#') {
+                e.preventDefault();
+                const el = document.querySelector(id);
+                if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+            }
         });
-    }
-}
-
-// Atualizar header com status de login (simplificado)
-function updateHeader() {
-    if(loggedInUser) {
-        DOM.loginHeaderLink.innerHTML = `<i class="fas fa-user-circle"></i> Minha Conta`;
-        DOM.loginHeaderLink.classList.add('logged-in');
-    } else {
-        DOM.loginHeaderLink.innerHTML = '<i class="fas fa-user"></i> Faça o Login';
-        DOM.loginHeaderLink.classList.remove('logged-in');
-    }
-}
-
-// Mostrar alerta
-function showAlert(message, type = 'success') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.innerHTML = message;
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.right = '20px';
-    alertDiv.style.padding = '15px 20px';
-    alertDiv.style.background = type === 'error' ? '#ff6b6b' : '#51cf66';
-    alertDiv.style.color = 'white';
-    alertDiv.style.borderRadius = '5px';
-    alertDiv.style.boxShadow = '0 3px 10px rgba(0,0,0,0.2)';
-    alertDiv.style.zIndex = '10000';
-    alertDiv.style.animation = 'fadeIn 0.3s';
-    
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => {
-        alertDiv.style.animation = 'fadeOut 0.3s';
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 300);
-    }, 3000);
-}
+    });
+});

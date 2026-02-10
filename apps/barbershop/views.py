@@ -775,16 +775,25 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
     return render(request, "barbershop/myWebsite.html", context)
 
 
-def UnitLP(request, barbershop_slug):
+def UnitLP(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+    units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+    
+    # Define qual unidade exibir
+    if unit_slug:
+        unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+    else:
+        unit = units.first() # Pega a primeira se não houver slug na URL
 
-    units = Unit.objects.filter(barbershop=barbershop)
-
+    # Se não houver nenhuma unidade, unit será None (tratar no HTML)
     context = {
         "barbershop": barbershop,
-        "barbershop_slug": barbershop_slug,
+        "unit": unit,
         "units": units,
-        "active_units_count": units.filter(is_active=True).count()
+        # Mídias da Unidade
+        "banners": unit.media.filter(media_type="banner").order_by('order') if unit else [],
+        "hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
+        "products": unit.media.filter(media_type="product").order_by('order') if unit else [],
     }
 
     return render(request, "barbershop/unitLP.html", context)
