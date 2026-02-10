@@ -141,22 +141,23 @@
                 <div class="team-section">
                     <h3 class="team-title">Nossos Barbeiros</h3>
                     <div class="team-grid">
-                        <div class="team-card">
-                            <div class="team-avatar" style="background-color: #1a2a3a;">RM</div>
-                            <div class="team-info">
-                                <h4>Rafael Matias</h4>
-                                <p class="specialty">Especialista em cortes clássicos</p>
-                                <p class="bio">Mais de 10 anos de experiência em técnicas tradicionais de barbearia.</p>
+                        {% for barber in barbers %}
+                            <div class="team-card">
+                                <div class="team-avatar" style="background-color: #1a2a3a; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                    {{ barber.user.name|slice:":1"|upper }}{{ barber.user.last_name|slice:":1"|upper }}
+                                </div>
+                                
+                                <div class="team-info">
+                                    <h4>{{ barber.user.name }} {{ barber.user.last_name }}</h4>
+                                    <p class="specialty">Especialista em Barbearia</p>
+                                    <p class="bio">Profissional qualificado disponível na unidade {{ unit.name }}.</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="team-card">
-                            <div class="team-avatar" style="background-color: #3a1a2a;">LL</div>
-                            <div class="team-info">
-                                <h4>Lucas Lopes</h4>
-                                <p class="specialty">Mestre em design de barba</p>
-                                <p class="bio">Especializado em estilos modernos e cuidados com barba.</p>
+                        {% empty %}
+                            <div class="team-card" style="grid-column: 1/-1; text-align: center; padding: 20px;">
+                                <p>Nenhum barbeiro cadastrado para esta unidade no momento.</p>
                             </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>

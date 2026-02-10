@@ -779,18 +779,25 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     units = Unit.objects.filter(barbershop=barbershop, is_active=True)
     
-    # Define qual unidade exibir
     if unit_slug:
         unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
     else:
-        unit = units.first() # Pega a primeira se não houver slug na URL
+        unit = units.first()
 
-    # Se não houver nenhuma unidade, unit será None (tratar no HTML)
+    # BUSCA OS BARBEIROS DA UNIDADE
+    # Filtramos funcionários da unidade que tenham a Role de 'barbeiro'
+    barbers = []
+    if unit:
+        barbers = Employee.objects.filter(
+            unit=unit, 
+            roles__occupation='barbeiro'
+        ).select_related('user').distinct()
+
     context = {
         "barbershop": barbershop,
         "unit": unit,
         "units": units,
-        # Mídias da Unidade
+        "barbers": barbers, # Lista de barbeiros dinâmica
         "banners": unit.media.filter(media_type="banner").order_by('order') if unit else [],
         "hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
         "products": unit.media.filter(media_type="product").order_by('order') if unit else [],
