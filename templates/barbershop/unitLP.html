@@ -143,19 +143,23 @@
                     <div class="team-grid">
                         {% for barber in barbers %}
                             <div class="team-card">
-                                <div class="team-avatar" style="background-color: #1a2a3a; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                    {{ barber.user.name|slice:":1"|upper }}{{ barber.user.last_name|slice:":1"|upper }}
+                                <div class="team-avatar" style="background-color: #1a2a3a; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; color: white; font-weight: bold; font-size: 1.2rem; width: 80px; height: 80px; margin: 0 auto 15px;">
+                                    {% if barber.user.photo %}
+                                        <img src="{{ barber.user.photo.url }}" alt="{{ barber.user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        <span>{{ barber.user.name|slice:":1"|upper }}{{ barber.user.last_name|slice:":1"|upper }}</span>
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="team-info">
                                     <h4>{{ barber.user.name }} {{ barber.user.last_name }}</h4>
-                                    <p class="specialty">Especialista em Barbearia</p>
-                                    <p class="bio">Profissional qualificado disponível na unidade {{ unit.name }}.</p>
+                                    <p class="specialty" style="color: #FF7A00; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
+                                        {{ barber.specialty|default:"Barbeiro Profissional" }}
+                                    </p>
+                                    <p class="bio" style="font-size: 0.85rem; color: #ccc;">
+                                        {{ barber.bio|default:"" }}
+                                    </p>
                                 </div>
-                            </div>
-                        {% empty %}
-                            <div class="team-card" style="grid-column: 1/-1; text-align: center; padding: 20px;">
-                                <p>Nenhum barbeiro cadastrado para esta unidade no momento.</p>
                             </div>
                         {% endfor %}
                     </div>

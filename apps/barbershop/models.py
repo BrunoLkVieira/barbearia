@@ -97,7 +97,8 @@ class Employee(models.Model):
         on_delete=models.CASCADE,
         related_name="employees"
     )
-
+    bio = models.CharField(max_length=255, null=True, blank=True)
+    specialty = models.CharField(max_length=50, null=True, blank=True)
     commission_percentage = models.BooleanField(default=False)
     service_commission_percentage = models.DecimalField(
         max_digits=5, decimal_places=2, null=True, blank=True

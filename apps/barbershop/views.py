@@ -302,6 +302,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     employee = Employee.objects.create(
                         user=user,
                         unit=unit,
+                        specialty=request.POST.get("specialty", "").strip(), 
+                        bio=request.POST.get("bio", "").strip(),
                         commission_percentage=_to_bool(request.POST.get("commission_percentage")),
                         service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
                         product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
@@ -341,6 +343,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
             emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
             emp.system_access = _to_bool(request.POST.get("system_access"))
+            emp.specialty = request.POST.get("specialty", "").strip() # ADICIONADO
+            emp.bio = request.POST.get("bio", "").strip()
             emp.save()
 
             # Atualização de roles (sem alterações)

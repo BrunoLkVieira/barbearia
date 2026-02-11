@@ -117,6 +117,9 @@ document.addEventListener('DOMContentLoaded', function() {
             employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
             employeeForm.querySelector('#employeeEmail').value = employeeData.email;
             employeeForm.querySelector('#employeePhone').value = employeeData.phone;
+            
+            employeeForm.querySelector('#employeeSpecialty').value = employeeData.specialty || '';
+            employeeForm.querySelector('#employeeBio').value = employeeData.bio || '';
             unitField.value = employeeData.unit;
             
             // Preenchimento de comissão e roles permanece igual...
@@ -149,6 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 employeeForm.reset();
                 employeeForm.querySelector('input[name="action"]').value = 'create';
                 employeeForm.querySelector('#employeeId').value = '';
+
+                employeeForm.querySelector('#employeeSpecialty').value = '';
+                employeeForm.querySelector('#employeeBio').value = '';
 
                 // --- LÓGICA DE TRAVA COM CURSOR DE BLOQUEIO ---
                 if (unitFilter && unitFilter.value !== 'geral') {

@@ -158,7 +158,8 @@
                                     data-cpf="{{ emp.user.cpf }}"
                                     data-unit="{{ emp.unit.id }}"
                                     data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                    
+                                    data-specialty="{{ emp.specialty|default:'' }}"
+                                    data-bio="{{ emp.bio|default:'' }}"
                                     data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
                                     data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
                                     data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
@@ -245,7 +246,8 @@
                                 data-cpf="{{ emp.user.cpf }}"
                                 data-unit="{{ emp.unit.id }}"
                                 data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                
+                                data-specialty="{{ emp.specialty|default:'' }}"
+                                data-bio="{{ emp.bio|default:'' }}"
                                 data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
                                 data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
                                 data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
@@ -323,6 +325,15 @@
                     <div class="form-group">
                         <label for="employeePhone">Telefone</label>
                         <input type="number" name="phone" id="employeePhone" class="form-control" placeholder="00000000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="employeeSpecialty">Especialidade</label>
+                        <input type="text" name="specialty" id="employeeSpecialty" class="form-control" placeholder="Ex: Especialista em Degradê">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="employeeBio">Bio (Frase para o site)</label>
+                        <textarea name="bio" id="employeeBio" class="form-control" rows="2" placeholder="Ex: 10 anos de experiência e master em barbas."></textarea>
                     </div>
 
                     <div class="form-group">
