@@ -19,6 +19,41 @@
         .map-preview iframe { width: 100%; height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; }
         .image-preview-admin { width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
         .edit-address-link { display: inline-block; margin-top: 10px; color: #FF7A00; font-size: 13px; text-decoration: none; font-weight: bold; }
+
+        /* Estilo do botão de visualizar site */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .view-lp-btn {
+            background-color: #fff;
+            color: #FF7A00;
+            border: 1px solid #FF7A00;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-lp-btn:hover {
+            background-color: #FF7A00;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(255, 122, 0, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .section-header { flex-direction: column; align-items: flex-start; }
+            .view-lp-btn { width: 100%; justify-content: center; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -55,6 +90,21 @@
     </div>
 
     <div class="main-content">
+        <div class="section-header" style="margin-bottom: 20px;">
+            <div class="section-title" style="font-size: 20px; font-weight: bold; color: #333;">
+                <i class="fas fa-pen"></i> Editar Website
+            </div>
+            
+            {% if unit %}
+                <a href="{% url 'barbershop:unitLP_unit' barbershop.slug unit.slug %}" target="_blank" class="view-lp-btn">
+                    <i class="fas fa-external-link-alt"></i> Visualizar Unidade
+                </a>
+            {% else %}
+                <a href="{% url 'barbershop:unitLP' barbershop.slug %}" target="_blank" class="view-lp-btn">
+                    <i class="fas fa-external-link-alt"></i> Visualizar Geral
+                </a>
+            {% endif %}
+        </div>
         <div class="form-container">
             <div class="left-column">
                 {% if unit %}
@@ -110,7 +160,7 @@
                     </div>
                 {% endif %}
             </div>
-
+            
             <div class="right-column">
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
@@ -135,6 +185,7 @@
                             <textarea name="businessDescription" class="form-control" rows="5">{{ barbershop.description|default:'' }}</textarea>
                         </div>
                     {% else %}
+                        
                         <div class="form-group">
                             <label><i class="fas fa-info-circle"></i> Imagem do "Sobre" (Unidade)</label>
                             {% if unit.about_image %}<img src="{{ unit.about_image.url }}" class="image-preview-admin">{% endif %}
