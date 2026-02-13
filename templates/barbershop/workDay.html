@@ -90,6 +90,27 @@
     </div>
 
     <div class="main-content">
+        {% if unit %}
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-store"></i> Funcionamento: {{ unit.name }}
+                </div>
+                <button class="btn btn-outline" onclick="openUnitWorkdayModal()">
+                    <i class="fas fa-clock"></i> Configurar Horários
+                </button>
+            </div>
+            
+            <div class="unit-hours-summary" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                {% for wd in unit_workdays %}
+                    <div class="day-badge {% if not wd.is_open %}off{% endif %}" style="padding: 10px; border-radius: 8px; font-size: 12px; min-width: 100px; text-align: center; border: 1px solid #ddd;">
+                        <strong>{{ wd.get_weekday_display|slice:":3"|upper }}:</strong> <br>
+                        {% if wd.is_open %}{{ wd.open_time|time:"H:i" }} - {{ wd.close_time|time:"H:i" }}{% else %}<span style="color: #dc3545;">FECHADO</span>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
@@ -447,6 +468,8 @@
 
     {% endif %}  
     
+
+    {{ unit_workdays_json|json_script:"unit-workdays-data" }}
     {{ workdays_json|json_script:"workdays-data" }}
 
     <script src="{% static 'geral/js/script.js' %}"></script>
@@ -503,6 +526,45 @@
     </script>
 
    
-    
+    <div id="unitWorkdayModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-store"></i> Horários da Unidade</h2>
+                <button class="close-btn" onclick="closeUnitWorkdayModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="unitWorkdayForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_unit_workdays">
+                <div class="modal-body">
+                    {% for i in "0123456"|make_list %}
+                    {% with weekday_index=forloop.counter0 %}
+                    <div class="unit-day-row" style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #eee;">
+                        <span style="font-weight:bold; width:45px;">
+                            {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
+                        </span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="unit_open_{{ weekday_index }}" onchange="toggleUnitTimeInputs(this)">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="unit-time-inputs">
+                            <select name="unit_start_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
+                                {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
+                            </select>
+                            <span> às </span>
+                            <select name="unit_end_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
+                                {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeUnitWorkdayModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Horários</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

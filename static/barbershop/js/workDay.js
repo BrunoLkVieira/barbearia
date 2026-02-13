@@ -195,3 +195,108 @@ function openHolidayModal() { document.getElementById('createHolidayModal').styl
 function closeHolidayModal() { document.getElementById('createHolidayModal').style.display = 'none'; document.body.style.overflow = ''; }
 function openVacationModal() { document.getElementById('vacationModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 function closeVacationModal() { document.getElementById('vacationModal').style.display = 'none'; document.body.style.overflow = ''; }
+
+
+// ===================================================================
+// NOVA FUNCIONALIDADE: HORÁRIOS DA UNIDADE
+// ===================================================================
+
+function openUnitWorkdayModal() {
+    const modal = document.getElementById('unitWorkdayModal');
+    const dataEl = document.getElementById('unit-workdays-data');
+
+    // Se o modal existe mas os dados estão vazios, avisamos
+    if (!modal || !dataEl || dataEl.textContent === '{}') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Aviso',
+            text: 'Selecione uma unidade específica no filtro para ajustar os horários.',
+            confirmButtonColor: '#7066e0'
+        });
+        return;
+    }
+
+    try {
+        const unitData = JSON.parse(dataEl.textContent);
+
+        // O Django envia chaves como String ("0", "1"...), então percorremos de 0 a 6
+        for (let i = 0; i < 7; i++) {
+            const day = unitData[i] || unitData[String(i)];
+            
+            if (day) {
+                // Selecionamos os elementos pelo nome que o Django gera no loop
+                const checkbox = document.querySelector(`input[name="unit_open_${i}"]`);
+                const startSelect = document.querySelector(`select[name="unit_start_${i}"]`);
+                const endSelect = document.querySelector(`select[name="unit_end_${i}"]`);
+
+                if (checkbox) {
+                    checkbox.checked = day.is_open;
+                    
+                    // substring(0, 5) remove os segundos (ex: 09:00:00 vira 09:00)
+                    if (startSelect && day.open_time) startSelect.value = day.open_time.substring(0, 5);
+                    if (endSelect && day.close_time) endSelect.value = day.close_time.substring(0, 5);
+                    
+                    // Chama a função visual para desabilitar selects se estiver fechado
+                    toggleUnitTimeInputs(checkbox);
+                }
+            }
+        }
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } catch (e) {
+        console.error("Erro ao preencher modal da unidade:", e);
+    }
+}
+
+function closeUnitWorkdayModal() {
+    const modal = document.getElementById('unitWorkdayModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function toggleUnitTimeInputs(checkbox) {
+    const row = checkbox.closest('.unit-day-row');
+    if (!row) return;
+    
+    const selects = row.querySelectorAll('select');
+    selects.forEach(s => {
+        s.disabled = !checkbox.checked;
+    });
+    
+    // Deixa os selects "apagadinhos" se o dia estiver fechado
+    const inputArea = row.querySelector('.unit-time-inputs');
+    if (inputArea) inputArea.style.opacity = checkbox.checked ? "1" : "0.3";
+}
+
+// Interceptar o envio do formulário via AJAX (Resolve o problema da Foto 2)
+document.addEventListener('DOMContentLoaded', function() {
+    const unitForm = document.getElementById('unitWorkdayForm');
+    if (unitForm) {
+        unitForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // Impede a tela preta com JSON
+            
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Usamos o seu Toast já configurado
+                    Toast.fire({ icon: 'success', title: data.message });
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    Swal.fire('Erro', 'Houve um problema ao salvar.', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro', 'Erro de comunicação com o servidor.', 'error');
+            }
+        });
+    }
+});

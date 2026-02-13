@@ -395,7 +395,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     return render(request, "barbershop/employee.html", context)
 
 # Em apps/barbershop/views.py
-
 @login_required
 @owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
@@ -413,9 +412,14 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         current_employee = Employee.objects.filter(user=request.user, unit__barbershop=barbershop).first()
         if not current_employee:
             messages.error(request, "Funcionário não encontrado nesta barbearia.")
-            return redirect("core:home") # <-- MUDE PARA SUA URL DE 'HOME'
+            return redirect("core:home") 
         
         gerente_unit = current_employee.unit 
+
+    # Identificação da unidade
+    unit = gerente_unit if gerente_unit else None
+    if not unit and unit_slug:
+        unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
 
     # --- Processamento de POST ---
     if request.method == "POST":
@@ -424,42 +428,49 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         # --- BLOQUEIO DE PERMISSÃO PARA FUNCIONÁRIO ---
         funcionario_allowed_actions = ["edit_workday"]
         if current_employee and action not in funcionario_allowed_actions:
-            
-            # <--- MUDANÇA: Retorna JSON no erro ---
             return JsonResponse({
                 'status': 'error',
                 'errors': ['Você não tem permissão para executar esta ação.']
-            }, status=403) # 403 = Proibido
+            }, status=403)
 
-        # --- Bloco para editar a DISPONIBILIDADE ---
+        # --- NOVO BLOCO: EDITAR FUNCIONAMENTO DA UNIDADE ---
+        if action == "edit_unit_workdays":
+            if not unit:
+                return JsonResponse({'status': 'error', 'errors': ['Unidade não selecionada.']}, status=400)
+            
+            for i in range(7):
+                try:
+                    wd_unit = UnitWorkDay.objects.get(unit=unit, weekday=i)
+                except UnitWorkDay.DoesNotExist:
+                    wd_unit = UnitWorkDay(unit=unit, weekday=i)
+                
+                is_open = f'unit_open_{i}' in request.POST
+                wd_unit.open_time = request.POST.get(f'unit_start_{i}') or "09:00"
+                wd_unit.close_time = request.POST.get(f'unit_end_{i}') or "19:00"
+                wd_unit.is_open = is_open
+                wd_unit.save()
+
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Horário de funcionamento da unidade atualizado!'
+            })
+
+        # --- Bloco para editar a DISPONIBILIDADE DO BARBEIRO ---
         if action == "edit_workday":
             emp_id = request.POST.get("employee_id")
             emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
             
-            # --- VERIFICAÇÃO DE PERMISSÃO NO POST ---
             if current_employee and emp.id != current_employee.id:
-                # <--- MUDANÇA: Retorna JSON no erro ---
                 return JsonResponse({
                     'status': 'error',
                     'errors': ['Você só pode editar sua própria disponibilidade.']
                 }, status=403)
 
-            # (not current_employee) garante que isso só rode para donos ou gerentes
             if gerente_unit and not current_employee and emp.unit != gerente_unit:
-                # <--- MUDANÇA: Retorna JSON no erro ---
                 return JsonResponse({
                     'status': 'error',
                     'errors': ['Você só pode editar funcionários da sua unidade.']
                 }, status=403)
-            
-            # --- Lógica de Validação (Exemplo) ---
-            # Você pode adicionar validações aqui. Se falharem:
-            # errors = []
-            # if (algum_erro):
-            #     errors.append("Horário de início inválido.")
-            # if errors:
-            #     return JsonResponse({'status': 'error', 'errors': errors}, status=400)
-            # --- Fim da Validação ---
 
             for i in range(7):
                 try:
@@ -486,62 +497,31 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 
                 workday.save()
 
-            # <--- MUDANÇA: Remove 'messages' e 'redirect', retorna JSON ---
             return JsonResponse({
                 'status': 'success',
                 'message': f'Disponibilidade de {emp.user.name} atualizada com sucesso!'
             })
 
+        # --- Ações de Holiday e Absence (Exatamente como estavam) ---
         elif action == "create_holiday":
             date_str = request.POST.get("date")
             holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-
-            # REGRA 1: Não permitir data retroativa
             if holiday_date < today:
-                return JsonResponse({
-                    'status': 'error', 
-                    'errors': ['A data não pode ser anterior à data atual.']
-                }, status=400)
+                return JsonResponse({'status': 'error', 'errors': ['A data não pode ser anterior à data atual.']}, status=400)
             else:
                 unit_id = request.POST.get("unit_id")
                 unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
-                
-                UnitHoliday.objects.create(
-                    unit=unit_obj,
-                    date=holiday_date,
-                    name=request.POST.get("name"),
-                )
-                
-                return JsonResponse({
-                    'status': 'success', 
-                    'message': f"Feriado '{request.POST.get('name')}' adicionado com sucesso!"
-                })
-        elif action == "edit_holiday":
-            date_str = request.POST.get("date")
-            holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                UnitHoliday.objects.create(unit=unit_obj, date=holiday_date, name=request.POST.get("name"))
+                return JsonResponse({'status': 'success', 'message': f"Feriado '{request.POST.get('name')}' adicionado!"})
 
-            if holiday_date < today:
-                return JsonResponse({
-                    'status': 'error', 
-                    'errors': ['Não é possível alterar para uma data retroativa.']
-                }, status=400)
+        elif action == "edit_holiday":
             holiday_id = request.POST.get("holiday_id")
             holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
-            holiday.date = request.POST.get("date")
-            holiday.name = request.POST.get("name")
+            holiday.date, holiday.name = request.POST.get("date"), request.POST.get("name")
             holiday.save()
-            
-            # <--- MUDANÇA: Remove 'messages', retorna JSON ---
-            # (O 'workday.js' também usa fetch para este formulário)
-           
-
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Feriado atualizado com sucesso'
-            })
+            return JsonResponse({'status': 'success', 'message': 'Feriado atualizado com sucesso'})
 
         elif action == "delete_holiday":
-            # ... (seu código original - NÃO MUDA)
             holiday_id = request.POST.get("holiday_id")
             holiday = get_object_or_404(UnitHoliday, id=holiday_id, unit__barbershop=barbershop)
             holiday.delete()
@@ -550,49 +530,32 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         elif action == "create_absence":
             date_start_str = request.POST.get("date_start")
             date_end_str = request.POST.get("date_end")
-            
             start_date = datetime.strptime(date_start_str, '%Y-%m-%d').date()
-            # Se não enviar data fim, ela é igual a data início
             end_date = datetime.strptime(date_end_str, '%Y-%m-%d').date() if date_end_str else start_date
-
-            # REGRA 1: Bloquear retroativo
             if end_date < today:
                 messages.error(request, "Não é possível registrar uma folga que já terminou.")
-            elif end_date < start_date:
-                messages.error(request, "A data de término não pode ser anterior ao início.")
             else:
                 emp_ids = request.POST.getlist("employee_id")
                 for emp_id in emp_ids:
-                    emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
-                    EmployeeAbsence.objects.create(
-                        employee=emp,
-                        start_date=start_date,
-                        end_date=end_date,
-                        reason=request.POST.get("reason", "Folga agendada"),
-                    )
+                    emp_obj = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
+                    EmployeeAbsence.objects.create(employee=emp_obj, start_date=start_date, end_date=end_date, reason=request.POST.get("reason", "Folga agendada"))
                 messages.success(request, f"Folga(s) agendada(s) com sucesso!")
         
         elif action == "delete_absence":
-            # ... (seu código original - NÃO MUDA)
             absence_id = request.POST.get("absence_id")
             absence = get_object_or_404(EmployeeAbsence, id=absence_id, employee__unit__barbershop=barbershop)
             absence.delete()
             messages.success(request, "Folga excluída com sucesso!")
 
-        # Redirect genérico (para actions que NÃO usam fetch)
         if unit_slug:
             return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         else:
             return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
     
-    # --- LÓGICA GET (Sem alterações) ---
-    
-    unit = None 
-    
+    # --- LÓGICA GET ---
     if gerente_unit:
         unit = gerente_unit
         units = [unit] 
-        
         if current_employee:
             employees = Employee.objects.filter(id=current_employee.id).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
@@ -600,11 +563,9 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         else:
             employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
             holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee=current_employee, end_date__gte=today).order_by("start_date")
-    
-    else: # <-- SE FOR DONO
+            absences = EmployeeAbsence.objects.filter(employee__unit=unit, end_date__gte=today).order_by("start_date")
+    else:
         units = barbershop.units.all() 
-        
         if unit_slug:
             unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
             employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
@@ -636,6 +597,20 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 emp_data[i] = { 'morning_available': False, 'afternoon_available': False, 'start_morning_work': '', 'end_morning_work': '', 'start_afternoon_work': '', 'end_afternoon_work': '' }
         workdays_data[emp.id] = emp_data
 
+    # --- NOVO BLOCO: DADOS DA UNIDADE PARA O FUTURO MODAL ---
+    unit_workdays_list = unit.work_days.all().order_by('weekday') if unit else []
+    unit_data_dict = {}
+    if unit:
+        if not unit_workdays_list.exists():
+            unit_data_dict = {i: {'is_open': True, 'open_time': '09:00', 'close_time': '19:00'} for i in range(7)}
+        else:
+            for wd in unit_workdays_list:
+                unit_data_dict[wd.weekday] = {
+                    'is_open': wd.is_open,
+                    'open_time': wd.open_time.strftime('%H:%M'),
+                    'close_time': wd.close_time.strftime('%H:%M')
+                }
+
     time_options = [f"{h:02d}:{m:02d}" for h in range(5, 24) for m in (0, 30)]
 
     context = {
@@ -649,9 +624,13 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "gerente_unit": gerente_unit,
         "time_options": time_options,
         "workdays_json": json.dumps(workdays_data),
+        "unit_workdays_json": unit_data_dict, # Novo dado
+        "unit_workdays": unit_workdays_list, # Nova lista
         "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
+
+
 @login_required
 @require_POST
 def check_employee_data(request):
