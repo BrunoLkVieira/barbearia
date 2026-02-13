@@ -18,7 +18,8 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError 
 from datetime import datetime
-
+from itertools import groupby
+from operator import itemgetter
 
 
 
@@ -775,23 +776,64 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
     else:
         unit = units.first()
 
-    # BUSCA OS BARBEIROS DA UNIDADE
-    # Filtramos funcionários da unidade que tenham a Role de 'barbeiro'
     barbers = []
     if unit:
-        barbers = Employee.objects.filter(
-            unit=unit, 
-            roles__occupation='barbeiro'
-        ).select_related('user').distinct()
+        barbers = Employee.objects.filter(unit=unit, roles__occupation='barbeiro').select_related('user').distinct()
+
+    # --- LÓGICA DE AGRUPAMENTO ESTRATÉGICO ---
+    grouped_hours = []
+    if unit:
+        # 1. Ordenamos de Segunda(1) a Domingo(0 -> vira 7 para ordenação)
+        all_days = list(unit.work_days.all())
+        all_days.sort(key=lambda x: x.weekday if x.weekday != 0 else 7)
+
+        # 2. Separar abertos e fechados
+        open_days = [d for d in all_days if d.is_open]
+        closed_days = [d for d in all_days if not d.is_open]
+
+        # 3. Agrupar dias abertos por horário idêntico
+        temp_map = {}
+        for d in open_days:
+            label = f"{d.open_time.strftime('%H:%M')} - {d.close_time.strftime('%H:%M')}"
+            if label not in temp_map: temp_map[label] = []
+            temp_map[label].append(d)
+
+        # 4. Criar as strings (ex: "Segunda a Quarta, Sexta")
+        processed_labels = []
+        for d in open_days:
+            label = f"{d.open_time.strftime('%H:%M')} - {d.close_time.strftime('%H:%M')}"
+            if label in processed_labels: continue
+            
+            # Pegamos os números dos dias (1-7) desse grupo de horário
+            indices = sorted([wd.weekday if wd.weekday != 0 else 7 for wd in temp_map[label]])
+            
+            sequences = []
+            # groupby identifica números consecutivos
+            for k, g in groupby(enumerate(indices), lambda x: x[0] - x[1]):
+                group = list(map(itemgetter(1), g))
+                day_names = {1:'Segunda', 2:'Terça', 3:'Quarta', 4:'Quinta', 5:'Sexta', 6:'Sábado', 7:'Domingo'}
+                
+                if len(group) > 1:
+                    sequences.append(f"{day_names[group[0]]} a {day_names[group[-1]]}")
+                else:
+                    sequences.append(day_names[group[0]])
+            
+            grouped_hours.append({'days': ", ".join(sequences), 'hours': label, 'is_open': True})
+            processed_labels.append(label)
+
+        # 5. Dias fechados no final
+        if closed_days:
+            closed_names = []
+            for d in closed_days:
+                name = {1:'Segunda', 2:'Terça', 3:'Quarta', 4:'Quinta', 5:'Sexta', 6:'Sábado', 0:'Domingo'}[d.weekday]
+                closed_names.append(name)
+            grouped_hours.append({'days': ", ".join(closed_names), 'hours': 'Fechado', 'is_open': False})
 
     context = {
-        "barbershop": barbershop,
-        "unit": unit,
-        "units": units,
-        "barbers": barbers, # Lista de barbeiros dinâmica
+        "barbershop": barbershop, "unit": unit, "units": units, "barbers": barbers,
         "banners": unit.media.filter(media_type="banner").order_by('order') if unit else [],
         "hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
         "products": unit.media.filter(media_type="product").order_by('order') if unit else [],
+        "grouped_hours": grouped_hours,
     }
-
     return render(request, "barbershop/unitLP.html", context)

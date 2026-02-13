@@ -1,3 +1,81 @@
+/* --- Estilos Base de Localização e Horários --- */
+
+.location-container {
+    height: auto !important; 
+    min-height: 450px;
+    display: flex;
+    flex-wrap: wrap; /* Essencial para não "esmagar" o conteúdo */
+    background: #fdfdfd;
+    border-radius: 15px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.location-info {
+    height: auto !important;
+    padding: 40px; /* Aumentei o respiro lateral */
+    flex: 1 1 350px; /* O '350px' é a base; se a tela for menor que isso, ele quebra */
+    box-sizing: border-box;
+}
+
+/* Horários agrupados */
+.hours ul li {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    padding-bottom: 5px;
+}
+
+.day-text {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #333;
+    padding-right: 5px;
+}
+
+.time-text {
+    font-weight: bold;
+    white-space: nowrap; /* Impede o horário de quebrar linha */
+    color: #1a2a3a;
+    text-align: right;
+}
+
+.time-text.closed {
+    color: #dc3545;
+}
+
+/* CORREÇÃO DO ENDEREÇO (Aqui resolve a quebra da rua + número) */
+.address-item {
+    display: flex;
+    align-items: flex-start; 
+    gap: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.address-item i {
+    color: #FF7A00;
+    margin-top: 5px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0; /* IMPEDE o ícone de ser esmagado */
+}
+
+.address-item p {
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+    color: #444;
+    /* Permite que o texto quebre de forma inteligente */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    min-width: 0; /* Fix para overflow de flex-item */
+}
+
 /* Responsividade - Breakpoints */
 
 /* Desktop Grande (1200px para cima) */
@@ -9,45 +87,22 @@
 
 /* Tablet (992px para baixo) */
 @media (max-width: 992px) {
-    /* Sobre Section */
-    .about-content,
+    /* ... outras regras que você já tem ... */
+
     .location-container {
-        flex-direction: column;
+        flex-direction: column; /* Mapa vai para baixo do texto */
+        height: auto !important;
     }
     
-    .about-image,
-    .map {
-        margin-top: 30px;
-        width: 100%;
-    }
-
-    .about-text, 
     .location-info {
         width: 100%;
+        padding: 25px; /* Reduz padding no tablet/celular */
     }
 
-    /* Planos Section */
-    .plans-container {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
-
-    /* Header */
-    .logo-img {
-        height: 80px;
-    }
-
-    /* Hero Section */
-    .hero h1 {
-        font-size: 3rem;
-    }
-    
-    .hero p {
-        font-size: 1.1rem;
-    }
-
-    /* Modal */
-    .modal-content {
-        width: 85%;
+    .map {
+        margin-top: 0; /* Mapa cola no texto ao quebrar */
+        width: 100%;
+        height: 350px;
     }
 }
 
@@ -140,7 +195,8 @@
 
     /* Seções */
     .map {
-        height: 300px;
+        width: 100%;
+        height: 350px
     }
 
     /* Profile Modal */

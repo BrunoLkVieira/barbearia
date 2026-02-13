@@ -271,28 +271,36 @@
                 <div class="location-container">
                     <div class="location-info">
                         <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
-                        <p><i class="fas fa-info-circle"></i> Estamos localizados no coração de {{ unit.city }}, com fácil acesso e estacionamento próximo.</p>
+                        <p class="loc-desc"><i class="fas fa-info-circle"></i> Venha conhecer nossa unidade em {{ unit.city }}. Oferecemos um ambiente exclusivo com localização privilegiada e fácil acesso para sua total comodidade.</p>
                         
                         <div class="hours">
                             <h4><i class="far fa-clock"></i> HORÁRIOS DE FUNCIONAMENTO</h4>
                             <ul>
-                                <li><span><i class="far fa-calendar-alt"></i> Segunda a Sexta</span> <span>09:00 - 19:00</span></li>
-                                <li><span><i class="far fa-calendar-alt"></i> Sábado</span> <span>09:00 - 17:00</span></li>
-                                <li><span><i class="far fa-calendar-alt"></i> Domingo</span> <span class="closed">Fechado</span></li>
+                                {% for item in grouped_hours %}
+                                    <li>
+                                        <span class="day-text"><i class="far fa-calendar-alt"></i> {{ item.days }}</span>
+                                        <span class="time-text {% if not item.is_open %}closed{% endif %}">{{ item.hours }}</span>
+                                    </li>
+                                {% endfor %}
                             </ul>
                         </div>
                         
                         <div class="address">
                             <h4><i class="fas fa-map-pin"></i> ENDEREÇO</h4>
-                            <p><i class="fas fa-road"></i> {{ unit.street_address }}, {{ unit.number_address }}</p>
-                            <p><i class="fas fa-city"></i> {{ unit.neighborhood }}, {{ unit.city }} - {{ unit.state }}</p>
+                            <div class="address-item">
+                                <i class="fas fa-road"></i>
+                                <p>{{ unit.street_address }}, {{ unit.number_address }}</p>
+                            </div>
+                            <div class="address-item">
+                                <i class="fas fa-city"></i>
+                                <p>{{ unit.neighborhood }}, {{ unit.city }} - {{ unit.state }}</p>
+                            </div>
                         </div>
-
                     </div>
                     
                     <div class="map">
                         {% if unit.map_link %}
-                        <iframe src="{{ unit.map_link }}" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Localização da Barbearia no mapa"></iframe>
+                        <iframe src="{{ unit.map_link }}" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
                         {% endif %}
                     </div>
                 </div>
@@ -816,7 +824,8 @@
             </div>
         </div>
     </div>
-    
+
+    <script id="unit-hours-config" type="application/json">{{ unit_workdays_json|safe }}</script>
     <script src="{% static 'barbershop/js/UnitLP/auth-system.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/schedule-modal.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/plans-modal.js' %}"></script>
