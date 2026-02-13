@@ -128,7 +128,7 @@ def UnitView(request, barbershop_slug):
                 }, status=400)
             else:
                 try:
-                    Unit.objects.create(
+                    new_unit = Unit.objects.create(
                         name=name,
                         cep_address=request.POST.get("cep_address"),
                         street_address=request.POST.get("street_address"),
@@ -141,6 +141,14 @@ def UnitView(request, barbershop_slug):
                         is_active=request.POST.get("is_active") == "True",
                         barbershop=barbershop,
                     )
+                    for i in range(7):
+                        UnitWorkDay.objects.create(
+                            unit=new_unit,
+                            weekday=i,
+                            open_time="09:00",
+                            close_time="19:00",
+                            is_open=True if i != 0 else False # Exemplo: Domingo (0) começa fechado
+                        )
                     return JsonResponse({'is_valid': True, 'message': 'Unidade cadastrada com sucesso!'})
                 except Exception:
                     return JsonResponse({'is_valid': False, 'errors': ['Erro interno ao salvar a unidade.']}, status=500)
