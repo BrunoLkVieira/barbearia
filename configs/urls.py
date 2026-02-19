@@ -12,10 +12,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('apps.user.urls', namespace='user')),
     path("", include("apps.system_plan.urls",namespace='system_plan')),
-    path("", include("apps.system_plan.urls",namespace='system_plan')),
+     path('', include('apps.service.urls', namespace='services')),
     path("", include("apps.barbershop.urls",namespace='barbershop')),
-    path('catalogo/', include('apps.product.urls', namespace='products')),
-    path('catalogo/', include('apps.service.urls', namespace='services')),
+    path('', include('apps.product.urls', namespace='products')),
+   
     path('', include('apps.core.urls')),
 ]
 
@@ -27,6 +27,6 @@ handler400 = core_views.error400
 handler403 = core_views.error403
 handler404 = core_views.error404
 handler500 = core_views.error500
-handler503 = core_views.error503
+
 
 

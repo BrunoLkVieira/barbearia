@@ -1,9 +1,7 @@
 <header>
     <div class="logo">
         <div class="logo-icon">
-           
             <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
-           
         </div>
         <div class="logo-content">
             <h1>Orbly Barber</h1>
@@ -16,54 +14,30 @@
     </div>
     <div class="user-controls">
         <div class="user-profile" id="userProfile">
-            <div class="avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
-            <div class="user-name">{{ user.name }} {{ user.last_name }}</div>
+            <div class="avatar">{{ request.user.name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}</div>
+            <div class="user-name">{{ request.user.name }} {{ request.user.last_name }}</div>
             <i class="fas fa-chevron-down" id="chevronIcon"></i>
             
             <div class="user-sidebar">
                 <div class="sidebar-header">
-                    <div class="sidebar-avatar">{{ user.name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                    <div class="sidebar-avatar">{{ request.user.name|slice:":1"|upper }}</div>
                     <div class="sidebar-user-info">
-                        <span class="sidebar-name">{{ user.name }} {{ user.last_name }}</span>
-                        <span class="sidebar-email">{{ user.email }}</span>
+                        <span class="sidebar-name">{{ request.user.name }}</span>
+                        <span class="sidebar-email">{{ request.user.email }}</span>
                     </div>
                 </div>
                 <div class="sidebar-menu">
-                    <a href="" class="sidebar-item">
-                        <i class="fas fa-user"></i>
-                        <span>Meu Perfil</span>
-                    </a>
-                    <a href="" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-calendar-days"></i>
-                        <span>Agenda</span>
-                    </a>
-                    <a href="" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-users"></i>
-                        <span>Clientes</span>
-                    </a>
-                    <a href="" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-credit-card"></i>
-                        <span>Catálogo</span>
-                    </a>
-                    <a href="" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-history"></i>
-                        <span>Histórico</span>
-                    </a>
-                    <a href="" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Dashboard</span>
+                    <a href="#" class="sidebar-item"><i class="fas fa-user"></i><span>Meu Perfil</span></a>
+                    
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">
+                        <i class="fas fa-credit-card"></i><span>Catálogo</span>
                     </a>
                     <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-store"></i>
-                        <span>Minha Barbearia</span>
+                        <i class="fas fa-store"></i><span>Minha Barbearia</span>
                     </a>
-                    <a href="{% url 'barbershop:myWebsite' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">
-                        <i class="fas fa-pen"></i>
-                        <span>Meu Website</span>
-                    </a>
+                    
                     <a href="{% url 'user:logout' %}" class="sidebar-item">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Sair</span>
+                        <i class="fas fa-sign-out-alt"></i><span>Sair</span>
                     </a>
                 </div>
             </div>

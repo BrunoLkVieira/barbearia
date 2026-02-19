@@ -49,4 +49,4 @@ class BarberService(models.Model):
         return f"{self.name} - {self.employee.user.username}"
 
     def get_absolute_url(self):
-        return reverse('services:list')
+        return reverse('services:list_general', kwargs={'barbershop_slug': self.employee.unit.barbershop.slug})
