@@ -26,6 +26,18 @@
     </style>
 </head>
 <body>
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+
     {% include 'geral/header.html' %}
     
    <div class="nav-bar">
@@ -100,7 +112,7 @@
             <div class="services-table">
                 <div class="services-header">
                     <div>Nome</div>
-                    <div>Preço</div>
+                    <div>Responsável</div> <div>Preço</div>
                     <div>Duração</div>
                     <div>Ações</div>
                 </div>
@@ -108,11 +120,22 @@
                 {% for service in services %}
                 <div class="service-row">
                     <div class="service-name">{{ service.name }}</div>
+                    
+                    <div class="service-employee">
+                        <i class="fas fa-user-tie"></i> {{ service.employee.user.name }} 
+                        <small>({{ service.employee.unit.name }})</small>
+                    </div>
+
                     <div class="service-price">R$ {{ service.price }}</div>
                     <div class="service-duration"><i class="fas fa-clock"></i> {{ service.duration }} min</div>
+                    
                     <div class="service-actions">
-                        <div class="action-btn edit" onclick="editService('{{ service.id }}')"><i class="fas fa-edit"></i></div>
-                        <div class="action-btn delete" onclick="deleteService('{{ service.id }}')"><i class="fas fa-trash"></i></div>
+                        <div class="action-btn edit" onclick="editService('{{ service.id }}')">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="action-btn delete" onclick="deleteService('{{ service.id }}')">
+                            <i class="fas fa-trash"></i>
+                        </div>
                     </div>
                 </div>
                 {% empty %}
@@ -125,16 +148,10 @@
     <footer>
         <div class="total-display">
             <div class="footer-first-row">
-                Total de serviços: <strong> 4</strong>
+                Total de serviços: <strong> {{ services.count }}</strong>
             </div>
         </div>
-        <div class="buttons-display">
-            <div class="actions">
-                <button class="btn btn-primary" id="newServiceBtnFooter">
-                    <i class="fas fa-plus"></i> Novo Serviço
-                </button>
-            </div>
-        </div>
+        
     </footer>
 
     <!-- Modal de Novo Serviço -->
@@ -147,20 +164,39 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="serviceForm">
+                <form id="serviceForm" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="serviceEmployee">Funcionário Responsável *</label>
+                        <select id="serviceEmployee" name="employee" required>
+                            <option value="">Selecione um funcionário</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.user.name }} ({{ emp.unit.name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="baseService">Serviço Base (Admin) *</label>
+                        <select id="baseService" name="base_service" required>
+                            <option value="">Selecione um serviço base</option>
+                            {% for bs in base_services %}
+                                <option value="{{ bs.id }}">{{ bs.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="serviceName">Nome do Serviço *</label>
-                        <input type="text" id="serviceName" placeholder="Ex: Corte Executivo">
+                        <input type="text" id="serviceName" name="name" placeholder="Ex: Corte Executivo" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="servicePrice">Preço (R$) *</label>
-                        <input type="number" id="servicePrice" placeholder="Ex: 45.90" step="0.01">
+                        <input type="number" id="servicePrice" name="price" placeholder="Ex: 45.90" step="0.01" required>
                     </div>
                     
-                    <div class="form-group">
+                   <div class="form-group">
                         <label for="serviceDuration">Duração *</label>
-                        <select id="serviceDuration">
+                        <select id="serviceDuration" name="duration" required>
                             <option value="">Selecione a duração</option>
                             <option value="15">15 minutos</option>
                             <option value="30">30 minutos</option>

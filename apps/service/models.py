@@ -46,7 +46,7 @@ class BarberService(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} - {self.employee.user.username}"
+        return f"{self.name} - {self.employee.user.name}"
 
     def get_absolute_url(self):
         return reverse('services:list_general', kwargs={'barbershop_slug': self.employee.unit.barbershop.slug})
