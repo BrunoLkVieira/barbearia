@@ -8,31 +8,47 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
     unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
 
     if request.method == "POST":
-        # Captura os dados do POST
+        action = request.POST.get('action')
+        service_id = request.POST.get('service_id')
+
+        if action == "delete":
+            service = get_object_or_404(BarberService, id=service_id)
+            service.delete()
+            messages.success(request, "Serviço excluído com sucesso!")
+            return redirect(request.path)
+
+        # Captura dados Comuns para Create e Update
         base_service_id = request.POST.get('base_service')
-        employee_id = request.POST.get('employee') # Novo campo
+        employee_id = request.POST.get('employee')
         name = request.POST.get('name')
         price = request.POST.get('price')
         duration = request.POST.get('duration')
 
-        # Criação do serviço vinculando ao funcionário selecionado
-        BarberService.objects.create(
-            base_service_id=base_service_id,
-            employee_id=employee_id, # Vinculo corrigido
-            name=name,
-            price=price,
-            duration=duration
-        )
-        messages.success(request, "Serviço criado com sucesso!")
+        if action == "create":
+            BarberService.objects.create(
+                base_service_id=base_service_id,
+                employee_id=employee_id,
+                name=name, price=price, duration=duration
+            )
+            messages.success(request, "Serviço criado com sucesso!")
+        
+        elif action == "update":
+            service = get_object_or_404(BarberService, id=service_id)
+            service.base_service_id = base_service_id
+            service.employee_id = employee_id
+            service.name = name
+            service.price = price
+            service.duration = duration
+            service.save()
+            messages.success(request, "Serviço atualizado com sucesso!")
+
         return redirect(request.path)
 
-    # Lógica de Filtro para a Listagem e para o Modal
+    # Listagem (Mantém seu filtro original)
     if unit:
-        # Se houver unidade, filtra funcionários e serviços apenas dela
         employees = Employee.objects.filter(unit=unit)
         services = BarberService.objects.filter(employee__unit=unit)
     else:
-        # Geral: Todos os funcionários e serviços da barbearia
         employees = Employee.objects.filter(unit__barbershop=barbershop)
         services = BarberService.objects.filter(employee__unit__barbershop=barbershop)
 
@@ -40,8 +56,9 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
         "barbershop": barbershop,
         "unit": unit,
         "units": barbershop.units.all(),
-        "employees": employees, # Enviado para popular o select do modal
+        "employees": employees,
         "services": services,
         "base_services": BaseService.objects.all(),
+        "active_tab": "catalog", # Garante que o menu reconheça a aba
     }
     return render(request, "service/services.html", context)

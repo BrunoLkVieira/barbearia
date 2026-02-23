@@ -5,9 +5,19 @@ const saveServiceBtn = document.getElementById('saveServiceBtn');
 const baseServiceSelect = document.getElementById('baseService');
 const serviceNameInput = document.getElementById('serviceName');
 
+// Campos ocultos e Título para controle de Estado (Adicione no HTML se não tiver)
+const modalTitle = document.querySelector('#serviceModal h2');
+const modalAction = document.getElementById('modalAction'); // Campo hidden no HTML
+const modalServiceId = document.getElementById('modalServiceId'); // Campo hidden no HTML
+
 // --- CONTROLE DO MODAL ---
 
+// Função para abrir como "Novo"
 function openModal() {
+    serviceForm.reset();
+    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-scissors"></i> Novo Serviço';
+    if (modalAction) modalAction.value = 'create';
+    
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
@@ -15,56 +25,64 @@ function openModal() {
 function cancelModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    serviceForm.reset(); // Limpa o form ao fechar
+    serviceForm.reset();
 }
 
-// Fecha o modal ao clicar no "x"
-const closeBtn = modal.querySelector('.close-btn');
-if (closeBtn) {
-    closeBtn.addEventListener('click', cancelModal);
-}
+// Fecha o modal ao clicar no "x" ou fora dele
+const closeBtn = document.getElementById('closeModal');
+if (closeBtn) closeBtn.addEventListener('click', cancelModal);
 
-// Fecha o modal ao clicar fora dele
 window.addEventListener('click', e => {
-    if (e.target === modal) {
-        cancelModal();
-    }
+    if (e.target === modal) cancelModal();
 });
 
-// --- LÓGICA DINÂMICA DO FORMULÁRIO ---
+// --- LÓGICA DO FORMULÁRIO ---
 
-// Preenche o nome do serviço automaticamente ao selecionar o BaseService (Admin)
 if (baseServiceSelect && serviceNameInput) {
     baseServiceSelect.addEventListener('change', function() {
         const selectedText = this.options[this.selectedIndex].text;
-        // Só preenche se o campo Nome estiver vazio para não sobrescrever o que o usuário escreveu
         if (this.value !== "" && !serviceNameInput.value) {
             serviceNameInput.value = selectedText;
         }
     });
 }
 
-// Gatilho para o botão de salvar (que está fora da tag <form>)
 if (saveServiceBtn && serviceForm) {
     saveServiceBtn.addEventListener('click', () => {
-        // Verifica as validações do HTML5 (required, min, etc)
         if (serviceForm.checkValidity()) {
             serviceForm.submit();
         } else {
-            serviceForm.reportValidity(); // Mostra os balões de erro do navegador
+            serviceForm.reportValidity();
         }
     });
 }
 
-// --- FUNÇÕES DE AÇÃO (CRUD) ---
+// --- FUNÇÕES CRUD (EDIÇÃO E EXCLUSÃO) ---
 
-// Função de exclusão com confirmação
+function editService(id, name, price, duration, employeeId, baseId) {
+    // 1. Muda o estado do modal para Edição
+    if (modalTitle) modalTitle.innerText = "Editar Serviço";
+    if (modalAction) modalAction.value = "update";
+    if (modalServiceId) modalServiceId.value = id;
+
+    // 2. Preenche os campos com os dados atuais
+    document.getElementById('serviceName').value = name;
+    // Converte vírgula para ponto caso o preço venha formatado do Django
+    document.getElementById('servicePrice').value = price.replace(',', '.');
+    document.getElementById('serviceDuration').value = duration;
+    document.getElementById('serviceEmployee').value = employeeId;
+    document.getElementById('baseService').value = baseId;
+
+    // 3. Abre o modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
 function deleteService(serviceId) {
     if (confirm('Tem certeza que deseja excluir este serviço?')) {
-        // Cria um form dinâmico para enviar o DELETE via POST (segurança do Django)
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = ''; // Envia para a mesma URL atual
+        form.action = ''; 
 
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
@@ -87,13 +105,4 @@ function deleteService(serviceId) {
         document.body.appendChild(form);
         form.submit();
     }
-}
-
-// Função para preparar o modal para edição
-function editService(serviceId) {
-    // Aqui você implementaria a lógica para buscar os dados via AJAX 
-    // ou capturar da linha da tabela e preencher o modal antes de abrir.
-    console.log('Editando serviço:', serviceId);
-    openModal();
-    // Você precisaria mudar o título do modal para "Editar Serviço"
 }

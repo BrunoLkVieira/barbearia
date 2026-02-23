@@ -130,12 +130,16 @@
                     <div class="service-duration"><i class="fas fa-clock"></i> {{ service.duration }} min</div>
                     
                     <div class="service-actions">
-                        <div class="action-btn edit" onclick="editService('{{ service.id }}')">
+                        <div class="action-btn edit" 
+                            onclick="editService('{{ service.id }}', '{{ service.name }}', '{{ service.price }}', '{{ service.duration }}', '{{ service.employee.id }}', '{{ service.base_service.id }}')">
                             <i class="fas fa-edit"></i>
                         </div>
-                        <div class="action-btn delete" onclick="deleteService('{{ service.id }}')">
-                            <i class="fas fa-trash"></i>
-                        </div>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('Excluir este serviço?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="service_id" value="{{ service.id }}">
+                            <button type="submit" class="action-btn delete"><i class="fas fa-trash"></i></button>
+                        </form>
                     </div>
                 </div>
                 {% empty %}
@@ -159,13 +163,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-scissors"></i> Novo Serviço</h2>
-                <button class="close-btn" id="closeModal">
+                <button class="close-btn" id="closeModal" onclick="closeModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <form id="serviceForm" method="POST">
                     {% csrf_token %}
+                    <input type="hidden" name="action" id="modalAction" value="create">
+                    <input type="hidden" name="service_id" id="modalServiceId">
                     <div class="form-group">
                         <label for="serviceEmployee">Funcionário Responsável *</label>
                         <select id="serviceEmployee" name="employee" required>
@@ -206,12 +212,13 @@
                             <option value="90">1 hora e 30 minutos</option>
                         </select>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="cancelServiceBtn" onclick="cancelModal()">Cancelar</button>
-                <button class="btn btn-primary" id="saveServiceBtn">Salvar Serviço</button>
-            </div>
+            
         </div>
     </div>
 
