@@ -25,24 +25,17 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
         duration = request.POST.get('duration')
 
         if action == "create":
-            BarberService.objects.create(
-                base_service_id=base_service_id,
-                employee_id=employee_id,
-                name=name, price=price, duration=duration
-            )
-            messages.success(request, "Serviço criado com sucesso!")
-        
-        elif action == "update":
-            service = get_object_or_404(BarberService, id=service_id)
-            service.base_service_id = base_service_id
-            service.employee_id = employee_id
-            service.name = name
-            service.price = price
-            service.duration = duration
-            service.save()
-            messages.success(request, "Serviço atualizado com sucesso!")
-
-        return redirect(request.path)
+            employee_ids = request.POST.getlist('employee_ids')
+            for emp_id in employee_ids:
+                BarberService.objects.create(
+                    base_service_id=base_service_id,
+                    employee_id=emp_id,
+                    name=name,
+                    price=price,
+                    duration=duration
+                )
+            messages.success(request, f"{len(employee_ids)} serviços criados!")
+            return redirect(request.path)
 
     # Listagem (Mantém seu filtro original)
     if unit:

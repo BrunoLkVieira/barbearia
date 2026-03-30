@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{% static 'service/css/mobile/service.css' %}">
     <link rel="stylesheet" href="{% static 'service/css/mobile/modals/newService.css' %}">
 
+
     <style>
         #tab-catalogo-fixo.active {
             background-color: #ff7300 !important; /* Cor laranja da sua logo */
@@ -172,14 +173,34 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" id="modalAction" value="create">
                     <input type="hidden" name="service_id" id="modalServiceId">
-                    <div class="form-group">
-                        <label for="serviceEmployee">Funcionário Responsável *</label>
-                        <select id="serviceEmployee" name="employee" required>
-                            <option value="">Selecione um funcionário</option>
-                            {% for emp in employees %}
-                                <option value="{{ emp.id }}">{{ emp.user.name }} ({{ emp.unit.name }})</option>
-                            {% endfor %}
-                        </select>
+                        
+                        <div class="form-group select-barbers-group">
+                            <label class="form-label main-label">
+                                <i class="fas fa-users icon-label"></i>
+                                Selecione o(s) Barbeiro(s) Responsável(is) *
+                            </label>
+                            
+                            <div class="barber-list" id="serviceBarbersList">
+                                {% for emp in employees %}
+                                <label class="barber-item">
+                                    <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="barber-checkbox">
+                                    
+                                    <div class="barber-avatar">
+                                        {{ emp.user.name|slice:":1"|upper }}{{ emp.user.last_name|slice:":1"|upper }}
+                                    </div>
+                                    
+                                    <div class="modal-barber-name">
+                                        {{ emp.user.name }} {{ emp.user.last_name }}
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            
+                            <p class="selection-instruction-text">
+                                No modo <strong>criação</strong>, você pode selecionar vários. Na <strong>edição</strong>, selecione apenas um.
+                            </p>
+                        </div>
+                        
                     </div>
                     <div class="form-group">
                         <label for="baseService">Serviço Base (Admin) *</label>

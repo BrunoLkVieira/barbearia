@@ -1,108 +1,68 @@
-// Seleção de elementos
 const modal = document.getElementById('serviceModal');
 const serviceForm = document.getElementById('serviceForm');
-const saveServiceBtn = document.getElementById('saveServiceBtn');
-const baseServiceSelect = document.getElementById('baseService');
-const serviceNameInput = document.getElementById('serviceName');
-
-// Campos ocultos e Título para controle de Estado (Adicione no HTML se não tiver)
 const modalTitle = document.querySelector('#serviceModal h2');
-const modalAction = document.getElementById('modalAction'); // Campo hidden no HTML
-const modalServiceId = document.getElementById('modalServiceId'); // Campo hidden no HTML
+const modalAction = document.getElementById('modalAction');
+const modalServiceId = document.getElementById('modalServiceId');
 
 // --- CONTROLE DO MODAL ---
 
-// Função para abrir como "Novo"
 function openModal() {
     serviceForm.reset();
-    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-scissors"></i> Novo Serviço';
-    if (modalAction) modalAction.value = 'create';
+    
+    // Limpa todos os barbeiros selecionados (permite selecionar vários depois)
+    const checkboxes = document.querySelectorAll('.barber-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+
+    modalTitle.innerHTML = '<i class="fas fa-scissors"></i> Novo Serviço';
+    modalAction.value = 'create';
+    modalServiceId.value = '';
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
 
-function cancelModal() {
+function closeModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
-    serviceForm.reset();
 }
 
-// Fecha o modal ao clicar no "x" ou fora dele
-const closeBtn = document.getElementById('closeModal');
-if (closeBtn) closeBtn.addEventListener('click', cancelModal);
+// Fecha no X ou clicando fora
+document.getElementById('closeModal').onclick = closeModal;
+window.onclick = e => { if (e.target === modal) closeModal(); };
 
-window.addEventListener('click', e => {
-    if (e.target === modal) cancelModal();
-});
-
-// --- LÓGICA DO FORMULÁRIO ---
-
-if (baseServiceSelect && serviceNameInput) {
-    baseServiceSelect.addEventListener('change', function() {
-        const selectedText = this.options[this.selectedIndex].text;
-        if (this.value !== "" && !serviceNameInput.value) {
-            serviceNameInput.value = selectedText;
-        }
-    });
-}
-
-if (saveServiceBtn && serviceForm) {
-    saveServiceBtn.addEventListener('click', () => {
-        if (serviceForm.checkValidity()) {
-            serviceForm.submit();
-        } else {
-            serviceForm.reportValidity();
-        }
-    });
-}
-
-// --- FUNÇÕES CRUD (EDIÇÃO E EXCLUSÃO) ---
+// --- FUNÇÕES CRUD ---
 
 function editService(id, name, price, duration, employeeId, baseId) {
-    // 1. Muda o estado do modal para Edição
-    if (modalTitle) modalTitle.innerText = "Editar Serviço";
-    if (modalAction) modalAction.value = "update";
-    if (modalServiceId) modalServiceId.value = id;
+    modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Serviço';
+    modalAction.value = "update";
+    modalServiceId.value = id;
 
-    // 2. Preenche os campos com os dados atuais
+    // Preenche campos básicos
     document.getElementById('serviceName').value = name;
-    // Converte vírgula para ponto caso o preço venha formatado do Django
-    document.getElementById('servicePrice').value = price.replace(',', '.');
+    document.getElementById('servicePrice').value = price.replace('R$ ', '').replace(',', '.').trim();
     document.getElementById('serviceDuration').value = duration;
-    document.getElementById('serviceEmployee').value = employeeId;
     document.getElementById('baseService').value = baseId;
 
-    // 3. Abre o modal
+    // Na EDIÇÃO, marca apenas o dono desse serviço específico
+    const checkboxes = document.querySelectorAll('.barber-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = (cb.value == employeeId);
+    });
+
     modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 }
 
-function deleteService(serviceId) {
-    if (confirm('Tem certeza que deseja excluir este serviço?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = ''; 
+// --- LÓGICA DE SELEÇÃO ---
 
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-        const idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'service_id';
-        idInput.value = serviceId;
-
-        const actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'delete';
-
-        form.appendChild(csrfInput);
-        form.appendChild(idInput);
-        form.appendChild(actionInput);
-        document.body.appendChild(form);
-        form.submit();
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('barber-checkbox')) {
+        // Se estiver EDITANDO, a gente força seleção única para não bugar o banco
+        if (modalAction.value === 'update') {
+            const checkboxes = document.querySelectorAll('.barber-checkbox');
+            checkboxes.forEach(cb => {
+                if (cb !== e.target) cb.checked = false;
+            });
+        }
+        // Se estiver CRIANDO, não tem lógica nenhuma, pode marcar todos!
     }
-}
+});
