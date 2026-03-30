@@ -11,21 +11,23 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
         action = request.POST.get('action')
         service_id = request.POST.get('service_id')
 
+        # Dados Comuns para Create e Update
+        base_service_id = request.POST.get('base_service')
+        name = request.POST.get('name')
+        price = request.POST.get('price')
+        duration = request.POST.get('duration')
+        # Captura a lista de IDs (usada tanto no Create quanto no Update)
+        employee_ids = request.POST.getlist('employee_ids')
+
+        # --- AÇÃO: EXCLUIR ---
         if action == "delete":
             service = get_object_or_404(BarberService, id=service_id)
             service.delete()
             messages.success(request, "Serviço excluído com sucesso!")
             return redirect(request.path)
 
-        # Captura dados Comuns para Create e Update
-        base_service_id = request.POST.get('base_service')
-        employee_id = request.POST.get('employee')
-        name = request.POST.get('name')
-        price = request.POST.get('price')
-        duration = request.POST.get('duration')
-
-        if action == "create":
-            employee_ids = request.POST.getlist('employee_ids')
+        # --- AÇÃO: CRIAR (Vários de uma vez) ---
+        elif action == "create":
             for emp_id in employee_ids:
                 BarberService.objects.create(
                     base_service_id=base_service_id,
@@ -37,7 +39,25 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
             messages.success(request, f"{len(employee_ids)} serviços criados!")
             return redirect(request.path)
 
-    # Listagem (Mantém seu filtro original)
+        # --- AÇÃO: EDITAR (ADICIONADO AGORA) ---
+        elif action == "update":
+            service = get_object_or_404(BarberService, id=service_id)
+            
+            # Atualiza os campos
+            service.base_service_id = base_service_id
+            service.name = name
+            service.price = price
+            service.duration = duration
+            
+            # Como o seu JS garante que na edição apenas 1 fica marcado:
+            if employee_ids:
+                service.employee_id = employee_ids[0]
+            
+            service.save()
+            messages.success(request, "Serviço atualizado com sucesso!")
+            return redirect(request.path)
+
+    # ... Restante da lógica de listagem (Filtro de unit) permanece igual ...
     if unit:
         employees = Employee.objects.filter(unit=unit)
         services = BarberService.objects.filter(employee__unit=unit)
@@ -52,6 +72,6 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
         "employees": employees,
         "services": services,
         "base_services": BaseService.objects.all(),
-        "active_tab": "catalog", # Garante que o menu reconheça a aba
+        "active_tab": "catalog",
     }
     return render(request, "service/services.html", context)
