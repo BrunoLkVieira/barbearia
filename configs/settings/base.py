@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'apps.barbershop',
     'apps.product',
     'apps.service',
+    'apps.client',
+    'apps.scheduling',
     'widget_tweaks',
     
     
