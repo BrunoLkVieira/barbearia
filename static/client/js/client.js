@@ -56,8 +56,30 @@ function editClient(id, firstName, lastName, phone, email) {
 
 // Função para exclusão (apenas confirmação por enquanto)
 function deleteClient(clientId) {
-    if (confirm('Tem certeza que deseja excluir este cliente?')) {
-        // Aqui você pode submeter um formulário oculto ou fazer um fetch
-        console.log('Excluindo cliente ID:', clientId);
+    // 1. Pede confirmação ao usuário
+    if (confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.')) {
+        
+        // 2. Coloca o ID do cliente no formulário oculto
+        document.getElementById('deleteClientId').value = clientId;
+        
+        // 3. Envia o formulário para a View
+        document.getElementById('deleteForm').submit();
     }
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const unitFilter = document.getElementById('unitFilter');
+    if (unitFilter) {
+        unitFilter.addEventListener('change', function() {
+            const selectedUnit = this.value;
+            // Se for 'geral', vai para a URL sem unit_slug, senão inclui o slug
+            if (selectedUnit === 'geral') {
+                window.location.href = `/${barbershop_slug}/clientes/`;
+            } else {
+                // Aqui você precisaria adaptar sua rota para aceitar a unit
+                window.location.href = `/${barbershop_slug}/${selectedUnit}/clientes/`;
+            }
+        });
+    }
+});

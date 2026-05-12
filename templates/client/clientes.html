@@ -38,7 +38,7 @@
                     </div>
                 {% endif %}
                 <div class="stat-box">
-                    <div class="stat-value">{{ clients.count }}</div>
+                    <div class="stat-value">{{ total_geral }}</div>
                     <div class="stat-label">Clientes</div>
                 </div>
             </div>
@@ -56,49 +56,31 @@
             </button>
         </div>
         
-        <div class="search-section">
+        <!-- Envolva toda a área de busca e filtro em um formulário GET -->
+        <form method="GET" action="." class="search-section">
             <div class="search-container">
                 <div class="search-input">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Pesquisar Cliente">
+                    <input type="text" name="search" placeholder="Pesquisar Cliente" value="{{ search_query }}">
                 </div>
-                <button class="btn-search">
+                <button type="submit" class="btn-search">
                     <i class="fas fa-search"></i> Buscar
                 </button>
             </div>
             
             <div class="filter-container">
-                <div class="filter-item">
-                    <label for="plan-filter">Plano</label>
-                    <select id="plan-filter">
-                        <option>Todos os planos</option>
-                        <option>Corte Mensal</option>
-                        <option>Barba Mensal</option>
-                        <option>Completo Mensal</option>
-                        <option>Sem plano</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label for="status-filter">Status</label>
-                    <select id="status-filter">
-                        <option>Todos os status</option>
-                        <option>Ativo</option>
-                        <option>Inativo</option>
-                        <option>Fidelidade</option>
-                    </select>
-                </div>
+                <!-- Removidos Planos e Status para o Beta -->
                 <div class="filter-item">
                     <label for="sort">Ordenar por</label>
-                    <select id="sort">
-                        <option>Mais recentes</option>
-                        <option>Nome (A-Z)</option>
-                        <option>Nome (Z-A)</option>
-                        <option>Última visita</option>
-                        <option>Mais serviços</option>
+                    <select id="sort" name="sort" onchange="this.form.submit()">
+                        <option value="-created_at" {% if sort_filter == '-created_at' %}selected{% endif %}>Mais recentes</option>
+                        <option value="first_name" {% if sort_filter == 'first_name' %}selected{% endif %}>Nome (A-Z)</option>
+                        <!-- O valor '-first_name' faz o Django ordenar de forma decrescente -->
+                        <option value="-first_name" {% if sort_filter == '-first_name' %}selected{% endif %}>Nome (Z-A)</option>
                     </select>
                 </div>
             </div>
-        </div>
+        </form>
         
         <div class="clients-table-container">
             <div class="table-header">
@@ -158,25 +140,35 @@
         <div class="mobile-footer">
             <div class="total-display">
                 <div class="footer-first-row-one-item">
-                    Exibindo <strong>6</strong> de <strong>128</strong>
+                    Exibindo <strong>{{ clients.start_index }} - {{ clients.end_index }}</strong> de <strong>{{ clients.paginator.count }}</strong>
                     clientes
                 </div>
             </div>
             <div class="pagination">
+                <!-- Botão Voltar -->
                 {% if clients.has_previous %}
-                    <a href="?page={{ clients.previous_page_number }}" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
+                    <a href="?page={{ clients.previous_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
                 {% endif %}
             
+                <!-- Números das Páginas -->
                 {% for num in clients.paginator.page_range %}
                     {% if clients.number == num %}
                         <button class="pagination-btn active">{{ num }}</button>
                     {% else %}
-                        <a href="?page={{ num }}" class="pagination-btn">{{ num }}</a>
+                        <!-- Adicionando os filtros no link de cada número -->
+                        <a href="?page={{ num }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn">
+                            {{ num }}
+                        </a>
                     {% endif %}
                 {% endfor %}
             
+                <!-- Botão Avançar -->
                 {% if clients.has_next %}
-                    <a href="?page={{ clients.next_page_number }}" class="pagination-btn"><i class="fas fa-chevron-right"></i></a>
+                    <a href="?page={{ clients.next_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
                 {% endif %}
             </div>
         </div>
@@ -218,6 +210,12 @@
             </div>
         </div>
     </div>
+
+    <form id="deleteForm" method="POST" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="client_id" id="deleteClientId">
+    </form>
     
 
     <script src="{% static 'geral/js/script.js' %}"></script>
