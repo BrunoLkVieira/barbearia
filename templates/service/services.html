@@ -53,7 +53,7 @@
             </a>
 
             <a href="#"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="#"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
+            {% comment %} <a href="#"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a> {% endcomment %}
 
             <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
                 <div class="nav-tab">
@@ -97,8 +97,7 @@
         <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}">
             <div class="page-option active"><i class="fas fa-scissors"></i> Serviços</div>
         </a>
-        <a href="#"><div class="page-option"><i class="fas fa-pump-soap"></i> Produtos</div></a>
-        <a href="#"><div class="page-option"><i class="fas fa-credit-card"></i> Planos</div></a>
+      
     </div>
     
     <div class="main-content">
