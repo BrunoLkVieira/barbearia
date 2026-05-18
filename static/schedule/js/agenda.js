@@ -1,96 +1,108 @@
-// Ativar cards de barbeiros ao clicar
-document.querySelectorAll('.barber-card').forEach(card => {
-    card.addEventListener('click', function() {
-        document.querySelectorAll('.barber-card').forEach(c => {
-            c.classList.remove('active');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("JS da Agenda carregado com sucesso!");
+
+    // ==========================================
+    // 1. FILTRO DE BARBEIROS EM TEMPO REAL
+    // ==========================================
+    const barberCards = document.querySelectorAll('.barber-card');
+    const timeSlots = document.querySelectorAll('.time-slot');
+    const agendaTitleName = document.querySelector('.agenda-barber-name');
+
+    barberCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Alterna classe ativa nos cards
+            barberCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Atualiza nome no topo
+            const barberName = this.querySelector('.barber-name').textContent;
+            if (agendaTitleName) agendaTitleName.textContent = barberName;
+
+            // Filtra os agendamentos pelo ID do barbeiro
+            const selectedBarberId = this.getAttribute('data-barber-id');
+            console.log("Filtrando pelo barbeiro ID:", selectedBarberId);
+
+            timeSlots.forEach(slot => {
+                if (selectedBarberId === 'all') {
+                    slot.style.display = 'flex';
+                } else {
+                    const slotBarberId = slot.getAttribute('data-barber');
+                    if (slotBarberId === selectedBarberId) {
+                        slot.style.display = 'flex';
+                    } else {
+                        slot.style.display = 'none';
+                    }
+                }
+            });
         });
-        this.classList.add('active');
-        
-        // Atualizar o nome do barbeiro no título da agenda
-        const barberName = this.querySelector('.barber-name').textContent;
-        document.querySelector('.agenda-barber-name').textContent = `${barberName}`;
     });
+
+    // ==========================================
+    // 2. FILTRO DE DATA (MUDAR DIA RECARREGA PÁGINA)
+    // ==========================================
+    const dateInput = document.getElementById('agendaDateFilter');
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            console.log("Mudando data para:", this.value);
+            window.location.href = `?date=${this.value}`;
+        });
+    }
 });
 
+// ==========================================
+// 3. FUNÇÕES DOS MODAIS (ESCOPO GLOBAL)
+// ==========================================
 
-// ====== MODAL FINALIZAR SERVIÇO ======
-const endServiceModal = document.querySelector('.endServiceModal-overlay');
-
-function openModal() {
-    endServiceModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+// --- Modal Novo Agendamento ---
+const appointmentModal = document.getElementById('appointmentModalContainer');
+function openNewAppointmentModal() {
+    if (appointmentModal) {
+        const form = document.getElementById('appointmentForm');
+        if (form) form.reset();
+        appointmentModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+function closeNewAppointmentModal() {
+    if (appointmentModal) {
+        appointmentModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
-// Fechar modal
-function closeModal() {
-    endServiceModal.style.display = 'none';
-    document.body.style.overflow = '';
+// --- Modal Finalizar Serviço ---
+const finishModal = document.getElementById('finishModal');
+function openFinishModal(appointmentId, clientName) {
+    if (finishModal) {
+        const idInput = document.getElementById('finishAppointmentId');
+        const nameSpan = document.getElementById('finishClientName');
+        
+        if (idInput) idInput.value = appointmentId;
+        if (nameSpan) nameSpan.textContent = clientName;
+
+        finishModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+function closeFinishModal() {
+    if (finishModal) {
+        finishModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
-function cancelModal(){
-    endServiceModal.style.display = 'none';
-    document.body.style.overflow = '';
+// --- Modal Editar Agendamento ---
+const editModal = document.getElementById('editServiceContainer');
+function openEditAppointmentModal(appointmentId) {
+    if (editModal) {
+        console.log("Abrindo edição do agendamento:", appointmentId);
+        editModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
 }
-
-
-
-// Eidtar Servico
-const editServiceModal = document.getElementById('editServiceContainer');
-
-function EditModal() {
-    editServiceModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-// Fechar modal
 function closeEditModal() {
-    editServiceModal.style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-function cancelEidtModal(){
-    editServiceModal.style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-window.addEventListener('click', function (e) {
-    if (e.target === editServiceModal) {
-        closeEditModal();
+    if (editModal) {
+        editModal.style.display = 'none';
+        document.body.style.overflow = '';
     }
-});
-
-
-// Carregar o modal de novo agendamento
-const modalContainer = document.getElementById('appointmentModalContainer');
-const newAppointmentBtn = document.getElementById('newAppointmentBtn');
-const closeBtn = modalContainer.querySelector('.close-btn');
-const cancelBtn = modalContainer.querySelector('#cancelAppointmentBtn');
-
-// Função para abrir o modal
-function openAppointmentModal() {
-    modalContainer.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 }
-
-// Função para fechar o modal
-function closeAppointmentModal() {
-    modalContainer.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-// Abrir o modal ao clicar no botão
-newAppointmentBtn.addEventListener('click', openAppointmentModal);
-
-// Fechar ao clicar no "X"
-closeBtn.addEventListener('click', closeAppointmentModal);
-
-// Fechar ao clicar em "Cancelar"
-cancelBtn.addEventListener('click', closeAppointmentModal);
-
-// Fechar ao clicar fora do conteúdo do modal
-modalContainer.addEventListener('click', function (e) {
-    if (e.target === modalContainer) {
-        closeAppointmentModal();
-    }
-});
-

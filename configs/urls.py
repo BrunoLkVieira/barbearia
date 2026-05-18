@@ -16,6 +16,7 @@ urlpatterns = [
     path("", include("apps.barbershop.urls",namespace='barbershop')),
     path('', include('apps.product.urls', namespace='products')),
     path('', include('apps.client.urls')),
+    path('', include('apps.scheduling.urls')),
     path('', include('apps.core.urls')),
 ]
 
