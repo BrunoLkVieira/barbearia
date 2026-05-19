@@ -1,41 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("JS da Agenda carregado com sucesso!");
 
-    // ==========================================
-    // 1. FILTRO DE BARBEIROS EM TEMPO REAL
-    // ==========================================
-    const barberCards = document.querySelectorAll('.barber-card');
-    const timeSlots = document.querySelectorAll('.time-slot');
-    const agendaTitleName = document.querySelector('.agenda-barber-name');
-
-    barberCards.forEach(card => {
-        card.addEventListener('click', function() {
-            // Alterna classe ativa nos cards
-            barberCards.forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Atualiza nome no topo
-            const barberName = this.querySelector('.barber-name').textContent;
-            if (agendaTitleName) agendaTitleName.textContent = barberName;
-
-            // Filtra os agendamentos pelo ID do barbeiro
-            const selectedBarberId = this.getAttribute('data-barber-id');
-            console.log("Filtrando pelo barbeiro ID:", selectedBarberId);
-
-            timeSlots.forEach(slot => {
-                if (selectedBarberId === 'all') {
-                    slot.style.display = 'flex';
-                } else {
-                    const slotBarberId = slot.getAttribute('data-barber');
-                    if (slotBarberId === selectedBarberId) {
-                        slot.style.display = 'flex';
-                    } else {
-                        slot.style.display = 'none';
-                    }
-                }
-            });
-        });
-    });
+    initBarberFilter();
 
     // ==========================================
     // 2. FILTRO DE DATA (MUDAR DIA RECARREGA PÁGINA)
@@ -48,6 +14,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function initBarberFilter() {
+    const barberCards = document.querySelectorAll(".barber-card");
+    const timeSlots = document.querySelectorAll(".time-slot");
+    const titleName = document.querySelector(".agenda-barber-name");
+
+    barberCards.forEach(card => {
+        card.addEventListener("click", () => {
+            // 1. Muda a cor do card selecionado
+            barberCards.forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+
+            // 2. Atualiza o título na tela (opcional)
+            if (titleName) {
+                titleName.innerText = card.querySelector(".barber-name").innerText;
+            }
+
+            // 3. Pega o ID do barbeiro clicado
+            const clickedBarberId = card.getAttribute("data-barber-id");
+
+            // 4. Mostra ou Esconde os cards SEM QUEBRAR O CSS
+            timeSlots.forEach(slot => {
+                const slotBarberId = slot.getAttribute("data-barber");
+                
+                if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
+                    slot.style.display = ""; // Devolve o controle pro seu arquivo CSS (flexbox)
+                } else {
+                    slot.style.display = "none"; // Esconde quem não é o barbeiro clicado
+                }
+            });
+        });
+    });
+}
 
 // ==========================================
 // 3. FUNÇÕES DOS MODAIS (ESCOPO GLOBAL)
