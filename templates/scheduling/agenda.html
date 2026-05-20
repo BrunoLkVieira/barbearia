@@ -142,10 +142,18 @@
                         </div>
                     </div>
                     <div class="client-actions">
-                        <div class="action-btn" onclick="openEditAppointmentModal('{{ appointment.id }}')">
+                        <div class="action-btn" onclick="openEditAppointmentModal(this)"
+                             data-id="{{ appointment.id }}"
+                             data-client="{{ appointment.client.id }}"
+                             data-unit="{{ appointment.unit.id }}"
+                             data-barber="{{ appointment.employee.id }}"
+                             data-service="{{ appointment.services.first.service.id }}"
+                             data-date="{{ appointment.date|date:'Y-m-d' }}"
+                             data-time="{{ appointment.time|time:'H:i' }}">
                             <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
+
                         {% if not appointment.is_paid and appointment.status != 'completed' %}
                         <div class="action-btn finish-btn" onclick="openFinishModal('{{ appointment.id }}', '{{ appointment.client.first_name }} {{ appointment.client.last_name }}')">
                             <i class="fas fa-check-circle"></i>
@@ -190,13 +198,11 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="endServiceSection">
                         <div class="endServiceSection-title">
                             <i class="fas fa-cash-register"></i>
                             <span>Informações para o Caixa</span>
                         </div>
-                        
                         <div class="form-group">
                             <div class="form-label">Método de Pagamento</div>
                             <select name="payment_type" class="form-control" required>
@@ -237,7 +243,6 @@
                             {% endfor %}
                         </select>
                     </div>
-        
                     <div class="form-group">
                         <label for="unitSelect" class="form-label">Unidade</label>
                         <select id="unitSelect" class="form-control" required>
@@ -247,21 +252,18 @@
                             {% endfor %}
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="barberSelect" class="form-label">Barbeiro</label>
                         <select name="employee_id" id="barberSelect" class="form-control" disabled required>
                             <option value="">Selecione um barbeiro...</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="serviceSelect" class="form-label">Serviço</label>
                         <select name="service_id" id="serviceSelect" class="form-control" disabled required>
                             <option value="">Selecione um serviço...</option>
                         </select>
                     </div>
-        
                     <div class="form-row">
                         <div class="form-group">
                             <label for="appointmentDate" class="form-label">Data</label>
@@ -281,11 +283,73 @@
         </div>        
     </div>
 
+    <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="appointmentModal-content">
+            <div class="appointmentModal-header">
+                <h2><i class="fas fa-edit"></i> Editar Agendamento</h2>
+                <button type="button" class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editAppointmentForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_appointment">
+                <input type="hidden" name="appointment_id" id="editAppointmentId">
+                
+                <div class="appointmentModal-body">
+                    <div class="form-group">
+                        <label for="editClientSelect" class="form-label">Cliente</label>
+                        <select name="client_id" id="editClientSelect" class="form-control" required>
+                            <option value="">Selecione um cliente...</option>
+                            {% for client in clients_list %}
+                                <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }} ({{ client.phone }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editUnitSelect" class="form-label">Unidade</label>
+                        <select id="editUnitSelect" class="form-control" required>
+                            <option value="">Selecione uma unidade...</option>
+                            {% for u in units %}
+                                <option value="{{ u.id }}">{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBarberSelect" class="form-label">Barbeiro</label>
+                        <select name="employee_id" id="editBarberSelect" class="form-control" required>
+                            <option value="">Selecione um barbeiro...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editServiceSelect" class="form-label">Serviço</label>
+                        <select name="service_id" id="editServiceSelect" class="form-control" required>
+                            <option value="">Selecione um serviço...</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editAppointmentDate" class="form-label">Data</label>
+                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAppointmentTime" class="form-label">Hora</label>
+                            <input type="time" name="time" id="editAppointmentTime" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="appointmentModal-footer">
+                    <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btnModal btnModal-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>        
+    </div>
+
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
         const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
     </script>
-
     <script src="{% static 'schedule/js/agenda.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
 </body>

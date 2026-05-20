@@ -28,30 +28,62 @@ def SchedulingView(request, barbershop_slug):
                 service_id = request.POST.get('service_id')
                 date_str = request.POST.get('date')
                 time_str = request.POST.get('time')
-
-                # Captura o funcionário para preencher a Unit automaticamente
                 emp = get_object_or_404(Employee, id=employee_id)
                 svc = get_object_or_404(BarberService, id=service_id)
 
-                # Cria o cabeçalho do agendamento
                 appointment = Appointment.objects.create(
                     client_id=client_id,
                     employee=emp,
                     barbershop=barbershop,
-                    unit=emp.unit, # Pega a unidade direto do barbeiro selecionado
+                    unit=emp.unit, 
                     date=date_str,
                     time=time_str,
                     status='scheduled',
-                    total_price=svc.price # Define o preço total inicial
+                    total_price=svc.price 
                 )
 
-                # Cria a relação do serviço realizado salvando o preço histórico
                 AppointmentService.objects.create(
                     appointment=appointment,
                     service=svc,
                     price_at_sale=svc.price
                 )
                 messages.success(request, "Horário agendado com sucesso!")
+
+            # --- EDITAR AGENDAMENTO ---
+            elif action == "edit_appointment":
+                appointment_id = request.POST.get('appointment_id')
+                client_id = request.POST.get('client_id')
+                employee_id = request.POST.get('employee_id')
+                service_id = request.POST.get('service_id')
+                date_str = request.POST.get('date')
+                time_str = request.POST.get('time')
+
+                appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
+                emp = get_object_or_404(Employee, id=employee_id)
+                svc = get_object_or_404(BarberService, id=service_id)
+
+                # Atualiza dados principais
+                appointment.client_id = client_id
+                appointment.employee = emp
+                appointment.unit = emp.unit
+                appointment.date = date_str
+                appointment.time = time_str
+                appointment.total_price = svc.price
+                appointment.save()
+
+                # Atualiza o serviço associado (Assumindo 1 serviço por formulário)
+                app_service = appointment.services.first()
+                if app_service:
+                    app_service.service = svc
+                    app_service.price_at_sale = svc.price
+                    app_service.save()
+                else:
+                    AppointmentService.objects.create(
+                        appointment=appointment, 
+                        service=svc, 
+                        price_at_sale=svc.price
+                    )
+                messages.success(request, "Agendamento atualizado com sucesso!")
 
             # --- FINALIZAR SERVIÇO (BAIXA NO CAIXA) ---
             elif action == "complete_appointment":
@@ -61,7 +93,6 @@ def SchedulingView(request, barbershop_slug):
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
                 appointment.status = 'completed'
                 appointment.is_paid = True
-                # appointment.payment_type = payment_type 
                 appointment.save()
                 messages.success(request, "Serviço finalizado e caixa atualizado!")
 
@@ -86,11 +117,9 @@ def SchedulingView(request, barbershop_slug):
         date=current_date
     ).order_by('time')
 
-    # 4. Cálculos dos Boxes Estatísticos (Stats do topo e rodapé)
     total_appointments = appointments.count()
     total_revenue = sum(app.total_price for app in appointments)
 
-    # 5. Listagens auxiliares que alimentam as seleções do Modal
     clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
     catalog_services = BarberService.objects.filter(employee__unit__barbershop=barbershop).distinct()
 
@@ -108,37 +137,21 @@ def SchedulingView(request, barbershop_slug):
     }
     return render(request, 'scheduling/agenda.html', context)
 
-
 # ==========================================
-# ENDPOINTS DA API PARA O FORMULÁRIO (DEPENDENTES)
+# ENDPOINTS DA API
 # ==========================================
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
     if not unit_id:
         return JsonResponse({'employees': []})
-    
     employees = Employee.objects.filter(unit_id=unit_id)
-    # Lista de dicionários pura para evitar problemas de JsonResponse
-    data = [
-        {'id': emp.id, 'name': f"{emp.user.name} {emp.user.last_name}"} 
-        for emp in employees
-    ]
+    data = [{'id': emp.id, 'name': f"{emp.user.name} {emp.user.last_name}"} for emp in employees]
     return JsonResponse({'employees': data})
 
 def get_services_by_employee(request):
     employee_id = request.GET.get('employee_id')
     if not employee_id:
         return JsonResponse({'services': []})
-    
     services = BarberService.objects.filter(employee_id=employee_id)
-    
-    # Decimal convertido para float para aceitar no JSON
-    data = [
-        {
-            'id': svc.id, 
-            'name': svc.name, 
-            'price': float(svc.price) if svc.price else 0.0
-        } 
-        for svc in services
-    ]
+    data = [{'id': svc.id, 'name': svc.name, 'price': float(svc.price) if svc.price else 0.0} for svc in services]
     return JsonResponse({'services': data})

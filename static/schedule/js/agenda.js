@@ -1,70 +1,74 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("JS da Agenda carregado com sucesso!");
-
     initBarberFilter();
 
-    // ==========================================
-    // 2. FILTRO DE DATA (MUDAR DIA RECARREGA PÁGINA)
-    // ==========================================
+    // 1. FILTRO DE DATA
     const dateInput = document.getElementById('agendaDateFilter');
     if (dateInput) {
         dateInput.addEventListener('change', function() {
-            console.log("Mudando data para:", this.value);
             window.location.href = `?date=${this.value}`;
         });
     }
 
-    // ==========================================
-    // CASCATA DE SELECTS (UNIDADE -> BARBEIRO -> SERVIÇO)
-    // ==========================================
+    // 2. CASCATA DE SELECTS - MODAL CRIAR
     const unitSelect = document.getElementById('unitSelect');
     const barberSelect = document.getElementById('barberSelect');
     const serviceSelect = document.getElementById('serviceSelect');
 
-    if(unitSelect) {
+    if (unitSelect) {
         unitSelect.addEventListener('change', async (e) => {
-            resetSelects([barberSelect, serviceSelect]);
-            if (!e.target.value) return;
-
-            try {
-                // Utiliza a variável definida no HTML (resolvida pelo Django)
-                const response = await fetch(`${API_EMPLOYEES_URL}?unit_id=${e.target.value}`);
-                const data = await response.json();
-                
-                if(data.employees && data.employees.length > 0) {
-                    populateSelect(barberSelect, data.employees, 'Selecione um barbeiro');
-                    barberSelect.disabled = false;
-                } else {
-                    console.warn("Nenhum barbeiro encontrado para esta unidade.");
-                }
-            } catch (error) {
-                console.error("Erro ao buscar barbeiros:", error);
-            }
+            await loadBarbers(e.target.value, barberSelect, serviceSelect);
+        });
+    }
+    if (barberSelect) {
+        barberSelect.addEventListener('change', async (e) => {
+            await loadServices(e.target.value, serviceSelect);
         });
     }
 
-    if(barberSelect) {
-        barberSelect.addEventListener('change', async (e) => {
-            resetSelects([serviceSelect]);
-            if (!e.target.value) return;
+    // 3. CASCATA DE SELECTS - MODAL EDITAR
+    const editUnitSelect = document.getElementById('editUnitSelect');
+    const editBarberSelect = document.getElementById('editBarberSelect');
+    const editServiceSelect = document.getElementById('editServiceSelect');
 
-            try {
-                // Utiliza a variável definida no HTML (resolvida pelo Django)
-                const response = await fetch(`${API_SERVICES_URL}?employee_id=${e.target.value}`);
-                const data = await response.json();
-                
-                if(data.services && data.services.length > 0) {
-                    populateSelect(serviceSelect, data.services, 'Selecione um serviço');
-                    serviceSelect.disabled = false;
-                } else {
-                    console.warn("Nenhum serviço encontrado para este barbeiro.");
-                }
-            } catch (error) {
-                console.error("Erro ao buscar serviços:", error);
-            }
+    if (editUnitSelect) {
+        editUnitSelect.addEventListener('change', async (e) => {
+            await loadBarbers(e.target.value, editBarberSelect, editServiceSelect);
+        });
+    }
+    if (editBarberSelect) {
+        editBarberSelect.addEventListener('change', async (e) => {
+            await loadServices(e.target.value, editServiceSelect);
         });
     }
 });
+
+// Funções de Busca API Centralizadas (Usadas tanto no Criar quanto no Editar)
+async function loadBarbers(unitId, barberSel, serviceSel) {
+    resetSelects([barberSel, serviceSel]);
+    if (!unitId) return;
+    try {
+        const response = await fetch(`${API_EMPLOYEES_URL}?unit_id=${unitId}`);
+        const data = await response.json();
+        if (data.employees && data.employees.length > 0) {
+            populateSelect(barberSel, data.employees, 'Selecione um barbeiro');
+            barberSel.disabled = false;
+        }
+    } catch (error) { console.error("Erro ao carregar barbeiros:", error); }
+}
+
+async function loadServices(employeeId, serviceSel) {
+    resetSelects([serviceSel]);
+    if (!employeeId) return;
+    try {
+        const response = await fetch(`${API_SERVICES_URL}?employee_id=${employeeId}`);
+        const data = await response.json();
+        if (data.services && data.services.length > 0) {
+            populateSelect(serviceSel, data.services, 'Selecione um serviço');
+            serviceSel.disabled = false;
+        }
+    } catch (error) { console.error("Erro ao carregar serviços:", error); }
+}
 
 function initBarberFilter() {
     const barberCards = document.querySelectorAll(".barber-card");
@@ -73,49 +77,36 @@ function initBarberFilter() {
 
     barberCards.forEach(card => {
         card.addEventListener("click", () => {
-            // 1. Muda a cor do card selecionado
             barberCards.forEach(c => c.classList.remove("active"));
             card.classList.add("active");
-
-            // 2. Atualiza o título na tela (opcional)
             if (titleName) {
                 titleName.innerText = card.querySelector(".barber-name").innerText;
             }
-
-            // 3. Pega o ID do barbeiro clicado
             const clickedBarberId = card.getAttribute("data-barber-id");
-
-            // 4. Mostra ou Esconde os cards SEM QUEBRAR O CSS
             timeSlots.forEach(slot => {
                 const slotBarberId = slot.getAttribute("data-barber");
-                
                 if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
-                    slot.style.display = ""; // Devolve o controle pro seu arquivo CSS (flexbox)
+                    slot.style.display = "";
                 } else {
-                    slot.style.display = "none"; // Esconde quem não é o barbeiro clicado
+                    slot.style.display = "none";
                 }
             });
         });
     });
 }
 
-// ==========================================
-// 3. FUNÇÕES DOS MODAIS (ESCOPO GLOBAL)
-// ==========================================
+// --- MODAIS ---
 
-// --- Modal Novo Agendamento ---
+// Criar Agendamento
 const appointmentModal = document.getElementById('appointmentModalContainer');
 function openNewAppointmentModal() {
     if (appointmentModal) {
         const form = document.getElementById('appointmentForm');
         if (form) form.reset();
         
-        // Mantem bloqueado e resetado ao abrir novo form
         const barberSelect = document.getElementById('barberSelect');
         const serviceSelect = document.getElementById('serviceSelect');
-        if(barberSelect && serviceSelect) {
-            resetSelects([barberSelect, serviceSelect]);
-        }
+        if(barberSelect && serviceSelect) resetSelects([barberSelect, serviceSelect]);
 
         appointmentModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -128,16 +119,64 @@ function closeNewAppointmentModal() {
     }
 }
 
-// --- Modal Finalizar Serviço ---
+// Editar Agendamento
+async function openEditAppointmentModal(btn) {
+    const editModal = document.getElementById('editAppointmentModalContainer');
+    if (!editModal) return;
+
+    // Reseta o formulário
+    const form = document.getElementById('editAppointmentForm');
+    if (form) form.reset();
+
+    // Captura os dados que estão no botão Editar via HTML (data-attributes)
+    const id = btn.getAttribute('data-id');
+    const clientId = btn.getAttribute('data-client');
+    const unitId = btn.getAttribute('data-unit');
+    const barberId = btn.getAttribute('data-barber');
+    const serviceId = btn.getAttribute('data-service');
+    const date = btn.getAttribute('data-date');
+    const time = btn.getAttribute('data-time');
+
+    // Preenche os inputs fáceis
+    document.getElementById('editAppointmentId').value = id;
+    document.getElementById('editClientSelect').value = clientId;
+    document.getElementById('editAppointmentDate').value = date;
+    document.getElementById('editAppointmentTime').value = time;
+
+    const unitSelect = document.getElementById('editUnitSelect');
+    const barberSelect = document.getElementById('editBarberSelect');
+    const serviceSelect = document.getElementById('editServiceSelect');
+
+    // Preenche a Unidade
+    unitSelect.value = unitId;
+
+    // A mágica: Forçamos a busca dos Barbeiros e Serviços como se o usuário tivesse clicado,
+    // E então aplicamos os values antigos
+    await loadBarbers(unitId, barberSelect, serviceSelect);
+    barberSelect.value = barberId;
+
+    await loadServices(barberId, serviceSelect);
+    serviceSelect.value = serviceId;
+
+    // Mostra o Modal
+    editModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+    const editModal = document.getElementById('editAppointmentModalContainer');
+    if (editModal) {
+        editModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Finalizar Serviço
 const finishModal = document.getElementById('finishModal');
 function openFinishModal(appointmentId, clientName) {
     if (finishModal) {
-        const idInput = document.getElementById('finishAppointmentId');
-        const nameSpan = document.getElementById('finishClientName');
-        
-        if (idInput) idInput.value = appointmentId;
-        if (nameSpan) nameSpan.textContent = clientName;
-
+        document.getElementById('finishAppointmentId').value = appointmentId;
+        document.getElementById('finishClientName').textContent = clientName;
         finishModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
@@ -149,36 +188,18 @@ function closeFinishModal() {
     }
 }
 
-// --- Modal Editar Agendamento ---
-const editModal = document.getElementById('editServiceContainer');
-function openEditAppointmentModal(appointmentId) {
-    if (editModal) {
-        console.log("Abrindo edição do agendamento:", appointmentId);
-        editModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-}
-function closeEditModal() {
-    if (editModal) {
-        editModal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-}
-
-// Funções Utilitárias para o Select
+// Utilitários de Select
 function resetSelects(elements) {
     elements.forEach(el => {
         el.innerHTML = '<option value="">Selecione...</option>';
         el.disabled = true;
     });
 }
-
 function populateSelect(selectEl, items, placeholder) {
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     items.forEach(item => {
         const option = document.createElement('option');
         option.value = item.id;
-        // Se houver preço (no caso de serviço) ele formata, senão coloca só o nome
         option.textContent = item.name + (item.price !== undefined ? ` - R$ ${item.price.toFixed(2)}` : '');
         selectEl.appendChild(option);
     });
