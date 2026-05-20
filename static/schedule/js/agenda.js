@@ -13,6 +13,57 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `?date=${this.value}`;
         });
     }
+
+    // ==========================================
+    // CASCATA DE SELECTS (UNIDADE -> BARBEIRO -> SERVIÇO)
+    // ==========================================
+    const unitSelect = document.getElementById('unitSelect');
+    const barberSelect = document.getElementById('barberSelect');
+    const serviceSelect = document.getElementById('serviceSelect');
+
+    if(unitSelect) {
+        unitSelect.addEventListener('change', async (e) => {
+            resetSelects([barberSelect, serviceSelect]);
+            if (!e.target.value) return;
+
+            try {
+                // Utiliza a variável definida no HTML (resolvida pelo Django)
+                const response = await fetch(`${API_EMPLOYEES_URL}?unit_id=${e.target.value}`);
+                const data = await response.json();
+                
+                if(data.employees && data.employees.length > 0) {
+                    populateSelect(barberSelect, data.employees, 'Selecione um barbeiro');
+                    barberSelect.disabled = false;
+                } else {
+                    console.warn("Nenhum barbeiro encontrado para esta unidade.");
+                }
+            } catch (error) {
+                console.error("Erro ao buscar barbeiros:", error);
+            }
+        });
+    }
+
+    if(barberSelect) {
+        barberSelect.addEventListener('change', async (e) => {
+            resetSelects([serviceSelect]);
+            if (!e.target.value) return;
+
+            try {
+                // Utiliza a variável definida no HTML (resolvida pelo Django)
+                const response = await fetch(`${API_SERVICES_URL}?employee_id=${e.target.value}`);
+                const data = await response.json();
+                
+                if(data.services && data.services.length > 0) {
+                    populateSelect(serviceSelect, data.services, 'Selecione um serviço');
+                    serviceSelect.disabled = false;
+                } else {
+                    console.warn("Nenhum serviço encontrado para este barbeiro.");
+                }
+            } catch (error) {
+                console.error("Erro ao buscar serviços:", error);
+            }
+        });
+    }
 });
 
 function initBarberFilter() {
@@ -58,6 +109,14 @@ function openNewAppointmentModal() {
     if (appointmentModal) {
         const form = document.getElementById('appointmentForm');
         if (form) form.reset();
+        
+        // Mantem bloqueado e resetado ao abrir novo form
+        const barberSelect = document.getElementById('barberSelect');
+        const serviceSelect = document.getElementById('serviceSelect');
+        if(barberSelect && serviceSelect) {
+            resetSelects([barberSelect, serviceSelect]);
+        }
+
         appointmentModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
@@ -104,4 +163,23 @@ function closeEditModal() {
         editModal.style.display = 'none';
         document.body.style.overflow = '';
     }
+}
+
+// Funções Utilitárias para o Select
+function resetSelects(elements) {
+    elements.forEach(el => {
+        el.innerHTML = '<option value="">Selecione...</option>';
+        el.disabled = true;
+    });
+}
+
+function populateSelect(selectEl, items, placeholder) {
+    selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        // Se houver preço (no caso de serviço) ele formata, senão coloca só o nome
+        option.textContent = item.name + (item.price !== undefined ? ` - R$ ${item.price.toFixed(2)}` : '');
+        selectEl.appendChild(option);
+    });
 }

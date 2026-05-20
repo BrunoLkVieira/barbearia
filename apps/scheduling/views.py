@@ -2,6 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils.timezone import localdate
 from datetime import datetime
+from django.http import JsonResponse
+from decimal import Decimal
+
 from apps.barbershop.models import Barbershop, Employee, Unit
 from apps.service.models import BarberService
 from apps.client.models import Client
@@ -58,7 +61,6 @@ def SchedulingView(request, barbershop_slug):
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
                 appointment.status = 'completed'
                 appointment.is_paid = True
-                # Se seu model tiver a forma de pagamento, você salva aqui:
                 # appointment.payment_type = payment_type 
                 appointment.save()
                 messages.success(request, "Serviço finalizado e caixa atualizado!")
@@ -86,8 +88,6 @@ def SchedulingView(request, barbershop_slug):
 
     # 4. Cálculos dos Boxes Estatísticos (Stats do topo e rodapé)
     total_appointments = appointments.count()
-    
-    # Soma o faturamento previsto do dia
     total_revenue = sum(app.total_price for app in appointments)
 
     # 5. Listagens auxiliares que alimentam as seleções do Modal
@@ -99,11 +99,46 @@ def SchedulingView(request, barbershop_slug):
         'employees': employees,
         'units': units,
         'appointments': appointments,
-        'clients_list': clients_list,       # Alimenta o select de clientes no modal
-        'catalog_services': catalog_services, # Alimenta os serviços no modal
+        'clients_list': clients_list,       
+        'catalog_services': catalog_services, 
         'current_date': current_date,
         'total_appointments': total_appointments,
         'total_revenue': total_revenue,
         'active_tab': 'agenda',
     }
     return render(request, 'scheduling/agenda.html', context)
+
+
+# ==========================================
+# ENDPOINTS DA API PARA O FORMULÁRIO (DEPENDENTES)
+# ==========================================
+def get_employees_by_unit(request):
+    unit_id = request.GET.get('unit_id')
+    if not unit_id:
+        return JsonResponse({'employees': []})
+    
+    employees = Employee.objects.filter(unit_id=unit_id)
+    # Lista de dicionários pura para evitar problemas de JsonResponse
+    data = [
+        {'id': emp.id, 'name': f"{emp.user.name} {emp.user.last_name}"} 
+        for emp in employees
+    ]
+    return JsonResponse({'employees': data})
+
+def get_services_by_employee(request):
+    employee_id = request.GET.get('employee_id')
+    if not employee_id:
+        return JsonResponse({'services': []})
+    
+    services = BarberService.objects.filter(employee_id=employee_id)
+    
+    # Decimal convertido para float para aceitar no JSON
+    data = [
+        {
+            'id': svc.id, 
+            'name': svc.name, 
+            'price': float(svc.price) if svc.price else 0.0
+        } 
+        for svc in services
+    ]
+    return JsonResponse({'services': data})
