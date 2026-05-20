@@ -149,8 +149,8 @@
                              data-barber="{{ appointment.employee.id }}"
                              data-service="{{ appointment.services.first.service.id }}"
                              data-date="{{ appointment.date|date:'Y-m-d' }}"
-                             data-time="{{ appointment.time|time:'H:i' }}">
-                            <i class="fas fa-edit"></i>
+                             data-time="{{ appointment.time|time:'H:i' }}"
+                             data-status="{{ appointment.status }}"> <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
 
@@ -337,6 +337,16 @@
                             <input type="time" name="time" id="editAppointmentTime" class="form-control" required>
                         </div>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="editStatusSelect" class="form-label">Status</label>
+                        <select name="status" id="editStatusSelect" class="form-control" required>
+                            <option value="scheduled">Agendado</option>
+                            <option value="completed">Finalizado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+
                 </div>
                 <div class="appointmentModal-footer">
                     <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()">Cancelar</button>

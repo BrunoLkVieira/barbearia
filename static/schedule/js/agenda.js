@@ -136,12 +136,14 @@ async function openEditAppointmentModal(btn) {
     const serviceId = btn.getAttribute('data-service');
     const date = btn.getAttribute('data-date');
     const time = btn.getAttribute('data-time');
+    const status = btn.getAttribute('data-status'); // NOVO: Pega o Status atual
 
-    // Preenche os inputs fáceis
+    // Preenche os inputs diretos
     document.getElementById('editAppointmentId').value = id;
     document.getElementById('editClientSelect').value = clientId;
     document.getElementById('editAppointmentDate').value = date;
     document.getElementById('editAppointmentTime').value = time;
+    document.getElementById('editStatusSelect').value = status; // NOVO: Preenche o Status no HTML
 
     const unitSelect = document.getElementById('editUnitSelect');
     const barberSelect = document.getElementById('editBarberSelect');
@@ -150,8 +152,7 @@ async function openEditAppointmentModal(btn) {
     // Preenche a Unidade
     unitSelect.value = unitId;
 
-    // A mágica: Forçamos a busca dos Barbeiros e Serviços como se o usuário tivesse clicado,
-    // E então aplicamos os values antigos
+    // Forçamos a busca dos Barbeiros e Serviços e aplicamos os values
     await loadBarbers(unitId, barberSelect, serviceSelect);
     barberSelect.value = barberId;
 

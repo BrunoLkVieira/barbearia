@@ -28,6 +28,7 @@ def SchedulingView(request, barbershop_slug):
                 service_id = request.POST.get('service_id')
                 date_str = request.POST.get('date')
                 time_str = request.POST.get('time')
+
                 emp = get_object_or_404(Employee, id=employee_id)
                 svc = get_object_or_404(BarberService, id=service_id)
 
@@ -57,6 +58,7 @@ def SchedulingView(request, barbershop_slug):
                 service_id = request.POST.get('service_id')
                 date_str = request.POST.get('date')
                 time_str = request.POST.get('time')
+                status_val = request.POST.get('status') # NOVO: Captura o status
 
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
                 emp = get_object_or_404(Employee, id=employee_id)
@@ -69,9 +71,15 @@ def SchedulingView(request, barbershop_slug):
                 appointment.date = date_str
                 appointment.time = time_str
                 appointment.total_price = svc.price
+                appointment.status = status_val # NOVO: Salva o status atualizado
+                
+                # Regra de segurança: Se o status não for mais "finalizado", marcamos como "não pago"
+                if status_val != 'completed':
+                    appointment.is_paid = False
+
                 appointment.save()
 
-                # Atualiza o serviço associado (Assumindo 1 serviço por formulário)
+                # Atualiza o serviço associado
                 app_service = appointment.services.first()
                 if app_service:
                     app_service.service = svc
@@ -101,7 +109,7 @@ def SchedulingView(request, barbershop_slug):
         
         return redirect(request.path)
 
-    # 3. Filtros de Exibição (GET) - Data e Unidade
+    # 3. Filtros de Exibição (GET)
     date_param = request.GET.get('date')
     if date_param:
         try:
@@ -111,7 +119,6 @@ def SchedulingView(request, barbershop_slug):
     else:
         current_date = localdate()
 
-    # Busca os agendamentos do dia para esta barbearia
     appointments = Appointment.objects.filter(
         barbershop=barbershop,
         date=current_date
@@ -136,6 +143,7 @@ def SchedulingView(request, barbershop_slug):
         'active_tab': 'agenda',
     }
     return render(request, 'scheduling/agenda.html', context)
+
 
 # ==========================================
 # ENDPOINTS DA API
