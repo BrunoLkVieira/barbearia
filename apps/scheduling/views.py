@@ -10,28 +10,25 @@ from apps.service.models import BarberService
 from apps.client.models import Client
 from .models import Appointment, AppointmentService
 
-# Adicionado 'unit_slug=None' nos parâmetros
 def SchedulingView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
-    # ---------------------------------------------
-    # LÓGICA DO FILTRO DE UNIDADE
-    # ---------------------------------------------
+    # Lógica do Filtro de Unidade
     current_unit = None
     if unit_slug:
-        # Pega a unidade específica e filtra os barbeiros DELA
         current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
         employees = Employee.objects.filter(unit=current_unit)
     else:
-        # Visão Geral: Mostra barbeiros de todas as unidades
         employees = Employee.objects.filter(unit__barbershop=barbershop)
         
     units = Unit.objects.filter(barbershop=barbershop)
 
-    # 2. Processar ações do formulário (POST) ... [O BLOCO POST FICA EXATAMENTE IGUAL O SEU ANTERIOR]
+    # 2. Processar ações do formulário (POST)
     if request.method == "POST":
         action = request.POST.get('action')
+        
         try:
+            # --- CRIAR AGENDAMENTO ---
             if action == "create_appointment":
                 client_id = request.POST.get('client_id')
                 employee_id = request.POST.get('employee_id')
@@ -51,6 +48,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
                 messages.success(request, "Horário agendado com sucesso!")
 
+            # --- EDITAR AGENDAMENTO ---
             elif action == "edit_appointment":
                 appointment_id = request.POST.get('appointment_id')
                 client_id = request.POST.get('client_id')
@@ -86,8 +84,9 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     app_service.save()
                 else:
                     AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
-                messages.success(request, "Agendamento atualizado com sucesso!")
+                messages.success(request, "Agendamento updated com sucesso!")
 
+            # --- FINALIZAR SERVIÇO ---
             elif action == "complete_appointment":
                 appointment_id = request.POST.get('appointment_id')
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
@@ -99,7 +98,18 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         except Exception as e:
             messages.error(request, f"Erro ao processar ação: {str(e)}")
         
-        # request.path preserva a URL atual (seja geral ou de unidade específica)
+        # -------------------------------------------------------------
+        # AQUI ESTÁ A CORREÇÃO DO BUG: PRESERVAR A DATA APÓS O REDIRECIONAMENTO
+        # -------------------------------------------------------------
+        # Captura o parâmetro de data enviado pelo input 'date' do formulário que acabou de ser executado
+        target_date = request.POST.get('date')
+        
+        # Se por acaso o formulário não tiver o campo date (ex: botão finalizar rápido), pegamos da URL antiga
+        if not target_date:
+            target_date = request.GET.get('date')
+
+        if target_date:
+            return redirect(f"{request.path}?date={target_date}")
         return redirect(request.path)
 
     # 3. Filtros de Exibição (GET) - Data
@@ -110,24 +120,14 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     else:
         current_date = localdate()
 
-    # ---------------------------------------------
-    # FILTRO DE AGENDAMENTOS POR UNIDADE E DATA
-    # ---------------------------------------------
+    # Filtro de Agendamentos por Unidade e Data
     appointments_query = Appointment.objects.filter(barbershop=barbershop, date=current_date)
-    
     if current_unit:
         appointments_query = appointments_query.filter(unit=current_unit)
-        
     appointments = appointments_query.order_by('time')
 
     total_appointments = appointments.count()
     total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
-
-    # Previsão (Header) - Ignora cancelados
-    total_appointments = appointments.exclude(status='cancelled').count()
-    total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
-
-    # NOVO: Realizado (Footer) - Apenas finalizados
     completed_appointments = appointments.filter(status='completed').count()
     completed_revenue = sum(app.total_price for app in appointments if app.status == 'completed')
 
@@ -145,8 +145,8 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         'current_date': current_date,
         'total_appointments': total_appointments,
         'total_revenue': total_revenue,
-        'completed_appointments': completed_appointments, # NOVO
-        'completed_revenue': completed_revenue, # NOVO
+        'completed_appointments': completed_appointments,
+        'completed_revenue': completed_revenue,
         'active_tab': 'agenda',
     }
     return render(request, 'scheduling/agenda.html', context)

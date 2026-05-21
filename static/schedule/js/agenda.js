@@ -115,35 +115,44 @@ function initBarberFilter() {
             }
 
             const clickedBarberId = card.getAttribute("data-barber-id");
+            
+            // NOVO: Anota no navegador qual barbeiro está ativo!
+            sessionStorage.setItem('activeBarberId', clickedBarberId);
+
             let completedCount = 0;
             let completedRevenue = 0;
 
             timeSlots.forEach(slot => {
                 const slotBarberId = slot.getAttribute("data-barber");
-                const slotStatus = slot.getAttribute("data-status"); // Pega o status do HTML
+                const slotStatus = slot.getAttribute("data-status"); 
                 
-                // Verifica se o slot pertence ao barbeiro clicado
                 if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
                     slot.style.display = "";
                     
-                    // Soma valores APENAS se o status for finalizado (completed)
                     if (slotStatus === 'completed') {
                         completedCount++;
-                        // Pega o valor na tela e converte para somar
                         const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]').innerText;
                         const price = parseFloat(priceText.replace('R$ ', '').replace(',', '.'));
                         completedRevenue += price;
                     }
                 } else {
-                    slot.style.display = "none"; // Oculta slots de outros barbeiros
+                    slot.style.display = "none";
                 }
             });
 
-            // Atualiza os números no Footer dinamicamente
             if (totalCountEl) totalCountEl.innerText = completedCount;
             if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${completedRevenue.toFixed(2).replace('.', ',')}`;
         });
     });
+
+    // NOVO: Quando a página carregar, verifica a anotação e "clica" no barbeiro correto
+    const savedBarberId = sessionStorage.getItem('activeBarberId');
+    if (savedBarberId) {
+        const cardToActivate = document.querySelector(`.barber-card[data-barber-id="${savedBarberId}"]`);
+        if (cardToActivate) {
+            cardToActivate.click(); // Simula o clique do usuário!
+        }
+    }
 }
 
 const appointmentModal = document.getElementById('appointmentModalContainer');
