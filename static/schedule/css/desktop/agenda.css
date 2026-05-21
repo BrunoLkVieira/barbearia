@@ -221,7 +221,7 @@
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         border-color: #e67e22;
     }
-
+/* ESTILO VISUAL PARA AGENDAMENTO CANCELADO */
     .cancelled-slot {
         opacity: 0.6;
         background-color: #fafafa;
@@ -229,6 +229,15 @@
     }
     .cancelled-slot .time-info {
         background-color: #e0e0e0;
+    }
+
+    /* NOVO: ESTILO VISUAL PARA AGENDAMENTO FINALIZADO */
+    .completed-slot {
+        background-color: #ffffff; /* Mantém a cor sólida/sem transparência */
+        border-left: 4px solid #27ae60 !important; /* Borda verde de sucesso */
+    }
+    .completed-slot .time-info {
+        background-color: #e8f5e9; /* Fundo verde bem clarinho apenas na área da hora */
     }
     
     .time-info {

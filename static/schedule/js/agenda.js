@@ -101,7 +101,7 @@ function initBarberFilter() {
     const timeSlots = document.querySelectorAll(".time-slot");
     const titleName = document.querySelector(".agenda-barber-name");
     
-    // Elementos do Footer para atualização dinâmica
+    // Elementos do Footer
     const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
     const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
 
@@ -115,32 +115,33 @@ function initBarberFilter() {
             }
 
             const clickedBarberId = card.getAttribute("data-barber-id");
-            let count = 0;
-            let revenue = 0;
+            let completedCount = 0;
+            let completedRevenue = 0;
 
             timeSlots.forEach(slot => {
                 const slotBarberId = slot.getAttribute("data-barber");
+                const slotStatus = slot.getAttribute("data-status"); // Pega o status do HTML
                 
-                // Verifica se o slot deve aparecer
+                // Verifica se o slot pertence ao barbeiro clicado
                 if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
                     slot.style.display = "";
                     
-                    // Soma valores apenas se não estiver cancelado
-                    if (!slot.classList.contains('cancelled-slot')) {
-                        count++;
-                        // Extrai o valor do texto do card (R$ 00,00)
+                    // Soma valores APENAS se o status for finalizado (completed)
+                    if (slotStatus === 'completed') {
+                        completedCount++;
+                        // Pega o valor na tela e converte para somar
                         const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]').innerText;
                         const price = parseFloat(priceText.replace('R$ ', '').replace(',', '.'));
-                        revenue += price;
+                        completedRevenue += price;
                     }
                 } else {
-                    slot.style.display = "none";
+                    slot.style.display = "none"; // Oculta slots de outros barbeiros
                 }
             });
 
-            // Atualiza o Footer
-            if (totalCountEl) totalCountEl.innerText = count;
-            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${revenue.toFixed(2).replace('.', ',')}`;
+            // Atualiza os números no Footer dinamicamente
+            if (totalCountEl) totalCountEl.innerText = completedCount;
+            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${completedRevenue.toFixed(2).replace('.', ',')}`;
         });
     });
 }

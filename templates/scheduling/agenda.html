@@ -105,7 +105,9 @@
             
             <div class="schedule-container">
                 {% for appointment in appointments %}
-                <div class="time-slot {% if appointment.status == 'cancelled' %}cancelled-slot{% endif %}" data-barber="{{ appointment.employee.id }}">
+                <div class="time-slot {% if appointment.status == 'cancelled' %}cancelled-slot{% elif appointment.status == 'completed' %}completed-slot{% endif %}" 
+                data-barber="{{ appointment.employee.id }}" 
+                data-status="{{ appointment.status }}">
                     <div class="time-info">
                         <div class="order">{{ forloop.counter }}</div>
                         <div class="time">{{ appointment.time|time:"H:i" }}</div>
@@ -209,14 +211,14 @@
                 {% endfor %}
             </div>
 
-            <div class="schedule-footer">
+          <div class="schedule-footer">
                 <div class="footer-stat">
-                    <span class="footer-label"><i class="fas fa-calendar-check"></i> Total de Agendamentos Hoje:</span>
-                    <span class="footer-value">{{ total_appointments|default:"0" }}</span>
+                    <span class="footer-label"><i class="fas fa-check-double"></i> Agendamentos Finalizados:</span>
+                    <span class="footer-value">{{ completed_appointments|default:"0" }}</span>
                 </div>
                 <div class="footer-stat">
-                    <span class="footer-label"><i class="fas fa-coins"></i> Faturamento Previsto Hoje:</span>
-                    <span class="footer-value total-cash">R$ {{ total_revenue|default:"0,00" }}</span>
+                    <span class="footer-label"><i class="fas fa-hand-holding-dollar"></i> Caixa Realizado:</span>
+                    <span class="footer-value total-cash">R$ {{ completed_revenue|default:"0,00" }}</span>
                 </div>
             </div>
 

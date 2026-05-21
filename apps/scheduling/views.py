@@ -123,6 +123,14 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     total_appointments = appointments.count()
     total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
 
+    # Previsão (Header) - Ignora cancelados
+    total_appointments = appointments.exclude(status='cancelled').count()
+    total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
+
+    # NOVO: Realizado (Footer) - Apenas finalizados
+    completed_appointments = appointments.filter(status='completed').count()
+    completed_revenue = sum(app.total_price for app in appointments if app.status == 'completed')
+
     clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
     catalog_services = BarberService.objects.filter(employee__unit__barbershop=barbershop).distinct()
 
@@ -130,13 +138,15 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         'barbershop': barbershop,
         'employees': employees,
         'units': units,
-        'current_unit': current_unit, # Enviamos a unidade atual para o HTML para deixar selecionada
+        'current_unit': current_unit,
         'appointments': appointments,
         'clients_list': clients_list,       
         'catalog_services': catalog_services, 
         'current_date': current_date,
         'total_appointments': total_appointments,
         'total_revenue': total_revenue,
+        'completed_appointments': completed_appointments, # NOVO
+        'completed_revenue': completed_revenue, # NOVO
         'active_tab': 'agenda',
     }
     return render(request, 'scheduling/agenda.html', context)
