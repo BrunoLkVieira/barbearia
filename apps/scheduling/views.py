@@ -4,12 +4,15 @@ from django.utils.timezone import localdate
 from datetime import datetime
 from django.http import JsonResponse
 from decimal import Decimal
+from django.contrib.auth.decorators import login_required # NOVO: Importação para bloquear página
 
 from apps.barbershop.models import Barbershop, Employee, Unit
 from apps.service.models import BarberService
 from apps.client.models import Client
 from .models import Appointment, AppointmentService
 
+# NOVO: Bloqueia o acesso para usuários anônimos
+@login_required
 def SchedulingView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
@@ -84,7 +87,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     app_service.save()
                 else:
                     AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
-                messages.success(request, "Agendamento updated com sucesso!")
+                messages.success(request, "Agendamento atualizado com sucesso!")
 
             # --- FINALIZAR SERVIÇO ---
             elif action == "complete_appointment":
@@ -98,18 +101,9 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         except Exception as e:
             messages.error(request, f"Erro ao processar ação: {str(e)}")
         
-        # -------------------------------------------------------------
-        # AQUI ESTÁ A CORREÇÃO DO BUG: PRESERVAR A DATA APÓS O REDIRECIONAMENTO
-        # -------------------------------------------------------------
-        # Captura o parâmetro de data enviado pelo input 'date' do formulário que acabou de ser executado
         target_date = request.POST.get('date')
-        
-        # Se por acaso o formulário não tiver o campo date (ex: botão finalizar rápido), pegamos da URL antiga
-        if not target_date:
-            target_date = request.GET.get('date')
-
-        if target_date:
-            return redirect(f"{request.path}?date={target_date}")
+        if not target_date: target_date = request.GET.get('date')
+        if target_date: return redirect(f"{request.path}?date={target_date}")
         return redirect(request.path)
 
     # 3. Filtros de Exibição (GET) - Data
@@ -126,7 +120,16 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         appointments_query = appointments_query.filter(unit=current_unit)
     appointments = appointments_query.order_by('time')
 
-    total_appointments = appointments.count()
+    # NOVO: Cálculo de duração dinâmica para a view
+    for app in appointments:
+        total_duration = 0
+        for app_svc in app.services.all():
+            # Busca o campo 'duration' do BarberService. Caso não exista, usa 45 min como segurança
+            duration = getattr(app_svc.service, 'duration', 45) 
+            total_duration += duration if duration else 45
+        app.total_duration_calc = total_duration
+
+    total_appointments = appointments.exclude(status='cancelled').count()
     total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
     completed_appointments = appointments.filter(status='completed').count()
     completed_revenue = sum(app.total_price for app in appointments if app.status == 'completed')
@@ -151,9 +154,11 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     }
     return render(request, 'scheduling/agenda.html', context)
 
+
 # ==========================================
 # ENDPOINTS DA API
 # ==========================================
+@login_required # NOVO: Bloqueio para a API também
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
     if not unit_id:
@@ -162,6 +167,7 @@ def get_employees_by_unit(request):
     data = [{'id': emp.id, 'name': f"{emp.user.name} {emp.user.last_name}"} for emp in employees]
     return JsonResponse({'employees': data})
 
+@login_required # NOVO: Bloqueio para a API também
 def get_services_by_employee(request):
     employee_id = request.GET.get('employee_id')
     if not employee_id:

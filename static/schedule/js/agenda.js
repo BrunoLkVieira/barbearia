@@ -2,39 +2,30 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("JS da Agenda carregado com sucesso!");
     initBarberFilter();
 
-    // 1. FILTRO DE DATA
     const dateInput = document.getElementById('agendaDateFilter');
     if (dateInput) {
         dateInput.addEventListener('change', function() {
-            // Pega apenas a url base atual (sem parâmetros) e concatena com a nova data
             const baseUrl = window.location.href.split('?')[0];
             window.location.href = `${baseUrl}?date=${this.value}`;
         });
     }
 
-    // 1.5. NOVO: FILTRO DE UNIDADE COM REDIRECIONAMENTO DE URL
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
             const unitSlug = this.value;
             const urlParams = new URLSearchParams(window.location.search);
             const dateParam = urlParams.get('date');
-            
             let newUrl = "";
             
             if (unitSlug === "geral") {
-                // Direciona pra URL limpa
                 newUrl = URL_AGENDA_GENERAL; 
             } else {
-                // Substitui "/agenda/" por "/nome-da-unidade/agenda/"
                 newUrl = URL_AGENDA_GENERAL.replace('/agenda/', `/${unitSlug}/agenda/`);
             }
-
-            // Preserva a data caso o usuário já estivesse em um dia diferente de hoje
             if (dateParam) {
                 newUrl += `?date=${dateParam}`;
             }
-            
             window.location.href = newUrl;
         });
     }
@@ -101,7 +92,6 @@ function initBarberFilter() {
     const timeSlots = document.querySelectorAll(".time-slot");
     const titleName = document.querySelector(".agenda-barber-name");
     
-    // Elementos do Footer
     const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
     const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
 
@@ -115,12 +105,12 @@ function initBarberFilter() {
             }
 
             const clickedBarberId = card.getAttribute("data-barber-id");
-            
-            // NOVO: Anota no navegador qual barbeiro está ativo!
             sessionStorage.setItem('activeBarberId', clickedBarberId);
 
             let completedCount = 0;
             let completedRevenue = 0;
+            // NOVO: Contador dinâmico visual
+            let visualOrder = 1;
 
             timeSlots.forEach(slot => {
                 const slotBarberId = slot.getAttribute("data-barber");
@@ -128,6 +118,12 @@ function initBarberFilter() {
                 
                 if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
                     slot.style.display = "";
+                    
+                    // Atualiza o texto do ".order" dinamicamente (1, 2, 3...)
+                    const orderElement = slot.querySelector('.order');
+                    if (orderElement) {
+                        orderElement.innerText = visualOrder++;
+                    }
                     
                     if (slotStatus === 'completed') {
                         completedCount++;
@@ -145,12 +141,11 @@ function initBarberFilter() {
         });
     });
 
-    // NOVO: Quando a página carregar, verifica a anotação e "clica" no barbeiro correto
     const savedBarberId = sessionStorage.getItem('activeBarberId');
     if (savedBarberId) {
         const cardToActivate = document.querySelector(`.barber-card[data-barber-id="${savedBarberId}"]`);
         if (cardToActivate) {
-            cardToActivate.click(); // Simula o clique do usuário!
+            cardToActivate.click(); 
         }
     }
 }
@@ -191,14 +186,14 @@ async function openEditAppointmentModal(btn) {
     const date = btn.getAttribute('data-date');
     const time = btn.getAttribute('data-time');
     const status = btn.getAttribute('data-status');
-    const notes = btn.getAttribute('data-notes'); // NOVO: Captura Notas
+    const notes = btn.getAttribute('data-notes');
 
     document.getElementById('editAppointmentId').value = id;
     document.getElementById('editClientSelect').value = clientId;
     document.getElementById('editAppointmentDate').value = date;
     document.getElementById('editAppointmentTime').value = time;
     document.getElementById('editStatusSelect').value = status;
-    document.getElementById('editAppointmentNotes').value = notes || ''; // NOVO: Preenche a caixa de Notas
+    document.getElementById('editAppointmentNotes').value = notes || ''; 
 
     const unitSelect = document.getElementById('editUnitSelect');
     const barberSelect = document.getElementById('editBarberSelect');
