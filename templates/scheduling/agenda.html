@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Executiva - Barbearia</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
@@ -97,7 +96,7 @@
             
             <div class="schedule-header">
                 <div>Horário</div>
-                <div>Cliente e Serviços</div>
+                <div>Cliente e Detalhes</div>
                 <div>Ações</div>
             </div>
             
@@ -114,6 +113,14 @@
                             <div class="client-name">
                                 <i class="fas fa-user"></i>
                                 {{ appointment.client.first_name }} {{ appointment.client.last_name }}
+                                
+                                {% if appointment.status == 'completed' %}
+                                    <span style="font-size: 0.75rem; background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Finalizado</span>
+                                {% elif appointment.status == 'cancelled' %}
+                                    <span style="font-size: 0.75rem; background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Cancelado</span>
+                                {% else %}
+                                    <span style="font-size: 0.75rem; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Agendado</span>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="service-details">
@@ -125,6 +132,26 @@
                                     {% endfor %}
                                 </div>
                             </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-label">Barbeiro:</div>
+                                <div class="detail-value">
+                                    <span style="background: #f0f5ff; padding: 2px 8px; border-radius: 6px; color: #2980b9; font-size: 0.85rem; font-weight: 600;">
+                                        <i class="fas fa-cut" style="margin-right: 4px;"></i> {{ appointment.employee.user.name }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <div class="detail-label">Contato:</div>
+                                <div class="detail-value">{{ appointment.client.phone }}</div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-label">Total:</div>
+                                <div class="detail-value" style="font-weight: 700; color: #27ae60;">R$ {{ appointment.total_price }}</div>
+                            </div>
+
                             <div class="detail-item">
                                 <div class="detail-label">Pagamento:</div>
                                 <div class="detail-value">
@@ -137,10 +164,15 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Contato:</div>
-                                <div class="detail-value">{{ appointment.client.phone }}</div>
+
+                            {% if appointment.notes %}
+                            <div class="detail-item" style="grid-column: span 2; margin-top: 5px;">
+                                <div class="detail-label"><i class="fas fa-sticky-note" style="color: #f39c12;"></i> Obs:</div>
+                                <div class="detail-value" style="font-style: italic; color: #7f8c8d; font-size: 0.9rem;">
+                                    {{ appointment.notes }}
+                                </div>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="client-actions">
@@ -152,7 +184,8 @@
                              data-service="{{ appointment.services.first.service.id }}"
                              data-date="{{ appointment.date|date:'Y-m-d' }}"
                              data-time="{{ appointment.time|time:'H:i' }}"
-                             data-status="{{ appointment.status }}"> 
+                             data-status="{{ appointment.status }}"
+                             data-notes="{{ appointment.notes|default:'' }}">
                             <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
@@ -187,7 +220,6 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="complete_appointment">
                 <input type="hidden" name="appointment_id" id="finishAppointmentId">
-                
                 <div class="endServiceModal-body">
                     <div class="section">
                         <div class="modal-section-title">
@@ -235,7 +267,6 @@
             <form id="appointmentForm" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_appointment">
-                
                 <div class="appointmentModal-body">
                     <div class="form-group">
                         <label for="clientSelect" class="form-label">Cliente</label>
@@ -277,6 +308,10 @@
                             <input type="time" name="time" id="appointmentTime" class="form-control" required>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="appointmentNotes" class="form-label">Observações (Opcional)</label>
+                        <textarea name="notes" id="appointmentNotes" class="form-control" rows="2" placeholder="Ex: Cliente prefere máquina 2 nas laterais..."></textarea>
+                    </div>
                 </div>
                 <div class="appointmentModal-footer">
                     <button type="button" class="btnModal btnModal-outline" onclick="closeNewAppointmentModal()">Cancelar</button>
@@ -298,7 +333,6 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_appointment">
                 <input type="hidden" name="appointment_id" id="editAppointmentId">
-                
                 <div class="appointmentModal-body">
                     <div class="form-group">
                         <label for="editClientSelect" class="form-label">Cliente</label>
@@ -340,7 +374,6 @@
                             <input type="time" name="time" id="editAppointmentTime" class="form-control" required>
                         </div>
                     </div>
-                    
                     <div class="form-group">
                         <label for="editStatusSelect" class="form-label">Status</label>
                         <select name="status" id="editStatusSelect" class="form-control" required>
@@ -349,7 +382,10 @@
                             <option value="cancelled">Cancelado</option>
                         </select>
                     </div>
-
+                    <div class="form-group">
+                        <label for="editAppointmentNotes" class="form-label">Observações (Opcional)</label>
+                        <textarea name="notes" id="editAppointmentNotes" class="form-control" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="appointmentModal-footer">
                     <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()">Cancelar</button>
