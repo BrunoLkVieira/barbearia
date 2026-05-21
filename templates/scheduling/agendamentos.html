@@ -4,95 +4,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico - Barbearia Executiva</title>
+    <title>Histórico de Agendamentos</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
-    <link rel="stylesheet" href="{% static 'product/css/desktop/history.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/agendamentos.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/novoAgendamento.css' %}">
 
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
-    <link rel="stylesheet" href="{% static 'product/css/mobile/history.css' %}">
-</head>
+    </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-icon">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
-            </div>
-            <div class="logo-content">
-                <h1>Orbly Barber</h1>
-                <p>Sistema de agendamento profissional</p>
-            </div>
-        </div>
-        <div class="date-display">
-            <i class="fas fa-calendar-alt"></i>
-            <span id="currentDate">Carregando data...</span>
-        </div>
-        <div class="user-controls">
-            <div class="user-profile" id="userProfile">
-                <div class="avatar">RM</div>
-                <div class="user-name">Raphael Matias</div>
-                <i class="fas fa-chevron-down" id="chevronIcon"></i>
-                
-                <div class="user-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-avatar">RM</div>
-                        <div class="sidebar-user-info">
-                            <span class="sidebar-name">Raphael Matias</span>
-                            <span class="sidebar-email">raphael@barbearia.com</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-menu">
-                        <a href="../0.SideBar/profile.html" class="sidebar-item">
-                            <i class="fas fa-user"></i>
-                            <span>Meu Perfil</span>
-                        </a>
-                        <a href="../../../index.html" class="sidebar-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Sair</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    {% include "geral/header.html" %}
     
     <div class="nav-bar">
-        <div class="nav-tabs">
-            <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href="../4.History/schedule.html"><div class="nav-tab active"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href="../6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
-        </div>
+        {% include "geral/nav.html" %}
         <div class="stats">
             <div class="unit-filter">
-                <select>
-                    <option>Unidade 1</option>
-                    <option>Unidade 2</option>
-                    <option>Geral</option>
+                <select id="unitSelectFilter">
+                    <option value="geral" {% if not current_unit %}selected{% endif %}>Geral</option>
+                    {% for u in units %}
+                        <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
+                            {{ u.name }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="stat-box">
-                <div class="stat-value">8</div>
-                <div class="stat-label">Planos</div>
+                <div class="stat-value">{{ total_filtered_appointments }}</div>
+                <div class="stat-label">Agendamentos</div>
             </div>
             <div class="stat-box">
-                <div class="stat-value">R$ 2.150</div>
-                <div class="stat-label">Mensal</div>
+                <div class="stat-value">R$ {{ total_filtered_revenue|floatformat:2 }}</div>
+                <div class="stat-label">Faturado (Finalizados)</div>
             </div>
         </div>
     </div>
 
-    <div class="pages-options-Container">
-        <div class="page-option active"><i class="fas fa-history"></i> Agendamentos</div>
-        <a href="productSold.html">
-            <div class="page-option"><i class="fas fa-pump-soap"></i> Vendas</div>
-        </a>
+    <div class="pages-options-Container" style="padding: 10px 20px; background: #fff; margin-bottom: 10px; border-bottom: 1px solid #eaecef;">
+        <div class="page-option active" style="color: #FF7A00; font-weight: 600; display: inline-block;">
+            <i class="fas fa-history"></i> Histórico de Agendamentos
+        </div>
     </div>
     
     <div class="main-content">
@@ -100,44 +52,53 @@
             <div class="history-top-body">
                 <div class="content-header">
                     <h2><i class="fas fa-history"></i> Histórico de Agendamentos</h2>
-                    <button class="btn btn-outline">
-                        <i class="fas fa-filter"></i> Filtrar
-                    </button>
                 </div>
                 
-                <div class="filters-container">
-                    <div class="filter-group">
-                        <label for="dateFilter">Data</label>
-                        <input type="date" id="dateFilter">
+                <form id="filterForm" method="GET">
+                    <input type="hidden" name="page" id="pageInput" value="1">
+                    <div class="filters-container">
+                        <div class="filter-group">
+                            <label for="dateFilter">Data</label>
+                            <input type="date" name="date_filter" id="dateFilter" value="{{ date_filter }}">
+                        </div>
+                        <div class="filter-group">
+                            <label for="barberFilter">Barbeiro</label>
+                            <select name="barber_filter" id="barberFilter">
+                                <option value="">Todos</option>
+                                {% for emp in employees %}
+                                    <option value="{{ emp.id }}" {% if barber_filter == emp.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ emp.user.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="serviceFilter">Serviço</label>
+                            <select name="service_filter" id="serviceFilter">
+                                <option value="">Todos os serviços</option>
+                                {% for svc in services %}
+                                    <option value="{{ svc.id }}" {% if service_filter == svc.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ svc.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="statusFilter">Status</label>
+                            <select name="status_filter" id="statusFilter">
+                                <option value="">Todos os status</option>
+                                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Realizado</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pendente</option>
+                                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn-outline" style="height: 40px; padding: 0 20px; border-radius: 8px; border: 1px solid #FF7A00; color: #FF7A00; background: #fff; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                        </div>
                     </div>
-                    <div class="filter-group">
-                        <label for="barberFilter">Barbeiro</label>
-                        <select id="serviceFilter">
-                            <option value="">Todos</option>
-                            <option value="corte">Barbeiro 1</option>
-                            <option value="barba">Barbeiro 2</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="serviceFilter">Serviço</label>
-                        <select id="serviceFilter">
-                            <option value="">Todos os serviços</option>
-                            <option value="corte">Corte Executivo</option>
-                            <option value="barba">Barba Completa</option>
-                            <option value="combo">Corte + Barba</option>
-                            <option value="hidratacao">Hidratação Capilar</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="statusFilter">Status</label>
-                        <select id="statusFilter">
-                            <option value="">Todos os status</option>
-                            <option value="completed">Realizado</option>
-                            <option value="pending">Pendente</option>
-                            <option value="cancelled">Cancelado</option>
-                        </select>
-                    </div>
-                </div>
+                </form>
             </div>
             
             <table class="history-table">
@@ -151,198 +112,186 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-
                 <tbody>
+                    {% for app in page_obj %}
                     <tr>
                         <td data-label="Cliente" class="tr-header">
                             <div class="client-cell">
-                                <div class="client-avatar">JS</div>
-                                <div>João Silva</div>
+                                <div class="client-avatar">{{ app.client.first_name|slice:":1"|upper }}{{ app.client.last_name|slice:":1"|upper }}</div>
+                                <div>{{ app.client.first_name }} {{ app.client.last_name }}</div>
                             </div>
                         </td>
                         <td data-label="Serviço">
                             <div class="service-cell">
                                 <i class="fas fa-cut"></i>
-                                <span>Corte Executivo</span>
+                                <span>
+                                    {% for svc in app.services.all %}
+                                        {{ svc.service.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                    <br><small style="color: #7f8c8d; font-size: 0.8rem;">Por: {{ app.employee.user.name }}</small>
+                                </span>
                             </div>
                         </td>
                         <td data-label="Data e Hora">
                             <div class="date-time">
-                                <div>18/07/2025</div>
-                                <div>14:30</div>
-                            </div>
-                        </td>
-                        <td data-label="Pagamento">
-                            <div class="payment-info">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Plano Mensal Premium</span>
-                            </div>
-                        </td>
-                        <td data-label="Status">
-                            <div class="status-badge status-completed">Realizado</div>
-                        </td>
-                        <td data-label="">
-                            <div class="action-cell">
-                                <div class="action-btn edit">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td data-label="Cliente" class="tr-header">
-                            <div class="client-cell">
-                                <div class="client-avatar">PO</div>
-                                <div>Pedro Oliveira</div>
-                            </div>
-                        </td>
-                        <td data-label="Serviço">
-                            <div class="service-cell">
-                                <i class="fas fa-scissors"></i>
-                                <span>Barba Completa</span>
-                            </div>
-                        </td>
-                        <td data-label="Data e Hora">
-                            <div class="date-time">
-                                <div>17/07/2025</div>
-                                <div>16:15</div>
+                                <div>{{ app.date|date:"d/m/Y" }}</div>
+                                <div>{{ app.time|time:"H:i" }}</div>
                             </div>
                         </td>
                         <td data-label="Pagamento">
                             <div class="payment-info">
                                 <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ 40,00</span>
+                                <span>R$ {{ app.total_price }}</span>
                             </div>
                         </td>
                         <td data-label="Status">
-                            <div class="status-badge status-completed">Realizado</div>
+                            {% if app.status == 'completed' %}
+                                <div class="status-badge status-completed">Realizado</div>
+                            {% elif app.status == 'cancelled' %}
+                                <div class="status-badge status-cancelled">Cancelado</div>
+                            {% else %}
+                                <div class="status-badge status-pending">Pendente</div>
+                            {% endif %}
                         </td>
                         <td data-label="Ações">
                             <div class="action-cell">
-                                <div class="action-btn edit">
+                                <div class="action-btn edit" onclick="openEditAppointmentModal(this)"
+                                     data-id="{{ app.id }}"
+                                     data-client="{{ app.client.id }}"
+                                     data-unit="{{ app.unit.id }}"
+                                     data-barber="{{ app.employee.id }}"
+                                     data-service="{{ app.services.first.service.id }}"
+                                     data-date="{{ app.date|date:'Y-m-d' }}"
+                                     data-time="{{ app.time|time:'H:i' }}"
+                                     data-status="{{ app.status }}"
+                                     data-notes="{{ app.notes|default:'' }}">
                                     <i class="fas fa-edit"></i>
                                 </div>
-                                <div class="action-btn delete">
-                                    <i class="fas fa-trash"></i>
-                                </div>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este agendamento do histórico?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_appointment">
+                                    <input type="hidden" name="appointment_id" value="{{ app.id }}">
+                                    <button type="submit" class="action-btn delete" style="border: none; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
-
+                    {% empty %}
                     <tr>
-                        <td data-label="Cliente" class="tr-header">
-                            <div class="client-cell">
-                                <div class="client-avatar">CS</div>
-                                <div>Carlos Santos</div>
-                            </div>
-                        </td>
-                        <td data-label="Serviço">
-                            <div class="service-cell">
-                                <i class="fas fa-cut"></i>
-                                <span>Corte + Barba</span>
-                            </div>
-                        </td>
-                        <td data-label="Data e Hora">
-                            <div class="date-time">
-                                <div>16/07/2025</div>
-                                <div>11:00</div>
-                            </div>
-                        </td>
-                        <td data-label="Pagamento">
-                            <div class="payment-info">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ 85,00</span>
-                            </div>
-                        </td>
-                        <td data-label="Status">
-                            <div class="status-badge status-cancelled">Cancelado</div>
-                        </td>
-                        <td data-label="Ações">
-                            <div class="action-cell">
-                                <div class="action-btn edit">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: #7f8c8d;">
+                            <i class="fas fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Nenhum agendamento encontrado no histórico.
                         </td>
                     </tr>
-
-                    <tr>
-                        <td data-label="Cliente" class="tr-header">
-                            <div class="client-cell">
-                                <div class="client-avatar">MF</div>
-                                <div>Marcos Ferreira</div>
-                            </div>
-                        </td>
-                        <td data-label="Serviço">
-                            <div class="service-cell">
-                                <i class="fas fa-spa"></i>
-                                <span>Hidratação Capilar</span>
-                            </div>
-                        </td>
-                        <td data-label="Data e Hora">
-                            <div class="date-time">
-                                <div>15/07/2025</div>
-                                <div>17:45</div>
-                            </div>
-                        </td>
-                        <td data-label="Pagamento">
-                            <div class="payment-info">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Plano Trimestral</span>
-                            </div>
-                        </td>
-                        <td data-label="Status">
-                            <div class="status-badge status-pending">Pendente</div>
-                        </td>
-                        <td data-label="Ações">
-                            <div class="action-cell">
-                                <div class="action-btn edit">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <div class="action-btn delete">
-                                    <i class="fas fa-trash"></i>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
             
+            {% if page_obj.has_other_pages %}
+            <div class="pagination-wrapper" style="display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #eaecef; margin-top: 15px;">
+                <div class="pagination" style="display: flex; gap: 5px;">
+                    {% if page_obj.has_previous %}
+                        <button class="pagination-btn" onclick="changePage({{ page_obj.previous_page_number }})">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}" onclick="changePage({{ num }})">
+                            {{ num }}
+                        </button>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <button class="pagination-btn" onclick="changePage({{ page_obj.next_page_number }})">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <footer>
-        <div class="mobile-footer">
-            <div class="total-display">
-                <div class="footer-first-row-one-item">
-                    Total de produtos vendidos: <strong>45</strong>
+    <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="appointmentModal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%;">
+            <div class="appointmentModal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
+                <h2><i class="fas fa-edit" style="color: #FF7A00;"></i> Editar Agendamento</h2>
+                <button type="button" class="close-btn" onclick="closeEditModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editAppointmentForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_appointment">
+                <input type="hidden" name="appointment_id" id="editAppointmentId">
+                <div class="appointmentModal-body">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Cliente</label>
+                        <select name="client_id" id="editClientSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            {% for client in clients_list %}
+                                <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Unidade</label>
+                        <select id="editUnitSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <option value="">Selecione uma unidade...</option>
+                            {% for u in units %}
+                                <option value="{{ u.id }}">{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Barbeiro</label>
+                        <select name="employee_id" id="editBarberSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Serviço</label>
+                        <select name="service_id" id="editServiceSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        </select>
+                    </div>
+                    <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px;">Data</label>
+                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px;">Hora</label>
+                            <input type="time" name="time" id="editAppointmentTime" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Status</label>
+                        <select name="status" id="editStatusSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <option value="scheduled">Agendado</option>
+                            <option value="completed">Finalizado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px;">Observações</label>
+                        <textarea name="notes" id="editAppointmentNotes" class="form-control" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;"></textarea>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="pagination">
-                <button class="pagination-btn">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
-                <button class="pagination-btn">4</button>
-                <button class="pagination-btn">5</button>
-                <button class="pagination-btn">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-    </footer>
-    
-    <script src="{% static 'schedule/js/agendamento.js' %}"></script>
+                <div class="appointmentModal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()" style="padding: 10px 20px; border: 1px solid #ccc; background: transparent; border-radius: 6px; cursor: pointer;">Cancelar</button>
+                    <button type="submit" class="btnModal btnModal-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>        
+    </div>
+
+    <script>
+        const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
+        const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
+        const URL_HISTORY_GENERAL = "{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}";
+    </script>
+    <script src="{% static 'schedule/js/agendamentos.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
 </body>
 </html>
