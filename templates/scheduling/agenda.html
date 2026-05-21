@@ -30,9 +30,12 @@
         <div class="stats">
             <div class="unit-filter">
                 <select id="unitSelectFilter">
-                    <option value="geral">Geral</option>
+                    <option value="geral" {% if not current_unit %}selected{% endif %}>Geral</option>
+                    
                     {% for u in units %}
-                        <option value="{{ u.slug }}">{{ u.name }}</option>
+                        <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
+                            {{ u.name }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
@@ -410,6 +413,7 @@
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
         const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
+        const URL_AGENDA_GENERAL = "{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}";
     </script>
     <script src="{% static 'schedule/js/agenda.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
