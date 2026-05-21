@@ -58,7 +58,7 @@ def SchedulingView(request, barbershop_slug):
                 service_id = request.POST.get('service_id')
                 date_str = request.POST.get('date')
                 time_str = request.POST.get('time')
-                status_val = request.POST.get('status') # NOVO: Captura o status
+                status_val = request.POST.get('status')
 
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
                 emp = get_object_or_404(Employee, id=employee_id)
@@ -71,15 +71,17 @@ def SchedulingView(request, barbershop_slug):
                 appointment.date = date_str
                 appointment.time = time_str
                 appointment.total_price = svc.price
-                appointment.status = status_val # NOVO: Salva o status atualizado
+                appointment.status = status_val
                 
-                # Regra de segurança: Se o status não for mais "finalizado", marcamos como "não pago"
-                if status_val != 'completed':
+                # CORREÇÃO DE LÓGICA: Se mudar o status no editar, garante a integridade do "is_paid"
+                if status_val == 'completed':
+                    appointment.is_paid = True
+                elif status_val == 'cancelled' or status_val == 'scheduled':
                     appointment.is_paid = False
 
                 appointment.save()
 
-                # Atualiza o serviço associado
+                # Atualiza o serviço associado (Assumindo 1 serviço por formulário)
                 app_service = appointment.services.first()
                 if app_service:
                     app_service.service = svc
@@ -101,6 +103,8 @@ def SchedulingView(request, barbershop_slug):
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
                 appointment.status = 'completed'
                 appointment.is_paid = True
+                # Se houver campo para salvar método de pagamento, faria aqui:
+                # appointment.payment_type = payment_type 
                 appointment.save()
                 messages.success(request, "Serviço finalizado e caixa atualizado!")
 
@@ -109,7 +113,7 @@ def SchedulingView(request, barbershop_slug):
         
         return redirect(request.path)
 
-    # 3. Filtros de Exibição (GET)
+    # 3. Filtros de Exibição (GET) - Data e Unidade
     date_param = request.GET.get('date')
     if date_param:
         try:
@@ -119,13 +123,15 @@ def SchedulingView(request, barbershop_slug):
     else:
         current_date = localdate()
 
+    # Busca os agendamentos do dia para esta barbearia
     appointments = Appointment.objects.filter(
         barbershop=barbershop,
         date=current_date
     ).order_by('time')
 
     total_appointments = appointments.count()
-    total_revenue = sum(app.total_price for app in appointments)
+    # Soma apenas faturamento de agendamentos que não estão cancelados
+    total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
 
     clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
     catalog_services = BarberService.objects.filter(employee__unit__barbershop=barbershop).distinct()
@@ -143,7 +149,6 @@ def SchedulingView(request, barbershop_slug):
         'active_tab': 'agenda',
     }
     return render(request, 'scheduling/agenda.html', context)
-
 
 # ==========================================
 # ENDPOINTS DA API

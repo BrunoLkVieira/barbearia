@@ -103,7 +103,7 @@
             
             <div class="schedule-container">
                 {% for appointment in appointments %}
-                <div class="time-slot" data-barber="{{ appointment.employee.id }}">
+                <div class="time-slot {% if appointment.status == 'cancelled' %}cancelled-slot{% endif %}" data-barber="{{ appointment.employee.id }}">
                     <div class="time-info">
                         <div class="order">{{ forloop.counter }}</div>
                         <div class="time">{{ appointment.time|time:"H:i" }}</div>
@@ -128,7 +128,9 @@
                             <div class="detail-item">
                                 <div class="detail-label">Pagamento:</div>
                                 <div class="detail-value">
-                                    {% if appointment.is_paid %}
+                                    {% if appointment.status == 'cancelled' %}
+                                        <span class="payment-status not-paid">Cancelado</span>
+                                    {% elif appointment.is_paid %}
                                         <span class="payment-status paid">Pago</span>
                                     {% else %}
                                         <span class="payment-status pending">Pendente</span>
@@ -150,11 +152,12 @@
                              data-service="{{ appointment.services.first.service.id }}"
                              data-date="{{ appointment.date|date:'Y-m-d' }}"
                              data-time="{{ appointment.time|time:'H:i' }}"
-                             data-status="{{ appointment.status }}"> <i class="fas fa-edit"></i>
+                             data-status="{{ appointment.status }}"> 
+                            <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
 
-                        {% if not appointment.is_paid and appointment.status != 'completed' %}
+                        {% if not appointment.is_paid and appointment.status != 'completed' and appointment.status != 'cancelled' %}
                         <div class="action-btn finish-btn" onclick="openFinishModal('{{ appointment.id }}', '{{ appointment.client.first_name }} {{ appointment.client.last_name }}')">
                             <i class="fas fa-check-circle"></i>
                             <span>Finalizar</span>
