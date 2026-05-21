@@ -205,6 +205,18 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <div class="schedule-footer">
+                <div class="footer-stat">
+                    <span class="footer-label"><i class="fas fa-calendar-check"></i> Total de Agendamentos Hoje:</span>
+                    <span class="footer-value">{{ total_appointments|default:"0" }}</span>
+                </div>
+                <div class="footer-stat">
+                    <span class="footer-label"><i class="fas fa-coins"></i> Faturamento Previsto Hoje:</span>
+                    <span class="footer-value total-cash">R$ {{ total_revenue|default:"0,00" }}</span>
+                </div>
+            </div>
+
         </div>
     </div>
 

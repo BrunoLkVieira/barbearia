@@ -70,23 +70,47 @@ function initBarberFilter() {
     const barberCards = document.querySelectorAll(".barber-card");
     const timeSlots = document.querySelectorAll(".time-slot");
     const titleName = document.querySelector(".agenda-barber-name");
+    
+    // Elementos do Footer para atualização dinâmica
+    const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
+    const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
 
     barberCards.forEach(card => {
         card.addEventListener("click", () => {
             barberCards.forEach(c => c.classList.remove("active"));
             card.classList.add("active");
+            
             if (titleName) {
                 titleName.innerText = card.querySelector(".barber-name").innerText;
             }
+
             const clickedBarberId = card.getAttribute("data-barber-id");
+            let count = 0;
+            let revenue = 0;
+
             timeSlots.forEach(slot => {
                 const slotBarberId = slot.getAttribute("data-barber");
+                
+                // Verifica se o slot deve aparecer
                 if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
                     slot.style.display = "";
+                    
+                    // Soma valores apenas se não estiver cancelado
+                    if (!slot.classList.contains('cancelled-slot')) {
+                        count++;
+                        // Extrai o valor do texto do card (R$ 00,00)
+                        const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]').innerText;
+                        const price = parseFloat(priceText.replace('R$ ', '').replace(',', '.'));
+                        revenue += price;
+                    }
                 } else {
                     slot.style.display = "none";
                 }
             });
+
+            // Atualiza o Footer
+            if (totalCountEl) totalCountEl.innerText = count;
+            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${revenue.toFixed(2).replace('.', ',')}`;
         });
     });
 }
