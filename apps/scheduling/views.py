@@ -158,7 +158,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     return render(request, 'scheduling/agenda.html', context)
 
 
-
 @login_required
 def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
@@ -227,7 +226,6 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         except Exception as e:
             messages.error(request, f"Erro ao processar ação: {str(e)}")
         
-        # Preserva os filtros na URL ao recarregar a página
         query_string = request.GET.urlencode()
         redirect_url = request.path
         if query_string:
@@ -235,15 +233,24 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         return redirect(redirect_url)
 
     # ---------------------------------------------
-    # LÓGICA DOS FILTROS (GET)
+    # LÓGICA DOS FILTROS (GET) - INCLUINDO MÊS
     # ---------------------------------------------
     date_filter = request.GET.get('date_filter', '')
+    month_filter = request.GET.get('month_filter', '')
     barber_filter = request.GET.get('barber_filter', '')
     service_filter = request.GET.get('service_filter', '')
     status_filter = request.GET.get('status_filter', '')
 
+    # Se tiver data específica, ignora o mês. Se não tiver data, mas tiver mês, filtra pelo mês.
     if date_filter:
         appointments_query = appointments_query.filter(date=date_filter)
+    elif month_filter:
+        try:
+            year, month = month_filter.split('-')
+            appointments_query = appointments_query.filter(date__year=year, date__month=month)
+        except ValueError:
+            pass
+
     if barber_filter:
         appointments_query = appointments_query.filter(employee_id=barber_filter)
     if service_filter:
@@ -254,7 +261,6 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     # Ordenação Decrescente
     appointments_query = appointments_query.order_by('-date', '-time').distinct()
 
-    # Cálculos Estatísticos baseados no Filtro
     total_filtered_appointments = appointments_query.exclude(status='cancelled').count()
     total_filtered_revenue = sum(app.total_price for app in appointments_query if app.status == 'completed')
 
@@ -273,14 +279,14 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         'page_obj': page_obj,
         'total_filtered_appointments': total_filtered_appointments,
         'total_filtered_revenue': total_filtered_revenue,
-        'active_tab': 'history',
+        'active_tab': 'history', # Isso acende a aba do header
         'date_filter': date_filter,
+        'month_filter': month_filter, # Variável enviada pro HTML
         'barber_filter': barber_filter,
         'service_filter': service_filter,
         'status_filter': status_filter,
     }
     return render(request, 'scheduling/agendamentos.html', context)
-
 
 
 # ==========================================

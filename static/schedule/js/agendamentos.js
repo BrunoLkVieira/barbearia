@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("JS do Histórico de Agendamentos carregado!");
 
-    // Redirecionamento da Unidade (Geral / Específica)
+    // 1. Redirecionamento da Unidade Global
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Modal de Edição - Filtros Dependentes (Unidade -> Barbeiro -> Serviço)
+    // 2. Eventos do Modal de Edição (Cascata)
     const editUnitSelect = document.getElementById('editUnitSelect');
     const editBarberSelect = document.getElementById('editBarberSelect');
     const editServiceSelect = document.getElementById('editServiceSelect');
@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Executado ao clicar nas páginas (1, 2, 3...) enviando os filtros de pesquisa junto!
+// FUNÇÃO PARA PAGINAÇÃO (Mantém os filtros da barra superior)
 function changePage(pageNum) {
     document.getElementById('pageInput').value = pageNum;
     document.getElementById('filterForm').submit();
 }
 
-// Funções do Modal de Edição (Busca na API)
+// Funções do Modal de Edição (API)
 async function loadBarbers(unitId, barberSel, serviceSel) {
     resetSelects([barberSel, serviceSel]);
     if (!unitId) return;
@@ -94,7 +94,6 @@ async function openEditAppointmentModal(btn) {
 
     unitSelect.value = unitId;
 
-    // Aguarda a resposta da API antes de preencher os valores selecionados
     await loadBarbers(unitId, barberSelect, serviceSelect);
     barberSelect.value = barberId;
 
@@ -119,7 +118,6 @@ function resetSelects(elements) {
         el.disabled = true;
     });
 }
-
 function populateSelect(selectEl, items, placeholder) {
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     items.forEach(item => {
