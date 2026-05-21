@@ -256,7 +256,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     if service_filter:
         appointments_query = appointments_query.filter(services__service_id=service_filter)
     if status_filter:
-        appointments_query = appointments_query.filter(status=status_filter)
+        # Se for 'pending', buscamos 'scheduled' no banco de dados
+        db_status = 'scheduled' if status_filter == 'pending' else status_filter
+        appointments_query = appointments_query.filter(status=db_status)
 
     # Ordenação Decrescente
     appointments_query = appointments_query.order_by('-date', '-time').distinct()
