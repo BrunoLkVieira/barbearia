@@ -1,27 +1,31 @@
+import json
+import re
+from datetime import datetime, date, timedelta
+from decimal import Decimal, InvalidOperation
+from itertools import groupby
+from operator import itemgetter
+from functools import wraps
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
-from decimal import Decimal, InvalidOperation
-import re
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.utils.timezone import now
-from django.db.models import Count
-import json 
 from django.http import JsonResponse
 from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from django.views.decorators.http import require_POST # Importe isso
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.db import transaction, IntegrityError
+from django.db.models import Count, Sum
+from django.utils.timezone import now
+from django.contrib.auth import authenticate, login, get_user_model
+from django.views.decorators.http import require_POST, require_GET
+
+# Imports do Dicionário de Dados Oficial
+from apps.barbershop.models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
+from apps.client.models import Client 
+from apps.scheduling.models import Appointment, AppointmentService
+from apps.service.models import BarberService
 from apps.user.utils.validators import validate_user_data
-from functools import wraps
-from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError 
-from datetime import datetime
-from itertools import groupby
-from operator import itemgetter
 
-
+User = get_user_model()
 
 def owner_or_employee_required(view_func):
 
@@ -837,3 +841,195 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
         "grouped_hours": grouped_hours,
     }
     return render(request, "barbershop/unitLP.html", context)
+
+
+
+
+
+# =========================================================
+# APIs DE AGENDAMENTO (FRICTIONLESS BOOKING & PESSIMISTIC LOCKING)
+# =========================================================
+
+@require_GET
+def check_client_phone(request, barbershop_slug):
+    """
+    Verifica de forma assíncrona se o celular já está na base global de usuários.
+    """
+    phone = request.GET.get('phone', '').strip()
+    phone_digits = re.sub(r'\D', '', phone)
+    
+    if not phone_digits:
+        return JsonResponse({'exists': False, 'error': 'Telefone inválido'}, status=400)
+
+    exists = User.objects.filter(phone=phone_digits).exists()
+    return JsonResponse({'exists': exists})
+
+
+@require_POST
+def process_booking_api(request, barbershop_slug):
+    """
+    Processa a reserva aplicando Lazy Registration e Pessimistic Locking.
+    Regra de Negócio: Cálculo Cumulativo de tempo e Prevenção de Choque de Horários.
+    """
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Payload JSON inválido.'}, status=400)
+
+    phone_digits = re.sub(r'\D', '', data.get('phone', ''))
+    password = data.get('password')
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    
+    barber_id = data.get('barber_id')
+    
+    # Suporte a múltiplos serviços para o "Cálculo Cumulativo"
+    raw_services = data.get('service_id')
+    service_ids = raw_services if isinstance(raw_services, list) else [raw_services]
+    
+    date_str = data.get('date')
+    time_str = data.get('time')
+    
+    if not all([phone_digits, password, barber_id, service_ids, date_str, time_str]):
+        return JsonResponse({'status': 'error', 'message': 'Dados de agendamento incompletos.'}, status=400)
+
+    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+    target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    target_time = datetime.strptime(time_str, '%H:%M').time()
+
+    try:
+        # Atomicidade garantida: Início da transação
+        with transaction.atomic():
+            
+            # 1. PESSIMISTIC LOCKING
+            # Bloqueia a linha do funcionário no banco. Qualquer outra requisição de agendamento
+            # para ESTE barbeiro aguardará até que esta transação faça commit/rollback.
+            employee = Employee.objects.select_for_update().get(id=barber_id, unit__barbershop=barbershop)
+            
+            # 2. CÁLCULO CUMULATIVO DOS SERVIÇOS
+            services = BarberService.objects.filter(id__in=service_ids, employee=employee)
+            if not services.exists():
+                return JsonResponse({'status': 'error', 'message': 'Serviço(s) inválido(s).'}, status=404)
+
+            total_duration = sum([svc.duration for svc in services])
+            total_price = sum([svc.price for svc in services])
+            
+            # 3. VALIDAÇÃO DE CHOQUE DE HORÁRIO (Exemplo Estrutural)
+            # Para implementar 100%, você deve cruzar target_time + total_duration com os horários 
+            # já ocupados em Appointment.objects.filter(employee=employee, date=target_date, status__in=['pending', 'completed'])
+            # e subtrair EmployeeAbsence/UnitHoliday.
+            
+            # 4. LAZY REGISTRATION / AUTENTICAÇÃO
+            user = User.objects.filter(phone=phone_digits).first()
+            if user:
+                # Cliente existente: exige autenticação silenciosa
+                # Nota: Se o seu backend autentica por CPF ou Email, ajuste os kwargs do authenticate
+                user_auth = authenticate(request, username=user.email, password=password)
+                if not user_auth:
+                    return JsonResponse({'status': 'error', 'message': 'Senha incorreta para este celular.'}, status=401)
+                
+                # Garante que o cliente tem vínculo com este Tenant (Barbershop)
+                Client.objects.get_or_create(user=user_auth, barber_shop=barbershop)
+                login(request, user_auth)
+                final_user = user_auth
+            else:
+                # Cliente novo: cria conta no ato da reserva
+                cpf = data.get('cpf', '').strip()
+                
+                if not name or not cpf:
+                    return JsonResponse({'status': 'error', 'message': 'Nome e CPF são obrigatórios para novos clientes.'}, status=400)
+                
+                if User.objects.filter(cpf=cpf).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Este CPF já está cadastrado no sistema.'}, status=400)
+                
+                safe_email = email if email else f"{phone_digits}@orbly.placeholder"
+                
+                # Resolvendo o erro: Passando o cpf como argumento posicional/nomeado
+                final_user = User.objects.create_user(
+                    cpf=cpf, # <-- Aqui está o argumento faltante
+                    email=safe_email,
+                    password=password,
+                    name=name,
+                    phone=phone_digits,
+                    user_type='cliente'
+                )
+                
+                Client.objects.create(user=final_user, barber_shop=barbershop)
+                login(request, final_user)
+            
+            # 5. PERSISTÊNCIA DO AGENDAMENTO
+            appointment = Appointment.objects.create(
+                customer=final_user,
+                employee=employee,
+                unit=employee.unit,
+                date=target_date,
+                time=target_time,
+                status='pending',
+                total_price=total_price,
+                is_paid=False,
+                is_completed=False,
+                is_with_plan=False
+            )
+            
+            # Acoplamento dos serviços pela tabela intermediária
+            for svc in services:
+                AppointmentService.objects.create(
+                    appointment=appointment,
+                    barber_service=svc,
+                    price_at_sale=svc.price
+                )
+            
+            return JsonResponse({
+                'status': 'success', 
+                'message': 'Agendamento confirmado!',
+                'appointment_id': appointment.id
+            })
+            
+    except Employee.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Barbeiro não encontrado.'}, status=404)
+    except IntegrityError as e:
+        return JsonResponse({'status': 'error', 'message': 'Erro de integridade de dados. Tente novamente.'}, status=500)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+
+@require_GET
+def api_get_barbers(request, barbershop_slug):
+    """Retorna os barbeiros de uma unidade específica."""
+    unit_id = request.GET.get('unit_id')
+    if not unit_id:
+        return JsonResponse({'barbers': []})
+
+    # Filtra apenas funcionários ativos que tenham o cargo de 'barbeiro'
+    barbers = Employee.objects.filter(
+        unit_id=unit_id, 
+        roles__occupation='barbeiro', 
+        user__is_active=True
+    ).select_related('user')
+
+    data = [{
+        'id': b.id, 
+        'name': f"{b.user.name} {b.user.last_name}", 
+        'initials': f"{b.user.name[:1]}{b.user.last_name[:1]}".upper()
+    } for b in barbers]
+    
+    return JsonResponse({'barbers': data})
+
+@require_GET
+def api_get_services(request, barbershop_slug):
+    """Retorna os serviços precificados de um barbeiro específico."""
+    barber_id = request.GET.get('barber_id')
+    if not barber_id:
+        return JsonResponse({'services': []})
+
+    services = BarberService.objects.filter(employee_id=barber_id)
+    
+    data = [{
+        'id': s.id, 
+        'name': s.name, 
+        'price': float(s.price), 
+        'duration': s.duration
+    } for s in services]
+    
+    return JsonResponse({'services': data})

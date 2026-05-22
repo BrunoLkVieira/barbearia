@@ -418,67 +418,31 @@
                     <div class="form-group">
                         <label for="locationSelect">Barbearia/Unidade</label>
                         <select id="locationSelect" required>
-                            <option value="none">Selecione uma Unidade</option>
-                            <option value="tribobo">Tribobó - São Gonçalo</option>
-                            <option value="centro">Centro - São Gonçalo</option>
+                            <option value="">Selecione uma Unidade</option>
+                            {% for u in units %}
+                                <option value="{{ u.id }}">{{ u.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
-                    <!-- <label>
-                        <input type="checkbox" id="acceptPolicy" required> Usar Seu Plano ?
-                    </label> -->
                 </div>
                 
                 <div id="stepBarber" class="step-content">
                     <h3 class="barber-selection-title">Escolha seu barbeiro</h3>
-                    <div class="barber-grid">
-                        <div class="barber-card">
-                            <div class="barber-info">
-                                <div class="employee-avatar">
-                                    JS
-                                </div>
-                                <h4>Joao Santos</h4>
-                            </div>
-                            <button class="select-barber-btn" data-id="${barber.id}">
-                                <i class="fas fa-check"></i> Selecionar
-                            </button>
-                        </div>
-
-                        <div class="barber-card">
-                            <div class="barber-info">
-                                <div class="employee-avatar">
-                                    JS
-                                </div>
-                                <h4>Joao Santos</h4>
-                            </div>
-                            <button class="select-barber-btn" data-id="${barber.id}">
-                                <i class="fas fa-check"></i> Selecionar
-                            </button>
-                        </div>
-
-                        <div class="barber-card">
-                            <div class="barber-info">
-                                <div class="employee-avatar">
-                                    JS
-                                </div>
-                                <h4>Joao Santos</h4>
-                            </div>
-                            <button class="select-barber-btn" data-id="${barber.id}">
-                                <i class="fas fa-check"></i> Selecionar
-                            </button>
-                        </div>
+                    <div class="barber-grid" id="dynamicBarberGrid">
+                        <!-- Preenchido via JS (Fetch API) -->
+                        <p style="text-align: center; color: #7f8c8d; width: 100%;">Selecione uma unidade primeiro.</p>
                     </div>
-                    <select id="barberSelect" style="display: none;" required></select>
+                    <input type="hidden" id="barberSelect" required>
                 </div>
                 
                 <div id="stepService" class="step-content">
                     <div class="form-group">
-                        <label for="serviceSelect">Serviço</label>
-                        <select id="serviceSelect" required>
-                            <option value="none">Selecione um Servico</option>
-                            <option value="corte">Corte de Cabelo', 49.90</option>
-                            <option value="barba">Design de Barba', 35.00</option>
-                            <option value="completp">Corte + Barba', 79.90</option>
+                        <label for="serviceSelect">Serviços Disponíveis</label>
+                        <!-- multiple permite o Cálculo Cumulativo futuro -->
+                        <select id="serviceSelect" multiple required style="height: 120px;">
+                            <option value="" disabled>Selecione um barbeiro primeiro</option>
                         </select>
+                        <small style="color: #7f8c8d; font-size: 0.8rem;">Pressione Ctrl (ou Cmd) para selecionar mais de um serviço.</small>
                     </div>
                 </div>
                 
@@ -493,6 +457,7 @@
                     </div>
                 </div>
                 
+                <!-- Módulo de Confirmação e Identificação -->
                 <div id="stepConfirm" class="step-content">
                     <h3>Resumo do Agendamento</h3>
                     <div class="appointment-summary">
@@ -502,14 +467,46 @@
                         <p><strong>Data e Hora:</strong> <span id="summaryDatetime"></span></p>
                     </div>
                     
-                    <div class="cancellation-policy">
+                    <div class="auth-booking-section" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+                        <h4 style="margin-bottom: 15px; color: #2c3e50;">Identificação Rápida</h4>
+                        
+                        <div class="form-group">
+                            <label for="bookingPhone">Celular (WhatsApp) *</label>
+                            <input type="tel" id="bookingPhone" placeholder="(21) 99999-9999" required maxlength="15" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px;">Usaremos para enviar o lembrete da sua reserva.</small>
+                        </div>
+
+                        <!-- Hidden by default -->
+                        <div id="newClientFields" style="display: none; animation: fadeIn 0.3s ease;">
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label for="bookingCpf">CPF *</label>
+                                <input type="text" id="bookingCpf" placeholder="Apenas números" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            </div>
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label for="bookingName">Nome Completo *</label>
+                                <input type="text" id="bookingName" placeholder="Como devemos te chamar?" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            </div>
+                            <div class="form-group" style="margin-top: 10px;">
+                                <label for="bookingEmail">E-mail (Opcional)</label>
+                                <input type="email" id="bookingEmail" placeholder="Para receber os recibos" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            </div>
+                        </div>
+
+                        <!-- Hidden by default -->
+                        <div id="passwordField" class="form-group password-container" style="display: none; margin-top: 10px; animation: fadeIn 0.3s ease;">
+                            <label for="bookingPassword" id="passwordLabel">Senha *</label>
+                            <input type="password" id="bookingPassword" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        </div>
+                    </div>
+                    
+                    <div class="cancellation-policy" style="margin-top: 20px;">
                         <h4>Política de Cancelamento:</h4>
-                        <ul>
-                            <li>Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência</li>
-                            <li>Faltas sem aviso prévio podem resultar em cobrança</li>
-                            <li>Para alterações, entre em contato com pelo menos 6 horas de antecedência</li>
+                        <ul style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px; padding-left: 20px;">
+                            <li>Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência.</li>
+                            <li>Faltas sem aviso prévio podem resultar em cobrança.</li>
+                            <li>Para alterações, entre em contato com antecedência.</li>
                         </ul>
-                        <label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
                             <input type="checkbox" id="acceptPolicy" required> Eu li e concordo com as políticas
                         </label>
                     </div>
