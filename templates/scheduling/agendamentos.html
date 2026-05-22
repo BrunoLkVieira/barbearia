@@ -106,93 +106,95 @@
                 </form>
             </div>
             
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Serviço</th>
-                        <th>Data e Hora</th>
-                        <th>Pagamento</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for app in page_obj %}
-                    <tr>
-                        <td data-label="Cliente" class="tr-header">
-                            <div class="client-cell">
-                                <div class="client-avatar">{{ app.client.first_name|slice:":1"|upper }}{{ app.client.last_name|slice:":1"|upper }}</div>
-                                <div>{{ app.client.first_name }} {{ app.client.last_name }}</div>
-                            </div>
-                        </td>
-                        <td data-label="Serviço">
-                            <div class="service-cell">
-                                <i class="fas fa-cut"></i>
-                                <span>
-                                    {% for svc in app.services.all %}
-                                        {{ svc.service.name }}{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
-                                    <br><small style="color: #7f8c8d; font-size: 0.8rem;">Com: {{ app.employee.user.name }}</small>
-                                </span>
-                            </div>
-                        </td>
-                        <td data-label="Data e Hora">
-                            <div class="date-time">
-                                <div>{{ app.date|date:"d/m/Y" }}</div>
-                                <div>{{ app.time|time:"H:i" }}</div>
-                            </div>
-                        </td>
-                        <td data-label="Pagamento">
-                            <div class="payment-info">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>R$ {{ app.total_price }}</span>
-                            </div>
-                        </td>
-                        <td data-label="Status">
-                            {% if app.status == 'completed' %}
-                                <div class="status-badge status-completed">Realizado</div>
-                            {% elif app.status == 'cancelled' %}
-                                <div class="status-badge status-cancelled">Cancelado</div>
-                            {% else %}
-                                <div class="status-badge status-pending">Pendente</div>
-                            {% endif %}
-                        </td>
-                        <td data-label="Ações">
-                            <div class="action-cell">
-                                <div class="action-btn edit" onclick="openEditAppointmentModal(this)"
-                                     data-id="{{ app.id }}"
-                                     data-client="{{ app.client.id }}"
-                                     data-unit="{{ app.unit.id }}"
-                                     data-barber="{{ app.employee.id }}"
-                                     data-service="{{ app.services.first.service.id }}"
-                                     data-date="{{ app.date|date:'Y-m-d' }}"
-                                     data-time="{{ app.time|time:'H:i' }}"
-                                     data-status="{{ app.status }}"
-                                     data-notes="{{ app.notes|default:'' }}">
-                                    <i class="fas fa-edit"></i>
+            <div class="table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Data e Hora</th>
+                            <th>Pagamento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in page_obj %}
+                        <tr>
+                            <td data-label="Cliente" class="tr-header">
+                                <div class="client-cell">
+                                    <div class="client-avatar">{{ app.client.first_name|slice:":1"|upper }}{{ app.client.last_name|slice:":1"|upper }}</div>
+                                    <div>{{ app.client.first_name }} {{ app.client.last_name }}</div>
                                 </div>
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este agendamento do histórico?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete_appointment">
-                                    <input type="hidden" name="appointment_id" value="{{ app.id }}">
-                                    <button type="submit" class="action-btn delete" style="border: none; background: transparent;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px; color: #7f8c8d;">
-                            <i class="fas fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                            Nenhum agendamento encontrado no histórico.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td data-label="Serviço">
+                                <div class="service-cell">
+                                    <i class="fas fa-cut"></i>
+                                    <span>
+                                        {% for svc in app.services.all %}
+                                            {{ svc.service.name }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                        <br><small style="color: #7f8c8d; font-size: 0.8rem;">Com: {{ app.employee.user.name }}</small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="Data e Hora">
+                                <div class="date-time">
+                                    <div>{{ app.date|date:"d/m/Y" }}</div>
+                                    <div>{{ app.time|time:"H:i" }}</div>
+                                </div>
+                            </td>
+                            <td data-label="Pagamento">
+                                <div class="payment-info">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>R$ {{ app.total_price }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Status">
+                                {% if app.status == 'completed' %}
+                                    <div class="status-badge status-completed">Realizado</div>
+                                {% elif app.status == 'cancelled' %}
+                                    <div class="status-badge status-cancelled">Cancelado</div>
+                                {% else %}
+                                    <div class="status-badge status-pending">Pendente</div>
+                                {% endif %}
+                            </td>
+                            <td data-label="Ações">
+                                <div class="action-cell">
+                                    <div class="action-btn edit" onclick="openEditAppointmentModal(this)"
+                                        data-id="{{ app.id }}"
+                                        data-client="{{ app.client.id }}"
+                                        data-unit="{{ app.unit.id }}"
+                                        data-barber="{{ app.employee.id }}"
+                                        data-service="{{ app.services.first.service.id }}"
+                                        data-date="{{ app.date|date:'Y-m-d' }}"
+                                        data-time="{{ app.time|time:'H:i' }}"
+                                        data-status="{{ app.status }}"
+                                        data-notes="{{ app.notes|default:'' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este agendamento do histórico?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete_appointment">
+                                        <input type="hidden" name="appointment_id" value="{{ app.id }}">
+                                        <button type="submit" class="action-btn delete" style="border: none; background: transparent;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px; color: #7f8c8d;">
+                                <i class="fas fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                                Nenhum agendamento encontrado no histórico.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>   
         </div>
     </div>
 
