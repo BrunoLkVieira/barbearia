@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     UnitView, EmployeeView, WorkDayView, check_employee_data, 
     MyWebsiteView, UnitLP, api_get_barbers, api_get_services, 
-    process_booking_api, check_client_phone
+    process_booking_api, api_login, api_register, api_logout, api_cancel_appointment
 )
 
 app_name = "barbershop"
@@ -31,10 +31,13 @@ urlpatterns = [
     path('<slug:barbershop_slug>/agendar/<slug:unit_slug>/', UnitLP, name='unitLP_unit'),
 
     # ==========================================
-    # APIs DE AGENDAMENTO (FRICTIONLESS BOOKING)
+    # APIs DE AUTENTICAÇÃO E AGENDAMENTO (AJAX)
     # ==========================================
+    path('<slug:barbershop_slug>/api/login/', api_login, name='api_login'),
+    path('<slug:barbershop_slug>/api/register/', api_register, name='api_register'),
+    path('<slug:barbershop_slug>/api/logout/', api_logout, name='api_logout'),
     path('<slug:barbershop_slug>/api/barbers/', api_get_barbers, name='api_get_barbers'),
     path('<slug:barbershop_slug>/api/services/', api_get_services, name='api_get_services'),
-    path('<slug:barbershop_slug>/api/check-phone/', check_client_phone, name='api_check_phone'),
     path('<slug:barbershop_slug>/api/process-booking/', process_booking_api, name='api_process_booking'),
+    path('<slug:barbershop_slug>/api/appointment/cancel/', api_cancel_appointment, name='api_cancel_appointment'),
 ]

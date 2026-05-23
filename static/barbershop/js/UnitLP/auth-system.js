@@ -1,111 +1,240 @@
-// auth-system.js - Versão apenas visual (sem backend)
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos do DOM
-    const loginHeaderLink = document.getElementById('loginHeaderLink');
-    const userWelcome = document.querySelector('.user-welcome');
     const loginModal = document.getElementById('loginModal');
     const registerModal = document.getElementById('registerModal');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const closeModalButtons = document.querySelectorAll('.close-modal');
-    const loginForm = document.getElementById('loginForm');
+    const authPromptModal = document.getElementById('authPromptModal');
+    const appointmentsModal = document.getElementById('appointmentsModal');
+    
+    const loginHeaderLink = document.getElementById('loginHeaderLink');
     const showRegisterLink = document.getElementById('showRegister');
-    const showLoginLink = document.getElementById('showLogin');
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileContent = document.getElementById('profileDropdownContent');
 
-    // Estado visual de login (false = deslogado, true = logado)
-    let isLoggedIn = false;
+    const BARBERSHOP_SLUG = window.location.pathname.split('/')[1];
 
-    // Event Listeners
-    if (loginHeaderLink) {
-        loginHeaderLink.addEventListener('click', function(e) {
+    // ==========================================
+    // CONTROLES GLOBAIS DE MODAIS E UI
+    // ==========================================
+    
+    // Fechar modais ao clicar no 'X'
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
-            openModal(loginModal);
-        });
-    }
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            isLoggedIn = false;
-            updateAuthUI();
-            alert('Você foi deslogado (apenas visual)');
-        });
-    }
-
-    // Simula login (aceita qualquer dado)
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            isLoggedIn = true;
-            updateAuthUI();
-            closeModal(loginModal);
-        });
-    }
-
-    // Alternar entre modais de login e registro
-    if (showRegisterLink) {
-        showRegisterLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeModal(loginModal);
-            openModal(registerModal);
-        });
-    }
-
-    if (showLoginLink) {
-        showLoginLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeModal(registerModal);
-            openModal(loginModal);
-        });
-    }
-
-    // Fechar modais com botão X
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', function() {
             const modal = this.closest('.modal');
-            closeModal(modal);
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
         });
     });
 
-    // *** REMOVIDO: Fechar modais clicando fora ***
-    // *** REMOVIDO: Fechar modais com tecla Escape ***
-
-    // Atualiza a interface conforme estado
-    function updateAuthUI() {
-        if (isLoggedIn) {
-            loginHeaderLink.style.display = 'none';
-            if (userWelcome) userWelcome.style.display = 'block';
-        } else {
-            loginHeaderLink.style.display = 'block';
-            if (userWelcome) userWelcome.style.display = 'none';
-        }
-    }
-
-    // Funções auxiliares
-    function openModal(modal) {
-        if (modal) {
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    function closeModal(modal) {
-        if (modal) {
-            modal.style.display = 'none';
+    // Fechar modais (e dropdowns) ao clicar no fundo escuro
+    window.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
             document.body.style.overflow = 'auto';
         }
+        
+        // Fecha dropdown se clicar fora
+        if (profileContent && profileBtn && !profileBtn.contains(e.target) && !profileContent.contains(e.target)) {
+            profileContent.style.display = 'none';
+        }
+    });
+
+    // Dropdown Header Toggle
+    if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            profileContent.style.display = profileContent.style.display === 'block' ? 'none' : 'block';
+        });
     }
 
-    // Alternar visibilidade da senha (opcional)
+    // Revelar Senha
     window.togglePassword = function(inputId) {
         const input = document.getElementById(inputId);
         const icon = input.nextElementSibling.querySelector('i');
-        
         if (input.type === 'password') {
             input.type = 'text';
-            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
         } else {
             input.type = 'password';
-            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
         }
     };
+
+    // ==========================================
+    // FLUXO DE LOGIN E REGISTRO
+    // ==========================================
+
+    window.openLoginFromPrompt = function() {
+        if (authPromptModal) authPromptModal.style.display = 'none';
+        if (loginModal) {
+            loginModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+    
+    window.openAppointmentsModal = function() {
+        if (profileContent) profileContent.style.display = 'none';
+        if (appointmentsModal) {
+            appointmentsModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    if (loginHeaderLink) {
+        loginHeaderLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginModal.style.display = 'none';
+            registerModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    // LOGIN API
+    document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`/${BARBERSHOP_SLUG}/api/login/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') 
+                },
+                body: JSON.stringify({
+                    cpf: document.getElementById('loginCpf').value, 
+                    password: document.getElementById('loginPassword').value
+                })
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                window.location.reload(); 
+            } else {
+                alert(data.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        } catch (error) {
+            alert('Erro de conexão ao tentar fazer login.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    });
+
+    // REGISTER API
+    document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const pass = document.getElementById('registerPassword').value;
+        const confirmPass = document.getElementById('registerConfirmPassword').value;
+        
+        if (pass !== confirmPass) {
+            alert('As senhas não coincidem!');
+            return;
+        }
+
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`/${BARBERSHOP_SLUG}/api/register/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') 
+                },
+                body: JSON.stringify({
+                    name: document.getElementById('registerName').value,
+                    email: document.getElementById('registerEmail').value,
+                    cpf: document.getElementById('registerCpf').value,
+                    phone: document.getElementById('registerPhone').value,
+                    password: pass
+                })
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                window.location.reload(); 
+            } else {
+                alert(data.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        } catch (error) {
+            alert('Erro de conexão ao tentar registrar.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    });
+
+    // LOGOUT API
+    window.logoutUser = async function() {
+        try {
+            const res = await fetch(`/${BARBERSHOP_SLUG}/api/logout/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+            if (res.ok) window.location.reload();
+        } catch (error) {
+            alert("Erro ao sair.");
+        }
+    };
+
+    // CANCEL APPOINTMENT API
+    window.cancelAppointment = async function(appointmentId) {
+        if(!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
+        
+        try {
+            const res = await fetch(`/${BARBERSHOP_SLUG}/api/appointment/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ appointment_id: appointmentId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Agendamento cancelado com sucesso.");
+                window.location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert("Erro de conexão ao cancelar agendamento.");
+        }
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 });

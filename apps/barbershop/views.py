@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Sum
 from django.utils.timezone import now
-from django.contrib.auth import authenticate, login, get_user_model
+from django.contrib.auth import authenticate, login, logout as auth_logout, get_user_model
 from django.views.decorators.http import require_POST, require_GET
 
 # Imports do Dicionário de Dados Oficial
@@ -328,13 +328,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     
                     for role_occupation in roles_selected:
                         Role.objects.create(employee=employee, occupation=role_occupation)
-                        
-                    # if created:
-                        # messages.success(request, f"Funcionário {user.name} criado com sucesso!")
-                    # else:
-                        # messages.info(request, f"O usuário {user.name} já existia e foi adicionado como funcionário.")
-                # else:
-                    # messages.warning(request, f"O usuário {user.name} já é um funcionário desta barbearia.")
 
         # ---------- EDIT ----------
         elif action == "edit":
@@ -407,7 +400,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     }
     return render(request, "barbershop/employee.html", context)
 
-# Em apps/barbershop/views.py
+
 @login_required
 @owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
@@ -515,7 +508,7 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 'message': f'Disponibilidade de {emp.user.name} atualizada com sucesso!'
             })
 
-        # --- Ações de Holiday e Absence (Exatamente como estavam) ---
+        # --- Ações de Holiday e Absence ---
         elif action == "create_holiday":
             date_str = request.POST.get("date")
             holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -637,8 +630,8 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "gerente_unit": gerente_unit,
         "time_options": time_options,
         "workdays_json": json.dumps(workdays_data),
-        "unit_workdays_json": unit_data_dict, # Novo dado
-        "unit_workdays": unit_workdays_list, # Nova lista
+        "unit_workdays_json": unit_data_dict, 
+        "unit_workdays": unit_workdays_list, 
         "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
@@ -738,7 +731,7 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
             messages.success(request, "Alterações salvas!")
             return redirect(request.path)
 
-        # C. ADICIONAR MÍDIA (CORREÇÃO AQUI)
+        # C. ADICIONAR MÍDIA
         elif action == "add_media":
             m_type = request.POST.get("media_type")
             img = request.FILES.get("image")
@@ -784,35 +777,45 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
     if unit:
         barbers = Employee.objects.filter(unit=unit, roles__occupation='barbeiro').select_related('user').distinct()
 
+    # --- NOVO: LÓGICA DE AGENDAMENTO ATIVO ---
+    has_active_appointment = False
+    active_appointment = None
+
+    if request.user.is_authenticated:
+        client = Client.objects.filter(user=request.user, barbershop=barbershop).first()
+        if client:
+            active_appointment = Appointment.objects.filter(
+                client=client,
+                barbershop=barbershop,
+                status='scheduled',
+                date__gte=now().date()
+            ).order_by('date', 'time').first()
+            if active_appointment:
+                has_active_appointment = True
+
     # --- LÓGICA DE AGRUPAMENTO ESTRATÉGICO ---
     grouped_hours = []
     if unit:
-        # 1. Ordenamos de Segunda(1) a Domingo(0 -> vira 7 para ordenação)
         all_days = list(unit.work_days.all())
         all_days.sort(key=lambda x: x.weekday if x.weekday != 0 else 7)
 
-        # 2. Separar abertos e fechados
         open_days = [d for d in all_days if d.is_open]
         closed_days = [d for d in all_days if not d.is_open]
 
-        # 3. Agrupar dias abertos por horário idêntico
         temp_map = {}
         for d in open_days:
             label = f"{d.open_time.strftime('%H:%M')} - {d.close_time.strftime('%H:%M')}"
             if label not in temp_map: temp_map[label] = []
             temp_map[label].append(d)
 
-        # 4. Criar as strings (ex: "Segunda a Quarta, Sexta")
         processed_labels = []
         for d in open_days:
             label = f"{d.open_time.strftime('%H:%M')} - {d.close_time.strftime('%H:%M')}"
             if label in processed_labels: continue
             
-            # Pegamos os números dos dias (1-7) desse grupo de horário
             indices = sorted([wd.weekday if wd.weekday != 0 else 7 for wd in temp_map[label]])
             
             sequences = []
-            # groupby identifica números consecutivos
             for k, g in groupby(enumerate(indices), lambda x: x[0] - x[1]):
                 group = list(map(itemgetter(1), g))
                 day_names = {1:'Segunda', 2:'Terça', 3:'Quarta', 4:'Quinta', 5:'Sexta', 6:'Sábado', 7:'Domingo'}
@@ -825,7 +828,6 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
             grouped_hours.append({'days': ", ".join(sequences), 'hours': label, 'is_open': True})
             processed_labels.append(label)
 
-        # 5. Dias fechados no final
         if closed_days:
             closed_names = []
             for d in closed_days:
@@ -839,169 +841,167 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
         "hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
         "products": unit.media.filter(media_type="product").order_by('order') if unit else [],
         "grouped_hours": grouped_hours,
+        "has_active_appointment": has_active_appointment,
+        "active_appointment": active_appointment,
     }
     return render(request, "barbershop/unitLP.html", context)
 
-
-
-
-
 # =========================================================
-# APIs DE AGENDAMENTO (FRICTIONLESS BOOKING & PESSIMISTIC LOCKING)
+# APIs ASYNC DA LANDING PAGE (ISOLADAS DO CORE)
 # =========================================================
 
-@require_GET
-def check_client_phone(request, barbershop_slug):
-    """
-    Verifica de forma assíncrona se o celular já está na base global de usuários.
-    """
-    phone = request.GET.get('phone', '').strip()
-    phone_digits = re.sub(r'\D', '', phone)
-    
-    if not phone_digits:
-        return JsonResponse({'exists': False, 'error': 'Telefone inválido'}, status=400)
+@require_POST
+def api_login(request, barbershop_slug):
+    try:
+        data = json.loads(request.body)
+        cpf = re.sub(r'\D', '', data.get('cpf', ''))
+        password = data.get('password')
+        
+        user = authenticate(request, username=cpf, password=password)
+        if user is None:
+            user = authenticate(request, cpf=cpf, password=password)
+            
+        if user is not None:
+            login(request, user)
+            
+            barbershop = Barbershop.objects.get(slug=barbershop_slug)
+            Client.objects.get_or_create(
+                user=user, 
+                barbershop=barbershop,
+                defaults={
+                    'first_name': user.name.split()[0] if user.name else "",
+                    'last_name': " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else "",
+                    'email': user.email,
+                    'phone': user.phone,
+                    'cpf': user.cpf
+                }
+            )
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'CPF ou senha inválidos.'}, status=401)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-    exists = User.objects.filter(phone=phone_digits).exists()
-    return JsonResponse({'exists': exists})
+
+@require_POST
+def api_register(request, barbershop_slug):
+    try:
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        cpf = re.sub(r'\D', '', data.get('cpf', ''))
+        phone = re.sub(r'\D', '', data.get('phone', ''))
+        password = data.get('password')
+        
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'status': 'error', 'message': 'Este e-mail já está em uso.'}, status=400)
+        if User.objects.filter(cpf=cpf).exists():
+            return JsonResponse({'status': 'error', 'message': 'Este CPF já está cadastrado.'}, status=400)
+            
+        user = User.objects.create_user(
+            cpf=cpf,
+            email=email,
+            password=password,
+            name=name,
+            phone=phone,
+            user_type='cliente'
+        )
+        
+        barbershop = Barbershop.objects.get(slug=barbershop_slug)
+        Client.objects.create(
+            user=user, 
+            barbershop=barbershop,
+            first_name=name.split()[0],
+            last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
+            email=email,
+            phone=phone,
+            cpf=cpf
+        )
+        
+        login(request, user)
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@require_POST
+def api_logout(request, barbershop_slug):
+    auth_logout(request)
+    return JsonResponse({'status': 'success'})
+
+
+@require_POST
+@login_required
+def api_cancel_appointment(request, barbershop_slug):
+    try:
+        data = json.loads(request.body)
+        appointment_id = data.get('appointment_id')
+        appointment = Appointment.objects.get(
+            id=appointment_id, 
+            client__user=request.user, 
+            barbershop__slug=barbershop_slug,
+            status='scheduled'
+        )
+        appointment.status = 'cancelado'
+        appointment.save()
+        return JsonResponse({'status': 'success'})
+    except Appointment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Agendamento não encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
 @require_POST
 def process_booking_api(request, barbershop_slug):
-    """
-    Processa a reserva aplicando Lazy Registration e Pessimistic Locking.
-    Regra de Negócio: Cálculo Cumulativo de tempo e Prevenção de Choque de Horários.
-    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Sessão expirada. Faça login novamente.'}, status=401)
+
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'error', 'message': 'Payload JSON inválido.'}, status=400)
-
-    phone_digits = re.sub(r'\D', '', data.get('phone', ''))
-    password = data.get('password')
-    name = data.get('name', '').strip()
-    email = data.get('email', '').strip()
-    
-    barber_id = data.get('barber_id')
-    
-    # Suporte a múltiplos serviços para o "Cálculo Cumulativo"
-    raw_services = data.get('service_id')
-    service_ids = raw_services if isinstance(raw_services, list) else [raw_services]
-    
-    date_str = data.get('date')
-    time_str = data.get('time')
-    
-    if not all([phone_digits, password, barber_id, service_ids, date_str, time_str]):
-        return JsonResponse({'status': 'error', 'message': 'Dados de agendamento incompletos.'}, status=400)
-
-    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    target_time = datetime.strptime(time_str, '%H:%M').time()
-
-    try:
-        # Atomicidade garantida: Início da transação
-        with transaction.atomic():
+        client = Client.objects.get(user=request.user, barbershop__slug=barbershop_slug)
+        employee = Employee.objects.get(id=data.get('barber_id'))
+        unit = Unit.objects.get(id=data.get('unit_id'))
+        
+        # Cria a reserva mãe
+        appointment = Appointment.objects.create(
+            client=client,
+            employee=employee,
+            barbershop=client.barbershop,
+            unit=unit,
+            date=data.get('date'),
+            time=data.get('time'),
+            status='scheduled'
+        )
+        
+        # Atrela os serviços e soma o valor
+        total_price = 0
+        service_ids = data.get('service_id')
+        if not isinstance(service_ids, list):
+            service_ids = [service_ids]
             
-            # 1. PESSIMISTIC LOCKING
-            # Bloqueia a linha do funcionário no banco. Qualquer outra requisição de agendamento
-            # para ESTE barbeiro aguardará até que esta transação faça commit/rollback.
-            employee = Employee.objects.select_for_update().get(id=barber_id, unit__barbershop=barbershop)
-            
-            # 2. CÁLCULO CUMULATIVO DOS SERVIÇOS
-            services = BarberService.objects.filter(id__in=service_ids, employee=employee)
-            if not services.exists():
-                return JsonResponse({'status': 'error', 'message': 'Serviço(s) inválido(s).'}, status=404)
-
-            total_duration = sum([svc.duration for svc in services])
-            total_price = sum([svc.price for svc in services])
-            
-            # 3. VALIDAÇÃO DE CHOQUE DE HORÁRIO (Exemplo Estrutural)
-            # Para implementar 100%, você deve cruzar target_time + total_duration com os horários 
-            # já ocupados em Appointment.objects.filter(employee=employee, date=target_date, status__in=['pending', 'completed'])
-            # e subtrair EmployeeAbsence/UnitHoliday.
-            
-            # 4. LAZY REGISTRATION / AUTENTICAÇÃO
-            user = User.objects.filter(phone=phone_digits).first()
-            if user:
-                # Cliente existente: exige autenticação silenciosa
-                # Nota: Se o seu backend autentica por CPF ou Email, ajuste os kwargs do authenticate
-                user_auth = authenticate(request, username=user.email, password=password)
-                if not user_auth:
-                    return JsonResponse({'status': 'error', 'message': 'Senha incorreta para este celular.'}, status=401)
-                
-                # Garante que o cliente tem vínculo com este Tenant (Barbershop)
-                Client.objects.get_or_create(user=user_auth, barber_shop=barbershop)
-                login(request, user_auth)
-                final_user = user_auth
-            else:
-                # Cliente novo: cria conta no ato da reserva
-                cpf = data.get('cpf', '').strip()
-                
-                if not name or not cpf:
-                    return JsonResponse({'status': 'error', 'message': 'Nome e CPF são obrigatórios para novos clientes.'}, status=400)
-                
-                if User.objects.filter(cpf=cpf).exists():
-                    return JsonResponse({'status': 'error', 'message': 'Este CPF já está cadastrado no sistema.'}, status=400)
-                
-                safe_email = email if email else f"{phone_digits}@orbly.placeholder"
-                
-                # Resolvendo o erro: Passando o cpf como argumento posicional/nomeado
-                final_user = User.objects.create_user(
-                    cpf=cpf, # <-- Aqui está o argumento faltante
-                    email=safe_email,
-                    password=password,
-                    name=name,
-                    phone=phone_digits,
-                    user_type='cliente'
-                )
-                
-                Client.objects.create(user=final_user, barber_shop=barbershop)
-                login(request, final_user)
-            
-            # 5. PERSISTÊNCIA DO AGENDAMENTO
-            appointment = Appointment.objects.create(
-                customer=final_user,
-                employee=employee,
-                unit=employee.unit,
-                date=target_date,
-                time=target_time,
-                status='pending',
-                total_price=total_price,
-                is_paid=False,
-                is_completed=False,
-                is_with_plan=False
+        for s_id in service_ids:
+            service = BarberService.objects.get(id=s_id)
+            AppointmentService.objects.create(
+                appointment=appointment,
+                service=service,
+                price_at_sale=service.price
             )
+            total_price += service.price
             
-            # Acoplamento dos serviços pela tabela intermediária
-            for svc in services:
-                AppointmentService.objects.create(
-                    appointment=appointment,
-                    barber_service=svc,
-                    price_at_sale=svc.price
-                )
-            
-            return JsonResponse({
-                'status': 'success', 
-                'message': 'Agendamento confirmado!',
-                'appointment_id': appointment.id
-            })
-            
-    except Employee.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Barbeiro não encontrado.'}, status=404)
-    except IntegrityError as e:
-        return JsonResponse({'status': 'error', 'message': 'Erro de integridade de dados. Tente novamente.'}, status=500)
+        appointment.total_price = total_price
+        appointment.save()
+
+        return JsonResponse({'status': 'success'})
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
 @require_GET
 def api_get_barbers(request, barbershop_slug):
-    """Retorna os barbeiros de uma unidade específica."""
     unit_id = request.GET.get('unit_id')
     if not unit_id:
         return JsonResponse({'barbers': []})
 
-    # Filtra apenas funcionários ativos que tenham o cargo de 'barbeiro'
     barbers = Employee.objects.filter(
         unit_id=unit_id, 
         roles__occupation='barbeiro', 
@@ -1016,9 +1016,9 @@ def api_get_barbers(request, barbershop_slug):
     
     return JsonResponse({'barbers': data})
 
+
 @require_GET
 def api_get_services(request, barbershop_slug):
-    """Retorna os serviços precificados de um barbeiro específico."""
     barber_id = request.GET.get('barber_id')
     if not barber_id:
         return JsonResponse({'services': []})
