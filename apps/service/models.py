@@ -8,13 +8,20 @@ class BaseService(models.Model):
     name = models.CharField("Nome Base", max_length=100, unique=True)
     
     class IconChoices(models.TextChoices):
-        TESOURA = 'fa-cut', 'Tesoura'
-        NAVALHA = 'fa-sharp', 'Navalha'
-        PENTE = 'fa-comb', 'Pente'
+        TESOURA = 'fas fa-cut', 'Tesoura / Corte'
+        MAQUINA = 'fas fa-bolt', 'Máquina / Degradê'
+        NAVALHA = 'fas fa-magic', 'Navalha / Acabamento'
+        BARBA = 'fas fa-user-tie', 'Barba / Modelagem'
+        PENTE = 'fas fa-wind', 'Penteado / Secador'
+        LAVAGEM = 'fas fa-tint', 'Lavagem / Hidratação'
+        QUIMICA = 'fas fa-spray-can', 'Química / Pigmentação'
+        ESTETICA = 'fas fa-spa', 'Estética / Massagem'
+        SOBRANCELHA = 'fas fa-eye', 'Sobrancelha'
+        KIDS = 'fas fa-child', 'Corte Infantil'
     
     icon = models.CharField(
         "Ícone", 
-        max_length=20, 
+        max_length=50, 
         choices=IconChoices.choices, 
         null=True, 
         blank=True

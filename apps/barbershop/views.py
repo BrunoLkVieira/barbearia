@@ -1023,13 +1023,104 @@ def api_get_services(request, barbershop_slug):
     if not barber_id:
         return JsonResponse({'services': []})
 
-    services = BarberService.objects.filter(employee_id=barber_id)
+    services = BarberService.objects.filter(employee_id=barber_id).select_related('base_service')
     
     data = [{
         'id': s.id, 
         'name': s.name, 
         'price': float(s.price), 
-        'duration': s.duration
+        'duration': s.duration,
+        # Ícone bonito com fallback caso o dono esqueça de colocar
+        'icon': s.base_service.icon if s.base_service and s.base_service.icon else 'fas fa-cut'
     } for s in services]
     
     return JsonResponse({'services': data})
+
+@require_GET
+def api_get_available_times(request, barbershop_slug):
+    """Motor de cálculo de disponibilidade de agenda, Double Booking Block."""
+    barber_id = request.GET.get('barber_id')
+    date_str = request.GET.get('date')
+    duration = int(request.GET.get('duration', 0))
+
+    if not barber_id or not date_str or duration <= 0:
+        return JsonResponse({'slots': []})
+
+    try:
+        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'slots': []})
+
+    # Correção de calendário: Python (Segunda=0) para o DB Orbly (Domingo=0)
+    db_weekday = (target_date.weekday() + 1) % 7 
+    employee = get_object_or_404(Employee, id=barber_id)
+
+    # 1. Unidade está aberta neste dia da semana?
+    if not UnitWorkDay.objects.filter(unit=employee.unit, weekday=db_weekday, is_open=True).exists():
+        return JsonResponse({'slots': []})
+
+    # 2. É Feriado na Unidade?
+    if UnitHoliday.objects.filter(unit=employee.unit, date=target_date).exists():
+        return JsonResponse({'slots': []})
+        
+    # 3. Barbeiro está de atestado/férias?
+    if EmployeeAbsence.objects.filter(employee=employee, start_date__lte=target_date, end_date__gte=target_date).exists():
+        return JsonResponse({'slots': []})
+
+    # 4. Barbeiro trabalha neste dia específico da semana?
+    try:
+        workday = EmployeeWorkDay.objects.get(employee=employee, weekday=db_weekday)
+        if not workday.morning_available and not workday.afternoon_available:
+            return JsonResponse({'slots': []})
+    except EmployeeWorkDay.DoesNotExist:
+        return JsonResponse({'slots': []})
+
+    # 5. Mapeia as reservas já existentes do dia
+    # CORREÇÃO CRÍTICA: O campo FK correto na tabela AppointmentService é barber_service
+    appointments = Appointment.objects.filter(
+        employee=employee, date=target_date
+    ).exclude(status='cancelado').prefetch_related('appointmentservice_set__barber_service')
+
+    booked_periods = []
+    for appt in appointments:
+        if not appt.time: continue
+        app_start = datetime.combine(target_date, appt.time)
+        # Calcula a soma correta dos minutos dos serviços agendados (Double Booking Block)
+        app_duration = sum((s.barber_service.duration if s.barber_service else 30) for s in appt.appointmentservice_set.all())
+        if app_duration == 0: app_duration = 30
+        app_end = app_start + timedelta(minutes=app_duration)
+        booked_periods.append((app_start, app_end))
+
+    # 6. Gera os Slots disponiveis
+    available_slots = []
+    from django.utils import timezone
+    now_time = timezone.localtime().replace(tzinfo=None) # Ajuste de fuso
+
+    def generate_slots(start_t, end_t):
+        if not start_t or not end_t: return
+        curr = datetime.combine(target_date, start_t)
+        end = datetime.combine(target_date, end_t)
+        
+        while curr + timedelta(minutes=duration) <= end:
+            slot_end = curr + timedelta(minutes=duration)
+            conflict = False
+            
+            for b_start, b_end in booked_periods:
+                # Se o horário que o cliente quer conflitar com o tempo de algum atendimento já marcado
+                if curr < b_end and slot_end > b_start:
+                    conflict = True
+                    break
+                    
+            if not conflict:
+                # Proteção para não agendar no passado se o dia for o de hoje
+                if curr >= now_time:
+                    available_slots.append(curr.strftime('%H:%M'))
+            
+            curr += timedelta(minutes=30)
+
+    if workday.morning_available:
+        generate_slots(workday.start_morning_work, workday.end_morning_work)
+    if workday.afternoon_available:
+        generate_slots(workday.start_afternoon_work, workday.end_afternoon_work)
+
+    return JsonResponse({'slots': sorted(list(set(available_slots)))})

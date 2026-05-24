@@ -37,144 +37,47 @@
     </script>
     
     <style>
-        /* CSS Específico para o Intercept Modal de Agendamento */
-        #authPromptModal {
-            background-color: rgba(0, 0, 0, 0.7); 
-            backdrop-filter: blur(4px);
-        }
+        /* INTERCEPT MODAL CSS */
+        #authPromptModal { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
+        #authPromptModal .modal-content { background: #2D3748; border-radius: 12px; padding: 40px 25px; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); position: relative; text-align: center; }
+        #authPromptModal .close-modal, #appointmentsModal .close-modal { position: absolute; top: 15px; right: 20px; color: #A0AEC0; font-size: 1.5rem; background: none; border: none; cursor: pointer; transition: color 0.2s; }
+        #authPromptModal .icon-wrapper { display: inline-flex; align-items: center; justify-content: center; width: 70px; height: 70px; background: rgba(237, 137, 54, 0.15); border-radius: 50%; margin-bottom: 20px; }
+        #authPromptModal .icon-wrapper i { font-size: 2.2rem; color: #ED8936; }
+        #authPromptModal h2 { color: #F7FAFC; margin-bottom: 12px; font-size: 1.6rem; font-weight: 700; }
+        #authPromptModal p { color: #A0AEC0; margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5; }
+
+        .btn-prompt { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+        .btn-auth { background: #ED8936; color: #fff; }
         
-        #authPromptModal .modal-content {
-            background: #2D3748; 
-            border-radius: 12px;
-            padding: 40px 25px;
-            max-width: 380px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
-            position: relative;
-            text-align: center;
-        }
+        /* CORREÇÃO DO BOTÃO WPP: ALTO CONTRASTE */
+        .btn-wpp { background-color: #25D366 !important; color: #ffffff !important; border: 2px solid #25D366 !important; }
+        .btn-wpp i { color: #ffffff !important; font-size: 1.3rem; }
+        .btn-wpp:hover { background-color: #128C7E !important; border-color: #128C7E !important; }
 
-        #authPromptModal .close-modal, #appointmentsModal .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            color: #A0AEC0;
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+        /* HEADER DOS MODAIS COM ÍCONES */
+        .modal-header h2 { display: flex; align-items: center; gap: 12px; }
+        .modal-header h2 i { color: #ED8936; font-size: 1.6rem; }
 
-        #authPromptModal .close-modal:hover, #appointmentsModal .close-modal:hover {
-            color: #E2E8F0;
-        }
+        /* DROPDOWN */
+        .user-profile-dropdown { position: relative; display: inline-block; }
+        .profile-dropdown-content { display: none; position: absolute; right: 0; top: 110%; background: #2D3748; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; border: 1px solid rgba(255,255,255,0.1); }
+        .profile-dropdown-content a { display: block; padding: 12px 15px; color: #F7FAFC; text-decoration: none; transition: background 0.2s; }
+        .profile-dropdown-content a:hover { background: rgba(255,255,255,0.05); }
 
-        #authPromptModal .icon-wrapper {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 70px;
-            height: 70px;
-            background: rgba(237, 137, 54, 0.15);
-            border-radius: 50%;
-            margin-bottom: 20px;
-        }
+        /* REDESIGN DOS SERVIÇOS EM CARDS */
+        .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+        .service-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .service-card i { font-size: 2.2rem; color: #4a5568; transition: color 0.2s ease; margin-bottom: 5px; }
+        .service-card.selected { border-color: #ED8936; background: #fffaf0; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(237, 137, 54, 0.15); }
+        .service-card.selected i { color: #ED8936; }
+        .service-price { font-weight: 800; color: #2D3748; font-size: 1.1rem; }
+        .service-duration { font-size: 0.8rem; color: #718096; background: #edf2f7; padding: 3px 8px; border-radius: 20px;}
 
-        #authPromptModal .icon-wrapper i {
-            font-size: 2.2rem;
-            color: #ED8936; 
-        }
-
-        #authPromptModal h2 {
-            color: #F7FAFC;
-            margin-bottom: 12px;
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        #authPromptModal p {
-            color: #A0AEC0;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .btn-prompt {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn-auth {
-            background: #ED8936;
-            color: #fff;
-        }
-
-        .btn-auth:hover {
-            background: #DD6B20;
-            transform: translateY(-2px);
-        }
-
-        .btn-wpp {
-            background: #25D366;
-            color: #fff;
-        }
-
-        .btn-wpp:hover {
-            background: #1EBE55;
-            transform: translateY(-2px);
-        }
-
-        /* Dropdown Profile */
-        .user-profile-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .profile-dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 110%;
-            background: #2D3748;
-            border-radius: 8px;
-            min-width: 220px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            overflow: hidden;
-            z-index: 1000;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .profile-dropdown-content a {
-            display: block;
-            padding: 12px 15px;
-            color: #F7FAFC;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        
-        .profile-dropdown-content a:hover {
-            background: rgba(255,255,255,0.05);
-        }
-        
-        .profile-dropdown-content a i {
-            margin-right: 8px;
-            width: 20px;
-            text-align: center;
-        }
+        /* REDESIGN DOS HORÁRIOS */
+        .time-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; padding: 5px;}
+        .time-slot-btn { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 8px; padding: 12px 5px; font-weight: 700; color: #4a5568; cursor: pointer; transition: all 0.2s ease; }
+        .time-slot-btn:hover { border-color: #a0aec0; }
+        .time-slot-btn.selected { background: #ED8936; color: white; border-color: #ED8936; transform: scale(1.05);}
     </style>
 </head>
 
@@ -203,14 +106,14 @@
                     <li>
                         {% if request.user.is_authenticated %}
                             <div class="user-profile-dropdown">
-                                <button id="profileDropdownBtn" class="login-btn" style="background: transparent; border: 1px solid #ED8936; color: #ED8936; padding: 8px 15px; border-radius: 8px; cursor: pointer;">
-                                    <i class="fas fa-user-circle"></i> Olá, {{ request.user.name|slice:":10" }}
+                                <button id="profileDropdownBtn" class="login-btn" style="background: transparent; border: 2px solid #ED8936; color: #ED8936; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                                    <i class="fas fa-user-circle" style="margin-right: 5px;"></i> {{ request.user.name|slice:":12" }}
                                 </button>
                                 <div id="profileDropdownContent" class="profile-dropdown-content">
                                     <a href="#" onclick="openAppointmentsModal()" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                         <i class="fas fa-calendar-alt"></i> Meu Agendamento
                                     </a>
-                                    <a href="#" onclick="window.logoutUser()" style="color: #e53e3e;">
+                                    <a href="#" onclick="window.logoutUser()" style="color: #FC8181;">
                                         <i class="fas fa-sign-out-alt"></i> Sair
                                     </a>
                                 </div>
@@ -416,13 +319,14 @@
             {% endif %}
         </div>
     </div>
-
     <!-- Modal "Meu Agendamento" (Cancelamento) -->
     <div class="modal" id="appointmentsModal" aria-hidden="true" style="display: none; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);">
         <div class="modal-content" style="background: #2D3748; border-radius: 12px; padding: 30px; max-width: 400px; color: #F7FAFC; border: 1px solid rgba(255,255,255,0.1); margin: 10% auto; position: relative;">
             <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">&times;</button>
             
-            <h2 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Meu Agendamento</h2>
+            <h2 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items:center; gap: 10px;">
+                <i class="fas fa-calendar-alt" style="color: #ED8936;"></i> Meu Agendamento
+            </h2>
             
             {% if has_active_appointment %}
                 <div class="appointment-details" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -442,12 +346,11 @@
             {% endif %}
         </div>
     </div>
-
     <!-- Modal de Login -->
     <div class="modal modal-login" id="loginModal" aria-hidden="true" style="display: none;">
         <div class="modal-content login-modal-content">
             <div class="modal-header">
-                <h2 id="loginModalTitle">Login</h2>
+                <h2 id="loginModalTitle"><i class="fas fa-sign-in-alt"></i> Login</h2>
                 <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
             <form id="loginForm" method="POST">
@@ -477,7 +380,7 @@
     <div class="modal modal-register" id="registerModal" aria-hidden="true" style="display: none;">
         <div class="modal-content register-modal-content">
             <div class="modal-header">
-                <h2 id="registerModalTitle">Criar Conta</h2>
+                <h2 id="registerModalTitle"><i class="fas fa-user-plus"></i> Criar Conta</h2>
                 <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
             <form id="registerForm" method="POST" autocomplete="off">
@@ -525,7 +428,7 @@
     <div class="modal modal-schedule" id="scheduleModal" aria-hidden="true" style="display: none;">
         <div class="modal-content schedule-modal-content">
             <div class="modal-header">
-                <h2 id="scheduleModalTitle">Agendar Horário</h2>
+                <h2 id="scheduleModalTitle"><i class="fas fa-cut"></i> Agendar Horário</h2>
                 <button class="close-modal" aria-label="Fechar modal">&times;</button>
             </div>
 
@@ -540,7 +443,7 @@
             <div class="step-content-container">
                 <div id="stepLocation" class="step-content active" style="display: none;">
                     <div class="form-group">
-                        <label for="locationSelect">Barbearia/Unidade</label>
+                        <label for="locationSelect"><i class="fas fa-store"></i> Barbearia/Unidade</label>
                         <select id="locationSelect" required>
                             <option value="">Selecione uma Unidade</option>
                             {% for u in units %}
@@ -560,40 +463,40 @@
                 </div>
                 
                 <div id="stepService" class="step-content" style="display: none;">
-                    <div class="form-group">
-                        <label for="serviceSelect">Serviços Disponíveis</label>
-                        <select id="serviceSelect" multiple required style="height: 120px;">
-                            <option value="" disabled>Selecione um barbeiro primeiro</option>
-                        </select>
-                        <small style="color: #7f8c8d; font-size: 0.8rem;">Pressione Ctrl (ou Cmd) para selecionar mais de um serviço.</small>
+                    <h3 class="barber-selection-title">Quais serviços deseja?</h3>
+                    <div class="service-grid" id="serviceGrid">
+                        <p style="text-align: center; color: #7f8c8d; width: 100%;">Selecione um barbeiro primeiro.</p>
                     </div>
                 </div>
                 
                 <div id="stepDatetime" class="step-content" style="display: none;">
                     <div class="form-group">
-                        <label for="appointmentDate">Data</label>
-                        <input type="date" id="appointmentDate" min="" required>
+                        <label for="appointmentDate"><i class="far fa-calendar-alt"></i> Escolha a Data</label>
+                        <input type="date" id="appointmentDate" min="" required style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; width: 100%;">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="appointmentTime">Horário</label>
-                        <input type="time" id="appointmentTime" min="09:00" max="19:00" required>
+                        <label><i class="far fa-clock"></i> Horários Disponíveis</label>
+                        <div class="time-slots-grid" id="timeSlotsGrid">
+                            <p style="color: #7f8c8d; font-size: 0.9rem; grid-column: 1 / -1; text-align: center;">Selecione uma data para ver os horários.</p>
+                        </div>
                     </div>
                 </div>
                 
                 <div id="stepConfirm" class="step-content" style="display: none;">
-                    <h3>Resumo do Agendamento</h3>
+                    <h3><i class="fas fa-clipboard-check"></i> Resumo do Agendamento</h3>
                     <div class="appointment-summary" style="margin-bottom: 20px;">
-                        <p><strong>Local:</strong> <span id="summaryLocation"></span></p>
-                        <p><strong>Barbeiro:</strong> <span id="summaryBarber"></span></p>
-                        <p><strong>Serviço:</strong> <span id="summaryService"></span></p>
-                        <p><strong>Data e Hora:</strong> <span id="summaryDatetime"></span></p>
+                        <p><strong><i class="fas fa-store"></i> Local:</strong> <span id="summaryLocation"></span></p>
+                        <p><strong><i class="fas fa-user-tie"></i> Barbeiro:</strong> <span id="summaryBarber"></span></p>
+                        <p><strong><i class="fas fa-cut"></i> Serviço:</strong> <span id="summaryService"></span></p>
+                        <p><strong><i class="far fa-calendar-alt"></i> Data e Hora:</strong> <span id="summaryDatetime"></span></p>
                     </div>
                     
                     <div class="cancellation-policy" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
                         <h4 style="margin-bottom: 10px;">Política de Cancelamento:</h4>
                         <ul style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px; padding-left: 20px;">
-                            <li>Cancelamentos devem ser feitos com pelo menos 24 horas de antecedência.</li>
-                            <li>Faltas sem aviso prévio podem resultar em cobrança.</li>
+                            <li>Cancelamentos devem ser feitos com antecedência pelo sistema.</li>
+                            <li>Faltas sem aviso prévio podem resultar em restrição de conta.</li>
                         </ul>
                         <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer;">
                             <input type="checkbox" id="acceptPolicy" required> Eu li e concordo com as políticas
@@ -603,13 +506,14 @@
             </div>
             
             <div class="modal-footer">
-                <button class="btn-submit prev-step" style="display: none;">Voltar</button>
+                <button class="btn-submit prev-step" style="display: none; background: #cbd5e0; color: #2d3748;">Voltar</button>
                 <button class="btn-submit next">Próximo</button>
             </div>
         </div>
     </div>
 
     <!-- Scripts do Sistema -->
+    
     <script src="{% static 'barbershop/js/UnitLP/auth-system.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/schedule-modal.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/gallery.js' %}"></script>
