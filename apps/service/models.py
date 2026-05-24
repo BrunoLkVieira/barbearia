@@ -12,12 +12,13 @@ class BaseService(models.Model):
         MAQUINA = 'fas fa-bolt', 'Máquina / Degradê'
         NAVALHA = 'fas fa-magic', 'Navalha / Acabamento'
         BARBA = 'fas fa-user-tie', 'Barba / Modelagem'
-        PENTE = 'fas fa-wind', 'Penteado / Secador'
+        PENTEADO = 'fas fa-wind', 'Penteado / Secador'
         LAVAGEM = 'fas fa-tint', 'Lavagem / Hidratação'
         QUIMICA = 'fas fa-spray-can', 'Química / Pigmentação'
-        ESTETICA = 'fas fa-spa', 'Estética / Massagem'
+        ESTETICA = 'fas fa-hand-sparkles', 'Estética / Massagem'
         SOBRANCELHA = 'fas fa-eye', 'Sobrancelha'
         KIDS = 'fas fa-child', 'Corte Infantil'
+        ESPECIAL = 'fas fa-star', 'Pacote Especial'
     
     icon = models.CharField(
         "Ícone", 

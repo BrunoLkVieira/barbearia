@@ -78,6 +78,16 @@
         .time-slot-btn { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 8px; padding: 12px 5px; font-weight: 700; color: #4a5568; cursor: pointer; transition: all 0.2s ease; }
         .time-slot-btn:hover { border-color: #a0aec0; }
         .time-slot-btn.selected { background: #ED8936; color: white; border-color: #ED8936; transform: scale(1.05);}
+    
+        /* CORREÇÃO DO BOTÃO WPP: ALTO CONTRASTE */
+        .btn-wpp { background-color: #25D366 !important; border: 2px solid #25D366 !important; }
+        .btn-wpp, .btn-wpp * { color: #ffffff !important; text-decoration: none; }
+        .btn-wpp i { font-size: 1.3rem; }
+        .btn-wpp:hover { background-color: #128C7E !important; border-color: #128C7E !important; transform: translateY(-2px); }
+
+        /* HEADER DOS MODAIS COM ÍCONES */
+        .modal-header h2 { display: flex; align-items: center; gap: 12px; }
+        .modal-header h2 i { color: #ED8936; font-size: 1.6rem; }
     </style>
 </head>
 
@@ -313,7 +323,7 @@
             </button>
             
             {% if unit.whatsapp_number %}
-            <a href="https://wa.me/55{{ unit.whatsapp_number }}" target="_blank" class="btn-prompt btn-wpp" style="text-decoration: none;">
+            <a href="https://wa.me/55{{ unit.whatsapp_number }}" target="_blank" class="btn-prompt btn-wpp">
                 <i class="fab fa-whatsapp"></i> Agendar pelo WhatsApp
             </a>
             {% endif %}

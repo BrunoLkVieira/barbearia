@@ -28,37 +28,19 @@ from apps.user.utils.validators import validate_user_data
 User = get_user_model()
 
 def owner_or_employee_required(view_func):
-
-    def wrapper(request, *args, **kwargs):
-
-        if not request.user.is_authenticated or getattr(request.user, "user_type", None) not in ["dono", "funcionario", "gerente"]:
-
-            messages.error(request,  "Acesso negado. Apenas donos, funcionários ou gerentes podem acessar.")
-
-            return redirect("user:login")
-
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
-
-
-def owner_or_employee_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.error(request, "Você precisa estar logado para acessar esta página.")
-            return redirect("user:login") # Ajuste sua URL de login se necessário
+            return redirect("user:login")
             
         user_type = getattr(request.user, "user_type", None)
         if user_type not in ["dono", "funcionario", "gerente"]:
             messages.error(request, "Acesso negado.")
-            # Redireciona para uma página 'home' genérica
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
-# NOVO DECORADOR: Apenas "dono"
 def owner_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -74,8 +56,6 @@ def owner_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
-# NOVO DECORADOR: "dono" ou "gerente"
 def owner_or_gerente_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -92,10 +72,6 @@ def owner_or_gerente_required(view_func):
     return wrapper
 
 def get_user_unit_if_manager(user):
-    """
-    Retorna a unidade do gerente se o usuário for gerente,
-    senão None
-    """
     try:
         employee = user.employees.select_related("unit").get()
         role = employee.roles.filter(occupation=Role.Occupation.GERENTE).first()
@@ -112,7 +88,6 @@ def UnitView(request, barbershop_slug):
     units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees'))
     active_units_count = units.filter(is_active=True).count()
     
-    # Lógica do gerente simplificada
     gerente_unit = None
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
@@ -123,9 +98,7 @@ def UnitView(request, barbershop_slug):
         action = request.POST.get("action")
         name = request.POST.get("name", "").strip()
 
-        # --- AÇÃO: CRIAR ---
         if action == "create":
-            # Verifica se já existe uma unidade com esse nome NESTA barbearia
             if Unit.objects.filter(barbershop=barbershop, name=name).exists():
                 return JsonResponse({
                     'is_valid': False, 
@@ -152,20 +125,16 @@ def UnitView(request, barbershop_slug):
                             weekday=i,
                             open_time="09:00",
                             close_time="19:00",
-                            is_open=True if i != 0 else False # Exemplo: Domingo (0) começa fechado
+                            is_open=True if i != 0 else False 
                         )
                     return JsonResponse({'is_valid': True, 'message': 'Unidade cadastrada com sucesso!'})
                 except Exception:
                     return JsonResponse({'is_valid': False, 'errors': ['Erro interno ao salvar a unidade.']}, status=500)
             
-          
-
-        # --- AÇÃO: EDITAR ---
         if action == "edit":
             unit_id = request.POST.get("unit_id")
             unit = get_object_or_404(Unit, pk=unit_id, barbershop=barbershop)
             
-            # Verifica duplicidade ignorando a própria unidade que está sendo editada
             if Unit.objects.filter(barbershop=barbershop, name=name).exclude(pk=unit_id).exists():
                 return JsonResponse({
                     'is_valid': False, 
@@ -187,7 +156,6 @@ def UnitView(request, barbershop_slug):
                 
             return JsonResponse({'is_valid': True, 'message': 'Alterações salvas com sucesso!'})
 
-        # --- AÇÃO: DELETAR ---
         if action == "delete":
             unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
             unit.delete()
@@ -206,8 +174,6 @@ def UnitView(request, barbershop_slug):
         },
     )
 
-User = get_user_model()
-
 def _to_bool(val: str) -> bool:
     return str(val).lower() in ("on", "true", "1", "yes")
 
@@ -222,17 +188,13 @@ def _to_decimal(val):
 @login_required
 @owner_or_gerente_required
 def EmployeeView(request, barbershop_slug, unit_slug=None):
-    # Barbershop do dono logado
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
 
-    # Lógica para gerente (sem alterações)
     gerente_unit = None
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
         if employee:
             gerente_unit = employee.unit
-    else:
-        gerente_unit = None
 
     unit = None
     if gerente_unit:
@@ -252,9 +214,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # ---------- CREATE ----------
         if action == "create":
-            # Coleta de dados básicos e de cargos (sem alterações)
             cpf = (request.POST.get("cpf") or "").strip()
             name = (request.POST.get("name") or "").strip()
             last_name = (request.POST.get("last_name") or "").strip()
@@ -262,7 +222,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             unit_id = request.POST.get("unit_id")
             roles_selected = request.POST.getlist("roles")
             
-            # Bloco de Validações (sem alterações)
             errors = []
             cpf_digits = re.sub(r'\D', '', cpf)
             if len(cpf_digits) != 11:
@@ -293,7 +252,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             with transaction.atomic():
                 try:
                     user = User.objects.get(cpf=cpf_digits)
-                    created = False
                 except User.DoesNotExist:
                     if User.objects.filter(email=email).exists():
                         messages.error(request, f"Email: O e-mail '{email}' já está em uso por outro usuário.")
@@ -307,11 +265,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     )
                     user.set_unusable_password()
                     user.save()
-                    created = True
 
                 if not Employee.objects.filter(user=user, unit__barbershop=barbershop).exists():
-                    # ---> ADICIONADO <---
-                    # Agora estamos passando TODOS os campos para o método create
                     employee = Employee.objects.create(
                         user=user,
                         unit=unit,
@@ -329,7 +284,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     for role_occupation in roles_selected:
                         Role.objects.create(employee=employee, occupation=role_occupation)
 
-        # ---------- EDIT ----------
         elif action == "edit":
             emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
 
@@ -339,9 +293,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 unit_obj = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
                 emp.unit = unit_obj
 
-            # ---> CORRIGIDO <---
-            # Removemos os `if "campo" in request.POST` para garantir que o campo
-            # seja sempre atualizado, seja para True/False ou para um valor/None.
             emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
             emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
             emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
@@ -349,18 +300,16 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
             emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
             emp.system_access = _to_bool(request.POST.get("system_access"))
-            emp.specialty = request.POST.get("specialty", "").strip() # ADICIONADO
+            emp.specialty = request.POST.get("specialty", "").strip() 
             emp.bio = request.POST.get("bio", "").strip()
             emp.save()
 
-            # Atualização de roles (sem alterações)
             with transaction.atomic():
                 emp.roles.all().delete()
                 new_roles = request.POST.getlist("roles")
                 for role_occupation in new_roles:
                     Role.objects.create(employee=emp, occupation=role_occupation)
 
-            # Atualiza dados do usuário (sem alterações)
             user = emp.user
             changed_user_fields = []
             for field in ["name", "last_name", "email", "phone"]:
@@ -372,23 +321,19 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             
             messages.success(request, f"Dados de {user.name} atualizados com sucesso!")
 
-        # ---------- DELETE ----------
         elif action == "delete":
             emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
             user_name = emp.user.name
             emp.delete()
             messages.success(request, f"Funcionário {user_name} removido com sucesso.")
 
-        # Redirecionamentos (sem alterações)
         if gerente_unit:
             return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
         if unit_slug:
             return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
 
-    # Contexto para a requisição GET
     role_choices = Role.Occupation.choices
-
     context = {
         "barbershop": barbershop,
         "units": units,
@@ -406,7 +351,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 def WorkDayView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     today = now().date()
-    # --- Lógica de Permissão ---
     gerente_unit = None
     current_employee = None
     
@@ -422,16 +366,13 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         
         gerente_unit = current_employee.unit 
 
-    # Identificação da unidade
     unit = gerente_unit if gerente_unit else None
     if not unit and unit_slug:
         unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
 
-    # --- Processamento de POST ---
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # --- BLOQUEIO DE PERMISSÃO PARA FUNCIONÁRIO ---
         funcionario_allowed_actions = ["edit_workday"]
         if current_employee and action not in funcionario_allowed_actions:
             return JsonResponse({
@@ -439,7 +380,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 'errors': ['Você não tem permissão para executar esta ação.']
             }, status=403)
 
-        # --- NOVO BLOCO: EDITAR FUNCIONAMENTO DA UNIDADE ---
         if action == "edit_unit_workdays":
             if not unit:
                 return JsonResponse({'status': 'error', 'errors': ['Unidade não selecionada.']}, status=400)
@@ -461,7 +401,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 'message': 'Horário de funcionamento da unidade atualizado!'
             })
 
-        # --- Bloco para editar a DISPONIBILIDADE DO BARBEIRO ---
         if action == "edit_workday":
             emp_id = request.POST.get("employee_id")
             emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
@@ -508,7 +447,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 'message': f'Disponibilidade de {emp.user.name} atualizada com sucesso!'
             })
 
-        # --- Ações de Holiday e Absence ---
         elif action == "create_holiday":
             date_str = request.POST.get("date")
             holiday_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -558,7 +496,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         else:
             return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
     
-    # --- LÓGICA GET ---
     if gerente_unit:
         unit = gerente_unit
         units = [unit] 
@@ -603,7 +540,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 emp_data[i] = { 'morning_available': False, 'afternoon_available': False, 'start_morning_work': '', 'end_morning_work': '', 'start_afternoon_work': '', 'end_afternoon_work': '' }
         workdays_data[emp.id] = emp_data
 
-    # --- NOVO BLOCO: DADOS DA UNIDADE PARA O FUTURO MODAL ---
     unit_workdays_list = unit.work_days.all().order_by('weekday') if unit else []
     unit_data_dict = {}
     if unit:
@@ -649,14 +585,11 @@ def check_employee_data(request):
     roles_selected = request.POST.getlist("roles")
     employee_id = request.POST.get('employee_id')
     
-    # 1. Validação básica de campos (Niterói utils)
     errors = validate_user_data(data)
 
-    # 2. Validação de Cargo (Obrigatório para o modal centralizado)
     if not roles_selected:
         errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
 
-    # 3. Validação de E-mail Único
     email = data.get('email')
     if email:
         user_query = User.objects.filter(email=email)
@@ -666,7 +599,6 @@ def check_employee_data(request):
         if user_query.exists():
             errors.append("Email: Este e-mail já está em uso por outro usuário.")
             
-    # 4. Validação de CPF Único
     cpf_digits = re.sub(r'\D', '', data['cpf'])
     if cpf_digits:
         user_query = User.objects.filter(cpf=cpf_digits)
@@ -676,11 +608,9 @@ def check_employee_data(request):
         if user_query.exists():
              errors.append("CPF: Este CPF já pertence a outro usuário.")
 
-    # Se houver qualquer erro acima, retorna a lista para o SweetAlert centralizado
     if errors:
         return JsonResponse({'is_valid': False, 'errors': errors})
 
-    # 5. Se for CRIAÇÃO e CPF já existe (mas não deu erro no banco desta barbearia)
     if not employee_id:
         try:
             user = User.objects.get(cpf=cpf_digits)
@@ -703,7 +633,6 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
     unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
 
     if request.method == "POST":
-        # A. Reordenação AJAX (Drag & Drop)
         if request.content_type == 'application/json':
             data = json.loads(request.body)
             if data.get('action') == 'update_order':
@@ -713,7 +642,6 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
 
         action = request.POST.get("action")
 
-        # B. Salvar Informações de Texto
         if action == "save_info":
             if not unit:
                 barbershop.name = request.POST.get("businessName")
@@ -731,12 +659,10 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
             messages.success(request, "Alterações salvas!")
             return redirect(request.path)
 
-        # C. ADICIONAR MÍDIA
         elif action == "add_media":
             m_type = request.POST.get("media_type")
             img = request.FILES.get("image")
             if unit and img:
-                # Pega a última ordem para não zerar
                 count = unit.media.filter(media_type=m_type).count()
                 UnitMedia.objects.create(
                     unit=unit, 
@@ -747,7 +673,6 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Imagem adicionada com sucesso!")
             return redirect(request.path)
 
-        # D. DELETAR MÍDIA
         elif action == "delete_media":
             media_id = request.POST.get("media_id")
             UnitMedia.objects.filter(id=media_id).delete()
@@ -777,7 +702,6 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
     if unit:
         barbers = Employee.objects.filter(unit=unit, roles__occupation='barbeiro').select_related('user').distinct()
 
-    # --- NOVO: LÓGICA DE AGENDAMENTO ATIVO ---
     has_active_appointment = False
     active_appointment = None
 
@@ -793,7 +717,6 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
             if active_appointment:
                 has_active_appointment = True
 
-    # --- LÓGICA DE AGRUPAMENTO ESTRATÉGICO ---
     grouped_hours = []
     if unit:
         all_days = list(unit.work_days.all())
@@ -845,6 +768,7 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
         "active_appointment": active_appointment,
     }
     return render(request, "barbershop/unitLP.html", context)
+
 
 # =========================================================
 # APIs ASYNC DA LANDING PAGE (ISOLADAS DO CORE)
@@ -1025,20 +949,30 @@ def api_get_services(request, barbershop_slug):
 
     services = BarberService.objects.filter(employee_id=barber_id).select_related('base_service')
     
-    data = [{
-        'id': s.id, 
-        'name': s.name, 
-        'price': float(s.price), 
-        'duration': s.duration,
-        # Ícone bonito com fallback caso o dono esqueça de colocar
-        'icon': s.base_service.icon if s.base_service and s.base_service.icon else 'fas fa-cut'
-    } for s in services]
+    data = []
+    for s in services:
+        icon_str = s.base_service.icon if s.base_service and s.base_service.icon else 'fas fa-cut'
+        
+        # Correção de fallback para garantir compatibilidade com FontAwesome 6
+        if not icon_str.startswith('fa'):
+            icon_str = f'fas {icon_str}'
+        elif not icon_str.startswith('fas ') and not icon_str.startswith('fab '):
+            icon_str = f'fas {icon_str}'
+
+        data.append({
+            'id': s.id, 
+            'name': s.name, 
+            'price': float(s.price), 
+            'duration': s.duration,
+            'icon': icon_str
+        })
     
     return JsonResponse({'services': data})
 
+
 @require_GET
 def api_get_available_times(request, barbershop_slug):
-    """Motor de cálculo de disponibilidade de agenda, Double Booking Block."""
+    """Motor matemático de disponibilidade com bloqueio perfeito de Double Booking."""
     barber_id = request.GET.get('barber_id')
     date_str = request.GET.get('date')
     duration = int(request.GET.get('duration', 0))
@@ -1051,76 +985,79 @@ def api_get_available_times(request, barbershop_slug):
     except ValueError:
         return JsonResponse({'slots': []})
 
-    # Correção de calendário: Python (Segunda=0) para o DB Orbly (Domingo=0)
-    db_weekday = (target_date.weekday() + 1) % 7 
-    employee = get_object_or_404(Employee, id=barber_id)
-
-    # 1. Unidade está aberta neste dia da semana?
-    if not UnitWorkDay.objects.filter(unit=employee.unit, weekday=db_weekday, is_open=True).exists():
-        return JsonResponse({'slots': []})
-
-    # 2. É Feriado na Unidade?
-    if UnitHoliday.objects.filter(unit=employee.unit, date=target_date).exists():
-        return JsonResponse({'slots': []})
-        
-    # 3. Barbeiro está de atestado/férias?
-    if EmployeeAbsence.objects.filter(employee=employee, start_date__lte=target_date, end_date__gte=target_date).exists():
-        return JsonResponse({'slots': []})
-
-    # 4. Barbeiro trabalha neste dia específico da semana?
     try:
-        workday = EmployeeWorkDay.objects.get(employee=employee, weekday=db_weekday)
-        if not workday.morning_available and not workday.afternoon_available:
+        db_weekday = (target_date.weekday() + 1) % 7 
+        employee = get_object_or_404(Employee, id=barber_id)
+
+        if not UnitWorkDay.objects.filter(unit=employee.unit, weekday=db_weekday, is_open=True).exists():
             return JsonResponse({'slots': []})
-    except EmployeeWorkDay.DoesNotExist:
-        return JsonResponse({'slots': []})
 
-    # 5. Mapeia as reservas já existentes do dia
-    # CORREÇÃO CRÍTICA: O campo FK correto na tabela AppointmentService é barber_service
-    appointments = Appointment.objects.filter(
-        employee=employee, date=target_date
-    ).exclude(status='cancelado').prefetch_related('appointmentservice_set__barber_service')
+        if UnitHoliday.objects.filter(unit=employee.unit, date=target_date).exists():
+            return JsonResponse({'slots': []})
+            
+        if EmployeeAbsence.objects.filter(employee=employee, start_date__lte=target_date, end_date__gte=target_date).exists():
+            return JsonResponse({'slots': []})
 
-    booked_periods = []
-    for appt in appointments:
-        if not appt.time: continue
-        app_start = datetime.combine(target_date, appt.time)
-        # Calcula a soma correta dos minutos dos serviços agendados (Double Booking Block)
-        app_duration = sum((s.barber_service.duration if s.barber_service else 30) for s in appt.appointmentservice_set.all())
-        if app_duration == 0: app_duration = 30
-        app_end = app_start + timedelta(minutes=app_duration)
-        booked_periods.append((app_start, app_end))
+        try:
+            workday = EmployeeWorkDay.objects.get(employee=employee, weekday=db_weekday)
+            if not workday.morning_available and not workday.afternoon_available:
+                return JsonResponse({'slots': []})
+        except EmployeeWorkDay.DoesNotExist:
+            return JsonResponse({'slots': []})
 
-    # 6. Gera os Slots disponiveis
-    available_slots = []
-    from django.utils import timezone
-    now_time = timezone.localtime().replace(tzinfo=None) # Ajuste de fuso
+        # --- BUGFIX RESOLVIDO AQUI: Blindagem da Query e Mapeamento de Horários ---
+        appointments = Appointment.objects.filter(
+            employee=employee, date=target_date
+        ).exclude(status__in=['cancelado', 'Cancelado', 'canceled', 'cancelled']).prefetch_related('services__service')
 
-    def generate_slots(start_t, end_t):
-        if not start_t or not end_t: return
-        curr = datetime.combine(target_date, start_t)
-        end = datetime.combine(target_date, end_t)
+        booked_periods = []
+        for appt in appointments:
+            if not appt.time: continue
+            app_start = datetime.combine(target_date, appt.time)
+            
+            # Cálculo cirúrgico do tempo de duração do agendamento 
+            app_duration = 0
+            for s in appt.services.all():
+                if s.service:
+                    app_duration += s.service.duration
+            if app_duration <= 0:
+                app_duration = 30
+                
+            app_end = app_start + timedelta(minutes=app_duration)
+            booked_periods.append((app_start, app_end))
+
+        available_slots = []
+        now_time = datetime.now() 
+
+        def generate_slots(start_t, end_t):
+            if not start_t or not end_t: return
+            curr = datetime.combine(target_date, start_t)
+            end = datetime.combine(target_date, end_t)
+            
+            while curr + timedelta(minutes=duration) <= end:
+                slot_end = curr + timedelta(minutes=duration)
+                conflict = False
+                
+                for b_start, b_end in booked_periods:
+                    # O overlap só existe se o início de um for estritamente menor que o fim do outro e vice-versa
+                    if max(curr, b_start) < min(slot_end, b_end):
+                        conflict = True
+                        break
+                        
+                if not conflict:
+                    if curr >= now_time: 
+                        available_slots.append(curr.strftime('%H:%M'))
+                
+                # O Pulo da Grade: Mantém a barra em 30 min, gerando respiro caso existam quebras.
+                curr += timedelta(minutes=30)
+
+        if workday.morning_available:
+            generate_slots(workday.start_morning_work, workday.end_morning_work)
+        if workday.afternoon_available:
+            generate_slots(workday.start_afternoon_work, workday.end_afternoon_work)
+
+        return JsonResponse({'slots': sorted(list(set(available_slots)))})
         
-        while curr + timedelta(minutes=duration) <= end:
-            slot_end = curr + timedelta(minutes=duration)
-            conflict = False
-            
-            for b_start, b_end in booked_periods:
-                # Se o horário que o cliente quer conflitar com o tempo de algum atendimento já marcado
-                if curr < b_end and slot_end > b_start:
-                    conflict = True
-                    break
-                    
-            if not conflict:
-                # Proteção para não agendar no passado se o dia for o de hoje
-                if curr >= now_time:
-                    available_slots.append(curr.strftime('%H:%M'))
-            
-            curr += timedelta(minutes=30)
-
-    if workday.morning_available:
-        generate_slots(workday.start_morning_work, workday.end_morning_work)
-    if workday.afternoon_available:
-        generate_slots(workday.start_afternoon_work, workday.end_afternoon_work)
-
-    return JsonResponse({'slots': sorted(list(set(available_slots)))})
+    except Exception as e:
+        print(f"Erro Backend Orbly (Available Times): {e}") 
+        return JsonResponse({'slots': []})
