@@ -74,6 +74,8 @@ function deleteMedia(id) {
         confirmButtonText: 'Sim, deletar'
     }).then((result) => {
         if (result.isConfirmed) {
+            // NOVO: Salva a posição antes de deletar a imagem
+            sessionStorage.setItem('myWebsiteScroll', window.scrollY);
             document.getElementById('deleteMediaId').value = id;
             document.getElementById('deleteForm').submit();
         }
@@ -96,4 +98,23 @@ function saveNewOrder(container) {
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
     updateHeaderDate();
+
+    // ============================================================
+    // NOVO: SISTEMA DE RESTAURAÇÃO DE SCROLL (Anti-pulo da tela)
+    // ============================================================
+    const savedScroll = sessionStorage.getItem('myWebsiteScroll');
+    if (savedScroll !== null) {
+        // Se houver uma posição salva na sessão, a tela é forçada para lá instantaneamente
+        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+        // Limpa a memória para que navegações normais no menu não caiam no meio da página
+        sessionStorage.removeItem('myWebsiteScroll');
+    }
+    
+    // NOVO: Intercepta também o botão principal de 'Salvar Alterações' (Right Column)
+    const mainForm = document.querySelector('.right-column form');
+    if (mainForm) {
+        mainForm.addEventListener('submit', () => {
+            sessionStorage.setItem('myWebsiteScroll', window.scrollY);
+        });
+    }
 });

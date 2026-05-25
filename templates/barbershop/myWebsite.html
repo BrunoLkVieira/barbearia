@@ -225,7 +225,7 @@
     <form id="uploadForm" method="POST" enctype="multipart/form-data" style="display:none;">
         {% csrf_token %}<input type="hidden" name="action" value="add_media">
         <input type="hidden" name="media_type" id="uploadMediaType">
-        <input type="file" name="image" id="fileInput" onchange="this.form.submit()">
+        <input type="file" name="image" id="fileInput" onchange="sessionStorage.setItem('myWebsiteScroll', window.scrollY); this.form.submit();">
     </form>
     <form id="deleteForm" method="POST" style="display:none;">
         {% csrf_token %}<input type="hidden" name="action" value="delete_media">
