@@ -1,177 +1,202 @@
-// Arquivo: static/barbershop/js/employee.js
-// VERSÃO FINAL CORRIGIDA COM CURSOR DE BLOQUEIO
-
 document.addEventListener('DOMContentLoaded', function() {
-    // --- SELETORES DE ELEMENTOS ---
     const modal = document.getElementById('employeeModal');
-    if (!modal) {
-        console.error("Elemento do modal não encontrado. Verifique o ID 'employeeModal'.");
-        return;
-    }
+    if (!modal) return;
     
     const modalTitle = document.getElementById('modalTitle');
     const employeeForm = document.getElementById('employeeForm');
-    const addEmployeeBtn = document.querySelector('.add-employee-btn');
     const unitField = document.getElementById('employeeUnit');
     const unitFilter = document.getElementById('unitFilterSelect');
 
-    // Função para impedir a abertura do select mantendo o cursor ativo
-    function preventSelectClick(e) {
-        e.preventDefault();
-        this.blur();
-        return false;
+    const cpfField = employeeForm.querySelector('#employeeCPF');
+    const nameField = employeeForm.querySelector('#employeeName');
+    const lastNameField = employeeForm.querySelector('#employeeLastName');
+    const emailField = employeeForm.querySelector('#employeeEmail');
+    const phoneField = employeeForm.querySelector('#employeePhone');
+    const cpfStatusMessage = document.getElementById('cpfStatusMessage');
+
+    function preventSelectClick(e) { e.preventDefault(); this.blur(); return false; }
+
+    // ===============================================
+    // LÓGICA DE AUTO-PREENCHIMENTO DE CPF
+    // ===============================================
+    if (cpfField) {
+        cpfField.addEventListener('input', function() {
+            if (this.value.length > 11) this.value = this.value.slice(0, 11);
+            
+            // Se chegou em 11 digitos e estamos em modo de criação
+            if (this.value.length === 11 && !employeeForm.querySelector('#employeeId').value) {
+                const apiCpf = employeeForm.dataset.cpfApi;
+                fetch(`${apiCpf}?cpf=${this.value}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.found) {
+                        if (data.in_barbershop) {
+                            cpfStatusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Este CPF já é um funcionário desta barbearia.';
+                            cpfStatusMessage.style.color = '#e53e3e';
+                            cpfStatusMessage.style.display = 'block';
+                        } else {
+                            nameField.value = data.name;
+                            lastNameField.value = data.last_name;
+                            emailField.value = data.email;
+                            phoneField.value = data.phone;
+                            
+                            [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                                el.readOnly = true; el.style.backgroundColor = "#e9ecef"; el.style.cursor = "not-allowed";
+                            });
+                            
+                            cpfStatusMessage.innerHTML = '<i class="fas fa-check-circle"></i> Usuário encontrado! Dados preenchidos.';
+                            cpfStatusMessage.style.color = '#48bb78';
+                            cpfStatusMessage.style.display = 'block';
+                        }
+                    } else {
+                        // Reseta se não achou (caso o cara apague e digite outro)
+                        cpfStatusMessage.style.display = 'none';
+                        [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                            if(!el.value) { el.readOnly = false; el.style.backgroundColor = ""; el.style.cursor = "text"; }
+                        });
+                    }
+                });
+            } else if (this.value.length < 11) {
+                cpfStatusMessage.style.display = 'none';
+                if (!employeeForm.querySelector('#employeeId').value) {
+                    [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                        el.readOnly = false; el.style.backgroundColor = ""; el.style.cursor = "text";
+                    });
+                }
+            }
+        });
     }
 
-    // --- CONFIGURAÇÃO DA VERIFICAÇÃO ---
     if (employeeForm) {
         const checkUrl = employeeForm.dataset.checkUrl;
         const csrfToken = employeeForm.querySelector('[name=csrfmiddlewaretoken]').value;
 
         employeeForm.addEventListener('submit', function(event) {
-            const action = employeeForm.querySelector('input[name="action"]').value;
             event.preventDefault(); 
             
+            // Destrava campos para enviar no form POST
+            employeeForm.querySelectorAll('input, select').forEach(el => { el.disabled = false; });
             const formData = new FormData(employeeForm);
 
             fetch(checkUrl, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRFToken': csrfToken }
+                method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.is_valid) {
-                    if (action === 'create' && data.user_exists) {
-                        Swal.fire({
-                            title: 'Usuário Encontrado!',
-                            text: `O usuário ${data.user_name} já existe. Deseja adicioná-lo?`,
-                            icon: 'info',
-                            showCancelButton: true,
-                            confirmButtonText: 'Sim, adicionar',
-                            cancelButtonText: 'Cancelar',
-                            confirmButtonColor: '#7066e0'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                employeeForm.submit(); 
-                            }
-                        });
-                    } else {
-                        employeeForm.submit();
-                    }
+                    employeeForm.submit();
                 } else {
                     let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
-                    data.errors.forEach(error => {
-                        errorHtml += `<li>${error}</li>`;
-                    });
+                    data.errors.forEach(error => { errorHtml += `<li>${error}</li>`; });
                     errorHtml += '</ul>';
 
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erros Encontrados',
-                        html: errorHtml,
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#7066e0'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Ação Bloqueada', html: errorHtml, confirmButtonText: 'Entendi', confirmButtonColor: '#c53030' });
+                    updatePermissions(document.getElementById('isOwnerInput').value === "True");
                 }
             })
             .catch(error => {
-                console.error('Erro no fetch:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro!',
-                    text: 'Ocorreu um erro de conexão. Tente novamente.',
-                    confirmButtonColor: '#7066e0'
-                });
+                Swal.fire({ icon: 'error', title: 'Erro de Servidor', text: 'Tente novamente.', confirmButtonColor: '#c53030' });
             });
         });
     }
 
-    // --- FUNÇÕES DE CONTROLE DO MODAL ---
-    
     function openEmployeeModal(employeeData = null) {
-        const cpfField = employeeForm.querySelector('#employeeCPF');
+        const isActiveField = employeeForm.querySelector('#employeeIsActive');
+        const isOwnerInput = document.getElementById('isOwnerInput');
+        if(cpfStatusMessage) cpfStatusMessage.style.display = 'none';
        
-        // Reset de interações da unidade (limpa travas anteriores)
         unitField.removeEventListener('mousedown', preventSelectClick);
         unitField.style.backgroundColor = "";
         unitField.style.cursor = "default";
+        
+        [cpfField, nameField, lastNameField, emailField, phoneField, isActiveField].forEach(el => {
+            if(el) { el.readOnly = false; el.disabled = false; el.style.backgroundColor = ""; el.style.cursor = "text"; }
+        });
 
         if (employeeForm) {
-            employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
+            employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => checkbox.checked = false);
+            const ownerBarberChk = document.getElementById('ownerIsBarber');
+            if (ownerBarberChk) ownerBarberChk.checked = false;
         }
         
         if (employeeData && employeeData.id) {
-            // MODO EDIÇÃO
-            modalTitle.innerHTML = '<i class="fas fa-user-edit"></i> Editar Funcionário';
+            const isOwner = employeeData.isOwner === 'true';
+            modalTitle.innerHTML = isOwner ? '<i class="fas fa-crown" style="color:#c53030;"></i> Editar Perfil do Titular' : '<i class="fas fa-user-edit"></i> Editar Funcionário';
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
+            isOwnerInput.value = isOwner ? "True" : "False";
             
             cpfField.value = employeeData.cpf;
-            cpfField.readOnly = true; 
-            cpfField.style.backgroundColor = "#e9ecef"; 
-            cpfField.style.cursor = "not-allowed";
+            cpfField.readOnly = true; cpfField.style.backgroundColor = "#e9ecef"; cpfField.style.cursor = "not-allowed";
 
-            employeeForm.querySelector('#employeeName').value = employeeData.name;
-            employeeForm.querySelector('#employeeLastName').value = employeeData.lastname;
-            employeeForm.querySelector('#employeeEmail').value = employeeData.email;
-            employeeForm.querySelector('#employeePhone').value = employeeData.phone;
+            nameField.value = employeeData.name;
+            lastNameField.value = employeeData.lastname;
+            emailField.value = employeeData.email;
+            phoneField.value = employeeData.phone;
             
+            if (isOwner) {
+                [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                    el.readOnly = true; el.style.backgroundColor = "#e9ecef"; el.style.cursor = "not-allowed";
+                });
+                if(isActiveField) { isActiveField.checked = true; isActiveField.disabled = true; }
+                
+                document.querySelectorAll('.regular-field').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.owner-field').forEach(el => el.style.display = 'block');
+                
+                if (employeeData.roles && employeeData.roles.includes('barbeiro')) {
+                    document.getElementById('ownerIsBarber').checked = true;
+                }
+            } else {
+                document.querySelectorAll('.regular-field').forEach(el => el.style.display = 'block');
+                document.querySelectorAll('.owner-field').forEach(el => el.style.display = 'none');
+                if(isActiveField) isActiveField.checked = employeeData.active === 'true'; 
+            }
+
             employeeForm.querySelector('#employeeSpecialty').value = employeeData.specialty || '';
             employeeForm.querySelector('#employeeBio').value = employeeData.bio || '';
             unitField.value = employeeData.unit;
             
-            // Preenchimento de comissão e roles permanece igual...
-            const serviceComm = employeeData.serviceCommission || '';
-            const productComm = employeeData.productCommission || '';
-            employeeForm.querySelector('#serviceCommission').value = serviceComm.toString().replace(',', '.');
-            employeeForm.querySelector('#productCommission').value = productComm.toString().replace(',', '.');          
+            employeeForm.querySelector('#serviceCommission').value = (employeeData.serviceCommission || '').toString().replace(',', '.');
+            employeeForm.querySelector('#productCommission').value = (employeeData.productCommission || '').toString().replace(',', '.');         
             employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
-            employeeForm.querySelector('input[name="can_manage_cashbox"]').checked = employeeData.canCashbox === 'true';
-            employeeForm.querySelector('input[name="can_register_sell"]').checked = employeeData.canSell === 'true';
-            employeeForm.querySelector('input[name="can_create_appointments"]').checked = employeeData.canAppointments === 'true';
-            employeeForm.querySelector('input[name="system_access"]').checked = employeeData.systemAccess === 'true';
             
-            if (employeeData.roles) {
+            const sysAccessChk = document.getElementById('systemAccessCheckbox');
+            if(sysAccessChk) sysAccessChk.checked = employeeData.systemAccess === 'true';
+            
+            if (employeeData.roles && !isOwner) {
                 const rolesArray = employeeData.roles.split(','); 
                 rolesArray.forEach(roleValue => {
                     const checkbox = employeeForm.querySelector(`input[name="roles"][value="${roleValue.trim()}"]`);
                     if (checkbox) checkbox.checked = true;
                 });
             }
+            updatePermissions(isOwner);
 
         } else {
-            // MODO CRIAÇÃO
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
-            cpfField.readOnly = false;
-            cpfField.style.backgroundColor = ""; 
-            cpfField.style.cursor = "text";
-
             if (employeeForm) {
                 employeeForm.reset();
                 employeeForm.querySelector('input[name="action"]').value = 'create';
                 employeeForm.querySelector('#employeeId').value = '';
+                isOwnerInput.value = "False";
+                
+                document.querySelectorAll('.regular-field').forEach(el => el.style.display = 'block');
+                document.querySelectorAll('.owner-field').forEach(el => el.style.display = 'none');
 
-                employeeForm.querySelector('#employeeSpecialty').value = '';
-                employeeForm.querySelector('#employeeBio').value = '';
+                if(isActiveField) isActiveField.checked = true;
 
-                // --- LÓGICA DE TRAVA COM CURSOR DE BLOQUEIO ---
                 if (unitFilter && unitFilter.value !== 'geral') {
                     const selectedOption = unitFilter.options[unitFilter.selectedIndex];
                     const filteredUnitId = selectedOption.dataset.unitId;
-
                     if (filteredUnitId) {
                         unitField.value = filteredUnitId;
-                        unitField.style.backgroundColor = "#e9ecef"; 
-                        unitField.style.cursor = "not-allowed";
-                        // Intercepta o clique para não abrir a lista, mas mantém o cursor ativo
+                        unitField.style.backgroundColor = "#e9ecef"; unitField.style.cursor = "not-allowed";
                         unitField.addEventListener('mousedown', preventSelectClick);
                     }
                 }
+                updatePermissions(false);
             }
         }
-        
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
     }
@@ -180,10 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.closeEmployeeModal = function() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
-    }
-
-    if (addEmployeeBtn) {
-        addEmployeeBtn.addEventListener('click', () => openEmployeeModal());
     }
 
     const tableSelectors = ['.employees-table tbody', '.employees-table-container'];
@@ -196,24 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-});
-
-// --- VALIDAÇÕES DE INPUT (MANTIDAS INTACTAS) ---
-
-document.addEventListener('DOMContentLoaded', function() {
-    const cpfInput = document.getElementById('employeeCPF');
-    if(cpfInput) {
-        cpfInput.addEventListener('input', function() {
-            if (this.value.length > 11) this.value = this.value.slice(0, 11);
-        });
-    }
 
     const cellInput = document.getElementById('employeePhone');
-    if(cellInput) {
-        cellInput.addEventListener('input', function() {
-            if (this.value.length > 11) this.value = this.value.slice(0, 11);
-        });
-    }
+    if(cellInput) cellInput.addEventListener('input', function() { if (this.value.length > 11) this.value = this.value.slice(0, 11); });
 
     const roleElements = document.querySelectorAll('.employee-type');
     roleElements.forEach(element => {
@@ -221,18 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (text.includes('barbeiro')) element.classList.add('type-barber');
         else if (text.includes('gerente')) element.classList.add('type-manager');
         else if (text.includes('caixa')) element.classList.add('type-cashier');
-        else element.classList.add('type-none');
+        else if (!text.includes('titular')) element.classList.add('type-none'); 
     });
-});
 
-const serviceCommissionInput = document.getElementById('serviceCommission');
-if(serviceCommissionInput) {
-    serviceCommissionInput.addEventListener('input', function() {
-        if (this.value.length > 3) this.value = this.value.slice(0, 3);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
     const commissionCheckbox = document.querySelector('input[name="commission_percentage"]');
     const serviceInput = document.getElementById('serviceCommission');
     const productInput = document.getElementById('productCommission');
@@ -240,58 +237,40 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateInputsState() {
         if (commissionCheckbox && serviceInput && productInput) {
             const isDisabled = !commissionCheckbox.checked;
-            serviceInput.disabled = isDisabled;
-            productInput.disabled = isDisabled;
+            serviceInput.disabled = isDisabled; productInput.disabled = isDisabled;
         }
     }
     
-    const modal = document.getElementById('employeeModal');
     if (modal) {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && modal.style.display === 'flex') {
-                    updateInputsState();
-                }
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && modal.style.display === 'flex') updateInputsState();
             });
         });
         observer.observe(modal, { attributes: true });
     }
-    
     if (commissionCheckbox) commissionCheckbox.addEventListener('change', updateInputsState);
-});
 
-document.addEventListener('DOMContentLoaded', function() {
     const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
-    const systemAccess = document.querySelector('input[name="system_access"]');
-    const canManageCashbox = document.querySelector('input[name="can_manage_cashbox"]');
-    const canRegisterSell = document.querySelector('input[name="can_register_sell"]');
-    const canCreateAppointments = document.querySelector('input[name="can_create_appointments"]');
+    const sysAccess = document.getElementById('systemAccessCheckbox');
+    const cashbox = document.getElementById('canManageCashboxCheckbox');
+    const registerSell = document.getElementById('canRegisterSellCheckbox');
+    const createAppt = document.getElementById('canCreateAppointmentsCheckbox');
     
-    function updatePermissions() {
+    function updatePermissions(isOwner = false) {
         const selectedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         
-        if (selectedRoles.length === 0) {
-            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => {
-                el.disabled = true;
-                el.checked = false;
-            });
-            return;
-        }
-        
-        [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.disabled = false);
-        
-        if (selectedRoles.includes('gerente')) {
-            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.checked = true);
-        } else if(selectedRoles.includes('caixa')) {
-            systemAccess.checked = true;
-            canManageCashbox.checked = true;
-            canRegisterSell.checked = true;
-            canCreateAppointments.checked = false;
-        } else if(selectedRoles.includes('barbeiro')){
-            [systemAccess, canManageCashbox, canRegisterSell, canCreateAppointments].forEach(el => el.checked = false);
-        }
+        if(sysAccess) sysAccess.disabled = false;
+        if(cashbox) cashbox.checked = false; 
+        if(registerSell) registerSell.checked = false; 
+        if(createAppt) createAppt.checked = false;
+
+        if (selectedRoles.includes('gerente') || selectedRoles.includes('caixa') || isOwner) {
+            if(sysAccess) { sysAccess.checked = true; sysAccess.disabled = true; }
+            if(cashbox) cashbox.checked = true; 
+            if(registerSell) registerSell.checked = true; 
+            if(createAppt) createAppt.checked = true;
+        } 
     }
-    
-    roleCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updatePermissions));
-    updatePermissions();
+    roleCheckboxes.forEach(checkbox => checkbox.addEventListener('change', () => updatePermissions(false)));
 });

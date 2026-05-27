@@ -18,7 +18,6 @@ from django.utils.timezone import now
 from django.contrib.auth import authenticate, login, logout as auth_logout, get_user_model
 from django.views.decorators.http import require_POST, require_GET
 
-# Imports do Dicionário de Dados Oficial
 from apps.barbershop.models import Unit, Barbershop, Employee, UnitWorkDay, EmployeeWorkDay, EmployeeAbsence, UnitHoliday, Role, UnitMedia
 from apps.client.models import Client 
 from apps.scheduling.models import Appointment, AppointmentService
@@ -52,7 +51,6 @@ def owner_required(view_func):
         if user_type != "dono":
             messages.error(request, "Acesso negado. Apenas o dono pode acessar esta página.")
             raise PermissionDenied
-        
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -67,7 +65,6 @@ def owner_or_gerente_required(view_func):
         if user_type not in ["dono", "gerente"]:
             messages.error(request, "Acesso negado. Apenas donos ou gerentes podem acessar esta página.")
             raise PermissionDenied
-        
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -75,11 +72,60 @@ def get_user_unit_if_manager(user):
     try:
         employee = user.employees.select_related("unit").get()
         role = employee.roles.filter(occupation=Role.Occupation.GERENTE).first()
-        if role:
-            return employee.unit
+        if role: return employee.unit
     except Employee.DoesNotExist:
         return None
     return None
+
+def _to_bool(val: str) -> bool:
+    return str(val).lower() in ("on", "true", "1", "yes")
+
+def _to_decimal(val):
+    try:
+        if val in (None, "",): return None
+        return Decimal(str(val).replace(",", "."))
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+
+# ==========================================
+# MOTOR CIRÚRGICO DE LIMITES SAAS E INTEGRIDADE
+# ==========================================
+def calculate_consumed_slots(barbershop, exclude_emp_id=None, simulate_emp=None):
+    """
+    O Dono nunca consome vaga. 1 ADM (Gerente/Caixa) por filial é grátis.
+    """
+    consumed = 0
+    for u in barbershop.units.all():
+        emps = Employee.objects.filter(unit=u, is_active=True).exclude(user=barbershop.owner_user)
+        if exclude_emp_id:
+            emps = emps.exclude(id=exclude_emp_id)
+        
+        barbers_count = emps.filter(roles__occupation='barbeiro').distinct().count()
+        admins_count = emps.exclude(roles__occupation='barbeiro').distinct().count()
+        
+        if simulate_emp and simulate_emp.get('is_active') and int(simulate_emp.get('unit_id', 0)) == u.id:
+            if 'barbeiro' in simulate_emp.get('roles', []):
+                barbers_count += 1
+            else:
+                admins_count += 1
+                
+        consumed += barbers_count + max(0, admins_count - 1)
+    return consumed
+
+def update_user_system_access(user):
+    """Atualiza o user_type global baseado nos vínculos ativos na plataforma."""
+    if user.user_type == 'dono': 
+        return # Nunca rebaixa o dono
+        
+    is_employee_anywhere = Employee.objects.filter(user=user, is_active=True).exists()
+    
+    if is_employee_anywhere and user.user_type == 'cliente':
+        user.user_type = 'funcionario'
+        user.save()
+    elif not is_employee_anywhere and user.user_type in ['funcionario', 'gerente']:
+        user.user_type = 'cliente'
+        user.save()
+
 
 @login_required
 @owner_required
@@ -87,12 +133,7 @@ def UnitView(request, barbershop_slug):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees'))
     active_units_count = units.filter(is_active=True).count()
-    
     gerente_unit = None
-    if request.user.user_type == "gerente":
-        employee = Employee.objects.filter(user=request.user).first()
-        if employee:
-            gerente_unit = employee.unit
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -100,60 +141,39 @@ def UnitView(request, barbershop_slug):
 
         if action == "create":
             if Unit.objects.filter(barbershop=barbershop, name=name).exists():
-                return JsonResponse({
-                    'is_valid': False, 
-                    'errors': [f"A unidade '{name}' já existe nesta barbearia."]
-                }, status=400)
-            else:
-                try:
-                    new_unit = Unit.objects.create(
-                        name=name,
-                        cep_address=request.POST.get("cep_address"),
-                        street_address=request.POST.get("street_address"),
-                        number_address=request.POST.get("number_address"),
-                        neighborhood=request.POST.get("neighborhood"),
-                        city=request.POST.get("city"),
-                        state=request.POST.get("state"),
-                        whatsapp_number=request.POST.get("whatsapp_number"),
-                        instagram_link=request.POST.get("instagram_link"),
-                        is_active=request.POST.get("is_active") == "True",
-                        barbershop=barbershop,
-                    )
-                    for i in range(7):
-                        UnitWorkDay.objects.create(
-                            unit=new_unit,
-                            weekday=i,
-                            open_time="09:00",
-                            close_time="19:00",
-                            is_open=True if i != 0 else False 
-                        )
-                    return JsonResponse({'is_valid': True, 'message': 'Unidade cadastrada com sucesso!'})
-                except Exception:
-                    return JsonResponse({'is_valid': False, 'errors': ['Erro interno ao salvar a unidade.']}, status=500)
+                return JsonResponse({'is_valid': False, 'errors': [f"A unidade '{name}' já existe nesta barbearia."]}, status=400)
+            try:
+                new_unit = Unit.objects.create(
+                    name=name, cep_address=request.POST.get("cep_address"), street_address=request.POST.get("street_address"),
+                    number_address=request.POST.get("number_address"), neighborhood=request.POST.get("neighborhood"),
+                    city=request.POST.get("city"), state=request.POST.get("state"), whatsapp_number=request.POST.get("whatsapp_number"),
+                    instagram_link=request.POST.get("instagram_link"), is_active=request.POST.get("is_active") == "True",
+                    barbershop=barbershop,
+                )
+                for i in range(7):
+                    UnitWorkDay.objects.create(unit=new_unit, weekday=i, open_time="09:00", close_time="19:00", is_open=True if i != 0 else False)
+                return JsonResponse({'is_valid': True, 'message': 'Unidade cadastrada com sucesso!'})
+            except Exception:
+                return JsonResponse({'is_valid': False, 'errors': ['Erro interno ao salvar a unidade.']}, status=500)
             
         if action == "edit":
             unit_id = request.POST.get("unit_id")
             unit = get_object_or_404(Unit, pk=unit_id, barbershop=barbershop)
-            
             if Unit.objects.filter(barbershop=barbershop, name=name).exclude(pk=unit_id).exists():
-                return JsonResponse({
-                    'is_valid': False, 
-                    'errors': [f"Já existe outra unidade chamada '{name}'."]
-                }, status=400)
-            else:
-                unit.name = name
-                unit.cep_address = request.POST.get("cep_address")
-                unit.street_address = request.POST.get("street_address")
-                unit.number_address = request.POST.get("number_address")
-                unit.neighborhood = request.POST.get("neighborhood")
-                unit.city = request.POST.get("city")
-                unit.state = request.POST.get("state")
-                unit.whatsapp_number = request.POST.get("whatsapp_number")
-                unit.instagram_link = request.POST.get("instagram_link")
-                unit.is_active = request.POST.get("is_active") == "True"
-                unit.save()
-                messages.success(request, "Alterações salvas com sucesso!")
-                
+                return JsonResponse({'is_valid': False, 'errors': [f"Já existe outra unidade chamada '{name}'."]}, status=400)
+            
+            unit.name = name
+            unit.cep_address = request.POST.get("cep_address")
+            unit.street_address = request.POST.get("street_address")
+            unit.number_address = request.POST.get("number_address")
+            unit.neighborhood = request.POST.get("neighborhood")
+            unit.city = request.POST.get("city")
+            unit.state = request.POST.get("state")
+            unit.whatsapp_number = request.POST.get("whatsapp_number")
+            unit.instagram_link = request.POST.get("instagram_link")
+            unit.is_active = request.POST.get("is_active") == "True"
+            unit.save()
+            messages.success(request, "Alterações salvas com sucesso!")
             return JsonResponse({'is_valid': True, 'message': 'Alterações salvas com sucesso!'})
 
         if action == "delete":
@@ -162,28 +182,8 @@ def UnitView(request, barbershop_slug):
             messages.success(request, "Unidade excluída com sucesso.")
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
-    return render(
-        request,
-        "barbershop/unit.html",
-        {
-            "barbershop": barbershop,
-            "units": units,
-            "user": request.user,
-            "active_units_count": active_units_count,
-            "gerente_unit": gerente_unit, 
-        },
-    )
+    return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit})
 
-def _to_bool(val: str) -> bool:
-    return str(val).lower() in ("on", "true", "1", "yes")
-
-def _to_decimal(val):
-    try:
-        if val in (None, "",):
-            return None
-        return Decimal(str(val).replace(",", "."))
-    except (InvalidOperation, ValueError, TypeError):
-        return None
 
 @login_required
 @owner_or_gerente_required
@@ -193,158 +193,272 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     gerente_unit = None
     if request.user.user_type == "gerente":
         employee = Employee.objects.filter(user=request.user).first()
-        if employee:
-            gerente_unit = employee.unit
+        if employee: gerente_unit = employee.unit
 
-    unit = None
-    if gerente_unit:
-        unit = gerente_unit
-        employees = Employee.objects.filter(unit=unit)
+    unit = gerente_unit if gerente_unit else None
+
+    if unit:
+        base_employees = Employee.objects.filter(unit=unit)
         units = [unit]
     else:
         if unit_slug:
             unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-            employees = Employee.objects.filter(unit=unit)
+            base_employees = Employee.objects.filter(unit=unit)
         else:
-            employees = Employee.objects.filter(unit__barbershop=barbershop)
+            base_employees = Employee.objects.filter(unit__barbershop=barbershop)
         units = barbershop.units.all()
 
-    employees_active_count = employees.filter(user__is_active=True).count()
+    owner_employee = Employee.objects.filter(user=barbershop.owner_user, unit__barbershop=barbershop).first()
+    owner_in_list = base_employees.filter(user=barbershop.owner_user).first()
+    regular_employees = base_employees.exclude(user=barbershop.owner_user).order_by('-is_active', 'user__name')
+    
+    regular_employees_active_count = regular_employees.filter(is_active=True).count()
+    consumed_slots = calculate_consumed_slots(barbershop)
 
     if request.method == "POST":
         action = request.POST.get("action")
+        
+        if action == "create_owner" and request.user == barbershop.owner_user:
+            unit_id = request.POST.get("unit_id")
+            unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+            if not owner_employee:
+                emp = Employee.objects.create(
+                    user=barbershop.owner_user, unit=unit_obj, is_active=True,
+                    system_access=True, can_manage_cashbox=True, 
+                    can_register_sell=True, can_create_appointments=True
+                )
+                Role.objects.create(employee=emp, occupation=Role.Occupation.GERENTE)
+                messages.success(request, "Você ingressou na operação com sucesso!")
+            return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
+
+        cpf = (request.POST.get("cpf") or "").strip()
+        cpf_digits = re.sub(r'\D', '', cpf)
+        name = (request.POST.get("name") or "").strip()
+        last_name = (request.POST.get("last_name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        unit_id = request.POST.get("unit_id")
+        roles_selected = request.POST.getlist("roles")
+        is_active_val = 'is_active' in request.POST 
 
         if action == "create":
-            cpf = (request.POST.get("cpf") or "").strip()
-            name = (request.POST.get("name") or "").strip()
-            last_name = (request.POST.get("last_name") or "").strip()
-            email = (request.POST.get("email") or "").strip()
-            unit_id = request.POST.get("unit_id")
-            roles_selected = request.POST.getlist("roles")
-            
-            errors = []
-            cpf_digits = re.sub(r'\D', '', cpf)
-            if len(cpf_digits) != 11:
-                errors.append("CPF: Deve conter 11 dígitos.")
-            if not name or name.isdigit():
-                errors.append("Nome: Não pode estar em branco ou ser apenas números.")
-            if not last_name or last_name.isdigit():
-                errors.append("Sobrenome: Não pode estar em branco ou ser apenas números.")
-            if not email:
-                errors.append("Email: O campo de e-mail é obrigatório.")
-            else:
-                try: validate_email(email)
-                except ValidationError: errors.append("Email: Formato de e-mail inválido.")
-            if not unit_id:
-                errors.append("Unidade: Você precisa selecionar uma unidade.")
-            if not roles_selected:
-                errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
+            simulate_emp = {'unit_id': unit_id, 'roles': roles_selected, 'is_active': is_active_val}
+            if calculate_consumed_slots(barbershop, simulate_emp=simulate_emp) > barbershop.max_employees:
+                messages.error(request, "Ação bloqueada. O limite de funcionários do seu plano foi atingido.")
+                return redirect(request.path)
 
-            if errors:
-                for error in errors:
-                    messages.error(request, error)
-                if unit_slug:
-                    return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-                return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
-            
-            unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
-
+            unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             with transaction.atomic():
                 try:
                     user = User.objects.get(cpf=cpf_digits)
                 except User.DoesNotExist:
-                    if User.objects.filter(email=email).exists():
-                        messages.error(request, f"Email: O e-mail '{email}' já está em uso por outro usuário.")
-                        if unit_slug:
-                             return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
-                        return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
-
                     user = User.objects.create(
                         cpf=cpf_digits, email=email, name=name, last_name=last_name,
-                        phone=(request.POST.get("phone") or "").strip(), user_type="funcionario",
+                        phone=(request.POST.get("phone") or "").strip()
                     )
                     user.set_unusable_password()
                     user.save()
 
                 if not Employee.objects.filter(user=user, unit__barbershop=barbershop).exists():
                     employee = Employee.objects.create(
-                        user=user,
-                        unit=unit,
-                        specialty=request.POST.get("specialty", "").strip(), 
-                        bio=request.POST.get("bio", "").strip(),
-                        commission_percentage=_to_bool(request.POST.get("commission_percentage")),
+                        user=user, unit=unit_obj, specialty=request.POST.get("specialty", "").strip(), 
+                        bio=request.POST.get("bio", "").strip(), is_active=is_active_val,
+                        commission_percentage='commission_percentage' in request.POST,
                         service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
                         product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
-                        can_manage_cashbox=_to_bool(request.POST.get("can_manage_cashbox")),
-                        can_register_sell=_to_bool(request.POST.get("can_register_sell")),
-                        can_create_appointments=_to_bool(request.POST.get("can_create_appointments")),
-                        system_access=_to_bool(request.POST.get("system_access")),
+                        can_manage_cashbox='can_manage_cashbox' in request.POST,
+                        can_register_sell='can_register_sell' in request.POST,
+                        can_create_appointments='can_create_appointments' in request.POST,
+                        system_access='system_access' in request.POST,
                     )
-                    
-                    for role_occupation in roles_selected:
-                        Role.objects.create(employee=employee, occupation=role_occupation)
+                    for role_occ in roles_selected:
+                        Role.objects.create(employee=employee, occupation=role_occ)
+                        
+                    update_user_system_access(user)
+                    messages.success(request, f"Funcionário {user.name} salvo com sucesso!")
 
         elif action == "edit":
-            emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
-
-            if gerente_unit:
-                emp.unit = gerente_unit
-            elif request.POST.get("unit_id"):
-                unit_obj = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
-                emp.unit = unit_obj
-
-            emp.commission_percentage = _to_bool(request.POST.get("commission_percentage"))
-            emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
-            emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
-            emp.can_manage_cashbox = _to_bool(request.POST.get("can_manage_cashbox"))
-            emp.can_register_sell = _to_bool(request.POST.get("can_register_sell"))
-            emp.can_create_appointments = _to_bool(request.POST.get("can_create_appointments"))
-            emp.system_access = _to_bool(request.POST.get("system_access"))
-            emp.specialty = request.POST.get("specialty", "").strip() 
-            emp.bio = request.POST.get("bio", "").strip()
-            emp.save()
-
-            with transaction.atomic():
-                emp.roles.all().delete()
-                new_roles = request.POST.getlist("roles")
-                for role_occupation in new_roles:
-                    Role.objects.create(employee=emp, occupation=role_occupation)
-
-            user = emp.user
-            changed_user_fields = []
-            for field in ["name", "last_name", "email", "phone"]:
-                if request.POST.get(field) is not None:
-                    setattr(user, field, request.POST.get(field).strip())
-                    changed_user_fields.append(field)
-            if changed_user_fields:
-                user.save(update_fields=changed_user_fields)
+            emp_id = request.POST.get("employee_id")
+            emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
             
-            messages.success(request, f"Dados de {user.name} atualizados com sucesso!")
+            if gerente_unit: emp.unit = gerente_unit
+            elif request.POST.get("unit_id"): emp.unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
+
+            if emp.user == barbershop.owner_user:
+                emp.specialty = request.POST.get("specialty", "").strip() 
+                emp.bio = request.POST.get("bio", "").strip()
+                emp.commission_percentage = 'commission_percentage' in request.POST
+                emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
+                emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                emp.save()
+                
+                emp.roles.all().delete()
+                Role.objects.create(employee=emp, occupation=Role.Occupation.GERENTE)
+                if 'owner_is_barber' in request.POST:
+                    Role.objects.create(employee=emp, occupation=Role.Occupation.BARBEIRO)
+                messages.success(request, "Perfil do Titular atualizado na operação.")
+            
+            else:
+                simulate_emp = {'unit_id': request.POST.get("unit_id") or emp.unit.id, 'roles': roles_selected, 'is_active': is_active_val}
+                if calculate_consumed_slots(barbershop, exclude_emp_id=emp.id, simulate_emp=simulate_emp) > barbershop.max_employees:
+                    messages.error(request, "Ação bloqueada! Ativar este funcionário ou mudar seu cargo excederia o limite do seu plano.")
+                    return redirect(request.path)
+
+                emp.is_active = is_active_val
+                
+                user = emp.user
+                changed_user_fields = []
+                for field in ["name", "last_name", "email", "phone"]:
+                    if request.POST.get(field) is not None and not user.user_type == 'dono':
+                        setattr(user, field, request.POST.get(field).strip())
+                        changed_user_fields.append(field)
+                if changed_user_fields: user.save(update_fields=changed_user_fields)
+
+                emp.commission_percentage = 'commission_percentage' in request.POST
+                emp.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
+                emp.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                
+                emp.system_access = 'system_access' in request.POST
+                emp.can_manage_cashbox = 'can_manage_cashbox' in request.POST
+                emp.can_register_sell = 'can_register_sell' in request.POST
+                emp.can_create_appointments = 'can_create_appointments' in request.POST
+                emp.specialty = request.POST.get("specialty", "").strip() 
+                emp.bio = request.POST.get("bio", "").strip()
+                emp.save()
+
+                with transaction.atomic():
+                    emp.roles.all().delete()
+                    for role_occ in roles_selected:
+                        Role.objects.create(employee=emp, occupation=role_occ)
+                
+                update_user_system_access(user)
+                messages.success(request, f"Dados atualizados com sucesso!")
 
         elif action == "delete":
             emp = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
             user_name = emp.user.name
-            emp.delete()
-            messages.success(request, f"Funcionário {user_name} removido com sucesso.")
+            target_user = emp.user
+            
+            if emp.user == barbershop.owner_user:
+                # O Dono pode apenas se "remover" da agenda/filial, mas a Orbly permite isso excluindo o Employee 
+                # e mantendo o Owner intacto. Porém, o ideal é só remover a role Barbeiro.
+                emp.delete()
+                messages.success(request, "Você saiu da operação. Seu perfil Master continua intacto.")
+            elif request.user.user_type == "gerente" and emp.user == request.user:
+                messages.error(request, "Ação negada: Você não pode excluir a si mesmo.")
+            else:
+                if Appointment.objects.filter(employee=emp).exists():
+                    emp.is_active = False
+                    emp.save()
+                    update_user_system_access(target_user)
+                    messages.warning(request, f"O funcionário {user_name} foi INATIVADO para preservar o histórico financeiro e de agendamentos.")
+                else:
+                    emp.delete()
+                    update_user_system_access(target_user)
+                    messages.success(request, f"Funcionário {user_name} removido definitivamente da operação.")
 
-        if gerente_unit:
-            return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
-        if unit_slug:
-            return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
+        if gerente_unit: return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
+        if unit_slug: return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
         return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
 
-    role_choices = Role.Occupation.choices
     context = {
         "barbershop": barbershop,
         "units": units,
         "unit": unit,
-        "employees": employees,
-        "employees_active_count": employees_active_count,
+        "owner_employee": owner_employee,
+        "owner_in_list": owner_in_list,
+        "regular_employees": regular_employees,
+        "regular_employees_active_count": regular_employees_active_count,
+        "consumed_slots": consumed_slots,
         "gerente_unit": gerente_unit,
-        "role_choices": role_choices,
+        "role_choices": Role.Occupation.choices,
     }
     return render(request, "barbershop/employee.html", context)
 
+
+@require_GET
+@login_required
+def api_check_cpf(request, barbershop_slug):
+    """Nova API: Verifica se o CPF existe na base para Auto-Preenchimento"""
+    cpf = re.sub(r'\D', '', request.GET.get('cpf', ''))
+    if len(cpf) != 11:
+        return JsonResponse({'valid': False})
+    
+    try:
+        user = User.objects.get(cpf=cpf)
+        emp = Employee.objects.filter(user=user, unit__barbershop__slug=barbershop_slug).first()
+        if emp:
+            return JsonResponse({
+                'found': True, 'in_barbershop': True, 
+                'message': 'Este CPF já é um funcionário cadastrado nesta barbearia.'
+            })
+        else:
+            return JsonResponse({
+                'found': True, 'in_barbershop': False,
+                'name': user.name, 'last_name': user.last_name, 
+                'email': user.email, 'phone': user.phone
+            })
+    except User.DoesNotExist:
+        return JsonResponse({'found': False})
+
+
+@login_required
+@require_POST
+def check_employee_data(request):
+    """API de Validação AJAX: Trava erros antes do POST oficial."""
+    data = {
+        "cpf": request.POST.get("cpf", ""),
+        "name": request.POST.get("name", ""),
+        "last_name": request.POST.get("last_name", ""),
+        "email": request.POST.get("email", ""),
+    }
+    roles_selected = request.POST.getlist("roles")
+    employee_id = request.POST.get('employee_id')
+    unit_id = request.POST.get('unit_id')
+    is_active_val = 'is_active' in request.POST
+    is_owner_val = 'is_owner' in request.POST
+    
+    if is_owner_val:
+        return JsonResponse({'is_valid': True})
+
+    errors = validate_user_data(data)
+    if not roles_selected:
+        errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
+
+    # --- VALIDAÇÃO INTELIGENTE DE LIMITE SAAS AJAX ---
+    if unit_id:
+        target_unit = Unit.objects.select_related('barbershop').filter(id=unit_id).first()
+        if target_unit:
+            barbershop = target_unit.barbershop
+            simulate_emp = {'unit_id': unit_id, 'roles': roles_selected, 'is_active': is_active_val}
+            
+            if calculate_consumed_slots(barbershop, exclude_emp_id=employee_id, simulate_emp=simulate_emp) > barbershop.max_employees:
+                errors.append(f"Limite Atingido: O plano permite {barbershop.max_employees} vagas (O Titular e 1 admin por unidade são grátis).")
+
+    email = data.get('email')
+    cpf_digits = re.sub(r'\D', '', data['cpf'])
+
+    if email:
+        user_query = User.objects.filter(email=email)
+        if employee_id:
+            employee_user_id = Employee.objects.get(id=employee_id).user.id
+            user_query = user_query.exclude(id=employee_user_id)
+        if user_query.exists():
+            # Apenas dá erro de email se já for um funcionário desta barbearia
+            if Employee.objects.filter(user=user_query.first(), unit__barbershop__slug=request.POST.get('barbershop_slug')).exists():
+                errors.append("Email: Este e-mail já pertence a um funcionário ativo na barbearia.")
+            
+    if cpf_digits:
+        user_query = User.objects.filter(cpf=cpf_digits)
+        if employee_id:
+            employee_user_id = Employee.objects.get(id=employee_id).user.id
+            user_query = user_query.exclude(id=employee_user_id)
+        if user_query.exists():
+            if Employee.objects.filter(user=user_query.first(), unit__barbershop__slug=request.POST.get('barbershop_slug')).exists():
+                errors.append("CPF: Este CPF já é um funcionário desta barbearia.")
+
+    if errors:
+        return JsonResponse({'is_valid': False, 'errors': errors})
+    return JsonResponse({'is_valid': True})
 
 @login_required
 @owner_or_employee_required
@@ -572,57 +686,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     }
     return render(request, "barbershop/workDay.html", context)
 
-
-@login_required
-@require_POST
-def check_employee_data(request):
-    data = {
-        "cpf": request.POST.get("cpf", ""),
-        "name": request.POST.get("name", ""),
-        "last_name": request.POST.get("last_name", ""),
-        "email": request.POST.get("email", ""),
-    }
-    roles_selected = request.POST.getlist("roles")
-    employee_id = request.POST.get('employee_id')
-    
-    errors = validate_user_data(data)
-
-    if not roles_selected:
-        errors.append("Cargo: Você precisa selecionar pelo menos um cargo.")
-
-    email = data.get('email')
-    if email:
-        user_query = User.objects.filter(email=email)
-        if employee_id:
-            employee_user_id = Employee.objects.get(id=employee_id).user.id
-            user_query = user_query.exclude(id=employee_user_id)
-        if user_query.exists():
-            errors.append("Email: Este e-mail já está em uso por outro usuário.")
-            
-    cpf_digits = re.sub(r'\D', '', data['cpf'])
-    if cpf_digits:
-        user_query = User.objects.filter(cpf=cpf_digits)
-        if employee_id:
-            employee_user_id = Employee.objects.get(id=employee_id).user.id
-            user_query = user_query.exclude(id=employee_user_id)
-        if user_query.exists():
-             errors.append("CPF: Este CPF já pertence a outro usuário.")
-
-    if errors:
-        return JsonResponse({'is_valid': False, 'errors': errors})
-
-    if not employee_id:
-        try:
-            user = User.objects.get(cpf=cpf_digits)
-            return JsonResponse({
-                'is_valid': True, 
-                'user_exists': True, 
-                'user_name': f'{user.name} {user.last_name}'
-            })
-        except User.DoesNotExist:
-            pass
-
-    return JsonResponse({'is_valid': True, 'user_exists': False})
 
 
 @login_required

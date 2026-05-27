@@ -13,6 +13,9 @@ class Barbershop(models.Model):
     description = models.TextField(null=True, blank=True)
     foundation_date = models.DateField(null=True, blank=True)
     
+    # --- REGRAS DE NEGÓCIO (LIMITES SAAS) ---
+    max_employees = models.PositiveIntegerField("Limite de Vagas (Funcionários)", default=5)
+    
     owner_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
@@ -21,22 +24,17 @@ class Barbershop(models.Model):
     is_active = models.BooleanField(default=True) 
 
     def save(self, *args, **kwargs):
-    
         base_slug = slugify(self.name)
-
         slug = base_slug
         counter = 1
         while Barbershop.objects.filter(slug=slug).exclude(pk=self.pk).exists():
             slug = f"{base_slug}-{counter}"
             counter += 1
-
         self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
-
-
 
 class Unit(models.Model):
     name = models.CharField(max_length=150)
@@ -45,7 +43,7 @@ class Unit(models.Model):
     street_address = models.CharField(max_length=255)
     number_address = models.CharField(max_length=10)
     neighborhood = models.CharField(max_length=100, null=True, blank=True)
-    city = models.CharField(max_length=100, null=True, blank=True)         
+    city = models.CharField(max_length=100, null=True, blank=True)        
     state = models.CharField(max_length=2, null=True, blank=True)    
     about_text = models.TextField(null=True, blank=True)
     about_image = models.ImageField(upload_to="about_units/", null=True, blank=True)
@@ -58,13 +56,11 @@ class Unit(models.Model):
         Barbershop, on_delete=models.CASCADE, related_name="units"
     )
     
-
     def save(self, *args, **kwargs):
         if self.street_address:
             query = f"{self.street_address}, {self.number_address}, {self.neighborhood}, {self.city}, {self.state}"
             self.map_link = f"https://maps.google.com/maps?q={query}&t=&z=15&ie=UTF8&iwloc=&output=embed"
         if not self.slug:
-            # cria slug único baseado no nome
             base_slug = slugify(self.name)
             slug = base_slug
             counter = 1
@@ -74,17 +70,13 @@ class Unit(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
-
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["barbershop", "name"], name="unique_unit_name_per_barbershop")
         ]
 
-
     def __str__(self):
         return f"{self.name} - {self.barbershop.name}"
-
-
 
 class Employee(models.Model):
     user = models.ForeignKey(
@@ -97,6 +89,10 @@ class Employee(models.Model):
         on_delete=models.CASCADE,
         related_name="employees"
     )
+    
+    # --- NOVO: Status do Vínculo Empregatício ---
+    is_active = models.BooleanField("Funcionário Ativo", default=True)
+    
     bio = models.CharField(max_length=255, null=True, blank=True)
     specialty = models.CharField(max_length=50, null=True, blank=True)
     commission_percentage = models.BooleanField(default=False)
@@ -116,7 +112,6 @@ class Employee(models.Model):
         return f"{self.user} - {self.unit}"
     
 
-
 class UnitWorkDay(models.Model):
     class Weekday(models.IntegerChoices):
         SUNDAY = 0, _("Domingo")
@@ -133,11 +128,8 @@ class UnitWorkDay(models.Model):
     close_time = models.TimeField()
     is_open = models.BooleanField(default=True)
 
-    
-
     def __str__(self):
         return f"{self.unit} - {self.get_weekday_display()}"
-
 
 
 class EmployeeWorkDay(models.Model):
@@ -163,12 +155,8 @@ class EmployeeWorkDay(models.Model):
 
     is_active = models.BooleanField(default=True)
 
- 
-
     def __str__(self):
         return f"{self.employee} - {self.get_weekday_display()}"
-
-
 
 class EmployeeAbsence(models.Model):
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="absences")
@@ -176,26 +164,16 @@ class EmployeeAbsence(models.Model):
     end_date = models.DateField()
     reason = models.CharField(max_length=255, blank=True, null=True)
 
-    
-
     def __str__(self):
         return f"{self.employee} - {self.start_date} até {self.end_date}"
-
-
 
 class UnitHoliday(models.Model):
     unit = models.ForeignKey("Unit", on_delete=models.CASCADE, related_name="holidays")
     date = models.DateField()
     name = models.CharField(max_length=100)
 
- 
-
     def __str__(self):
         return f"{self.unit} - {self.name} ({self.date})"
-
-
-
-
 
 class Role(models.Model):
     class Occupation(models.TextChoices):
@@ -206,11 +184,8 @@ class Role(models.Model):
     employee = models.ForeignKey("Employee", on_delete=models.CASCADE, related_name="roles")
     occupation = models.CharField(max_length=20, choices=Occupation.choices)
 
-    
-
     def __str__(self):
         return f"{self.employee} - {self.get_occupation_display()}"
-
 
 class UnitMedia(models.Model):
     class MediaType(models.TextChoices):
@@ -225,25 +200,14 @@ class UnitMedia(models.Model):
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
-   
-
     def __str__(self):
         return f"{self.unit} - {self.get_media_type_display()} ({self.order})"
-    
-
-
 
 @receiver(post_save, sender=Employee)
 def create_employee_work_days(sender, instance, created, **kwargs):
-    """
-    Este sinal é acionado sempre que um Employee é salvo.
-    Se o Employee estiver sendo CRIADO ('created' será True),
-    ele cria os 7 dias de trabalho padrão para ele.
-    """
     if created:
-        for i in range(7):  # Loop de 0 (Domingo) a 6 (Sábado)
+        for i in range(7):
             EmployeeWorkDay.objects.create(
                 employee=instance,
                 weekday=i,
-                # Os horários usarão os valores 'default' definidos no modelo
             )
