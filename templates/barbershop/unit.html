@@ -1,4 +1,3 @@
-
 {% load static %}
 
 <!DOCTYPE html>
@@ -30,7 +29,7 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
-                <div class="stat-box">
+                <div class="stat-box" title="Total de unidades ativas operando">
                     <div class="stat-value">{{ active_units_count }}</div>
                     <div class="stat-label">Unidades</div>
                 </div>
@@ -39,55 +38,36 @@
     </div>
 
 
-    
     <div class="pages-options-Container">
-
         {% if request.user.user_type == "dono" %}
             <a href="">
-                <div class="page-option active"><i class="fas fa-store"></i> Unidades</div>
+                <div class="page-option active" title="Gerenciar unidades físicas"><i class="fas fa-store"></i> Unidades</div>
             </a>
         {% endif %}
 
- 
         {% if request.user.user_type != "funcionario" %}    
             {% if request.user.user_type == "dono" %}
-                <!-- Dono pode ver geral -->
                 <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}">
-                    <div class="page-option "><i class="fas fa-store"></i> Funcionarios</div>
+                    <div class="page-option " title="Gerenciar equipe e permissões"><i class="fas fa-users-cog"></i> Funcionários</div>
                 </a>
-            
-
-                {% elif request.user.user_type == "gerente" and gerente_unit  %}
-                    <!-- Gerente só vê a unidade dele -->
-                    <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
-                        <div class="page-option "><i class="fas fa-store"></i> Funcionarios</div>
-                    </a>
+            {% elif request.user.user_type == "gerente" and gerente_unit %}
+                <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
+                    <div class="page-option " title="Gerenciar equipe da filial"><i class="fas fa-users-cog"></i> Funcionários</div>
+                </a>
             {% endif %}
-
         {% endif %}
-
-
 
         {% if request.user.user_type != "funcionario" %}    
             {% if request.user.user_type == "dono" %}
-                <!-- Dono pode ver geral -->
                 <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}">
-                    <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
+                    <div class="page-option" title="Configurar horários de abertura e turno da equipe"><i class="fas fa-clock"></i> Funcionamento</div>
                 </a>
-            
-
-                {% elif request.user.user_type == "gerente" %}
-                    <!-- Gerente só vê a unidade dele -->
-                    <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
-                        <div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div>
-                    </a>
+            {% elif request.user.user_type == "gerente" %}
+                <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
+                    <div class="page-option" title="Configurar horários da sua unidade"><i class="fas fa-clock"></i> Funcionamento</div>
+                </a>
             {% endif %}
-
         {% endif %}
-
-
-
-        
     </div>
     
     <div class="main-content">
@@ -98,7 +78,7 @@
                     <span>Gerenciamento de Unidades</span>
                 </div>
                 <div class="page-actions">
-                    <button class="btn-new-unit" id="newUnitBtn">
+                    <button class="btn-new-unit" id="newUnitBtn" data-consumed="{{ units.count }}" data-max="{{ barbershop.max_units }}">
                         <i class="fas fa-plus"></i> Nova Unidade
                     </button>
                 </div>
@@ -113,7 +93,7 @@
                 </div>
 
                 {% for unit in units %}
-                    <div class="table-row" 
+                    <div class="table-row" style="{% if not unit.is_active %}opacity: 0.6; background: #fdfdfd;{% endif %}"
                         data-id="{{ unit.id }}" 
                         data-cep="{{ unit.cep_address }}" 
                         data-street="{{ unit.street_address }}" 
@@ -121,20 +101,19 @@
                         data-neighborhood="{{ unit.neighborhood|default:'' }}"
                         data-city="{{ unit.city|default:'' }}"
                         data-state="{{ unit.state|default:'' }}"
-                        
                         data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
                         data-instagram="{{ unit.instagram_link|default:'' }}"
                         data-active="{{ unit.is_active }}">
                         <div class="unit-cell">
-                            <div class="unit-icon">
+                            <div class="unit-icon" style="{% if not unit.is_active %}filter: grayscale(1);{% endif %}">
                                 <i class="fas fa-store"></i>
                             </div>
                             <div class="unit-info">
                                 <div class="unit-name">{{ unit.name }}</div>
                                 {% if unit.is_active %}
-                                    <span class="unit-status status-active">Ativa</span>
+                                    <span class="unit-status status-active" title="Recebendo clientes">Ativa</span>
                                 {% else %}
-                                    <span class="unit-status status-inactive">Inativa</span>
+                                    <span class="unit-status status-inactive" title="Operação suspensa temporariamente">Inativa</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -145,11 +124,11 @@
                         </div>
 
                         <div class="unit-employees">
-                            <span>{{ unit.employee_count }}</span>
+                            <span title="Total de funcionários nesta unidade">{{ unit.employee_count }}</span>
                         </div>
 
                         <div class="unit-actions">
-                            <div class="action-btn edit"
+                            <div class="action-btn edit" title="Editar informações da unidade"
                                 data-id="{{ unit.id }}"
                                 data-name="{{ unit.name }}"
                                 data-cep="{{ unit.cep_address }}"
@@ -168,19 +147,20 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="unit_id" value="{{ unit.id }}">
                                 <input type="hidden" name="action" value="delete">
-                                <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-desktop-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.')">
+                                <button type="button" class="action-btn delete" title="Excluir unidade do sistema" onclick="confirmDelete('delete-unit-desktop-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? O histórico financeiro será perdido.')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                         </div>
                     </div>
+                {% empty %}
+                    <div style="text-align:center; padding: 20px;">Nenhuma unidade cadastrada.</div>
                 {% endfor %}
             </div>
 
             <div class="units-mobile-table-container">    
                 {% for unit in units %}
-                    <!-- Cada Funcionario -->
-                    <div class="table-row"
+                    <div class="table-row" style="{% if not unit.is_active %}opacity: 0.6; background: #fdfdfd;{% endif %}"
                     data-id="{{ unit.id }}" 
                     data-cep="{{ unit.cep_address }}" 
                     data-street="{{ unit.street_address }}" 
@@ -192,30 +172,30 @@
                     data-instagram="{{ unit.instagram_link|default:'' }}"
                     data-active="{{ unit.is_active }}">
                      <div class="unit-cell">
-                         <div class="unit-icon">
+                         <div class="unit-icon" style="{% if not unit.is_active %}filter: grayscale(1);{% endif %}">
                              <i class="fas fa-store"></i>
                          </div>
                          
                          <div class="unit-info">
                              <div class="unit-name">{{ unit.name }}</div>
                              {% if unit.is_active %}
-                                <span class="unit-status status-active">Ativa</span>
+                                <span class="unit-status status-active" title="Recebendo clientes">Ativa</span>
                             {% else %}
-                                <span class="unit-status status-inactive">Inativa</span>
+                                <span class="unit-status status-inactive" title="Operação suspensa temporariamente">Inativa</span>
                             {% endif %}
                          </div>
                      </div>
- 
+
                      <div class="employee-phone">
                          <span class="cell-label">Unidade:</span>
                          <i class="fas fa-map-marker-alt"></i>
                          <span>{{ unit.street_address }}, {{ unit.number_address }}</span>
                      </div>
- 
+
                      <div class="employee-role">
                          <span class="cell-label">Funcionários:</span>
                          <i class="fas fa-user-tie"></i>
-                         <div class="employee-quantity type-good">{{ unit.employee_count }}</div>
+                         <div class="employee-quantity type-good" title="Total de funcionários">{{ unit.employee_count }}</div>
                      </div>
          
                      <div class="unit-actions">
@@ -237,13 +217,12 @@
                             {% csrf_token %}
                             <input type="hidden" name="unit_id" value="{{ unit.id }}">
                             <input type="hidden" name="action" value="delete">
-                            <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-mobile-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? A ação não pode ser desfeita.')">
+                            <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-mobile-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? O histórico financeiro será perdido.')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
                      </div>
                  </div>
- 
                {% endfor %}
              </div>
         </div>
@@ -251,16 +230,16 @@
 
     <footer>
         <div class="total-display">
-        
+            <div class="footer-first-row" style="font-size: 0.95rem;">
+                Unidades do Plano: <strong id="footerConsumedUnits" title="Vagas da assinatura">{{ units.count }}</strong> / <strong>{{ barbershop.max_units }}</strong>
+            </div>
             <div class="footer-second-row">
-                Unidades Ativas: <strong>{{ active_units_count }}</strong>
+                Operações Ativas: <strong>{{ active_units_count }}</strong>
             </div>
         </div>
 
         <div class="actions">
-            <button class="btn btn-outline">
-                <i class="fas fa-print"></i> Imprimir
-            </button>
+            <!-- Espaço reservado para ações globais futuras -->
         </div>
     </footer>
     
@@ -277,17 +256,22 @@
                 </button>
             </div>
 
-            <!-- FORM FUNCIONAL -->
             <form id="unitForm" method="POST" autocomplete="off">
                 {% csrf_token %}
                 <div class="modal-body">
+                    
+                    <div id="limitWarningBanner" style="display: none; background: #feebc8; border: 1px solid #f6ad55; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                        <span style="color: #dd6b20; font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> Limite de Plano Atingido</span>
+                        <p style="font-size: 0.85rem; color: #7b341e; margin-top: 5px;">Sua assinatura atual atingiu o máximo de unidades permitidas. Para adicionar novas filiais, por favor faça um upgrade no plano.</p>
+                    </div>
+
                     <input type="hidden" id="unitId" name="unit_id">
                     <input type="hidden" id="formAction" name="action" value="create">
                     <div class="form-group">
                         <label for="unitName" class="form-label">
                             <i class="fas fa-signature"></i> Nome da Unidade
                         </label>
-                        <input type="text" id="unitName" name="name" class="form-control" placeholder="Ex: Matriz - Centro" maxlength="30" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
+                        <input type="text" id="unitName" name="name" class="form-control" placeholder="Ex: Matriz - Centro" maxlength="30" pattern="[A-Za-zÀ-ÿ\s\-]+" title="Letras e espaços são permitidos" required>
                     </div>
 
                     <div class="form-group">
@@ -301,7 +285,7 @@
                         <label for="unitStreet" class="form-label">
                             <i class="fas fa-map-marker-alt"></i> Rua
                         </label>
-                        <input type="text" id="unitStreet" name="street_address" class="form-control" placeholder="Ex: Av. Paulista" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
+                        <input type="text" id="unitStreet" name="street_address" class="form-control" placeholder="Ex: Av. Paulista" required>
                     </div>
 
                     <div class="form-group">
@@ -313,12 +297,12 @@
 
                     <div class="form-group">
                         <label for="unitNeighborhood" class="form-label"><i class="fas fa-map-signs"></i> Bairro</label>
-                        <input type="text" id="unitNeighborhood" name="neighborhood" class="form-control" placeholder="Ex: Copacabana" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
+                        <input type="text" id="unitNeighborhood" name="neighborhood" class="form-control" placeholder="Ex: Copacabana" required>
                     </div>
 
                     <div class="form-group">
                         <label for="unitCity" class="form-label"><i class="fas fa-city"></i> Cidade</label>
-                        <input type="text" id="unitCity" name="city" class="form-control" placeholder="Ex: Rio de Janeiro" pattern="[A-Za-zÀ-ÿ\s]+" title="Apenas letras são permitidas" required>
+                        <input type="text" id="unitCity" name="city" class="form-control" placeholder="Ex: Rio de Janeiro" required>
                     </div>
 
                     <div class="form-group">
@@ -327,7 +311,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="unitActive" class="form-label">Unidade Ativa</label>
+                        <label for="unitActive" class="form-label" title="Pausar unidade retira a barbearia do ar para os clientes">Unidade Ativa</label>
                         <select id="unitActive" name="is_active" class="form-option">
                             <option value="True">Sim</option>
                             <option value="False">Não</option>

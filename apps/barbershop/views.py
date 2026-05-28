@@ -136,7 +136,9 @@ def update_user_system_access(user):
 @owner_required
 def UnitView(request, barbershop_slug):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees'))
+    
+    # ORDENAÇÃO: Ativos primeiro, depois por nome
+    units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees')).order_by('-is_active', 'name')
     active_units_count = units.filter(is_active=True).count()
     gerente_unit = get_user_unit_if_manager(request.user, barbershop)
 
@@ -145,8 +147,13 @@ def UnitView(request, barbershop_slug):
         name = request.POST.get("name", "").strip()
 
         if action == "create":
+            # TRAVA DE LIMITE SAAS
+            if units.count() >= barbershop.max_units:
+                return JsonResponse({'is_valid': False, 'errors': [f'Limite atingido! O plano atual permite operar até {barbershop.max_units} unidade(s).']}, status=400)
+
             if Unit.objects.filter(barbershop=barbershop, name=name).exists():
                 return JsonResponse({'is_valid': False, 'errors': [f"A unidade '{name}' já existe nesta barbearia."]}, status=400)
+            
             try:
                 new_unit = Unit.objects.create(
                     name=name, cep_address=request.POST.get("cep_address"), street_address=request.POST.get("street_address"),
@@ -188,6 +195,7 @@ def UnitView(request, barbershop_slug):
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
     return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit})
+
 
 
 @login_required
@@ -495,153 +503,6 @@ def check_employee_data(request):
         except User.DoesNotExist: pass
 
     return JsonResponse({'is_valid': True, 'user_exists': False})
-
-
-@login_required
-@owner_or_employee_required
-def WorkDayView(request, barbershop_slug, unit_slug=None):
-    barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    today = now().date()
-    
-    is_owner = (request.user == barbershop.owner_user)
-    emp = get_tenant_employee(request.user, barbershop)
-    
-    if not is_owner and not emp:
-        messages.error(request, "Acesso negado.")
-        return redirect("core:home")
-
-    is_manager = emp and emp.roles.filter(occupation=Role.Occupation.GERENTE).exists()
-    
-    gerente_unit = None
-    current_employee = None
-    
-    if is_owner:
-        pass
-    elif is_manager:
-        gerente_unit = emp.unit
-    elif emp:
-        gerente_unit = emp.unit
-        current_employee = emp
-        
-    unit = gerente_unit if gerente_unit else None
-    if not unit and unit_slug:
-        unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        funcionario_allowed_actions = ["edit_workday"]
-        if current_employee and action not in funcionario_allowed_actions:
-            return JsonResponse({'status': 'error', 'errors': ['Ação não permitida para o seu cargo.']}, status=403)
-
-        if action == "edit_unit_workdays":
-            if not unit: return JsonResponse({'status': 'error', 'errors': ['Unidade não selecionada.']}, status=400)
-            for i in range(7):
-                try: wd_unit = UnitWorkDay.objects.get(unit=unit, weekday=i)
-                except UnitWorkDay.DoesNotExist: wd_unit = UnitWorkDay(unit=unit, weekday=i)
-                is_open = f'unit_open_{i}' in request.POST
-                wd_unit.open_time = request.POST.get(f'unit_start_{i}') or "09:00"
-                wd_unit.close_time = request.POST.get(f'unit_end_{i}') or "19:00"
-                wd_unit.is_open = is_open
-                wd_unit.save()
-            return JsonResponse({'status': 'success', 'message': 'Horário de funcionamento da unidade atualizado!'})
-
-        if action == "edit_workday":
-            emp_target_id = request.POST.get("employee_id")
-            emp_target = get_object_or_404(Employee, id=emp_target_id, unit__barbershop=barbershop)
-            
-            if current_employee and emp_target.id != current_employee.id:
-                return JsonResponse({'status': 'error', 'errors': ['Você só pode editar sua própria disponibilidade.']}, status=403)
-
-            if gerente_unit and not current_employee and emp_target.unit != gerente_unit:
-                return JsonResponse({'status': 'error', 'errors': ['Você só pode editar funcionários da sua unidade.']}, status=403)
-
-            for i in range(7):
-                try: workday = EmployeeWorkDay.objects.get(employee=emp_target, weekday=i)
-                except EmployeeWorkDay.DoesNotExist: workday = EmployeeWorkDay(employee=emp_target, weekday=i)
-                
-                morning_is_available = f'is_available_{i}_morning' in request.POST
-                afternoon_is_available = f'is_available_{i}_afternoon' in request.POST
-
-                workday.morning_available = morning_is_available
-                workday.afternoon_available = afternoon_is_available
-                workday.is_active = morning_is_available or afternoon_is_available
-
-                start_morning = request.POST.get(f'start_morning_work_{i}')
-                end_morning = request.POST.get(f'end_morning_work_{i}')
-                start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
-                end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
-
-                workday.start_morning_work = start_morning if morning_is_available and start_morning else None
-                workday.end_morning_work = end_morning if morning_is_available and end_morning else None
-                workday.start_afternoon_work = start_afternoon if afternoon_is_available and start_afternoon else None
-                workday.end_afternoon_work = end_afternoon if afternoon_is_available and end_afternoon else None
-                workday.save()
-            return JsonResponse({'status': 'success', 'message': f'Disponibilidade de {emp_target.user.name} atualizada!'})
-
-        # ... (Mantém create_holiday, edit_holiday, delete_holiday e absences sem alterações) ...
-
-    if gerente_unit:
-        unit = gerente_unit
-        units = [unit] 
-        if current_employee:
-            employees = Employee.objects.filter(id=current_employee.id).select_related("user", "unit")
-            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee=current_employee, end_date__gte=today).order_by("start_date")
-        else:
-            employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
-            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit=unit, end_date__gte=today).order_by("start_date")
-    else:
-        units = barbershop.units.all() 
-        if unit_slug:
-            unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-            employees = Employee.objects.filter(unit=unit).select_related("user", "unit")
-            holidays = UnitHoliday.objects.filter(unit=unit, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit=unit,end_date__gte=today).order_by("start_date")
-        else:
-            employees = Employee.objects.filter(unit__barbershop=barbershop).select_related("user", "unit")
-            holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=now().date()).order_by("date")
-            absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop,end_date__gte=today).order_by("start_date")
-
-    workdays = EmployeeWorkDay.objects.filter(employee__in=employees).order_by('weekday')
-
-    workdays_data = {}
-    for employee in employees:
-        emp_data = {}
-        emp_workdays = workdays.filter(employee=employee)
-        for i in range(7):
-            wd = next((d for d in emp_workdays if d.weekday == i), None)
-            if wd:
-                emp_data[i] = {
-                    'morning_available': wd.morning_available, 'afternoon_available': wd.afternoon_available,
-                    'start_morning_work': wd.start_morning_work.strftime('%H:%M') if wd.start_morning_work else '',
-                    'end_morning_work': wd.end_morning_work.strftime('%H:%M') if wd.end_morning_work else '',
-                    'start_afternoon_work': wd.start_afternoon_work.strftime('%H:%M') if wd.start_afternoon_work else '',
-                    'end_afternoon_work': wd.end_afternoon_work.strftime('%H:%M') if wd.end_afternoon_work else '',
-                }
-            else:
-                emp_data[i] = { 'morning_available': False, 'afternoon_available': False, 'start_morning_work': '', 'end_morning_work': '', 'start_afternoon_work': '', 'end_afternoon_work': '' }
-        workdays_data[employee.id] = emp_data
-
-    unit_workdays_list = unit.work_days.all().order_by('weekday') if unit else []
-    unit_data_dict = {}
-    if unit:
-        if not unit_workdays_list.exists(): unit_data_dict = {i: {'is_open': True, 'open_time': '09:00', 'close_time': '19:00'} for i in range(7)}
-        else:
-            for wd in unit_workdays_list:
-                unit_data_dict[wd.weekday] = { 'is_open': wd.is_open, 'open_time': wd.open_time.strftime('%H:%M'), 'close_time': wd.close_time.strftime('%H:%M') }
-
-    time_options = [f"{h:02d}:{m:02d}" for h in range(5, 24) for m in (0, 30)]
-
-    context = {
-        "barbershop": barbershop, "units": units, "unit": unit, "employees": employees,
-        "holidays": holidays, "absences": absences, "workdays": workdays,
-        "is_owner": is_owner, "is_manager": is_manager, "gerente_unit": gerente_unit,
-        "time_options": time_options, "workdays_json": json.dumps(workdays_data),
-        "unit_workdays_json": unit_data_dict, "unit_workdays": unit_workdays_list, "current_employee": current_employee, 
-    }
-    return render(request, "barbershop/workDay.html", context)
 
 
 
@@ -1016,6 +877,9 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
         "active_appointment": active_appointment,
     }
     return render(request, "barbershop/unitLP.html", context)
+
+
+
 
 
 # =========================================================

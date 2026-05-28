@@ -15,6 +15,7 @@ class Barbershop(models.Model):
     
     # --- REGRAS DE NEGÓCIO (LIMITES SAAS) ---
     max_employees = models.PositiveIntegerField("Limite de Vagas (Funcionários)", default=5)
+    max_units = models.PositiveIntegerField("Limite de Unidades", default=1) # NOVO LIMITE
     
     owner_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -24,13 +25,15 @@ class Barbershop(models.Model):
     is_active = models.BooleanField(default=True) 
 
     def save(self, *args, **kwargs):
-        base_slug = slugify(self.name)
-        slug = base_slug
-        counter = 1
-        while Barbershop.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-        self.slug = slug
+        # CORREÇÃO: Só gera slug automático se estiver vazio
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Barbershop.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -60,11 +63,13 @@ class Unit(models.Model):
         if self.street_address:
             query = f"{self.street_address}, {self.number_address}, {self.neighborhood}, {self.city}, {self.state}"
             self.map_link = f"https://maps.google.com/maps?q={query}&t=&z=15&ie=UTF8&iwloc=&output=embed"
+        
         if not self.slug:
             base_slug = slugify(self.name)
             slug = base_slug
             counter = 1
-            while Unit.objects.filter(slug=slug, barbershop=self.barbershop).exists():
+            # CORREÇÃO: Removido barbershop=self.barbershop para respeitar o unique=True global no banco
+            while Unit.objects.filter(slug=slug).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
