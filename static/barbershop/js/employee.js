@@ -6,24 +6,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const employeeForm = document.getElementById('employeeForm');
     const unitField = document.getElementById('employeeUnit');
     const unitFilter = document.getElementById('unitFilterSelect');
+    const addEmployeeBtn = document.querySelector('.add-employee-btn');
 
     const cpfField = employeeForm.querySelector('#employeeCPF');
     const nameField = employeeForm.querySelector('#employeeName');
     const lastNameField = employeeForm.querySelector('#employeeLastName');
     const emailField = employeeForm.querySelector('#employeeEmail');
     const phoneField = employeeForm.querySelector('#employeePhone');
+    const birthField = employeeForm.querySelector('#employeeBirth');
+    const passwordField = employeeForm.querySelector('#employeePassword');
     const cpfStatusMessage = document.getElementById('cpfStatusMessage');
 
     function preventSelectClick(e) { e.preventDefault(); this.blur(); return false; }
 
     // ===============================================
-    // LÓGICA DE AUTO-PREENCHIMENTO DE CPF
+    // LÓGICA DE AUTO-PREENCHIMENTO COM PRIVACIDADE
     // ===============================================
     if (cpfField) {
         cpfField.addEventListener('input', function() {
             if (this.value.length > 11) this.value = this.value.slice(0, 11);
             
-            // Se chegou em 11 digitos e estamos em modo de criação
             if (this.value.length === 11 && !employeeForm.querySelector('#employeeId').value) {
                 const apiCpf = employeeForm.dataset.cpfApi;
                 fetch(`${apiCpf}?cpf=${this.value}`)
@@ -31,35 +33,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.found) {
                         if (data.in_barbershop) {
-                            cpfStatusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Este CPF já é um funcionário desta barbearia.';
+                            cpfStatusMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Este CPF já atua nesta barbearia.';
                             cpfStatusMessage.style.color = '#e53e3e';
                             cpfStatusMessage.style.display = 'block';
                         } else {
                             nameField.value = data.name;
                             lastNameField.value = data.last_name;
-                            emailField.value = data.email;
-                            phoneField.value = data.phone;
                             
-                            [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                            // BUGFIX: Tira obrigatoriedade da senha se o usuario já tem conta na Orbly
+                            document.getElementById('emailGroup').style.display = 'none';
+                            document.getElementById('phoneGroup').style.display = 'none';
+                            document.getElementById('passwordGroup').style.display = 'none';
+                            emailField.required = false;
+                            passwordField.required = false;
+                            
+                            [nameField, lastNameField].forEach(el => {
                                 el.readOnly = true; el.style.backgroundColor = "#e9ecef"; el.style.cursor = "not-allowed";
                             });
                             
-                            cpfStatusMessage.innerHTML = '<i class="fas fa-check-circle"></i> Usuário encontrado! Dados preenchidos.';
+                            cpfStatusMessage.innerHTML = '<i class="fas fa-lock"></i> Usuário Encontrado! Digite a Data de Nascimento para confirmar o vínculo.';
                             cpfStatusMessage.style.color = '#48bb78';
                             cpfStatusMessage.style.display = 'block';
                         }
                     } else {
-                        // Reseta se não achou (caso o cara apague e digite outro)
                         cpfStatusMessage.style.display = 'none';
-                        [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                        document.getElementById('emailGroup').style.display = 'block';
+                        document.getElementById('phoneGroup').style.display = 'block';
+                        document.getElementById('passwordGroup').style.display = 'block';
+                        emailField.required = true;
+                        passwordField.required = true;
+                        
+                        [nameField, lastNameField].forEach(el => {
                             if(!el.value) { el.readOnly = false; el.style.backgroundColor = ""; el.style.cursor = "text"; }
                         });
                     }
                 });
             } else if (this.value.length < 11) {
                 cpfStatusMessage.style.display = 'none';
+                document.getElementById('emailGroup').style.display = 'block';
+                document.getElementById('phoneGroup').style.display = 'block';
+                document.getElementById('passwordGroup').style.display = 'block';
+                
                 if (!employeeForm.querySelector('#employeeId').value) {
-                    [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                    emailField.required = true;
+                    passwordField.required = true;
+                    [nameField, lastNameField].forEach(el => {
                         el.readOnly = false; el.style.backgroundColor = ""; el.style.cursor = "text";
                     });
                 }
@@ -74,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         employeeForm.addEventListener('submit', function(event) {
             event.preventDefault(); 
             
-            // Destrava campos para enviar no form POST
+            // Destrava campos bloqueados para enviar no form POST
             employeeForm.querySelectorAll('input, select').forEach(el => { el.disabled = false; });
             const formData = new FormData(employeeForm);
 
@@ -84,7 +102,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.is_valid) {
-                    employeeForm.submit();
+                    if (employeeForm.querySelector('input[name="action"]').value === 'create' && data.user_exists) {
+                        Swal.fire({
+                            title: 'Vínculo Confirmado!',
+                            text: `A conta de ${data.user_name} foi validada através da data de nascimento. Ele agora é funcionário da sua unidade.`,
+                            icon: 'success', showConfirmButton: false, timer: 2000
+                        }).then(() => { HTMLFormElement.prototype.submit.call(employeeForm); });
+                    } else {
+                        HTMLFormElement.prototype.submit.call(employeeForm);
+                    }
                 } else {
                     let errorHtml = '<ul style="text-align: left; list-style-position: inside; padding-left: 10px;">';
                     data.errors.forEach(error => { errorHtml += `<li>${error}</li>`; });
@@ -95,36 +121,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                Swal.fire({ icon: 'error', title: 'Erro de Servidor', text: 'Tente novamente.', confirmButtonColor: '#c53030' });
+                Swal.fire({ icon: 'error', title: 'Erro de Servidor', text: 'Não foi possível se comunicar com o banco de dados.', confirmButtonColor: '#c53030' });
             });
         });
     }
 
-    function openEmployeeModal(employeeData = null) {
+    window.openEmployeeModal = function(employeeData = null) {
         const isActiveField = employeeForm.querySelector('#employeeIsActive');
         const isOwnerInput = document.getElementById('isOwnerInput');
+        const limitBanner = document.getElementById('limitWarningBanner');
+        const barbeiroCheckbox = employeeForm.querySelector('input[name="roles"][value="barbeiro"]');
+        const labelBarbeiro = document.getElementById('label-role-barbeiro');
+        
         if(cpfStatusMessage) cpfStatusMessage.style.display = 'none';
+        document.getElementById('emailGroup').style.display = 'block';
+        document.getElementById('phoneGroup').style.display = 'block';
        
         unitField.removeEventListener('mousedown', preventSelectClick);
-        unitField.style.backgroundColor = "";
-        unitField.style.cursor = "default";
+        unitField.style.backgroundColor = ""; unitField.style.cursor = "default";
         
-        [cpfField, nameField, lastNameField, emailField, phoneField, isActiveField].forEach(el => {
+        [cpfField, nameField, lastNameField, emailField, phoneField, birthField, isActiveField].forEach(el => {
             if(el) { el.readOnly = false; el.disabled = false; el.style.backgroundColor = ""; el.style.cursor = "text"; }
         });
 
         if (employeeForm) {
-            employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => checkbox.checked = false);
+            employeeForm.querySelectorAll('input[name="roles"]').forEach(checkbox => { checkbox.checked = false; checkbox.disabled = false; });
+            if(labelBarbeiro) { labelBarbeiro.style.opacity = "1"; labelBarbeiro.style.cursor = "pointer"; }
             const ownerBarberChk = document.getElementById('ownerIsBarber');
             if (ownerBarberChk) ownerBarberChk.checked = false;
         }
         
         if (employeeData && employeeData.id) {
+            // EDIÇÃO
             const isOwner = employeeData.isOwner === 'true';
-            modalTitle.innerHTML = isOwner ? '<i class="fas fa-crown" style="color:#c53030;"></i> Editar Perfil do Titular' : '<i class="fas fa-user-edit"></i> Editar Funcionário';
+            modalTitle.innerHTML = isOwner ? '<i class="fas fa-crown" style="color:#c53030;"></i> Editar Dados do Titular' : '<i class="fas fa-user-edit"></i> Editar Funcionário';
             employeeForm.querySelector('input[name="action"]').value = 'edit';
             employeeForm.querySelector('#employeeId').value = employeeData.id;
             isOwnerInput.value = isOwner ? "True" : "False";
+            limitBanner.style.display = 'none'; 
+
+            // Na edição a senha NUNCA é pedida
+            document.getElementById('passwordGroup').style.display = 'none';
+            passwordField.required = false;
             
             cpfField.value = employeeData.cpf;
             cpfField.readOnly = true; cpfField.style.backgroundColor = "#e9ecef"; cpfField.style.cursor = "not-allowed";
@@ -133,9 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
             lastNameField.value = employeeData.lastname;
             emailField.value = employeeData.email;
             phoneField.value = employeeData.phone;
+            birthField.value = employeeData.birth;
             
             if (isOwner) {
-                [nameField, lastNameField, emailField, phoneField].forEach(el => {
+                [nameField, lastNameField, emailField, phoneField, birthField].forEach(el => {
                     el.readOnly = true; el.style.backgroundColor = "#e9ecef"; el.style.cursor = "not-allowed";
                 });
                 if(isActiveField) { isActiveField.checked = true; isActiveField.disabled = true; }
@@ -173,12 +212,28 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePermissions(isOwner);
 
         } else {
+            // CRIAÇÃO NOVA
             modalTitle.innerHTML = '<i class="fas fa-user-plus"></i> Novo Funcionário';
+            
+            if (addEmployeeBtn) {
+                const consumed = parseInt(addEmployeeBtn.dataset.consumed);
+                const max = parseInt(addEmployeeBtn.dataset.max);
+                if (consumed >= max) {
+                    limitBanner.style.display = 'block';
+                    if(barbeiroCheckbox) { barbeiroCheckbox.disabled = true; labelBarbeiro.style.opacity = "0.4"; labelBarbeiro.style.cursor = "not-allowed"; }
+                } else { limitBanner.style.display = 'none'; }
+            }
+
             if (employeeForm) {
                 employeeForm.reset();
                 employeeForm.querySelector('input[name="action"]').value = 'create';
                 employeeForm.querySelector('#employeeId').value = '';
                 isOwnerInput.value = "False";
+                
+                // Senha ligada por padrão, a API do CPF desliga depois se não precisar
+                document.getElementById('passwordGroup').style.display = 'block';
+                passwordField.required = true;
+                emailField.required = true;
                 
                 document.querySelectorAll('.regular-field').forEach(el => el.style.display = 'block');
                 document.querySelectorAll('.owner-field').forEach(el => el.style.display = 'none');
@@ -201,7 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('modal-open');
     }
 
-    window.openEmployeeModal = openEmployeeModal;
     window.closeEmployeeModal = function() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
@@ -217,9 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-
-    const cellInput = document.getElementById('employeePhone');
-    if(cellInput) cellInput.addEventListener('input', function() { if (this.value.length > 11) this.value = this.value.slice(0, 11); });
 
     const roleElements = document.querySelectorAll('.employee-type');
     roleElements.forEach(element => {
@@ -252,24 +303,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (commissionCheckbox) commissionCheckbox.addEventListener('change', updateInputsState);
 
     const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
+    const gerenteCheckbox = document.querySelector('input[name="roles"][value="gerente"]');
+    const caixaCheckbox = document.querySelector('input[name="roles"][value="caixa"]');
     const sysAccess = document.getElementById('systemAccessCheckbox');
-    const cashbox = document.getElementById('canManageCashboxCheckbox');
-    const registerSell = document.getElementById('canRegisterSellCheckbox');
-    const createAppt = document.getElementById('canCreateAppointmentsCheckbox');
     
     function updatePermissions(isOwner = false) {
-        const selectedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+        if (gerenteCheckbox && caixaCheckbox) {
+            if (gerenteCheckbox.checked) {
+                caixaCheckbox.checked = false;
+                caixaCheckbox.disabled = true;
+                const lbl = document.getElementById('label-role-caixa');
+                if(lbl) lbl.style.opacity = "0.4";
+            } else {
+                caixaCheckbox.disabled = false;
+                const lbl = document.getElementById('label-role-caixa');
+                if(lbl) lbl.style.opacity = "1";
+            }
+        }
         
+        const selectedRoles = Array.from(roleCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         if(sysAccess) sysAccess.disabled = false;
-        if(cashbox) cashbox.checked = false; 
-        if(registerSell) registerSell.checked = false; 
-        if(createAppt) createAppt.checked = false;
 
         if (selectedRoles.includes('gerente') || selectedRoles.includes('caixa') || isOwner) {
             if(sysAccess) { sysAccess.checked = true; sysAccess.disabled = true; }
-            if(cashbox) cashbox.checked = true; 
-            if(registerSell) registerSell.checked = true; 
-            if(createAppt) createAppt.checked = true;
         } 
     }
     roleCheckboxes.forEach(checkbox => checkbox.addEventListener('change', () => updatePermissions(false)));

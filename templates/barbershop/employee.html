@@ -24,9 +24,9 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
-                {% if request.user.user_type == "dono" %}
+                {% if is_owner %}
                     <div class="unit-filter">
-                        <select id="unitFilterSelect" 
+                        <select id="unitFilterSelect" title="Filtrar por Unidade"
                             data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
                             data-unit-url-template="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
                             <option value="geral" data-unit-id="" {% if not unit %}selected{% endif %}>Geral</option>
@@ -38,7 +38,7 @@
                         </select>
                     </div>
                 {% endif %}
-                <div class="stat-box">
+                <div class="stat-box" title="Total de funcionários listados">
                     <div class="stat-value">{% if owner_in_list %}{{ regular_employees.count|add:1 }}{% else %}{{ regular_employees.count }}{% endif %}</div>
                     <div class="stat-label">Funcionários</div>
                 </div>
@@ -47,18 +47,16 @@
     </div>
     
     <div class="pages-options-Container">
-        {% if request.user.user_type == "dono" %}
-            <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}"><div class="page-option "><i class="fas fa-store"></i> Unidades</div></a>
+        {% if is_owner %}
+            <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}" title="Gerenciar unidades físicas"><div class="page-option "><i class="fas fa-store"></i> Unidades</div></a>
         {% endif %}
-        {% if request.user.user_type != "funcionario" %}    
-            <a href=""><div class="page-option active"><i class="fas fa-users-cog"></i> Funcionários</div></a>
-        {% endif %}
-        {% if request.user.user_type != "funcionario" %}    
-            {% if request.user.user_type == "dono" %}
-                <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"><div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div></a>
-            {% elif request.user.user_type == "gerente" %}
-                <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div></a>
-            {% endif %}
+        
+        <a href="" title="Gerenciar equipe e permissões"><div class="page-option active"><i class="fas fa-users-cog"></i> Funcionários</div></a>
+        
+        {% if is_owner %}
+            <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}" title="Configurar horários de abertura e turno da equipe"><div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div></a>
+        {% else %}
+            <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}" title="Configurar horários da sua unidade"><div class="page-option"><i class="fas fa-clock"></i> Funcionamento</div></a>
         {% endif %}
     </div>
 
@@ -67,13 +65,12 @@
             <div class="section-header">
                 <div class="section-title"><i class="fas fa-users-cog"></i> Gerenciamento de Funcionários</div>
                 <div class="header-actions" style="display: flex; gap: 10px;">
-                    {% if not owner_employee and request.user.user_type == 'dono' %}
-                        <button class="add-employee-btn" style="background-color: #ED8936; border-color: #ED8936;" onclick="openOwnerCreationModal()">
+                    {% if not owner_employee and is_owner %}
+                        <button class="btn btn-primary" style="background-color: #ED8936; border-color: #ED8936;" onclick="openOwnerCreationModal()" title="Adicionar meu próprio perfil na agenda">
                             <i class="fas fa-crown"></i> Atuar na Operação
                         </button>
                     {% endif %}
-                    
-                    <button class="add-employee-btn" onclick="openEmployeeModal()">
+                    <button class="add-employee-btn" onclick="openEmployeeModal()" data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}" title="Adicionar um novo colaborador">
                         <i class="fas fa-plus"></i> Novo Funcionário
                     </button>
                 </div>
@@ -95,12 +92,12 @@
                         <tr style="border-left: 4px solid #c53030; background: #fffaf0;">
                             <td>
                                 <div class="employee-name">
-                                    <div class="employee-avatar" style="background: #c53030;">
+                                    <div class="employee-avatar" style="background: #c53030;" title="Titular da Conta">
                                         {{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}
                                     </div>
                                     <div style="font-weight: bold;">
                                         {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }}
-                                        <i class="fas fa-crown" style="color: #c53030; margin-left: 5px; font-size: 12px;"></i>
+                                        <i class="fas fa-crown" style="color: #c53030; margin-left: 5px; font-size: 12px;" title="Titular da Conta"></i>
                                     </div>
                                 </div>
                             </td>
@@ -113,30 +110,34 @@
                                     {% endif %}
                                 {% endfor %}
                             </td>
-                            <td><span class="employee-active type-barber">Ativo</span></td>
+                            <td><span class="employee-active type-barber" title="Conta sempre ativa">Ativo</span></td>
                             <td>{{ owner_in_list.user.phone|default:"---" }}</td>
                             <td>
                                 <div class="employee-actions">
-                                   <div class="action-btn edit-btn" style="background:#fed7d7; color:#c53030; border-color:#feb2b2;" title="Editar titular"
-                                    data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
-                                    data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
-                                    data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
-                                    data-unit="{{ owner_in_list.unit.id }}" data-active="true"
-                                    data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                    data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                    data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
-                                    data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
-                                    data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <form method="POST" style="display:inline;" id="delete-employee-form-{{ owner_in_list.id }}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
-                                    <input type="hidden" name="action" value="delete">
-                                    <button type="button" class="action-btn delete-btn" onclick="confirmDelete('delete-employee-form-{{ owner_in_list.id }}', 'Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                    {% if is_owner %}
+                                        <div class="action-btn edit-btn" style="background:#fed7d7; color:#c53030; border-color:#feb2b2;" title="Editar seu próprio perfil na agenda"
+                                            data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
+                                            data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
+                                            data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
+                                            data-unit="{{ owner_in_list.unit.id }}" data-active="true"
+                                            data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                            data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
+                                            data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
+                                            data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
+                                            data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <form method="POST" style="display:inline;" id="delete-employee-form-{{ owner_in_list.id }}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="button" class="action-btn delete-btn" title="Sair da agenda desta filial" onclick="confirmDelete('delete-employee-form-{{ owner_in_list.id }}', 'Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span style="color: #a0aec0; font-size: 0.85rem;" title="Restrito ao Titular"><i class="fas fa-lock"></i></span>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -160,34 +161,39 @@
                             </td>
                             <td>
                                 {% if emp.is_active %}
-                                    <span class="employee-active type-barber">Ativo</span>
+                                    <span class="employee-active type-barber" title="Tem acesso ou está na agenda">Ativo</span>
                                 {% else %}
-                                    <span class="employee-active type-none" style="background:#e2e8f0; color:#4a5568;">Inativo</span>
+                                    <span class="employee-active type-none" style="background:#e2e8f0; color:#4a5568;" title="Sem acesso e fora da agenda">Inativo</span>
                                 {% endif %}
                             </td>
                             <td>{{ emp.user.phone|default:"---" }}</td>
                             <td>
                                 <div class="employee-actions">
-                                   <div class="action-btn edit-btn"
-                                    data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
-                                    data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
-                                    data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
-                                    data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                    data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
-                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
-                                    <i class="fas fa-edit"></i>
-                                </div>
-                                <form method="POST" style="display:inline;" id="delete-employee-form-{{ emp.id }}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="employee_id" value="{{ emp.id }}">
-                                    <input type="hidden" name="action" value="delete">
-                                    <button type="button" class="action-btn delete-btn" onclick="confirmDelete('delete-employee-form-{{ emp.id }}', 'Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                    {% if is_owner or emp.user != request.user %}
+                                        <div class="action-btn edit-btn" title="Editar dados do funcionário"
+                                            data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
+                                            data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
+                                            data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
+                                            data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
+                                            data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                            data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
+                                            data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                            data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                            data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                            data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <form method="POST" style="display:inline;" id="delete-employee-form-{{ emp.id }}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="button" class="action-btn delete-btn" title="Excluir ou inativar funcionário" onclick="confirmDelete('delete-employee-form-{{ emp.id }}', 'Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -203,12 +209,12 @@
                 {% if owner_in_list %}
                     <div class="table-row" style="border-left: 4px solid #c53030; background: #fffaf0;">
                         <div class="employee-cell">
-                            <div class="employee-avatar" style="background:#c53030;">{{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}</div>
+                            <div class="employee-avatar" style="background:#c53030;" title="Titular da Conta">{{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}</div>
                             <div class="employee-info">
                                 <div class="employee-name">
-                                    {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }} <i class="fas fa-crown" style="color: #c53030;"></i>
+                                    {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }} <i class="fas fa-crown" style="color: #c53030;" title="Titular da Conta"></i>
                                 </div>
-                                <div class="employee-plan"><i class="fas fa-clock"></i> <span>Ativo</span></div>
+                                <div class="employee-plan"><i class="fas fa-clock"></i> <span title="Conta sempre ativa">Ativo</span></div>
                             </div>
                         </div>
                         <div class="employee-role">
@@ -216,24 +222,28 @@
                             <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
                         </div>
                         <div class="employee-actions">
-                            <div class="action-btn edit" style="background:#fed7d7; color:#c53030;"
-                                data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
-                                data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
-                                data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
-                                data-unit="{{ owner_in_list.unit.id }}" data-active="true"
-                                data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
-                                data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
-                                data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
-                                <i class="fas fa-edit"></i>
-                            </div>                      
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.');">
-                                {% csrf_token %}
-                                <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
-                                <input type="hidden" name="action" value="delete">
-                                <button type="submit" class="action-btn delete" title="Sair da Operação"><i class="fas fa-trash"></i></button>
-                            </form>
+                            {% if is_owner %}
+                                <div class="action-btn edit" style="background:#fed7d7; color:#c53030;" title="Editar seu próprio perfil na agenda"
+                                    data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
+                                    data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
+                                    data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
+                                    data-unit="{{ owner_in_list.unit.id }}" data-active="true"
+                                    data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                    data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
+                                    data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
+                                    data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
+                                    data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
+                                    <i class="fas fa-edit"></i>
+                                </div>                      
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="action-btn delete" title="Sair da Operação"><i class="fas fa-trash"></i></button>
+                                </form>
+                            {% else %}
+                                <span style="color: #a0aec0; font-size: 0.85rem;" title="Restrito"><i class="fas fa-lock"></i></span>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}
@@ -246,7 +256,7 @@
                                 <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
                                 <div class="employee-plan">
                                     <i class="fas fa-clock"></i>
-                                    {% if emp.is_active %} <span>Ativo</span> {% else %} <span>Inativo</span> {% endif %}
+                                    {% if emp.is_active %} <span title="Tem acesso ou está na agenda">Ativo</span> {% else %} <span title="Sem acesso e fora da agenda">Inativo</span> {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -258,25 +268,30 @@
                         </div>
             
                         <div class="employee-actions">
-                            <div class="action-btn edit"
-                                data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
-                                data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
-                                data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
-                                data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
-                                data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                data-system-access="{{ emp.system_access|yesno:'true,false' }}">
-                                <i class="fas fa-edit"></i>
-                            </div>                      
+                            {% if is_owner or emp.user != request.user %}
+                                <div class="action-btn edit" title="Editar dados do funcionário"
+                                    data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
+                                    data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
+                                    data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
+                                    data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
+                                    data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                    data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
+                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                    <i class="fas fa-edit"></i>
+                                </div>                      
 
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir? Se houver histórico, ele será inativado.');">
-                                {% csrf_token %}
-                                <input type="hidden" name="employee_id" value="{{ emp.id }}">
-                                <input type="hidden" name="action" value="delete">
-                                <button type="submit" class="action-btn delete" title="Excluir funcionario"><i class="fas fa-trash"></i></button>
-                            </form>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                    <input type="hidden" name="action" value="delete">
+                                    <button type="submit" class="action-btn delete" title="Excluir ou inativar funcionário"><i class="fas fa-trash"></i></button>
+                                </form>
+                            {% else %}
+                                <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
+                            {% endif %}
                         </div>
                     </div>
                 {% empty %}
@@ -288,10 +303,12 @@
         </div>
     </div>
     
-    <footer>
+    <footer style="position: fixed;  bottom: 0;
+    left: 0;
+    width: 100%;">
         <div class="total-display">
             <div class="footer-first-row" style="font-size: 0.95rem;">
-                Vagas Consumidas: <strong>{{ consumed_slots }} / {{ barbershop.max_employees }}</strong>
+                Vagas Consumidas: <strong id="footerConsumedSlots" title="Vagas da assinatura">{{ consumed_slots }}</strong> / <strong>{{ barbershop.max_employees }}</strong>
                 <span style="font-size: 0.8rem; color: #a0aec0; margin-left: 10px;">(O Titular e 1 admin por filial são grátis)</span>
             </div>
             <div class="footer-second-row">
@@ -342,19 +359,31 @@
                 </div>
                 
                 <div class="modal-body">
+                    
+                    <div id="limitWarningBanner" style="display: none; background: #feebc8; border: 1px solid #f6ad55; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                        <span style="color: #dd6b20; font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> Limite de Vagas Atingido</span>
+                        <p style="font-size: 0.85rem; color: #7b341e; margin-top: 5px;">Seu plano atingiu o limite de barbeiros. Você só pode adicionar cargos administrativos gratuitos ou inativar antigos.</p>
+                    </div>
+
                     <div class="form-group regular-field" style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                         <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             <input type="checkbox" name="is_active" id="employeeIsActive" checked>
-                            <strong style="color: #2c3e50;">Funcionário Ativo no Sistema</strong>
+                            <strong style="color: #2c3e50;" title="Define se o funcionário pode logar e se aparece na agenda">Funcionário Ativo no Sistema</strong>
                         </label>
-                        <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Desmarque para inativar (bloquear acesso e remover da agenda) sem perder o histórico.</small>
+                        <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Desmarque para inativar sem perder o histórico.</small>
                     </div>
 
                     <div class="form-group regular-field" style="position: relative;">
                         <label for="employeeCPF">CPF</label>
                         <input type="text" name="cpf" id="employeeCPF" class="form-control" placeholder="Apenas números" maxlength="11" required>
-                        <small id="cpfStatusMessage" style="color: #48bb78; font-weight: bold; display: none; margin-top: 5px;"><i class="fas fa-check-circle"></i> Usuário encontrado! Dados preenchidos.</small>
+                        <small id="cpfStatusMessage" style="color: #48bb78; font-weight: bold; display: none; margin-top: 5px;"><i class="fas fa-lock"></i> Digite a Data de Nascimento para confirmar a vinculação.</small>
                     </div>
+                    
+                    <div class="form-group regular-field">
+                        <label for="employeeBirth">Data de Nascimento <span style="color: #e53e3e;">*</span></label>
+                        <input type="date" name="birth_date" id="employeeBirth" class="form-control" required>
+                    </div>
+
                     <div class="form-group regular-field">
                         <label for="employeeName">Nome</label>
                         <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" pattern="[A-Za-zÀ-ÿ\s]+" required>
@@ -363,14 +392,20 @@
                         <label for="employeeLastName">Sobrenome</label>
                         <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" pattern="[A-Za-zÀ-ÿ\s]+" required>
                     </div>
-                    <div class="form-group regular-field">
+                    <div class="form-group regular-field" id="emailGroup">
                         <label for="employeeEmail">Email</label>
                         <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="Digite o email" required>
                     </div>
-                    <div class="form-group regular-field">
+                    <div class="form-group regular-field" id="phoneGroup">
                         <label for="employeePhone">Celular</label>
                         <input type="text" name="phone" id="employeePhone" class="form-control" placeholder="Com DDD e apenas números" maxlength="11">
                     </div>
+                    
+                    <div class="form-group" id="passwordGroup" style="display: none;">
+                        <label for="employeePassword">Senha Inicial do Aplicativo <span style="color: #e53e3e;">*</span></label>
+                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso" minlength="6">
+                    </div>
+                    
                     <div class="form-group">
                         <label for="employeeSpecialty">Especialidade (Opcional)</label>
                         <input type="text" name="specialty" id="employeeSpecialty" class="form-control" placeholder="Ex: Especialista em Degradê">
@@ -404,7 +439,7 @@
                         <label>Cargos (selecione um ou mais)</label>
                         <div class="roles-checkbox-group">
                             {% for value, display_name in role_choices %}
-                            <label class="checkbox-label">
+                            <label class="checkbox-label" id="label-role-{{ value }}">
                                 <input type="checkbox" name="roles" value="{{ value }}"> {{ display_name }}
                             </label>
                             {% endfor %}
@@ -416,18 +451,12 @@
                             <input type="checkbox" name="owner_is_barber" id="ownerIsBarber">
                             <strong style="color: #c53030;">Atuar como Barbeiro na Agenda</strong>
                         </label>
-                        <small style="color: #c53030; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Marque se você também vai atender clientes na cadeira. Você já possui acesso administrativo total.</small>
+                        <small style="color: #c53030; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Marque se você vai atender clientes na cadeira.</small>
                     </div>
 
                     <div class="form-group regular-field" id="systemAccessGroup">
                         <label><input type="checkbox" name="system_access" id="systemAccessCheckbox"> Acesso ao Sistema</label>
                         <small style="color:#7f8c8d; font-size:0.8rem; display:block; margin-top:2px; margin-left: 20px;">Gerentes e Caixas recebem acesso total automaticamente.</small>
-                    </div>
-                    
-                    <div style="display: none;">
-                        <input type="checkbox" name="can_manage_cashbox" id="canManageCashboxCheckbox">
-                        <input type="checkbox" name="can_register_sell" id="canRegisterSellCheckbox">
-                        <input type="checkbox" name="can_create_appointments" id="canCreateAppointmentsCheckbox">
                     </div>
                 </div>
                 
@@ -443,28 +472,23 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
-
     {% if messages %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const Toast = Swal.mixin({
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true
-                });
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500 });
                 {% for message in messages %}
                     Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
                 {% endfor %}
             });
         </script>
     {% endif %}
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const unitFilter = document.getElementById('unitFilterSelect');
             if (unitFilter) { 
                 unitFilter.addEventListener('change', function() {
-                    const selectedValue = this.value;
-                    if (selectedValue === 'geral') { window.location.href = this.dataset.generalUrl; } 
-                    else { window.location.href = this.dataset.unitUrlTemplate.replace('__SLUG__', selectedValue); }
+                    if (this.value === 'geral') { window.location.href = this.dataset.generalUrl; } 
+                    else { window.location.href = this.dataset.unitUrlTemplate.replace('__SLUG__', this.value); }
                 });
             }
         });
