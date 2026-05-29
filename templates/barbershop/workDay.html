@@ -23,8 +23,24 @@
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     
-    
-    <style>.swal2-container {z-index: 9999;}</style>
+    <style>
+        .swal2-container {z-index: 9999;}
+        .batch-actions { display: flex; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 15px; align-items: center; justify-content: space-between; }
+        .batch-actions .time-inputs { display: flex; gap: 5px; align-items: center;}
+        
+        /* FOOTER FIXO (Impede que ele suba ou sobreponha menu) */
+        .main-content {
+            padding-bottom: 100px;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            z-index: 100;
+        }
+       
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
 
@@ -37,13 +53,13 @@
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
-                {% if request.user.user_type == "dono" %}
+                {% if is_owner %}
                     <div class="unit-filter">
                         <select id="unitFilterSelect" 
                                 data-general-url="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"
                                 data-unit-url-template="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
                             
-                            <option value="geral" {% if not unit %}selected{% endif %}>Geral</option>
+                            <option value="geral" {% if not unit %}selected{% endif %}>Geral (Visão Ampla)</option>
                             
                             {% for u in units %}
                                 <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
@@ -56,28 +72,25 @@
 
                 <div class="stat-box">
                     <div class="stat-value">{{ employees.count }}</div>
-                    <div class="stat-label">Funcionarios</div>
+                    <div class="stat-label">Barbeiros na Operação</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="pages-options-Container">
-
-        {% if request.user.user_type == "dono" %}
+        {% if is_owner %}
             <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
                 <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
             </a>
         {% endif %}
 
-
-        {% if request.user.user_type != "funcionario" %}    
-            {% if request.user.user_type == "dono" %}
+        {% if is_owner or is_manager or is_cashier %}    
+            {% if is_owner %}
                 <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}">
                     <div class="page-option "><i class="fas fa-users"></i> Funcionarios</div>
                 </a>
-            
-            {% elif request.user.user_type == "gerente" %}
+            {% elif is_manager or is_cashier %}
                 <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
                     <div class="page-option "><i class="fas fa-users"></i> Funcionarios</div>
                 </a>
@@ -90,31 +103,43 @@
     </div>
 
     <div class="main-content">
-        {% if unit %}
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
-                    <i class="fas fa-store"></i> Funcionamento: {{ unit.name }}
+                    <i class="fas fa-store"></i> Expediente Físico (Barbearia)
                 </div>
+                {% if unit and is_owner or is_manager %}
                 <button class="btn btn-outline" onclick="openUnitWorkdayModal()">
-                    <i class="fas fa-clock"></i> Configurar Horários
+                    <i class="fas fa-clock"></i> Configurar Expediente
                 </button>
+                {% endif %}
             </div>
             
-            <div class="unit-hours-summary" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
-                {% for wd in unit_workdays %}
-                    <div class="day-badge {% if not wd.is_open %}off{% endif %}" style="padding: 10px; border-radius: 8px; font-size: 12px; min-width: 100px; text-align: center; border: 1px solid #ddd;">
-                        <strong>{{ wd.get_weekday_display|slice:":3"|upper }}:</strong> <br>
-                        {% if wd.is_open %}{{ wd.open_time|time:"H:i" }} - {{ wd.close_time|time:"H:i" }}{% else %}<span style="color: #dc3545;">FECHADO</span>{% endif %}
-                    </div>
-                {% endfor %}
-            </div>
+            {% if not unit %}
+                <div style="padding: 20px; text-align: center; color: #a0aec0; background: #f8f9fa; border-radius: 8px; border: 1px dashed #cbd5e0; margin-top: 15px;">
+                    <i class="fas fa-filter" style="font-size: 24px; margin-bottom: 10px; color: #718096;"></i>
+                    <p style="margin: 0; font-size: 0.95rem;">Você está na <strong>Visão Geral</strong>. Selecione uma Unidade Específica no filtro do topo para configurar o horário de abertura físico.</p>
+                </div>
+            {% else %}
+                <div class="unit-hours-summary" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    {% for wd in unit_workdays %}
+                        <div class="day-badge {% if not wd.is_open %}off{% endif %}" style="padding: 10px; border-radius: 8px; font-size: 12px; min-width: 100px; text-align: center; border: 1px solid #ddd;">
+                            <strong>{{ wd.get_weekday_display|slice:":3"|upper }}:</strong> <br>
+                            {% if wd.is_open %}
+                                <span class="badge-time">{{ wd.open_time|time:"H:i" }} - {{ wd.close_time|time:"H:i" }}</span>
+                            {% else %}
+                                <span style="color: #dc3545;" class="badge-time">FECHADO</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
-        {% endif %}
+        
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
-                    <i class="fas fa-user-clock"></i> Disponibilidade de Barbeiros
+                    <i class="fas fa-user-clock"></i> Disponibilidade na Cadeira (Barbeiros)
                 </div>
             </div>
             
@@ -125,6 +150,7 @@
                         <div class="barber-avatar">{{ barber.user.name|slice:":1"|upper }}{{ barber.user.last_name|slice:":1"|upper }}</div>
                         <div>
                             <div class="barber-name">{{ barber.user.name }} {{ barber.user.last_name }}</div>
+                            <div style="font-size: 0.75rem; color: #a0aec0;">{{ barber.unit.name }}</div>
                         </div>
                     </div>
                     <div class="available-days">
@@ -136,10 +162,14 @@
                             {% endif %}
                         {% endfor %}
                     </div>
+                    {% if is_owner or is_manager or current_employee.id == barber.id %}
                     <button class="edit-btn" onclick="openEditModal({{ barber.id }})">
                         <i class="fas fa-edit"></i> Editar
                     </button>
+                    {% endif %}
                 </div>
+                {% empty %}
+                    <p style="text-align: center; color: #a0aec0; width: 100%;">Nenhum barbeiro ativo nesta unidade.</p>
                 {% endfor %}
             </div>
         </div>
@@ -147,38 +177,33 @@
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
-                    <i class="fas fa-calendar-times"></i> Dias de Não Funcionamento
+                    <i class="fas fa-calendar-times"></i> Feriados / Dias Fechados
                 </div>
-                {% if request.user.user_type != "funcionario" %}
+                {% if is_owner or is_manager %}
                     <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createHolidayModal" onclick="openHolidayModal()">
-                        <i class="fas fa-plus"></i> Adicionar Dia
+                        <i class="fas fa-plus"></i> Adicionar Feriado
                     </button>
                 {% endif %}
             </div>
-            
             <div class="non-working-days">
                 {% for holiday in holidays %}
                 <div class="day-off-card">
-                    {% if request.user.user_type != "funcionario" %}
+                    {% if is_owner or is_manager %}
                         <div class="day-off-actions">
-                            <button class="day-off-btn" 
-                                    onclick="editHolidayModal('{{ holiday.id }}', '{{ holiday.name }}', '{{ holiday.date|date:"Y-m-d" }}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
+                            <button class="day-off-btn" onclick="editHolidayModal('{{ holiday.id }}', '{{ holiday.name }}', '{{ holiday.date|date:"Y-m-d" }}')"><i class="fas fa-edit"></i></button>
                             <form method="POST" style="display: inline;" id="delete-holiday-form-{{ holiday.id }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete_holiday">
                                 <input type="hidden" name="holiday_id" value="{{ holiday.id }}">
-                                
-                                <button type="button" class="day-off-btn" onclick="confirmDelete('delete-holiday-form-{{ holiday.id }}', 'Tem certeza que deseja excluir este dia?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <button type="button" class="day-off-btn" onclick="confirmDelete('delete-holiday-form-{{ holiday.id }}', 'Deseja excluir?')"><i class="fas fa-trash"></i></button>
                             </form>
                         </div>
                     {% endif %}
                     <div class="day-off-date">{{ holiday.date|date:"d/m/Y" }}</div>
-                    <div class="day-off-reason">{{ holiday.name }} ({{holiday.unit.name}})</div>
+                    <div class="day-off-reason">{{ holiday.name }} <br><small>({{holiday.unit.name}})</small></div>
                 </div>
+                {% empty %}
+                    <p style="color: #a0aec0;">Sem feriados ou dias fechados registrados no momento.</p>
                 {% endfor %}
             </div>
         </div>
@@ -186,47 +211,38 @@
         <div class="section">
             <div class="section-header">
                 <div class="section-title">
-                    <i class="fas fa-umbrella-beach"></i> Folgas Agendadas
+                    <i class="fas fa-umbrella-beach"></i> Férias e Folgas (Equipe)
                 </div>
-
-                {% if request.user.user_type != "funcionario" %}
+                {% if is_owner or is_manager %}
                     <button class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#createAbsenceModal" onclick="openVacationModal()">
                         <i class="fas fa-plus"></i> Marcar Folga
                     </button>
                 {% endif %}
             </div>
-            
             <div class="non-working-days">
                  {% for absence in absences %}
                     <div class="day-off-card blue-card">
-                        {% if request.user.user_type != "funcionario" %}
+                        {% if is_owner or is_manager %}
                             <div class="day-off-actions">
                                 <form method="POST" style="display: inline;" id="delete-absence-form-{{ absence.id }}">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete_absence">
                                     <input type="hidden" name="absence_id" value="{{ absence.id }}">
-                                
-                                    <button type="button" class="day-off-btn" onclick="confirmDelete('delete-absence-form-{{ absence.id }}', 'Tem certeza que deseja excluir esta folga?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <button type="button" class="day-off-btn" onclick="confirmDelete('delete-absence-form-{{ absence.id }}', 'Deseja cancelar esta folga?')"><i class="fas fa-trash"></i></button>
                                 </form>
                             </div>
                         {% endif %}
                          <div class="day-off-date">
-                            {% if absence.start_date ==  absence.end_date %}
-                                <span>Apenas</span>
-                                <div class="end-absence-day">{{ absence.start_date|date:"d/m/Y" }}</div>
+                            {% if absence.start_date == absence.end_date %}
+                                <span>Dia Único</span><div class="end-absence-day">{{ absence.start_date|date:"d/m/Y" }}</div>
                             {% else %}
-                                {{ absence.start_date|date:"d/m/Y" }}
-                            {% endif %}
-
-                            {% if absence.end_date and absence.end_date != absence.start_date %}
-                                <span>até</span>
-                                <div class="end-absence-day">{{ absence.end_date|date:"d/m/Y" }}</div>
+                                {{ absence.start_date|date:"d/m/Y" }} <span>até</span><div class="end-absence-day">{{ absence.end_date|date:"d/m/Y" }}</div>
                             {% endif %}
                          </div>
                          <div class="day-off-reason">{{ absence.employee.user.name }}: {{ absence.reason }}</div>
                     </div>
+                 {% empty %}
+                    <p style="color: #a0aec0;">Não há barbeiros de férias no momento.</p>
                  {% endfor %}
             </div>
         </div>
@@ -235,7 +251,7 @@
     <footer>
         <div class="total-display">
             <div class="footer-first-row-one-item">
-                Próximo dia de folga: <strong>{{ holidays.first.date|date:"d \d\e F, Y"|default:"Nenhum agendado" }}</strong>
+                Próximo fechamento/folga: <strong>{{ holidays.first.date|date:"d \d\e F, Y"|default:"Nenhum agendado" }}</strong>
             </div>
         </div>
     </footer>
@@ -244,18 +260,19 @@
     <div id="editModal" class="edit-modal">
         <div class="edit-modal-content">
             <div class="edit-modal-header">
-                <h2><i class="fas fa-user-clock"></i> Editar Disponibilidade</h2>
+                <h2><i class="fas fa-user-clock"></i> Editar Agenda do Barbeiro</h2>
                 <button class="close-btn" onclick="closeEditModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
     
             <div class="edit-modal-body">
+                <p style="font-size: 0.8rem; color: #a0aec0; margin-bottom: 10px; text-align: center;">Nota: O profissional não pode atender em dias ou horários em que a barbearia estiver fechada.</p>
                 <div class="barber-selector">
-                    <div class="barber-selector-item active">
+                    <div class="barber-selector-item active" data-target="morning">
                         <div>Manhã</div>
                     </div>
-                    <div class="barber-selector-item">
+                    <div class="barber-selector-item" data-target="afternoon">
                         <div>Tarde</div>
                     </div>
                 </div>
@@ -266,7 +283,19 @@
                         <input type="hidden" name="action" value="edit_workday">
                         <input type="hidden" name="employee_id" id="formEmployeeId">
     
-                        {% comment %} Bloco para o período da MANHÃ {% endcomment %}
+                        <div class="batch-actions">
+                            <button type="button" class="btn btn-outline" id="batchToggleBtn" onclick="toggleAllDaysInPeriod()" style="padding: 5px 15px; font-size: 0.8rem; flex-shrink: 0;">
+                                <i class="fas fa-check-double"></i> Ativar Todos
+                            </button>
+                            <div class="time-inputs" style="display: flex; gap: 5px; align-items: center;">
+                                <select class="time-input" id="batchStartTime" style="width: 70px; font-size: 0.8rem;"></select>
+                                <span style="font-size: 0.8rem;">às</span>
+                                <select class="time-input" id="batchEndTime" style="width: 70px; font-size: 0.8rem;"></select>
+                                <button type="button" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="applyBatchTimes()">Aplicar</button>
+                            </div>
+                        </div>
+
+                        {% comment %} Bloco MANHÃ {% endcomment %}
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off morning" data-weekday="{{ weekday_index }}" data-period="morning">
@@ -275,28 +304,25 @@
                                             {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
                                         </div>
                                         <label class="toggle-switch">
-                                            <input type="checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_morning">
+                                            <input type="checkbox" class="day-checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_morning">
                                             <span class="slider"></span>
                                         </label>
                                     </div>
                                     <div class="time-input-group">
-                                        <select class="time-input" name="start_morning_work_{{ weekday_index }}">
-                                            {% for time in time_options %}
-                                                <option value="{{ time }}">{{ time }}</option>
-                                            {% endfor %}
+                                        <select class="time-input start-time" name="start_morning_work_{{ weekday_index }}">
+                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
                                         </select>
                                         <span class="time-divider">-</span>
-                                        <select class="time-input" name="end_morning_work_{{ weekday_index }}">
-                                            {% for time in time_options %}
-                                                <option value="{{ time }}">{{ time }}</option>
-                                            {% endfor %}
+                                        <select class="time-input end-time" name="end_morning_work_{{ weekday_index }}">
+                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
                                         </select>
                                     </div>
+                                    <div class="closed-warning" style="display: none; color: #e53e3e; font-size: 0.75rem; width: 100%; text-align: right;">Barbearia Fechada</div>
                                 </div>
                             {% endwith %}
                         {% endfor %}
     
-                        {% comment %} Bloco para o período da TARDE {% endcomment %}
+                        {% comment %} Bloco TARDE {% endcomment %}
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off afternoon" data-weekday="{{ weekday_index }}" data-period="afternoon">
@@ -305,69 +331,50 @@
                                             {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
                                         </div>
                                         <label class="toggle-switch">
-                                            <input type="checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_afternoon">
+                                            <input type="checkbox" class="day-checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_afternoon">
                                             <span class="slider"></span>
                                         </label>
                                     </div>
                                     <div class="time-input-group">
-                                        <select class="time-input" name="start_afternoon_work_{{ weekday_index }}">
-                                            {% for time in time_options %}
-                                                <option value="{{ time }}">{{ time }}</option>
-                                            {% endfor %}
+                                        <select class="time-input start-time" name="start_afternoon_work_{{ weekday_index }}">
+                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
                                         </select>
                                         <span class="time-divider">-</span>
-                                        <select class="time-input" name="end_afternoon_work_{{ weekday_index }}">
-                                            {% for time in time_options %}
-                                                <option value="{{ time }}">{{ time }}</option>
-                                            {% endfor %}
+                                        <select class="time-input end-time" name="end_afternoon_work_{{ weekday_index }}">
+                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
                                         </select>
                                     </div>
+                                    <div class="closed-warning" style="display: none; color: #e53e3e; font-size: 0.75rem; width: 100%; text-align: right;">Barbearia Fechada</div>
                                 </div>
                             {% endwith %}
                         {% endfor %}
-    
                     </form>
                 </div>
             </div>
             
             <div class="edit-modal-footer">
                 <button class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
-                <button class="btn btn-primary">Salvar Alterações</button>
+                <button class="btn btn-primary" onclick="submitBarberAgenda()">Salvar Grade na Agenda</button>
             </div>
         </div>
     </div>
 
-    {% if request.user.user_type != "funcionario" %}
-        <!--  Criar dias de nao funcionamento  -->
+    {% if is_owner or is_manager %}
         <div id="createHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fas fa-calendar-times"></i> Adicionar Dia de Não Funcionamento</h2>
+                    <h2><i class="fas fa-calendar-times"></i> Fechar Barbearia</h2>
                     <button class="close-btn" onclick="closeHolidayModal()"><i class="fas fa-times"></i></button>
                 </div>
                 <form method="POST" class="holiday-form" autocomplete="off">
                     {%csrf_token%}
                     <input type="hidden" name="action" value="create_holiday">
+                    <input type="hidden" name="unit_id" value="{{ unit.id }}">
                     <div class="holiday-modal-body">
                         <div class="holiday-modal-section">
-                            <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
-                            <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma, etc." class="holiday-input" required>
+                            <h3 class="modal-title"><i class="fas fa-tag"></i> Motivo do Fechamento</h3>
+                            <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma..." class="holiday-input" required>
                         </div>
-                        
-                        {% if not unit %}
-                            <div class="holiday-modal-section">
-                                <h3 class="modal-title"><i class="fas fa-store"></i> Unidade</h3>
-                                <select name="unit_id" class="holiday-input" required>
-                                    <option value="" disabled selected>Selecione a unidade</option>
-                                    {% for u in units %}
-                                        <option value="{{ u.id }}">{{ u.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        {% else %}
-                            <input type="hidden" name="unit_id" value="{{ unit.id }}">
-                        {% endif %}
-
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
                             <input type="date" name="date" class="holiday-input" id="holidayDate" required>
@@ -381,11 +388,10 @@
             </div>
         </div>
       
-        <!-- Editar dias de nao funcionamento -->
         <div id="editHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fas fa-calendar-times"></i> Editar Dia de Não Funcionamento</h2>
+                    <h2><i class="fas fa-calendar-times"></i> Editar Feriado</h2>
                     <button class="close-btn" onclick="closeEditHolidayModal()"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="holiday-modal-body">
@@ -398,7 +404,6 @@
                             <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
                             <input type="text" name="name" class="holiday-input" required>
                         </div>
-                        
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
                             <input type="date" name="date" class="holiday-input" required>
@@ -413,14 +418,12 @@
             </div>
         </div>
 
-        <!-- Agendar folga -->
         <div id="vacationModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><i class="fas fa-umbrella-beach"></i> Marcar Folga</h2>
                     <button class="close-btn" onclick="closeVacationModal()"><i class="fas fa-times"></i></button>
                 </div>
-
                 <form method="POST" class="absence-form" autocomplete="off">
                     {%csrf_token%}
                     <input type="hidden" name="action" value="create_absence">
@@ -440,11 +443,11 @@
 
                         <div class="modal-section">
                             <h3 class="modal-title"><i class="fas fa-comment-alt"></i> Motivo</h3>
-                            <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, consulta, etc." required>
+                            <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, Consulta, Licença..." required>
                         </div>
                         
                         <div class="modal-section">
-                            <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período de Folga</h3>
+                            <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período</h3>
                             <div class="date-inputs">
                                 <div class="date-group">
                                     <label>Data de Início</label>
@@ -457,7 +460,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="modal-footer">
                         <button class="btn btn-outline" onclick="closeVacationModal()" type="button">Cancelar</button>
                         <button class="btn btn-primary" type="submit">Confirmar Folga</button>
@@ -465,9 +467,49 @@
                 </form>
             </div>
         </div>
-
-    {% endif %}  
-    
+        
+        <div id="unitWorkdayModal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-store"></i> Expediente Físico (Barbearia)</h2>
+                    <button class="close-btn" onclick="closeUnitWorkdayModal()"><i class="fas fa-times"></i></button>
+                </div>
+                <form id="unitWorkdayForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_unit_workdays">
+                    <div class="modal-body">
+                        <p style="font-size: 0.8rem; color: #a0aec0; margin-bottom: 15px;">Ao alterar o horário da barbearia, as agendas dos barbeiros que caírem fora deste período serão bloqueadas automaticamente.</p>
+                        {% for i in "0123456"|make_list %}
+                        {% with weekday_index=forloop.counter0 %}
+                        <div class="unit-day-row" style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #eee;">
+                            <span style="font-weight:bold; width:45px;">
+                                {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
+                            </span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="unit_open_{{ weekday_index }}" onchange="toggleUnitTimeInputs(this)">
+                                <span class="slider"></span>
+                            </label>
+                            <div class="unit-time-inputs">
+                                <select name="unit_start_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
+                                    {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
+                                </select>
+                                <span> às </span>
+                                <select name="unit_end_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
+                                    {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="closeUnitWorkdayModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Físico</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
 
     {{ unit_workdays_json|json_script:"unit-workdays-data" }}
     {{ workdays_json|json_script:"workdays-data" }}
@@ -476,27 +518,15 @@
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
     <script>
         const workdaysData = {{ workdays_json|safe }};
+        let activeTabPeriod = 'morning'; 
     </script>
 
     {% if messages %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3500,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer)
-                        toast.addEventListener('mouseleave', Swal.resumeTimer)
-                    }
-                });
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
                 {% for message in messages %}
-                    Toast.fire({
-                        icon: '{{ message.tags }}', 
-                        title: '{{ message }}'
-                    });
+                    Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
                 {% endfor %}
             });
         </script>
@@ -505,66 +535,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const unitFilter = document.getElementById('unitFilterSelect');
-            
-            if (unitFilter) { // Só executa se o filtro existir (se for dono)
+            if (unitFilter) { 
                 unitFilter.addEventListener('change', function() {
                     const selectedValue = this.value;
-                    
-                    if (selectedValue === 'geral') {
-                        // Redireciona para a URL geral
-                        const generalUrl = this.dataset.generalUrl;
-                        window.location.href = generalUrl;
-                    } else {
-                        // Redireciona para a URL da unidade específica
-                        const urlTemplate = this.dataset.unitUrlTemplate;
-                        const unitUrl = urlTemplate.replace('__SLUG__', selectedValue);
-                        window.location.href = unitUrl;
-                    }
+                    if (selectedValue === 'geral') { window.location.href = this.dataset.generalUrl; } 
+                    else { window.location.href = this.dataset.unitUrlTemplate.replace('__SLUG__', selectedValue); }
                 });
             }
         });
     </script>
-
-   
-    <div id="unitWorkdayModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2><i class="fas fa-store"></i> Horários da Unidade</h2>
-                <button class="close-btn" onclick="closeUnitWorkdayModal()"><i class="fas fa-times"></i></button>
-            </div>
-            <form id="unitWorkdayForm" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="edit_unit_workdays">
-                <div class="modal-body">
-                    {% for i in "0123456"|make_list %}
-                    {% with weekday_index=forloop.counter0 %}
-                    <div class="unit-day-row" style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #eee;">
-                        <span style="font-weight:bold; width:45px;">
-                            {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
-                        </span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="unit_open_{{ weekday_index }}" onchange="toggleUnitTimeInputs(this)">
-                            <span class="slider"></span>
-                        </label>
-                        <div class="unit-time-inputs">
-                            <select name="unit_start_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
-                                {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
-                            </select>
-                            <span> às </span>
-                            <select name="unit_end_{{ weekday_index }}" class="holiday-input" style="width: 85px;">
-                                {% for t in time_options %}<option value="{{t}}">{{t}}</option>{% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    {% endwith %}
-                    {% endfor %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeUnitWorkdayModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Horários</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </body>
 </html>

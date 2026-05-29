@@ -1,10 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
-from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import time
 
 class Barbershop(models.Model):
     name = models.CharField(max_length=150)
@@ -15,7 +15,7 @@ class Barbershop(models.Model):
     
     # --- REGRAS DE NEGÓCIO (LIMITES SAAS) ---
     max_employees = models.PositiveIntegerField("Limite de Vagas (Funcionários)", default=5)
-    max_units = models.PositiveIntegerField("Limite de Unidades", default=1) # NOVO LIMITE
+    max_units = models.PositiveIntegerField("Limite de Unidades", default=1)
     
     owner_user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -25,7 +25,6 @@ class Barbershop(models.Model):
     is_active = models.BooleanField(default=True) 
 
     def save(self, *args, **kwargs):
-        # CORREÇÃO: Só gera slug automático se estiver vazio
         if not self.slug:
             base_slug = slugify(self.name)
             slug = base_slug
@@ -68,7 +67,6 @@ class Unit(models.Model):
             base_slug = slugify(self.name)
             slug = base_slug
             counter = 1
-            # CORREÇÃO: Removido barbershop=self.barbershop para respeitar o unique=True global no banco
             while Unit.objects.filter(slug=slug).exists():
                 slug = f"{base_slug}-{counter}"
                 counter += 1
@@ -95,9 +93,7 @@ class Employee(models.Model):
         related_name="employees"
     )
     
-    # --- NOVO: Status do Vínculo Empregatício ---
     is_active = models.BooleanField("Funcionário Ativo", default=True)
-    
     bio = models.CharField(max_length=255, null=True, blank=True)
     specialty = models.CharField(max_length=50, null=True, blank=True)
     commission_percentage = models.BooleanField(default=False)
@@ -115,7 +111,6 @@ class Employee(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.unit}"
-    
 
 class UnitWorkDay(models.Model):
     class Weekday(models.IntegerChoices):
@@ -135,7 +130,6 @@ class UnitWorkDay(models.Model):
 
     def __str__(self):
         return f"{self.unit} - {self.get_weekday_display()}"
-
 
 class EmployeeWorkDay(models.Model):
     class Weekday(models.IntegerChoices):
@@ -210,9 +204,39 @@ class UnitMedia(models.Model):
 
 @receiver(post_save, sender=Employee)
 def create_employee_work_days(sender, instance, created, **kwargs):
+    """
+    Quando um funcionário é criado, automatiza a grade de horários lendo 
+    a grade da Unidade. Insere intervalo de almoço das 12h às 13h nativamente.
+    """
     if created:
+        unit_wds = {wd.weekday: wd for wd in instance.unit.work_days.all()}
+        
         for i in range(7):
-            EmployeeWorkDay.objects.create(
-                employee=instance,
-                weekday=i,
-            )
+            wd = unit_wds.get(i)
+            
+            if wd and wd.is_open:
+                start_morning = wd.open_time
+                end_morning = time(12, 0) if wd.close_time >= time(12, 0) else wd.close_time
+                
+                start_afternoon = time(13, 0) if wd.close_time > time(13, 0) else None
+                end_afternoon = wd.close_time if start_afternoon else None
+
+                EmployeeWorkDay.objects.create(
+                    employee=instance,
+                    weekday=i,
+                    is_active=True,
+                    morning_available=True,
+                    afternoon_available=bool(start_afternoon),
+                    start_morning_work=start_morning,
+                    end_morning_work=end_morning,
+                    start_afternoon_work=start_afternoon,
+                    end_afternoon_work=end_afternoon
+                )
+            else:
+                EmployeeWorkDay.objects.create(
+                    employee=instance,
+                    weekday=i,
+                    is_active=False,
+                    morning_available=False,
+                    afternoon_available=False
+                )
