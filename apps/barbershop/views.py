@@ -265,6 +265,9 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         password_val = request.POST.get("password")
 
         if action == "create":
+            if len(cpf_digits) != 11:
+                messages.error(request, "Ação bloqueada: O CPF deve conter exatamente 11 números.")
+                return redirect(request.path)
             unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             with transaction.atomic():
                 try:
@@ -441,6 +444,12 @@ def check_employee_data(request):
     if not roles_selected: errors.append("Cargo: Selecione pelo menos um cargo.")
     if not birth_date_str: errors.append("Data de Nascimento: Campo obrigatório para segurança LGPD.")
 
+    cpf_digits = re.sub(r'\D', '', data['cpf'])
+    
+    # --- NOVA TRAVA: VALIDAÇÃO DE 11 DÍGITOS ---
+    if len(cpf_digits) != 11:
+        errors.append("CPF Inválido: O CPF deve conter exatamente 11 números.")
+    
     if unit_id:
         target_unit = Unit.objects.filter(id=unit_id, barbershop__slug=request.POST.get("barbershop_slug")).first()
         if target_unit:
