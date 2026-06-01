@@ -1,20 +1,47 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.utils.timezone import localdate
-from datetime import datetime
-from django.http import JsonResponse
+import json
+import re
+from datetime import datetime, date
 from decimal import Decimal
-from django.contrib.auth.decorators import login_required # NOVO: Importação para bloquear página
-
-from apps.barbershop.models import Barbershop, Employee, Unit
-from apps.service.models import BarberService
-from apps.client.models import Client
-from .models import Appointment, AppointmentService
+from django.utils.timezone import localdate
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.db.models import Sum, F
+from django.utils.timezone import now
+from django.db.models import Prefetch
+
+from apps.barbershop.models import Barbershop, Unit, Employee, Role
+from apps.client.models import Client
+from apps.service.models import BarberService, BaseService  # <-- Adicionado BaseService
+from apps.scheduling.models import Appointment, AppointmentService
 
 
 
-# NOVO: Bloqueia o acesso para usuários anônimos
+def get_tenant_employee(user, barbershop):
+    if user.is_authenticated:
+        return Employee.objects.filter(user=user, unit__barbershop=barbershop, is_active=True).first()
+    return None
+
+def owner_or_employee_required(view_func):
+    def wrapper(request, barbershop_slug, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Faça login para acessar.")
+            return redirect("user:login")
+            
+        barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+        if request.user == barbershop.owner_user:
+            return view_func(request, barbershop_slug, *args, **kwargs)
+            
+        emp = get_tenant_employee(request.user, barbershop)
+        if not emp or not emp.system_access:
+            messages.error(request, "Você não tem acesso a este painel.")
+            return redirect("/") # <-- Corrigido o erro 500 do core:home
+            
+        return view_func(request, barbershop_slug, *args, **kwargs)
+    return wrapper
+
 @login_required
 def SchedulingView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
@@ -159,136 +186,172 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
 
 
 @login_required
+@owner_or_employee_required
 def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
-    # Lógica de Unidade
+    is_owner = (request.user == barbershop.owner_user)
+    emp = get_tenant_employee(request.user, barbershop)
+    
+    is_manager = False
+    is_cashier = False
+    is_barber = False
+    gerente_unit = None
+    
+    if emp:
+        is_manager = emp.roles.filter(occupation=Role.Occupation.GERENTE).exists()
+        is_cashier = emp.roles.filter(occupation=Role.Occupation.CAIXA).exists() and not is_manager
+        is_barber = emp.roles.filter(occupation=Role.Occupation.BARBEIRO).exists()
+        if is_manager or is_cashier:
+            gerente_unit = emp.unit
+
     current_unit = None
-    if unit_slug:
-        current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-        employees = Employee.objects.filter(unit=current_unit)
-        appointments_query = Appointment.objects.filter(barbershop=barbershop, unit=current_unit)
-    else:
-        employees = Employee.objects.filter(unit__barbershop=barbershop)
-        appointments_query = Appointment.objects.filter(barbershop=barbershop)
+    units = barbershop.units.filter(is_active=True)
 
-    units = Unit.objects.filter(barbershop=barbershop)
-    services = BarberService.objects.filter(employee__unit__barbershop=barbershop).distinct()
-    clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
+    if is_owner:
+        if unit_slug:
+            current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+            appointments = Appointment.objects.filter(unit=current_unit)
+        else:
+            appointments = Appointment.objects.filter(barbershop=barbershop)
+    
+    elif is_manager or is_cashier:
+        current_unit = gerente_unit
+        units = [current_unit] 
+        appointments = Appointment.objects.filter(unit=current_unit)
+    
+    else: 
+        current_unit = emp.unit
+        units = [current_unit]
+        appointments = Appointment.objects.filter(employee=emp)
 
-    # PROCESSAMENTO DE POST (Editar e Excluir)
     if request.method == "POST":
-        action = request.POST.get('action')
-        try:
-            if action == "edit_appointment":
-                appointment_id = request.POST.get('appointment_id')
-                client_id = request.POST.get('client_id')
-                employee_id = request.POST.get('employee_id')
-                service_id = request.POST.get('service_id')
-                date_str = request.POST.get('date')
-                time_str = request.POST.get('time')
-                status_val = request.POST.get('status')
-                notes_str = request.POST.get('notes', '')
-
-                appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
-                emp = get_object_or_404(Employee, id=employee_id)
-                svc = get_object_or_404(BarberService, id=service_id)
-
-                appointment.client_id = client_id
-                appointment.employee = emp
-                appointment.unit = emp.unit
-                appointment.date = date_str
-                appointment.time = time_str
-                appointment.total_price = svc.price
-                appointment.status = status_val
-                appointment.notes = notes_str
-                
-                if status_val == 'completed': appointment.is_paid = True
-                elif status_val == 'cancelled' or status_val == 'scheduled': appointment.is_paid = False
-
-                appointment.save()
-
-                app_service = appointment.services.first()
-                if app_service:
-                    app_service.service = svc
-                    app_service.price_at_sale = svc.price
-                    app_service.save()
-                else:
-                    AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
-                messages.success(request, "Agendamento atualizado com sucesso no Histórico!")
-
-            elif action == "delete_appointment":
-                appointment_id = request.POST.get('appointment_id')
-                appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
-                appointment.delete()
-                messages.success(request, "Agendamento excluído com sucesso!")
-
-        except Exception as e:
-            messages.error(request, f"Erro ao processar ação: {str(e)}")
+        action = request.POST.get("action")
         
-        query_string = request.GET.urlencode()
-        redirect_url = request.path
-        if query_string:
-            redirect_url += f"?{query_string}"
-        return redirect(redirect_url)
+        if is_cashier and not is_owner:
+            messages.error(request, "Acesso Negado: Caixas não têm permissão para editar o histórico.")
+            return redirect(request.path)
 
-    # ---------------------------------------------
-    # LÓGICA DOS FILTROS (GET) - INCLUINDO MÊS
-    # ---------------------------------------------
+        if action == "edit_appointment":
+            app_id = request.POST.get("appointment_id")
+            appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
+            
+            if not is_owner:
+                if is_manager and appointment.unit != current_unit:
+                    messages.error(request, "Acesso Negado: Este agendamento pertence a outra filial.")
+                    return redirect(request.path)
+                elif not is_manager and appointment.employee != emp:
+                    messages.error(request, "Acesso Negado: Você só pode editar seus próprios agendamentos.")
+                    return redirect(request.path)
+
+            appointment.client_id = request.POST.get("client_id")
+            appointment.unit_id = request.POST.get("unit_id") if is_owner else current_unit.id
+            appointment.employee_id = request.POST.get("employee_id") if (is_owner or is_manager) else emp.id
+            appointment.date = request.POST.get("date")
+            appointment.time = request.POST.get("time")
+            appointment.status = request.POST.get("status")
+            appointment.notes = request.POST.get("notes")
+            
+            new_service_id = request.POST.get("service_id")
+            if new_service_id:
+                new_service = get_object_or_404(BarberService, id=new_service_id)
+                appointment.services.all().delete()
+                AppointmentService.objects.create(appointment=appointment, service=new_service, price_at_sale=new_service.price)
+                appointment.total_price = new_service.price
+            
+            appointment.save()
+            messages.success(request, "Agendamento atualizado com sucesso!")
+            return redirect(request.path)
+
+        elif action == "delete_appointment":
+            if not is_owner and not is_manager:
+                messages.error(request, "Acesso Negado: Apenas o gerente ou o Titular podem deletar definitivamente um registro.")
+                return redirect(request.path)
+            
+            app_id = request.POST.get("appointment_id")
+            appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
+            
+            if is_manager and not is_owner and appointment.unit != current_unit:
+                messages.error(request, "Acesso Negado: Este agendamento pertence a outra filial.")
+                return redirect(request.path)
+                
+            appointment.delete()
+            messages.success(request, "Agendamento excluído definitivamente.")
+            return redirect(request.path)
+
     date_filter = request.GET.get('date_filter', '')
     month_filter = request.GET.get('month_filter', '')
     barber_filter = request.GET.get('barber_filter', '')
     service_filter = request.GET.get('service_filter', '')
     status_filter = request.GET.get('status_filter', '')
 
-    # Se tiver data específica, ignora o mês. Se não tiver data, mas tiver mês, filtra pelo mês.
+    appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service')
+    
     if date_filter:
-        appointments_query = appointments_query.filter(date=date_filter)
-    elif month_filter:
+        appointments = appointments.filter(date=date_filter)
+    if month_filter:
         try:
             year, month = month_filter.split('-')
-            appointments_query = appointments_query.filter(date__year=year, date__month=month)
-        except ValueError:
-            pass
-
+            appointments = appointments.filter(date__year=year, date__month=month)
+        except ValueError: pass
+    
     if barber_filter:
-        appointments_query = appointments_query.filter(employee_id=barber_filter)
+        appointments = appointments.filter(employee_id=barber_filter)
     if service_filter:
-        appointments_query = appointments_query.filter(services__service_id=service_filter)
+        # Filtra através do BaseService acoplado ao BarberService para agrupar
+        appointments = appointments.filter(services__service__base_service_id=service_filter)
     if status_filter:
-        # Se for 'pending', buscamos 'scheduled' no banco de dados
-        db_status = 'scheduled' if status_filter == 'pending' else status_filter
-        appointments_query = appointments_query.filter(status=db_status)
+        appointments = appointments.filter(status=status_filter)
 
-    # Ordenação Decrescente
-    appointments_query = appointments_query.order_by('-date', '-time').distinct()
+    # Ordenação da mais antiga para a nova e Distinct para evitar duplicidade no count()
+    appointments = appointments.distinct().order_by('date', 'time')
 
-    total_filtered_appointments = appointments_query.exclude(status='cancelled').count()
-    total_filtered_revenue = sum(app.total_price for app in appointments_query if app.status == 'completed')
+    total_filtered_appointments = appointments.count()
+    total_filtered_revenue = appointments.filter(status='completed').aggregate(total=Sum('total_price'))['total'] or 0.00
 
-    # Paginação (10 itens por página)
-    paginator = Paginator(appointments_query, 10)
-    page_number = request.GET.get('page', 1)
+    paginator = Paginator(appointments, 20)
+    page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
+    
+    # Select de BaseServices (Para o filtro agrupar)
+    if is_owner:
+        barbers_list = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation='barbeiro', is_active=True).distinct()
+        filter_services = BaseService.objects.filter(barberservice__employee__unit__barbershop=barbershop).distinct()
+    elif is_manager or is_cashier:
+        barbers_list = Employee.objects.filter(unit=current_unit, roles__occupation='barbeiro', is_active=True).distinct()
+        filter_services = BaseService.objects.filter(barberservice__employee__unit=current_unit).distinct()
+    else:
+        barbers_list = [emp]
+        filter_services = BaseService.objects.filter(barberservice__employee=emp).distinct()
+
+    # BarberServices apenas para o Modal do barbeiro comum
+    barber_services_list = BarberService.objects.filter(employee=emp) if is_barber and not is_owner and not is_manager else []
 
     context = {
         'barbershop': barbershop,
         'units': units,
         'current_unit': current_unit,
-        'employees': employees,
-        'services': services,
-        'clients_list': clients_list,
         'page_obj': page_obj,
-        'total_filtered_appointments': total_filtered_appointments,
-        'total_filtered_revenue': total_filtered_revenue,
-        'active_tab': 'history', # Isso acende a aba do header
         'date_filter': date_filter,
-        'month_filter': month_filter, # Variável enviada pro HTML
+        'month_filter': month_filter,
         'barber_filter': barber_filter,
         'service_filter': service_filter,
         'status_filter': status_filter,
+        'total_filtered_appointments': total_filtered_appointments,
+        'total_filtered_revenue': total_filtered_revenue,
+        'employees': barbers_list,
+        'filter_services': filter_services,
+        'barber_services': barber_services_list,
+        'clients_list': clients_list,
+        'is_owner': is_owner,
+        'is_manager': is_manager,
+        'is_cashier': is_cashier,
+        'is_barber': is_barber,
     }
-    return render(request, 'scheduling/agendamentos.html', context)
+
+    return render(request, "scheduling/agendamentos.html", context)
 
 
 # ==========================================

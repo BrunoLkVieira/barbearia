@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/novoAgendamento.css' %}">
 
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    
+    <style>.swal2-container {z-index: 9999;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     {% include "geral/header.html" %}
@@ -20,9 +23,10 @@
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         <div class="stats">
+            {% if is_owner %}
             <div class="unit-filter">
                 <select id="unitSelectFilter">
-                    <option value="geral" {% if not current_unit %}selected{% endif %}>Geral</option>
+                    <option value="geral" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>
                     {% for u in units %}
                         <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
                             {{ u.name }}
@@ -30,19 +34,23 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="stat-box">
+            {% endif %}
+            
+            <div class="stat-box" title="Baseado nos filtros aplicados abaixo">
                 <div class="stat-value">{{ total_filtered_appointments }}</div>
                 <div class="stat-label">Agendamentos</div>
             </div>
-            <div class="stat-box">
+            {% if is_owner or is_manager or is_cashier %}
+            <div class="stat-box" title="Faturamento total dos serviços com status Finalizado">
                 <div class="stat-value">R$ {{ total_filtered_revenue|floatformat:2 }}</div>
                 <div class="stat-label">Faturado (Finalizados)</div>
             </div>
+            {% endif %}
         </div>
     </div>
 
     <div class="pages-options-Container">
-        <a href="{% if current_unit %}{% url 'scheduling:history_unit' barbershop_slug=barbershop.slug unit_slug=current_unit.slug %}{% else %}{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}{% endif %}">
+        <a href="">
             <div class="page-option active"><i class="fas fa-history"></i> Agendamentos</div>
         </a>
     </div>
@@ -51,22 +59,24 @@
         <div class="history-container">
             <div class="history-top-body">
                 <div class="content-header">
-                    <h2><i class="fas fa-history"></i> Histórico de Agendamentos</h2>
+                    <h2><i class="fas fa-history"></i> Histórico da Agenda</h2>
                 </div>
                 
                 <form id="filterForm" method="GET">
                     <input type="hidden" name="page" id="pageInput" value="1">
                     <div class="filters-container">
                         <div class="filter-group">
-                            <label for="dateFilter">Data</label>
+                            <label for="dateFilter">Por Data Específica</label>
                             <input type="date" name="date_filter" id="dateFilter" value="{{ date_filter }}" onchange="document.getElementById('monthFilter').value='';">
                         </div>
                         <div class="filter-group">
-                            <label for="monthFilter">Mês</label>
+                            <label for="monthFilter">Por Mês/Ano</label>
                             <input type="month" name="month_filter" id="monthFilter" value="{{ month_filter }}" onchange="document.getElementById('dateFilter').value='';">
                         </div>
+                        
+                        {% if is_owner or is_manager or is_cashier %}
                         <div class="filter-group">
-                            <label for="barberFilter">Barbeiro</label>
+                            <label for="barberFilter">Por Barbeiro</label>
                             <select name="barber_filter" id="barberFilter">
                                 <option value="">Todos</option>
                                 {% for emp in employees %}
@@ -76,11 +86,13 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        {% endif %}
+                        
                         <div class="filter-group">
-                            <label for="serviceFilter">Serviço</label>
+                            <label for="serviceFilter">Por Serviço</label>
                             <select name="service_filter" id="serviceFilter">
                                 <option value="">Todos os serviços</option>
-                                {% for svc in services %}
+                                {% for svc in filter_services %}
                                     <option value="{{ svc.id }}" {% if service_filter == svc.id|stringformat:"s" %}selected{% endif %}>
                                         {{ svc.name }}
                                     </option>
@@ -92,14 +104,14 @@
                             <select name="status_filter" id="statusFilter">
                                 <option value="">Todos os status</option>
                                 <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Realizado</option>
-                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pendente</option>
+                                <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Agendado / Pendente</option>
                                 <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelado</option>
                             </select>
                         </div>
                         
                         <div class="filter-btn-container">
                             <button type="submit" class="btn-outline">
-                                <i class="fas fa-filter"></i> Filtrar
+                                <i class="fas fa-filter"></i> Filtrar Busca
                             </button>
                         </div>
                     </div>
@@ -110,85 +122,99 @@
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th>Cliente</th>
-                            <th>Serviço</th>
                             <th>Data e Hora</th>
-                            <th>Pagamento</th>
+                            <th>Cliente</th>
+                            <th>Serviço e Profissional</th>
                             <th>Status</th>
+                            {% if is_owner or is_manager or is_cashier %}
+                            <th>Total (R$)</th>
+                            {% endif %}
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for app in page_obj %}
                         <tr>
+                            <td data-label="Data e Hora">
+                                <div class="date-time">
+                                    <div style="font-weight: bold;">{{ app.date|date:"d/m/Y" }}</div>
+                                    <div style="color: #718096; font-size: 0.85rem;"><i class="far fa-clock"></i> {{ app.time|time:"H:i" }}</div>
+                                </div>
+                            </td>
                             <td data-label="Cliente" class="tr-header">
                                 <div class="client-cell">
                                     <div class="client-avatar">{{ app.client.first_name|slice:":1"|upper }}{{ app.client.last_name|slice:":1"|upper }}</div>
-                                    <div>{{ app.client.first_name }} {{ app.client.last_name }}</div>
+                                    <div style="font-weight: 500; color: #2d3748;">{{ app.client.first_name }} {{ app.client.last_name }}</div>
                                 </div>
                             </td>
-                            <td data-label="Serviço">
+                            <td data-label="Serviço e Profissional">
                                 <div class="service-cell">
-                                    <i class="fas fa-cut"></i>
                                     <span>
-                                        {% for svc in app.services.all %}
-                                            {{ svc.service.name }}{% if not forloop.last %}, {% endif %}
-                                        {% endfor %}
-                                        <br><small style="color: #7f8c8d; font-size: 0.8rem;">Com: {{ app.employee.user.name }}</small>
+                                        <strong>
+                                            {% for svc in app.services.all %}
+                                                {{ svc.service.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </strong>
+                                        <br><small style="color: #718096;">Barbeiro: {{ app.employee.user.name }}</small>
                                     </span>
                                 </div>
                             </td>
-                            <td data-label="Data e Hora">
-                                <div class="date-time">
-                                    <div>{{ app.date|date:"d/m/Y" }}</div>
-                                    <div>{{ app.time|time:"H:i" }}</div>
-                                </div>
-                            </td>
-                            <td data-label="Pagamento">
-                                <div class="payment-info">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <span>R$ {{ app.total_price }}</span>
-                                </div>
-                            </td>
+                            
                             <td data-label="Status">
                                 {% if app.status == 'completed' %}
                                     <div class="status-badge status-completed">Realizado</div>
                                 {% elif app.status == 'cancelled' %}
                                     <div class="status-badge status-cancelled">Cancelado</div>
                                 {% else %}
-                                    <div class="status-badge status-pending">Pendente</div>
+                                    <div class="status-badge status-pending">Agendado</div>
                                 {% endif %}
                             </td>
+                            
+                            {% if is_owner or is_manager or is_cashier %}
+                            <td data-label="Pagamento">
+                                <div class="payment-info" style="font-weight: bold; color: #2d3748;">
+                                    R$ {{ app.total_price }}
+                                </div>
+                            </td>
+                            {% endif %}
+                            
                             <td data-label="Ações">
                                 <div class="action-cell">
-                                    <div class="action-btn edit" onclick="openEditAppointmentModal(this)"
-                                        data-id="{{ app.id }}"
-                                        data-client="{{ app.client.id }}"
-                                        data-unit="{{ app.unit.id }}"
-                                        data-barber="{{ app.employee.id }}"
-                                        data-service="{{ app.services.first.service.id }}"
-                                        data-date="{{ app.date|date:'Y-m-d' }}"
-                                        data-time="{{ app.time|time:'H:i' }}"
-                                        data-status="{{ app.status }}"
-                                        data-notes="{{ app.notes|default:'' }}">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja EXCLUIR este agendamento do histórico?');">
+                                    {% if not is_cashier %}
+                                        <div class="action-btn edit" onclick="openEditAppointmentModal(this)" title="Alterar status, horário ou observação"
+                                            data-id="{{ app.id }}"
+                                            data-client="{{ app.client.id }}"
+                                            data-unit="{{ app.unit.id }}"
+                                            data-barber="{{ app.employee.id }}"
+                                            data-service="{{ app.services.first.service.id }}"
+                                            data-date="{{ app.date|date:'Y-m-d' }}"
+                                            data-time="{{ app.time|time:'H:i' }}"
+                                            data-status="{{ app.status }}"
+                                            data-notes="{{ app.notes|default:'' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                    {% else %}
+                                        <span style="color: #cbd5e0; margin-right: 15px;" title="Caixas possuem apenas visualização"><i class="fas fa-lock"></i></span>
+                                    {% endif %}
+                                    
+                                    {% if is_owner or is_manager %}
+                                    <form method="POST" style="display:inline;" onsubmit="return confirm('ATENÇÃO: Isso excluirá o agendamento do histórico permanentemente. Deseja excluir mesmo assim?');">
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="delete_appointment">
                                         <input type="hidden" name="appointment_id" value="{{ app.id }}">
-                                        <button type="submit" class="action-btn delete" style="border: none; background: transparent;">
+                                        <button type="submit" class="action-btn delete" style="border: none; background: transparent;" title="Excluir do histórico">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 30px; color: #7f8c8d;">
-                                <i class="fas fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                                Nenhum agendamento encontrado no histórico.
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0;">
+                                <i class="fas fa-calendar-times" style="font-size: 2.5rem; margin-bottom: 15px; display: block; color: #cbd5e0;"></i>
+                                Nenhum agendamento encontrado.
                             </td>
                         </tr>
                         {% endfor %}
@@ -206,31 +232,24 @@
         {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <button class="pagination-btn" onclick="changePage({{ page_obj.previous_page_number }})">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
+                <button class="pagination-btn" onclick="changePage({{ page_obj.previous_page_number }})"><i class="fas fa-chevron-left"></i></button>
             {% endif %}
-            
             {% for num in page_obj.paginator.page_range %}
-                <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}" onclick="changePage({{ num }})">
-                    {{ num }}
-                </button>
+                <button class="pagination-btn {% if page_obj.number == num %}active{% endif %}" onclick="changePage({{ num }})">{{ num }}</button>
             {% endfor %}
-
             {% if page_obj.has_next %}
-                <button class="pagination-btn" onclick="changePage({{ page_obj.next_page_number }})">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <button class="pagination-btn" onclick="changePage({{ page_obj.next_page_number }})"><i class="fas fa-chevron-right"></i></button>
             {% endif %}
         </div>
         {% endif %}
     </div>
 
+    <!-- MODAL DE EDIÇÃO -->
     <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div class="appointmentModal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%;">
             <div class="appointmentModal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
                 <h2><i class="fas fa-edit" style="color: #FF7A00;"></i> Editar Agendamento</h2>
-                <button type="button" class="close-btn" onclick="closeEditModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">
+                <button type="button" class="close-btn" onclick="closeEditModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -239,59 +258,74 @@
                 <input type="hidden" name="action" value="edit_appointment">
                 <input type="hidden" name="appointment_id" id="editAppointmentId">
                 <div class="appointmentModal-body">
+                    
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Cliente</label>
-                        <select name="client_id" id="editClientSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Cliente</label>
+                        <select name="client_id" id="editClientSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0; background: #f8f9fa;" {% if not is_owner and not is_manager %}disabled{% endif %}>
                             {% for client in clients_list %}
                                 <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
                             {% endfor %}
                         </select>
+                        {% if not is_owner and not is_manager %}<input type="hidden" name="client_id" id="hiddenClientId">{% endif %}
                     </div>
+                    
+                    {% if is_owner %}
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Unidade</label>
-                        <select id="editUnitSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-                            <option value="">Selecione uma unidade...</option>
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Unidade Física</label>
+                        <select id="editUnitSelect" name="unit_id" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
                             {% for u in units %}
                                 <option value="{{ u.id }}">{{ u.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
+                    {% endif %}
+
+                    {% if is_owner or is_manager %}
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Barbeiro</label>
-                        <select name="employee_id" id="editBarberSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Profissional (Barbeiro)</label>
+                        <select name="employee_id" id="editBarberSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
                         </select>
                     </div>
+                    {% endif %}
+
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Serviço</label>
-                        <select name="service_id" id="editServiceSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Serviço Realizado</label>
+                        <select name="service_id" id="editServiceSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            {% if not is_owner and not is_manager %}
+                                {% for svc in barber_services %}
+                                    <option value="{{ svc.id }}">{{ svc.name }} - R$ {{ svc.price }}</option>
+                                {% endfor %}
+                            {% endif %}
                         </select>
                     </div>
+                    
                     <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
                         <div class="form-group" style="flex: 1;">
-                            <label class="form-label" style="display: block; margin-bottom: 5px;">Data</label>
-                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Data</label>
+                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
                         </div>
                         <div class="form-group" style="flex: 1;">
-                            <label class="form-label" style="display: block; margin-bottom: 5px;">Hora</label>
-                            <input type="time" name="time" id="editAppointmentTime" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Hora</label>
+                            <input type="time" name="time" id="editAppointmentTime" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
                         </div>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Status</label>
-                        <select name="status" id="editStatusSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-                            <option value="scheduled">Agendado</option>
-                            <option value="completed">Finalizado</option>
-                            <option value="cancelled">Cancelado</option>
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Status do Atendimento</label>
+                        <select name="status" id="editStatusSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: bold;">
+                            <option value="scheduled">⏱️ Agendado (Na Fila)</option>
+                            <option value="completed">✅ Finalizado (Completado)</option>
+                            <option value="cancelled">❌ Cancelado</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px;">Observações</label>
-                        <textarea name="notes" id="editAppointmentNotes" class="form-control" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc;"></textarea>
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Observações</label>
+                        <textarea name="notes" id="editAppointmentNotes" class="form-control" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0; font-family: inherit; resize: vertical;"></textarea>
                     </div>
                 </div>
                 <div class="appointmentModal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()" style="padding: 10px 20px; border: 1px solid #ccc; background: transparent; border-radius: 6px; cursor: pointer;">Cancelar</button>
-                    <button type="submit" class="btnModal btnModal-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Salvar Alterações</button>
+                    <button type="button" class="btnModal btnModal-outline" onclick="closeEditModal()" style="padding: 10px 20px; border: 1px solid #cbd5e0; color: #4a5568; background: transparent; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                    <button type="submit" class="btnModal btnModal-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;"><i class="fas fa-save"></i> Salvar</button>
                 </div>
             </form>
         </div>        
@@ -303,6 +337,17 @@
         const URL_HISTORY_GENERAL = "{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}";
     </script>
     <script src="{% static 'schedule/js/agendamentos.js' %}"></script>
+    
     <script src="{% static 'geral/js/script.js' %}"></script>
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                {% for message in messages %}
+                    Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
 </body>
 </html>

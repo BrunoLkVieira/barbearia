@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("JS do Histórico de Agendamentos carregado!");
-
     // 1. Redirecionamento da Unidade Global
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
@@ -31,15 +29,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// FUNÇÃO PARA PAGINAÇÃO (Mantém os filtros da barra superior)
 function changePage(pageNum) {
     document.getElementById('pageInput').value = pageNum;
     document.getElementById('filterForm').submit();
 }
 
-// Funções do Modal de Edição (API)
 async function loadBarbers(unitId, barberSel, serviceSel) {
-    resetSelects([barberSel, serviceSel]);
+    if (!barberSel) return;
+    resetSelects([barberSel]);
+    if (serviceSel) resetSelects([serviceSel]);
+    
     if (!unitId) return;
     try {
         const response = await fetch(`${API_EMPLOYEES_URL}?unit_id=${unitId}`);
@@ -52,6 +51,7 @@ async function loadBarbers(unitId, barberSel, serviceSel) {
 }
 
 async function loadServices(employeeId, serviceSel) {
+    if (!serviceSel) return;
     resetSelects([serviceSel]);
     if (!employeeId) return;
     try {
@@ -82,7 +82,13 @@ async function openEditAppointmentModal(btn) {
     const notes = btn.getAttribute('data-notes');
 
     document.getElementById('editAppointmentId').value = id;
-    document.getElementById('editClientSelect').value = clientId;
+    
+    const clientSelect = document.getElementById('editClientSelect');
+    if(clientSelect) clientSelect.value = clientId;
+    
+    const hiddenClient = document.getElementById('hiddenClientId');
+    if(hiddenClient) hiddenClient.value = clientId;
+
     document.getElementById('editAppointmentDate').value = date;
     document.getElementById('editAppointmentTime').value = time;
     document.getElementById('editStatusSelect').value = status;
@@ -92,13 +98,21 @@ async function openEditAppointmentModal(btn) {
     const barberSelect = document.getElementById('editBarberSelect');
     const serviceSelect = document.getElementById('editServiceSelect');
 
-    unitSelect.value = unitId;
-
-    await loadBarbers(unitId, barberSelect, serviceSelect);
-    barberSelect.value = barberId;
-
-    await loadServices(barberId, serviceSelect);
-    serviceSelect.value = serviceId;
+    // MÁGICA: Proteção contra null para os cargos que não tem o input no HTML
+    if (unitSelect) {
+        unitSelect.value = unitId;
+    }
+    
+    if (barberSelect) {
+        await loadBarbers(unitId, barberSelect, serviceSelect);
+        barberSelect.value = barberId;
+        
+        await loadServices(barberId, serviceSelect);
+        if(serviceSelect) serviceSelect.value = serviceId;
+    } else if (serviceSelect) {
+        // Se for o barbeiro comum, a lista de serviços já veio do HTML, é só selecionar
+        serviceSelect.value = serviceId;
+    }
 
     editModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -114,11 +128,15 @@ function closeEditModal() {
 
 function resetSelects(elements) {
     elements.forEach(el => {
-        el.innerHTML = '<option value="">Selecione...</option>';
-        el.disabled = true;
+        if(el) {
+            el.innerHTML = '<option value="">Selecione...</option>';
+            el.disabled = true;
+        }
     });
 }
+
 function populateSelect(selectEl, items, placeholder) {
+    if(!selectEl) return;
     selectEl.innerHTML = `<option value="">${placeholder}</option>`;
     items.forEach(item => {
         const option = document.createElement('option');
