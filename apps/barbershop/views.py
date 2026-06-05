@@ -527,7 +527,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         messages.error(request, "Acesso negado.")
         return redirect("core:home")
 
-    # Mapeamento estrito de cargos
     is_manager = emp and emp.roles.filter(occupation=Role.Occupation.GERENTE).exists()
     is_cashier = emp and emp.roles.filter(occupation=Role.Occupation.CAIXA).exists() and not is_manager
     
@@ -545,7 +544,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # Caixa é read-only
         if is_cashier:
             return JsonResponse({'status': 'error', 'errors': ['Seu cargo (Caixa) tem permissão apenas de visualização nesta área.']}, status=403)
 
@@ -568,12 +566,10 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             emp_target_id = request.POST.get("employee_id")
             emp_target = get_object_or_404(Employee, id=emp_target_id, unit__barbershop=barbershop)
             
-            # Se for barbeiro comum, trava se tentar editar outro
             if not is_owner and not is_manager:
                 if current_employee and emp_target.id != current_employee.id:
                     return JsonResponse({'status': 'error', 'errors': ['Você só pode editar sua própria disponibilidade.']}, status=403)
 
-            # Se for gerente, trava se tentar editar alguém de fora da sua filial
             if is_manager and not is_owner:
                 if emp_target.unit != unit:
                     return JsonResponse({'status': 'error', 'errors': ['Você só pode editar funcionários da sua unidade.']}, status=403)
@@ -663,7 +659,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             holidays = UnitHoliday.objects.filter(unit__barbershop=barbershop, date__gte=today).order_by("date")
             absences = EmployeeAbsence.objects.filter(employee__unit__barbershop=barbershop, end_date__gte=today).order_by("start_date")
     else:
-        # Se for apenas Barbeiro, mostra somente ele
         employees = Employee.objects.filter(id=current_employee.id, roles__occupation='barbeiro', is_active=True).distinct().select_related("user", "unit")
         holidays = UnitHoliday.objects.filter(unit=unit, date__gte=today).order_by("date")
         absences = EmployeeAbsence.objects.filter(employee=current_employee, end_date__gte=today).order_by("start_date")
@@ -706,7 +701,6 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "unit_workdays_json": unit_data_dict, "unit_workdays": unit_workdays_list, "current_employee": current_employee, 
     }
     return render(request, "barbershop/workDay.html", context)
-
 
 @login_required
 @owner_or_gerente_required

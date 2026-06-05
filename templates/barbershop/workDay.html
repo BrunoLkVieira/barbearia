@@ -28,22 +28,12 @@
         .batch-actions { display: flex; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 15px; align-items: center; justify-content: space-between; }
         .batch-actions .time-inputs { display: flex; gap: 5px; align-items: center;}
         
-        /* FOOTER FIXO (Impede que ele suba ou sobreponha menu) */
-        .main-content {
-            padding-bottom: 100px;
-        }
-        footer {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 100%;
-            z-index: 100;
-        }
-       
+        .main-content { padding-bottom: 100px; }
+        footer { position: fixed; bottom: 0; right: 0; width: 100%; z-index: 100; }
+        @media (min-width: 769px) { footer { width: calc(100% - 250px); } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
-
 </head>
 
 <body>
@@ -60,11 +50,8 @@
                                 data-unit-url-template="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
                             
                             <option value="geral" {% if not unit %}selected{% endif %}>Geral (Visão Ampla)</option>
-                            
                             {% for u in units %}
-                                <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
-                                    {{ u.name }}
-                                </option>
+                                <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>{{ u.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -108,7 +95,7 @@
                 <div class="section-title">
                     <i class="fas fa-store"></i> Expediente Físico (Barbearia)
                 </div>
-                {% if unit and is_owner or is_manager %}
+                {% if is_owner or is_manager %}
                 <button class="btn btn-outline" onclick="openUnitWorkdayModal()">
                     <i class="fas fa-clock"></i> Configurar Expediente
                 </button>
@@ -169,7 +156,7 @@
                     {% endif %}
                 </div>
                 {% empty %}
-                    <p style="text-align: center; color: #a0aec0; width: 100%;">Nenhum barbeiro ativo nesta unidade.</p>
+                    <p style="text-align: center; color: #a0aec0; width: 100%;">Nenhum barbeiro listado.</p>
                 {% endfor %}
             </div>
         </div>
@@ -203,7 +190,7 @@
                     <div class="day-off-reason">{{ holiday.name }} <br><small>({{holiday.unit.name}})</small></div>
                 </div>
                 {% empty %}
-                    <p style="color: #a0aec0;">Sem feriados ou dias fechados registrados no momento.</p>
+                    <p style="color: #a0aec0;">Sem feriados ou dias fechados registrados.</p>
                 {% endfor %}
             </div>
         </div>
@@ -242,7 +229,7 @@
                          <div class="day-off-reason">{{ absence.employee.user.name }}: {{ absence.reason }}</div>
                     </div>
                  {% empty %}
-                    <p style="color: #a0aec0;">Não há barbeiros de férias no momento.</p>
+                    <p style="color: #a0aec0;">Não há barbeiros de folga no momento.</p>
                  {% endfor %}
             </div>
         </div>
@@ -256,7 +243,6 @@
         </div>
     </footer>
     
-
     <div id="editModal" class="edit-modal">
         <div class="edit-modal-content">
             <div class="edit-modal-header">
@@ -369,7 +355,7 @@
                 <form method="POST" class="holiday-form" autocomplete="off">
                     {%csrf_token%}
                     <input type="hidden" name="action" value="create_holiday">
-                    <input type="hidden" name="unit_id" value="{{ unit.id }}">
+                    <input type="hidden" name="unit_id" value="{{ unit.id|default:'' }}">
                     <div class="holiday-modal-body">
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-tag"></i> Motivo do Fechamento</h3>
@@ -519,6 +505,9 @@
     <script>
         const workdaysData = {{ workdays_json|safe }};
         let activeTabPeriod = 'morning'; 
+        
+        // Passando flag de visão global para o Javascript interceptar
+        const isGlobalView = {% if not unit %}true{% else %}false{% endif %};
     </script>
 
     {% if messages %}

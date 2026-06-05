@@ -11,11 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({ title: 'Erros Encontrados', html: errorHtml, icon: 'error', confirmButtonColor: '#7066e0' });
     }
 
-    // Carrega opções de horário globais pro script
     const baseSelect = document.querySelector('.time-input.start-time');
     if(baseSelect) Array.from(baseSelect.options).forEach(opt => globalTimeOptions.push(opt.value));
 
-    // REQUISIÇÕES AJAX CENTRALIZADAS
     const formsAjax = document.querySelectorAll('.holiday-form, #unitWorkdayForm');
     formsAjax.forEach(form => {
         form.addEventListener('submit', async function(e) {
@@ -33,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // VALIDAÇÃO DE FOLGAS
     const absenceForm = document.querySelector('.absence-form');
     if (absenceForm) {
         absenceForm.addEventListener('submit', function (e) {
@@ -50,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // LÓGICA DE ABAS MANHÃ E TARDE
     const tabs = document.querySelectorAll('.barber-selector-item');
     tabs.forEach(item => {
         item.addEventListener('click', function() {
@@ -61,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.day-edit.morning').forEach(d => d.style.display = (activeTabPeriod === 'morning') ? 'flex' : 'none');
             document.querySelectorAll('.day-edit.afternoon').forEach(d => d.style.display = (activeTabPeriod === 'afternoon') ? 'flex' : 'none');
             
-            // Reseta botão Lote
             allDaysActive = false;
             const btn = document.getElementById('batchToggleBtn');
             if(btn) btn.innerHTML = '<i class="fas fa-check-double"></i> Ativar Todos';
@@ -72,8 +67,20 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tabs[0]) tabs[0].click(); 
 });
 
+// INTERCEPTADOR DE AÇÕES NO MODO GLOBAL (VISÃO GERAL)
+function checkGlobalView(actionText) {
+    if (typeof isGlobalView !== 'undefined' && isGlobalView) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Ação Restrita',
+            text: `Para ${actionText}, selecione uma Unidade específica no filtro localizado no topo da página.`,
+            confirmButtonColor: '#ED8936'
+        });
+        return true;
+    }
+    return false;
+}
 
-// FUNÇÕES GLOBAIS DE GRADE DO BARBEIRO
 function updatePeriodVisuals(weekday, period, isAvailable, isShopOpen, shopStart, shopEnd) {
     const periodDiv = document.querySelector(`.day-edit[data-weekday="${weekday}"][data-period="${period}"]`);
     if (!periodDiv) return;
@@ -94,7 +101,6 @@ function updatePeriodVisuals(weekday, period, isAvailable, isShopOpen, shopStart
         inputGroup.style.display = 'flex'; warningText.style.display = 'none';
     }
 
-    // A mágica acontece aqui: Limitadores de string O(1)
     let periodStartLimit = shopStart;
     let periodEndLimit = shopEnd;
     
@@ -164,7 +170,6 @@ function applyBatchTimes() {
             const sSelect = dayDiv.querySelector('.start-time');
             const eSelect = dayDiv.querySelector('.end-time');
             
-            // Só aplica se o valor não violar as restrições da barbearia
             if (sSelect.querySelector(`option[value="${startTime}"]`) && !sSelect.querySelector(`option[value="${startTime}"]`).disabled) sSelect.value = startTime;
             if (eSelect.querySelector(`option[value="${endTime}"]`) && !eSelect.querySelector(`option[value="${endTime}"]`).disabled) eSelect.value = endTime;
         }
@@ -189,6 +194,8 @@ function handleToggleClick(checkboxElement) {
 }
 
 function openEditModal(employeeId) {
+    if (checkGlobalView('editar a disponibilidade do barbeiro (pois ela depende do horário de funcionamento da filial)')) return;
+
     const formEmpId = document.getElementById('formEmployeeId');
     const dataEl = document.getElementById('unit-workdays-data');
     if (!formEmpId || typeof workdaysData === 'undefined' || !dataEl) return;
@@ -213,11 +220,9 @@ function openEditModal(employeeId) {
                 const sSelect = div.querySelector(`[name^="start_${p}_work"]`);
                 const eSelect = div.querySelector(`[name^="end_${p}_work"]`);
                 
-                // Se existe no BD, joga pro select. Se não, faz fallback pras horas físicas
                 sSelect.value = dayData[`start_${p}_work`] || shopStart.substring(0,5);
                 eSelect.value = dayData[`end_${p}_work`] || shopEnd.substring(0,5);
                 
-                // Correção visual se a barbearia alterou o expediente físico recentemente
                 if (sSelect.value < shopStart) sSelect.value = shopStart.substring(0,5);
                 if (eSelect.value > shopEnd) eSelect.value = shopEnd.substring(0,5);
             }
@@ -246,6 +251,7 @@ function submitBarberAgenda() {
 
 // RESTANTE DOS MODAIS: FERIADOS E EXPEDIENTE FÍSICO
 function editHolidayModal(holidayId, name, date) {
+    if (checkGlobalView('editar este feriado')) return;
     const m = document.getElementById('editHolidayModal');
     if (!m) return;
     document.getElementById('editHolidayId').value = holidayId;
@@ -255,12 +261,24 @@ function editHolidayModal(holidayId, name, date) {
 }
 
 function closeEditHolidayModal() { document.getElementById('editHolidayModal').style.display = 'none'; document.body.style.overflow = ''; }
-function openHolidayModal() { document.getElementById('createHolidayModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+
+function openHolidayModal() { 
+    if (checkGlobalView('adicionar um feriado ou fechamento na agenda')) return;
+    document.getElementById('createHolidayModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; 
+}
+
 function closeHolidayModal() { document.getElementById('createHolidayModal').style.display = 'none'; document.body.style.overflow = ''; }
-function openVacationModal() { document.getElementById('vacationModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+
+function openVacationModal() { 
+    if (checkGlobalView('agendar uma folga para a equipe')) return;
+    document.getElementById('vacationModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; 
+}
+
 function closeVacationModal() { document.getElementById('vacationModal').style.display = 'none'; document.body.style.overflow = ''; }
 
 function openUnitWorkdayModal() {
+    if (checkGlobalView('configurar o horário de funcionamento físico da barbearia')) return;
+    
     const modal = document.getElementById('unitWorkdayModal');
     const dataEl = document.getElementById('unit-workdays-data');
     if (!modal || !dataEl || dataEl.textContent === '{}') return;
