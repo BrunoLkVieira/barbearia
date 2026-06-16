@@ -44,88 +44,108 @@ def owner_or_employee_required(view_func):
 @owner_or_employee_required
 def SchedulingView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+    today = localdate()
     
     is_owner = (request.user == barbershop.owner_user)
     emp = get_tenant_employee(request.user, barbershop)
-    is_manager = emp and emp.roles.filter(occupation__iexact='gerente').exists()
     
+    is_manager = False
+    is_cashier = False
+    is_barber = False
     current_unit = None
-    if unit_slug:
-        current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-        barbers_qs = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
+    
+    if emp:
+        is_manager = emp.roles.filter(occupation__iexact='gerente').exists()
+        is_cashier = emp.roles.filter(occupation__iexact='caixa').exists() and not is_manager
+        is_barber = emp.roles.filter(occupation__iexact='barbeiro').exists()
+
+    if is_owner:
+        if unit_slug:
+            current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+        units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+        if current_unit:
+            barbers_qs = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
+        else:
+            barbers_qs = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation__iexact='barbeiro', is_active=True).distinct()
     else:
-        barbers_qs = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation__iexact='barbeiro', is_active=True).distinct()
-        
+        current_unit = emp.unit
+        units = [current_unit]
+        if is_manager or is_cashier:
+            barbers_qs = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
+        else:
+            barbers_qs = Employee.objects.filter(id=emp.id)
+
     employees = sorted(barbers_qs, key=lambda e: 0 if e.user == barbershop.owner_user else 1)
-    units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+
+    date_param = request.GET.get('date') or request.POST.get('date')
+    if date_param:
+        try:
+            current_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+            if current_date < today: current_date = today
+        except ValueError: current_date = today
+    else:
+        current_date = today
 
     if request.method == "POST":
         action = request.POST.get('action')
-        
+
         try:
-            # --- CRIAR AGENDAMENTO ---
-            if action == "create_appointment":
-                client_id = request.POST.get('client_id')
-                employee_id = request.POST.get('employee_id')
-                service_ids = request.POST.getlist('service_id')
-                date_str = request.POST.get('date')
-                time_str = request.POST.get('time')
-                notes_str = request.POST.get('notes', '')
-
-                if not service_ids or not time_str:
-                    messages.error(request, "Atenção: Selecione ao menos um serviço e um horário válido.")
-                    return redirect(request.path)
-
-                target_emp = get_object_or_404(Employee, id=employee_id, unit__barbershop=barbershop)
-                target_client = get_object_or_404(Client, id=client_id, barbershop=barbershop)
-
-                appointment = Appointment.objects.create(
-                    client=target_client, employee=target_emp, barbershop=barbershop,
-                    unit=target_emp.unit, date=date_str, time=time_str, status='scheduled',
-                    total_price=0, notes=notes_str
-                )
-                
-                total_price = Decimal('0.00')
-                for sid in service_ids:
-                    svc = get_object_or_404(BarberService, id=sid)
-                    AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
-                    total_price += svc.price
-                    
-                appointment.total_price = total_price
-                appointment.save()
-                messages.success(request, "Horário agendado com sucesso!")
-
-            # --- EDITAR AGENDAMENTO ---
-            elif action == "edit_appointment":
+            if action in ["create_appointment", "edit_appointment"]:
                 appointment_id = request.POST.get('appointment_id')
                 client_id = request.POST.get('client_id')
                 employee_id = request.POST.get('employee_id')
+                unit_id = request.POST.get('unit_id') if is_owner else current_unit.id
                 service_ids = request.POST.getlist('service_id')
                 date_str = request.POST.get('date')
                 time_str = request.POST.get('time')
-                status_val = request.POST.get('status')
+                status_val = request.POST.get('status', 'scheduled')
                 notes_str = request.POST.get('notes', '')
 
                 if not service_ids or not time_str:
-                    messages.error(request, "Atenção: Serviço e horário são campos obrigatórios para edição.")
-                    return redirect(request.path)
+                    messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
+                    return redirect(f"{request.path}?date={current_date}")
 
-                appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
+                barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
+                client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
+                
+                if action == "edit_appointment":
+                    barber_conflict = barber_conflict.exclude(id=appointment_id)
+                    client_conflict = client_conflict.exclude(id=appointment_id)
+                
+                if barber_conflict.exists() and status_val not in ['cancelled', 'completed']:
+                    messages.error(request, "Conflito: Este barbeiro já possui um agendamento ativo neste horário.")
+                    return redirect(f"{request.path}?date={current_date}")
+                if client_conflict.exists() and status_val not in ['cancelled', 'completed']:
+                    messages.error(request, "Conflito: Este cliente já possui um agendamento marcado neste horário.")
+                    return redirect(f"{request.path}?date={current_date}")
+
                 target_emp = get_object_or_404(Employee, id=employee_id, unit__barbershop=barbershop)
                 target_client = get_object_or_404(Client, id=client_id, barbershop=barbershop)
+                target_unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
 
-                appointment.client = target_client
-                appointment.employee = target_emp
-                appointment.unit = target_emp.unit
-                appointment.date = date_str
-                appointment.time = time_str
-                appointment.status = status_val
-                appointment.notes = notes_str
-                
-                if status_val == 'completed': appointment.is_paid = True
-                elif status_val in ['cancelled', 'scheduled']: appointment.is_paid = False
+                if action == "create_appointment":
+                    appointment = Appointment.objects.create(
+                        client=target_client, employee=target_emp, barbershop=barbershop,
+                        unit=target_unit, date=date_str, time=time_str, status='scheduled',
+                        total_price=0, notes=notes_str
+                    )
+                    msg = "Horário agendado com sucesso!"
+                else:
+                    appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
+                    appointment.client = target_client
+                    appointment.employee = target_emp
+                    appointment.unit = target_unit
+                    appointment.date = date_str
+                    appointment.time = time_str
+                    appointment.status = status_val
+                    appointment.notes = notes_str
+                    
+                    if status_val == 'completed': appointment.is_paid = True
+                    elif status_val in ['cancelled', 'scheduled']: appointment.is_paid = False
 
-                appointment.services.all().delete()
+                    appointment.services.all().delete()
+                    msg = "Agendamento atualizado com sucesso!"
+
                 total_price = Decimal('0.00')
                 for sid in service_ids:
                     svc = get_object_or_404(BarberService, id=sid)
@@ -134,20 +154,18 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     
                 appointment.total_price = total_price
                 appointment.save()
-                messages.success(request, "Agendamento atualizado com sucesso!")
+                messages.success(request, msg)
                 
-            # --- EXCLUIR AGENDAMENTO ---
             elif action == "delete_appointment":
-                if not is_owner and not is_manager:
-                    messages.error(request, "Acesso Negado: Apenas gerente ou titular podem excluir registros.")
-                    return redirect(request.path)
+                if not is_owner and not is_manager and not is_cashier:
+                    messages.error(request, "Acesso Negado: Apenas gerente, caixa ou titular podem excluir registros.")
+                    return redirect(f"{request.path}?date={current_date}")
                     
                 app_id = request.POST.get("appointment_id")
                 appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
                 appointment.delete()
                 messages.success(request, "Agendamento excluído definitivamente.")
 
-            # --- FINALIZAR SERVIÇO COM EXTRAS ---
             elif action == "complete_appointment":
                 appointment_id = request.POST.get('appointment_id')
                 appointment = get_object_or_404(Appointment, id=appointment_id, barbershop=barbershop)
@@ -161,26 +179,24 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 
                 appointment.status = 'completed'
                 appointment.is_paid = True
+                payment_type = request.POST.get('payment_type')
+                if payment_type:
+                    appointment.payment_type = payment_type
                 appointment.save()
                 messages.success(request, "Serviço finalizado e caixa atualizado!")
 
         except Exception as e:
             messages.error(request, f"Erro ao processar ação: {str(e)}")
         
-        target_date = request.POST.get('date') or request.GET.get('date')
-        if target_date: return redirect(f"{request.path}?date={target_date}")
-        return redirect(request.path)
-
-    date_param = request.GET.get('date')
-    if date_param:
-        try: current_date = datetime.strptime(date_param, '%Y-%m-%d').date()
-        except ValueError: current_date = localdate()
-    else:
-        current_date = localdate()
+        return redirect(f"{request.path}?date={current_date}")
 
     appointments_query = Appointment.objects.filter(barbershop=barbershop, date=current_date)
     if current_unit:
         appointments_query = appointments_query.filter(unit=current_unit)
+    
+    if not is_owner and not is_manager and not is_cashier:
+        appointments_query = appointments_query.filter(employee=emp)
+
     appointments = appointments_query.order_by('time').prefetch_related('services__service')
 
     for app in appointments:
@@ -195,12 +211,13 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
 
     context = {
         'barbershop': barbershop, 'employees': employees, 'units': units, 'current_unit': current_unit,
-        'appointments': appointments, 'clients_list': clients_list, 'current_date': current_date,
+        'appointments': appointments, 'clients_list': clients_list, 'current_date': current_date, 'today': today,
         'total_appointments': total_appointments, 'total_revenue': total_revenue,
         'completed_appointments': completed_appointments, 'completed_revenue': completed_revenue,
-        'active_tab': 'agenda', 'is_owner': is_owner, 'is_manager': is_manager,
+        'active_tab': 'agenda', 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber
     }
     return render(request, 'scheduling/agenda.html', context)
+
 
 @login_required
 @owner_or_employee_required
@@ -347,13 +364,11 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     return render(request, "scheduling/agendamentos.html", context)
 
 
-# ==========================================
-# ENDPOINTS DA API E MOTOR DE AGENDA SAAS
-# ==========================================
 @login_required 
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
-    if not unit_id: return JsonResponse({'employees': []})
+    if not unit_id or unit_id == 'null': 
+        return JsonResponse({'employees': []})
     
     unit = get_object_or_404(Unit, id=unit_id)
     employees_qs = Employee.objects.filter(unit=unit, roles__occupation__iexact='barbeiro', is_active=True).select_related('user').distinct()
@@ -372,7 +387,8 @@ def get_employees_by_unit(request):
 @login_required 
 def get_services_by_employee(request):
     employee_id = request.GET.get('employee_id')
-    if not employee_id: return JsonResponse({'services': []})
+    if not employee_id or employee_id == 'null': 
+        return JsonResponse({'services': []})
     
     services = BarberService.objects.filter(employee_id=employee_id)
     data = [{
@@ -388,13 +404,14 @@ def get_available_slots(request):
     emp_id = request.GET.get('employee_id')
     date_str = request.GET.get('date')
     
+    if not emp_id or emp_id == 'null' or not date_str: 
+        return JsonResponse({'slots': []})
+
     try: duration = int(request.GET.get('duration', 30))
     except (TypeError, ValueError): duration = 30
     if duration <= 0: duration = 30
     
     app_id = request.GET.get('exclude_app_id') 
-
-    if not all([emp_id, date_str]): return JsonResponse({'slots': []})
 
     emp = get_object_or_404(Employee, id=emp_id)
     try: target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -402,27 +419,24 @@ def get_available_slots(request):
 
     if target_date < localdate(): return JsonResponse({'slots': []})
 
-    # BLOQUEIO 1: Validação de Feriados da Unidade
     if UnitHoliday.objects.filter(unit=emp.unit, date=target_date).exists():
         return JsonResponse({'slots': []})
 
-    # BLOQUEIO 2: Ausências do Funcionário
     if EmployeeAbsence.objects.filter(employee=emp, start_date__lte=target_date, end_date__gte=target_date).exists():
         return JsonResponse({'slots': []})
 
-    # CONVERSÃO MÁGICA: Ajuste do Dia da Semana do Python (Segunda=0) para o Django (Domingo=0)
     django_weekday = (target_date.weekday() + 1) % 7
 
-    # BLOQUEIO 3: Grade do Profissional (Corrigido os dias invertidos)
     workday = EmployeeWorkDay.objects.filter(employee=emp, weekday=django_weekday).first()
     if not workday or (not workday.morning_available and not workday.afternoon_available):
         return JsonResponse({'slots': []})
 
-    apps = Appointment.objects.filter(employee=emp, date=target_date).exclude(status='cancelled')
+    apps = Appointment.objects.filter(employee=emp, date=target_date).exclude(status__in=['cancelled', 'completed'])
     if app_id: apps = apps.exclude(id=app_id)
 
     booked_intervals = []
     for app in apps:
+        if not app.time: continue
         app_start = datetime.combine(target_date, app.time)
         app_dur = sum([(getattr(s.service, 'duration', 30) or 30) for s in app.services.all()])
         app_end = app_start + timedelta(minutes=app_dur)

@@ -9,6 +9,11 @@ class Appointment(models.Model):
         ('completed', 'Finalizado'),
         ('cancelled', 'Cancelado'),
     ]
+    PAYMENT_CHOICES = [
+        ('cash', 'Dinheiro'),
+        ('card', 'Cartão'),
+        ('pix', 'PIX'),
+    ]
 
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='appointments')
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='appointments')
@@ -19,11 +24,11 @@ class Appointment(models.Model):
     time = models.TimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     
-    # Campo para observações (ex: "cliente prefere tesoura")
     notes = models.TextField(blank=True, null=True)
     
-    # Controle financeiro básico para o histórico
+    # Controle financeiro
     is_paid = models.BooleanField(default=False)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_CHOICES, blank=True, null=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -36,7 +41,6 @@ class AppointmentService(models.Model):
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='services')
     service = models.ForeignKey(BarberService, on_delete=models.PROTECT)
     
-    # Salvamos o preço aqui para histórico, mesmo que o serviço mude de preço no futuro
     price_at_sale = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):

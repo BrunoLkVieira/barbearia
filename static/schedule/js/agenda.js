@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('agendaDateFilter');
     if (dateInput) {
         dateInput.addEventListener('change', function() {
-            const baseUrl = window.location.href.split('?')[0];
+            const baseUrl = window.location.pathname;
             window.location.href = `${baseUrl}?date=${this.value}`;
         });
     }
@@ -15,8 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitSlug = this.value;
             const urlParams = new URLSearchParams(window.location.search);
             const dateParam = urlParams.get('date');
-            let newUrl = unitSlug === "geral" ? URL_AGENDA_GENERAL : URL_AGENDA_GENERAL.replace('/agenda/', `/${unitSlug}/agenda/`);
+            
+            let newUrl = URL_AGENDA_GENERAL;
+            if (unitSlug !== "geral") {
+                newUrl = URL_AGENDA_UNIT.replace('__unit__', unitSlug);
+            }
             if (dateParam) newUrl += `?date=${dateParam}`;
+            
             window.location.href = newUrl;
         });
     }
@@ -28,15 +33,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (unitSelect) {
         unitSelect.addEventListener('change', async (e) => {
-            await loadBarbersVisual(e.target.value, 'barberVisualGrid', 'hiddenBarberId');
-            document.getElementById('serviceCheckboxGrid').innerHTML = '';
-            resetTimeSelect('appointmentTime');
+            if(document.getElementById('barberVisualGrid')){
+                await loadBarbersVisual(e.target.value, 'barberVisualGrid', 'hiddenBarberId');
+                document.getElementById('serviceCheckboxGrid').innerHTML = '';
+                resetTimeSelect('appointmentTime');
+            }
         });
     }
     if (hiddenBarberId) {
         hiddenBarberId.addEventListener('change', async (e) => {
-            await loadServicesCheckboxes(e.target.value, 'serviceCheckboxGrid');
-            triggerSlotFetch();
+            if(e.target.value && e.target.value !== 'null') {
+                await loadServicesCheckboxes(e.target.value, 'serviceCheckboxGrid');
+                triggerSlotFetch();
+            }
         });
     }
     if (appointmentDate) {
@@ -50,15 +59,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (editUnitSelect) {
         editUnitSelect.addEventListener('change', async (e) => {
-            await loadBarbersVisual(e.target.value, 'editBarberVisualGrid', 'editHiddenBarberId');
-            document.getElementById('editServiceCheckboxGrid').innerHTML = '';
-            resetTimeSelect('editAppointmentTime');
+            if(document.getElementById('editBarberVisualGrid')) {
+                await loadBarbersVisual(e.target.value, 'editBarberVisualGrid', 'editHiddenBarberId');
+                document.getElementById('editServiceCheckboxGrid').innerHTML = '';
+                resetTimeSelect('editAppointmentTime');
+            }
         });
     }
     if (editHiddenBarberId) {
         editHiddenBarberId.addEventListener('change', async (e) => {
-            await loadServicesCheckboxes(e.target.value, 'editServiceCheckboxGrid', [], true);
-            triggerEditSlotFetch();
+            if(e.target.value && e.target.value !== 'null') {
+                await loadServicesCheckboxes(e.target.value, 'editServiceCheckboxGrid', [], true);
+                triggerEditSlotFetch();
+            }
         });
     }
     if (editAppointmentDate) {
@@ -79,14 +92,77 @@ document.addEventListener('DOMContentLoaded', function() {
 // ====================== UTILITÁRIOS ======================
 function resetTimeSelect(selectId) {
     const sel = document.getElementById(selectId);
-    sel.innerHTML = '<option value="">Preencha Barbeiro, Data e Serviço antes</option>';
-    sel.classList.add('disabled-look');
+    if(sel) {
+        sel.innerHTML = '<option value="">Preencha Barbeiro, Data e Serviço antes</option>';
+        sel.classList.add('disabled-look');
+    }
+}
+
+function initBarberFilter() {
+    const barberCards = document.querySelectorAll(".barbers .barber-card");
+    const timeSlots = document.querySelectorAll(".time-slot");
+    const titleName = document.querySelector(".agenda-barber-name");
+    
+    const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
+    const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
+
+    barberCards.forEach(card => {
+        card.addEventListener("click", () => {
+            barberCards.forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+            
+            if (titleName) {
+                titleName.innerText = card.querySelector(".barber-name").innerText;
+            }
+
+            const clickedBarberId = card.getAttribute("data-barber-id");
+            sessionStorage.setItem('activeBarberId', clickedBarberId);
+
+            let completedCount = 0;
+            let completedRevenue = 0;
+            let visualOrder = 1;
+
+            timeSlots.forEach(slot => {
+                const slotBarberId = slot.getAttribute("data-barber");
+                const slotStatus = slot.getAttribute("data-status"); 
+                
+                if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
+                    slot.style.display = "";
+                    const orderElement = slot.querySelector('.order');
+                    if (orderElement) orderElement.innerText = visualOrder++;
+                    
+                    if (slotStatus === 'completed') {
+                        completedCount++;
+                        const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]');
+                        if (priceText) {
+                            const price = parseFloat(priceText.innerText.replace('R$ ', '').replace(',', '.'));
+                            if (!isNaN(price)) completedRevenue += price;
+                        }
+                    }
+                } else {
+                    slot.style.display = "none";
+                }
+            });
+
+            if (totalCountEl) totalCountEl.innerText = completedCount;
+            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${completedRevenue.toFixed(2).replace('.', ',')}`;
+        });
+    });
+
+    const savedBarberId = sessionStorage.getItem('activeBarberId');
+    if (savedBarberId) {
+        const cardToActivate = document.querySelector(`.barbers .barber-card[data-barber-id="${savedBarberId}"]`);
+        if (cardToActivate) cardToActivate.click(); 
+    } else {
+        const autoCard = document.querySelector(".barbers .barber-card.active");
+        if(autoCard) autoCard.click();
+    }
 }
 
 // ====================== GERAÇÃO DA MALHA DO BARBEIRO ======================
 async function loadBarbersVisual(unitId, containerId, inputId, preSelectedId = null) {
     const container = document.getElementById(containerId);
-    if (!unitId) { container.innerHTML = ''; return; }
+    if (!container || !unitId) return;
     container.innerHTML = '<p style="color:#7f8c8d; font-size:0.9rem; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Buscando barbeiros da unidade...</p>';
     
     try {
@@ -123,6 +199,7 @@ async function loadBarbersVisual(unitId, containerId, inputId, preSelectedId = n
             });
         } else {
             container.innerHTML = '<p style="color:#c62828; font-size:0.9rem; padding: 10px;">Nenhum barbeiro ativo encontrado.</p>';
+            document.getElementById(inputId).value = '';
         }
     } catch (e) { console.error(e); }
 }
@@ -130,7 +207,7 @@ async function loadBarbersVisual(unitId, containerId, inputId, preSelectedId = n
 // ====================== GERAÇÃO DOS CARDS DE SERVIÇOS ======================
 async function loadServicesCheckboxes(employeeId, containerId, preSelectedIds = [], isEdit = false) {
     const container = document.getElementById(containerId);
-    if (!employeeId) { container.innerHTML = ''; return; }
+    if (!container || !employeeId || employeeId === 'null') return;
     container.innerHTML = '<p style="color:#7f8c8d; font-size:0.9rem; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Buscando serviços do barbeiro...</p>';
     
     try {
@@ -169,9 +246,9 @@ function toggleServiceCard(checkbox) {
     }
 }
 
-// ====================== GERAÇÃO DINÂMICA DE HORÁRIOS (DROPDOWN) ======================
+// ====================== GERAÇÃO DINÂMICA DE HORÁRIOS ======================
 function triggerSlotFetch() { fetchSlots('hiddenBarberId', 'appointmentDate', '#serviceCheckboxGrid input[type="checkbox"]:checked', 'appointmentTime', 'timeLoader'); }
-function triggerEditSlotFetch() { fetchSlots('editHiddenBarberId', 'editAppointmentDate', '#editServiceCheckboxGrid input[type="checkbox"]:checked', 'editAppointmentTime', 'editTimeLoader', document.getElementById('editAppointmentId').value, document.getElementById('editAppointmentTime').getAttribute('data-preset')); }
+function triggerEditSlotFetch() { fetchSlots('editHiddenBarberId', 'editAppointmentDate', '#editServiceCheckboxGrid input[type="checkbox"]:checked', 'editAppointmentTime', 'editTimeLoader', document.getElementById('editAppointmentId').value, document.getElementById('originalTime').value); }
 
 async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, loaderId, excludeAppId = null, presetTime = null) {
     const empId = document.getElementById(empInputId).value;
@@ -182,7 +259,7 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
 
     resetTimeSelect(selectId);
     
-    if (!empId || !dateStr || checkedSvcs.length === 0) return;
+    if (!empId || empId === 'null' || !dateStr || checkedSvcs.length === 0) return;
 
     let totalDuration = 0;
     checkedSvcs.forEach(cb => totalDuration += parseInt(cb.getAttribute('data-duration') || 30));
@@ -202,15 +279,21 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
 
         if (data.slots && data.slots.length > 0) {
             let hasPreset = false;
-            data.slots.forEach(slot => {
-                const isSelected = (presetTime === slot) ? 'selected' : '';
+            
+            let slots = data.slots;
+            const initialEditDate = document.getElementById('editAppointmentDate') ? document.getElementById('editAppointmentDate').defaultValue : null;
+
+            if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
+                slots.push(presetTime);
+                slots.sort();
+            }
+
+            slots.forEach(slot => {
+                const isSelected = (presetTime === slot && dateStr === initialEditDate) ? 'selected' : '';
                 if(isSelected) hasPreset = true;
                 selectEl.innerHTML += `<option value="${slot}" ${isSelected}>${slot}</option>`;
             });
             
-            if(presetTime && !hasPreset && dateStr === document.getElementById('editAppointmentDate').defaultValue){
-                 selectEl.innerHTML += `<option value="${presetTime}" selected>${presetTime}</option>`;
-            }
         } else {
             selectEl.innerHTML = '<option value="">S/ Horário P/ Esta Duração</option>';
             selectEl.classList.add('disabled-look');
@@ -218,9 +301,98 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
     } catch (e) { console.error(e); loader.style.display = 'none'; }
 }
 
+// ====================== ABERTURA DO MODAL NOVO ======================
+function openNewAppointmentModal() {
+    const appointmentModal = document.getElementById('appointmentModalContainer');
+    if (appointmentModal) {
+        document.getElementById('appointmentForm').reset();
+        
+        const barberGrid = document.getElementById('barberVisualGrid');
+        if (barberGrid) barberGrid.innerHTML = '';
+        document.getElementById('serviceCheckboxGrid').innerHTML = '';
+        resetTimeSelect('appointmentTime');
+        
+        const unitSel = document.getElementById('unitSelect');
+        const managerUnit = document.getElementById('managerUnitId');
+        const hiddenBarberId = document.getElementById('hiddenBarberId');
+
+        // Se o Barbeiro é o logado, a unidade já está fixa e o visual grid não existe.
+        if (!barberGrid && hiddenBarberId && hiddenBarberId.value) {
+            loadServicesCheckboxes(hiddenBarberId.value, 'serviceCheckboxGrid');
+        } else if (unitSel && unitSel.value) {
+            unitSel.dispatchEvent(new Event('change'));
+        } else if (managerUnit && managerUnit.value) {
+            loadBarbersVisual(managerUnit.value, 'barberVisualGrid', 'hiddenBarberId');
+        }
+
+        appointmentModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+function closeNewAppointmentModal() {
+    const appointmentModal = document.getElementById('appointmentModalContainer');
+    if (appointmentModal) { appointmentModal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
+// ====================== ABERTURA DO MODAL EDITAR ======================
+async function openEditAppointmentModal(btn) {
+    const editModal = document.getElementById('editAppointmentModalContainer');
+    if (!editModal) return;
+
+    document.getElementById('editAppointmentForm').reset();
+
+    const id = btn.getAttribute('data-id');
+    const clientId = btn.getAttribute('data-client-id');
+    const unitId = btn.getAttribute('data-unit-id');
+    const barberId = btn.getAttribute('data-barber-id');
+    
+    const servicesStr = btn.getAttribute('data-services');
+    const preSelectedSvcIds = servicesStr ? servicesStr.split(',').map(String) : [];
+
+    const date = btn.getAttribute('data-date');
+    const time = btn.getAttribute('data-time');
+    const status = btn.getAttribute('data-status');
+    const notes = btn.getAttribute('data-notes');
+
+    document.getElementById('editAppointmentId').value = id;
+    
+    const clientSelect = document.getElementById('editClientSelect');
+    if(clientSelect) clientSelect.value = clientId;
+    
+    const dateInput = document.getElementById('editAppointmentDate');
+    dateInput.value = date;
+    dateInput.defaultValue = date; 
+    
+    document.getElementById('editStatusSelect').value = status;
+    document.getElementById('editAppointmentNotes').value = notes || ''; 
+    document.getElementById('editHiddenBarberId').value = barberId;
+    document.getElementById('originalTime').value = time;
+
+    const unitSelect = document.getElementById('editUnitSelect');
+    if (unitSelect) unitSelect.value = unitId;
+
+    const barberGrid = document.getElementById('editBarberVisualGrid');
+    if (barberGrid) {
+        await loadBarbersVisual(unitId, 'editBarberVisualGrid', 'editHiddenBarberId', barberId);
+    }
+    
+    await loadServicesCheckboxes(barberId, 'editServiceCheckboxGrid', preSelectedSvcIds, true);
+    triggerEditSlotFetch();
+
+    editModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+    const editModal = document.getElementById('editAppointmentModalContainer');
+    if (editModal) { editModal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
 // ====================== MODAL FINALIZAR (CAIXA COM EXTRAS) ======================
-async function loadExtraServicesCheckboxes(employeeId, containerId) {
+async function loadExtraServicesCheckboxes(employeeId, containerId, excludeIdsArray) {
     const container = document.getElementById(containerId);
+    if (!container || !employeeId || employeeId === 'null') return;
+    
     container.innerHTML = '<p style="font-size:0.85rem; color:#7f8c8d; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Buscando serviços do barbeiro...</p>';
     
     try {
@@ -229,28 +401,34 @@ async function loadExtraServicesCheckboxes(employeeId, containerId) {
         container.innerHTML = '';
         
         if (data.services && data.services.length > 0) {
+            let renderedCards = 0;
             data.services.forEach(svc => {
-                const html = `
-                    <label class="custom-service-card" style="padding: 10px 15px; margin-bottom: 8px;">
-                        <input type="checkbox" name="extra_service_id" value="${svc.id}" data-price="${svc.price}" class="hidden-checkbox" onchange="toggleServiceCard(this); calculateFinishTotal();">
-                        <div class="svc-info">
-                            <span class="svc-name" style="font-size: 1rem; margin-bottom:0; font-weight:700;">${svc.name}</span>
-                        </div>
-                        <div class="svc-meta" style="color: #27ae60; font-weight: 800; font-size:1.1rem; margin-top:5px;">
-                            + R$ ${svc.price.toFixed(2)}
-                        </div>
-                        <div class="svc-check-icon" style="top:5px; right:5px; font-size:1.2rem;"><i class="fas fa-check-circle"></i></div>
-                    </label>
-                `;
-                container.innerHTML += html;
+                if (!excludeIdsArray.includes(svc.id.toString())) {
+                    renderedCards++;
+                    const html = `
+                        <label class="custom-service-card" style="padding: 10px 15px; margin-bottom: 8px;">
+                            <input type="checkbox" name="extra_service_id" value="${svc.id}" data-price="${svc.price}" class="hidden-checkbox" onchange="toggleServiceCard(this); calculateFinishTotal();">
+                            <div class="svc-info">
+                                <span class="svc-name" style="font-size: 1rem; margin-bottom:0; font-weight:700;">${svc.name}</span>
+                            </div>
+                            <div class="svc-meta" style="color: #27ae60; font-weight: 800; font-size:1.1rem; margin-top:5px;">
+                                + R$ ${svc.price.toFixed(2)}
+                            </div>
+                            <div class="svc-check-icon" style="top:5px; right:5px; font-size:1.2rem;"><i class="fas fa-check-circle"></i></div>
+                        </label>
+                    `;
+                    container.innerHTML += html;
+                }
             });
+            if(renderedCards === 0) {
+                container.innerHTML = '<p style="color:#7f8c8d; font-size:0.85rem;">Todos os serviços disponíveis já foram realizados pelo cliente.</p>';
+            }
         } else {
-            container.innerHTML = '<p style="color:#7f8c8d; font-size:0.85rem;">O barbeiro não possui outros serviços disponíveis para venda extra.</p>';
+            container.innerHTML = '<p style="color:#7f8c8d; font-size:0.85rem;">Nenhum serviço extra disponível.</p>';
         }
     } catch (e) { console.error(e); }
 }
 
-let baseFinishTotal = 0;
 function calculateFinishTotal() {
     let finalTotal = baseFinishTotal;
     const isAddingExtra = document.getElementById('addExtraServiceCheck').checked;
@@ -262,23 +440,46 @@ function calculateFinishTotal() {
         });
     }
     
-    document.getElementById('finishTotalPrice').textContent = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+    document.getElementById('fTotalPrice').textContent = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 }
 
 function openFinishModal(btn) {
     const finishModal = document.getElementById('finishModal');
     if (finishModal) {
         document.getElementById('finishAppointmentId').value = btn.getAttribute('data-id');
-        document.getElementById('finishClientName').textContent = btn.getAttribute('data-client-name');
-        document.getElementById('finishBarberName').textContent = btn.getAttribute('data-barber-name');
+        document.getElementById('fClientName').textContent = btn.getAttribute('data-client-name');
+        document.getElementById('fBarberName').textContent = btn.getAttribute('data-barber-name');
+        document.getElementById('fPhone').textContent = btn.getAttribute('data-phone');
+        document.getElementById('fDateTime').textContent = btn.getAttribute('data-datetime');
         
-        baseFinishTotal = parseFloat(btn.getAttribute('data-total').replace(',', '.'));
+        let rawTotal = btn.getAttribute('data-total') || "0";
+        baseFinishTotal = parseFloat(rawTotal.replace(',', '.'));
         calculateFinishTotal();
         
-        const servicesRaw = btn.getAttribute('data-services');
-        document.getElementById('finishServicesList').innerHTML = servicesRaw ? servicesRaw.split('|').join('<br>') : 'Nenhum';
+        const servicesRawStr = btn.getAttribute('data-services') || '[]';
+        let servicesRaw = [];
+        try {
+            servicesRaw = JSON.parse(servicesRawStr);
+        } catch(e) {
+            console.error("Erro ao parsear os serviços", e);
+        }
+        
+        let serviceHTML = '';
+        let bookedServiceIds = [];
+        
+        servicesRaw.forEach(s => {
+            bookedServiceIds.push(s.id.toString());
+            serviceHTML += `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; color: #4a5568;">
+                    <span><i class="fas fa-check" style="color: #27ae60; margin-right: 5px;"></i> ${s.name}</span>
+                    <span>R$ ${s.price}</span>
+                </div>
+            `;
+        });
+        document.getElementById('fServicesList').innerHTML = serviceHTML;
 
-        loadExtraServicesCheckboxes(btn.getAttribute('data-barber-id'), 'extraServiceGrid');
+        const barberId = btn.getAttribute('data-barber-id');
+        loadExtraServicesCheckboxes(barberId, 'extraServiceGrid', bookedServiceIds);
         
         document.getElementById('addExtraServiceCheck').checked = false;
         document.getElementById('extraServiceWrapper').style.display = 'none';
@@ -287,125 +488,8 @@ function openFinishModal(btn) {
         document.body.style.overflow = 'hidden';
     }
 }
+
 function closeFinishModal() {
     const finishModal = document.getElementById('finishModal');
     if (finishModal) { finishModal.style.display = 'none'; document.body.style.overflow = ''; }
-}
-
-// ====================== CÓDIGO DA TELA PRINCIPAL ======================
-function initBarberFilter() {
-    const barberCards = document.querySelectorAll(".barbers .barber-card");
-    const timeSlots = document.querySelectorAll(".time-slot");
-    const titleName = document.querySelector(".agenda-barber-name");
-    const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
-    const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
-
-    barberCards.forEach(card => {
-        card.addEventListener("click", () => {
-            barberCards.forEach(c => c.classList.remove("active"));
-            card.classList.add("active");
-            if (titleName) titleName.innerText = card.querySelector(".barber-name").innerText;
-
-            const clickedBarberId = card.getAttribute("data-barber-id");
-            sessionStorage.setItem('activeBarberId', clickedBarberId);
-
-            let completedCount = 0; let completedRevenue = 0; let visualOrder = 1;
-
-            timeSlots.forEach(slot => {
-                const slotBarberId = slot.getAttribute("data-barber");
-                const slotStatus = slot.getAttribute("data-status"); 
-                
-                if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
-                    slot.style.display = "";
-                    const orderElement = slot.querySelector('.order');
-                    if (orderElement) orderElement.innerText = visualOrder++;
-                    
-                    if (slotStatus === 'completed') {
-                        completedCount++;
-                        const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]').innerText;
-                        const price = parseFloat(priceText.replace('R$ ', '').replace(',', '.'));
-                        completedRevenue += price;
-                    }
-                } else { slot.style.display = "none"; }
-            });
-
-            if (totalCountEl) totalCountEl.innerText = completedCount;
-            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${completedRevenue.toFixed(2).replace('.', ',')}`;
-        });
-    });
-
-    const savedBarberId = sessionStorage.getItem('activeBarberId');
-    if (savedBarberId) {
-        const cardToActivate = document.querySelector(`.barbers .barber-card[data-barber-id="${savedBarberId}"]`);
-        if (cardToActivate) cardToActivate.click();
-    } else {
-        const autoCard = document.querySelector(".barbers .barber-card.active");
-        if(autoCard) autoCard.click();
-    }
-}
-
-const appointmentModal = document.getElementById('appointmentModalContainer');
-function openNewAppointmentModal() {
-    if (appointmentModal) {
-        document.getElementById('appointmentForm').reset();
-        document.getElementById('barberVisualGrid').innerHTML = '';
-        document.getElementById('serviceCheckboxGrid').innerHTML = '';
-        resetTimeSelect('appointmentTime');
-        
-        const unitSel = document.getElementById('unitSelect');
-        if (unitSel && unitSel.value) unitSel.dispatchEvent(new Event('change'));
-
-        appointmentModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-}
-function closeNewAppointmentModal() {
-    if (appointmentModal) { appointmentModal.style.display = 'none'; document.body.style.overflow = ''; }
-}
-
-async function openEditAppointmentModal(btn) {
-    const editModal = document.getElementById('editAppointmentModalContainer');
-    if (!editModal) return;
-
-    document.getElementById('editAppointmentForm').reset();
-
-    const id = btn.getAttribute('data-id');
-    const clientId = btn.getAttribute('data-client');
-    const unitId = btn.getAttribute('data-unit');
-    const barberId = btn.getAttribute('data-barber');
-    const servicesStr = btn.getAttribute('data-services');
-    const date = btn.getAttribute('data-date');
-    const time = btn.getAttribute('data-time');
-    const status = btn.getAttribute('data-status');
-    const notes = btn.getAttribute('data-notes');
-
-    document.getElementById('editAppointmentId').value = id;
-    document.getElementById('editClientSelect').value = clientId;
-    
-    const dateInput = document.getElementById('editAppointmentDate');
-    dateInput.value = date;
-    dateInput.defaultValue = date; 
-    
-    document.getElementById('editStatusSelect').value = status;
-    document.getElementById('editAppointmentNotes').value = notes || ''; 
-    document.getElementById('editHiddenBarberId').value = barberId;
-    
-    const timeSelect = document.getElementById('editAppointmentTime');
-    timeSelect.setAttribute('data-preset', time);
-
-    const unitSelect = document.getElementById('editUnitSelect');
-    if (unitSelect) unitSelect.value = unitId;
-
-    await loadBarbersVisual(unitId, 'editBarberVisualGrid', 'editHiddenBarberId', barberId);
-    
-    const preSelectedSvcIds = servicesStr ? servicesStr.split(',') : [];
-    await loadServicesCheckboxes(barberId, 'editServiceCheckboxGrid', preSelectedSvcIds, true);
-    triggerEditSlotFetch();
-
-    editModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-function closeEditModal() {
-    const editModal = document.getElementById('editAppointmentModalContainer');
-    if (editModal) { editModal.style.display = 'none'; document.body.style.overflow = ''; }
 }
