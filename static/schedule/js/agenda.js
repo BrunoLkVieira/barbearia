@@ -277,28 +277,30 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
         selectEl.classList.remove('disabled-look');
         selectEl.innerHTML = '<option value="">Selecione o horário desejado...</option>';
 
-        if (data.slots && data.slots.length > 0) {
-            let hasPreset = false;
-            
-            let slots = data.slots;
-            const initialEditDate = document.getElementById('editAppointmentDate') ? document.getElementById('editAppointmentDate').defaultValue : null;
+        // CORREÇÃO: Garante que slots seja um array, mesmo se vier vazio
+        let slots = data.slots || [];
+        const editDateEl = document.getElementById('editAppointmentDate');
+        const initialEditDate = editDateEl ? editDateEl.defaultValue : null;
 
-            if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
-                slots.push(presetTime);
-                slots.sort();
-            }
+        // INJEÇÃO FORÇADA: Se existe um horário original e a data não mudou, empurra ele para o array
+        if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
+            slots.push(presetTime);
+            slots.sort(); // Mantém em ordem cronológica
+        }
 
+        if (slots.length > 0) {
             slots.forEach(slot => {
                 const isSelected = (presetTime === slot && dateStr === initialEditDate) ? 'selected' : '';
-                if(isSelected) hasPreset = true;
                 selectEl.innerHTML += `<option value="${slot}" ${isSelected}>${slot}</option>`;
             });
-            
         } else {
             selectEl.innerHTML = '<option value="">S/ Horário P/ Esta Duração</option>';
             selectEl.classList.add('disabled-look');
         }
-    } catch (e) { console.error(e); loader.style.display = 'none'; }
+    } catch (e) { 
+        console.error(e); 
+        loader.style.display = 'none'; 
+    }
 }
 
 // ====================== ABERTURA DO MODAL NOVO ======================
@@ -316,7 +318,7 @@ function openNewAppointmentModal() {
         const managerUnit = document.getElementById('managerUnitId');
         const hiddenBarberId = document.getElementById('hiddenBarberId');
 
-        // Se o Barbeiro é o logado, a unidade já está fixa e o visual grid não existe.
+        // Gatilho do Barbeiro Solitário Corrigido
         if (!barberGrid && hiddenBarberId && hiddenBarberId.value) {
             loadServicesCheckboxes(hiddenBarberId.value, 'serviceCheckboxGrid');
         } else if (unitSel && unitSel.value) {
@@ -359,6 +361,9 @@ async function openEditAppointmentModal(btn) {
     const clientSelect = document.getElementById('editClientSelect');
     if(clientSelect) clientSelect.value = clientId;
     
+    const hiddenClient = document.getElementById('hiddenClientId');
+    if(hiddenClient) hiddenClient.value = clientId;
+
     const dateInput = document.getElementById('editAppointmentDate');
     dateInput.value = date;
     dateInput.defaultValue = date; 

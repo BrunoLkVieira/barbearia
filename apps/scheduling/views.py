@@ -2,14 +2,13 @@ import json
 import re
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from django.utils.timezone import localdate
+from django.utils.timezone import localdate, localtime, now
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Sum, F
-from django.utils.timezone import now
 from django.db.models import Prefetch
 
 from apps.barbershop.models import Barbershop, Unit, Employee, Role, EmployeeWorkDay, EmployeeAbsence, UnitHoliday
@@ -104,6 +103,15 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 if not service_ids or not time_str:
                     messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
                     return redirect(f"{request.path}?date={current_date}")
+
+                # ARQUITETURA: Trava de Timezone local aplicada SOMENTE para criação.
+                # Permite a edição (ex: mudar status para Cancelado/Finalizado) de horários que já passaram no dia de hoje.
+                if action == "create_appointment":
+                    target_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    target_time_obj = datetime.strptime(time_str, '%H:%M').time()
+                    if target_date_obj < today or (target_date_obj == today and target_time_obj <= localtime(now()).time()):
+                        messages.error(request, "Erro: Não é possível criar um agendamento em um horário que já passou.")
+                        return redirect(f"{request.path}?date={current_date}")
 
                 barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
                 client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
@@ -363,7 +371,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
 
     return render(request, "scheduling/agendamentos.html", context)
 
-
+# ==========================================
+# ENDPOINTS DA API E MOTOR DE AGENDA SAAS
+# ==========================================
 @login_required 
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
@@ -443,7 +453,7 @@ def get_available_slots(request):
         booked_intervals.append((app_start, app_end))
 
     slots = []
-    current_datetime = datetime.now()
+    current_local_time = localtime(now()).time()
 
     def generate_for_period(start_time, end_time):
         if not start_time or not end_time: return
@@ -453,7 +463,7 @@ def get_available_slots(request):
         while curr + timedelta(minutes=duration) <= end:
             slot_end = curr + timedelta(minutes=duration)
             
-            if target_date == localdate() and curr <= current_datetime:
+            if target_date == localdate() and curr.time() <= current_local_time:
                 curr += timedelta(minutes=30)
                 continue
                 
