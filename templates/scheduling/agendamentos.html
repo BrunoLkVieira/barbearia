@@ -11,13 +11,42 @@
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'schedule/css/desktop/agendamentos.css' %}">
     <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/novoAgendamento.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/desktop/modals/editService.css' %}">
 
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'schedule/css/mobile/agenda.css' %}">
     
     <style>.swal2-container {z-index: 9999;}</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .swal2-container {z-index: 9999;}
+        /* ARQUITETURA DE GRID SAAS PARA HISTÓRICO */
+        .saas-barber-grid, .saas-service-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 8px;
+        }
+        .saas-barber-card, .saas-service-card {
+            border: 2px solid #e2e8f0; border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px; background: #fff;
+        }
+        .saas-barber-card:hover, .saas-service-card:hover { border-color: #cbd5e0; }
+        .saas-barber-card.active, .saas-service-card.selected { border-color: #FF7A00; background-color: #fffaf5; }
+        .saas-barber-avatar {
+            width: 35px; height: 35px; border-radius: 50%; background: #2c3e50; color: #fff; display: flex;
+            align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .saas-barber-info, .saas-service-details { display: flex; flex-direction: column; width: 100%;}
+        .saas-barber-name, .saas-service-title { font-weight: 700; font-size: 0.9rem; color: #2d3748; }
+        .saas-select-badge { font-size: 0.75rem; color: #718096; }
+        .saas-barber-card.active .saas-select-badge { color: #FF7A00; font-weight: 700; }
+        .saas-service-price { color: #27ae60; font-weight: 700; font-size: 0.85rem; margin-top: 2px;}
+        .saas-service-duration { font-size: 0.75rem; color: #a0aec0; }
+        .saas-service-icon { font-size: 1.1rem; color: #FF7A00; flex-shrink: 0; }
+        .hidden-checkbox { display: none; }
+    </style>
 </head>
 <body>
+    
     {% include "geral/header.html" %}
     
     <div class="nav-bar">
@@ -58,8 +87,14 @@
     <div class="main-content">
         <div class="history-container">
             <div class="history-top-body">
-                <div class="content-header">
+                <div class="content-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2><i class="fas fa-history"></i> Histórico da Agenda</h2>
+                    
+                    {% if not is_cashier %}
+                    <button type="button" class="btn-outline" onclick="openNewAppointmentModal()" style="background-color: #FF7A00; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-plus"></i> Lançar Retroativo
+                    </button>
+                    {% endif %}
                 </div>
                 
                 <form id="filterForm" method="GET">
@@ -183,10 +218,10 @@
                                     {% if not is_cashier %}
                                         <div class="action-btn edit" onclick="openEditAppointmentModal(this)" title="Alterar status, horário ou observação"
                                             data-id="{{ app.id }}"
-                                            data-client="{{ app.client.id }}"
-                                            data-unit="{{ app.unit.id }}"
-                                            data-barber="{{ app.employee.id }}"
-                                            data-service="{{ app.services.first.service.id }}"
+                                            data-client-id="{{ app.client.id }}"
+                                            data-unit-id="{{ app.unit.id }}"
+                                            data-barber-id="{{ app.employee.id }}"
+                                            data-services='[{% for s in app.services.all %}"{{ s.service.id }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
                                             data-date="{{ app.date|date:'Y-m-d' }}"
                                             data-time="{{ app.time|time:'H:i' }}"
                                             data-status="{{ app.status }}"
@@ -214,7 +249,7 @@
                         <tr>
                             <td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0;">
                                 <i class="fas fa-calendar-times" style="font-size: 2.5rem; margin-bottom: 15px; display: block; color: #cbd5e0;"></i>
-                                Nenhum agendamento encontrado.
+                                Nenhum agendamento encontrado para o filtro selecionado.
                             </td>
                         </tr>
                         {% endfor %}
@@ -244,7 +279,84 @@
         {% endif %}
     </div>
 
-    <!-- MODAL DE EDIÇÃO -->
+
+    <div id="appointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="appointmentModal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%;">
+            <div class="appointmentModal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
+                <h2><i class="fas fa-history" style="color: #FF7A00;"></i> Lançamento Retroativo</h2>
+                <button type="button" class="close-btn" onclick="closeNewAppointmentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="appointmentForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_appointment">
+                <div class="appointmentModal-body">
+                    <p style="font-size: 0.85rem; color: #718096; margin-bottom: 15px;">Lançamentos retroativos serão salvos diretamente como "Finalizados" no Caixa.</p>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Cliente</label>
+                        <select name="client_id" id="clientSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <option value="">Selecione um cliente...</option>
+                            {% for client in clients_list %}
+                                <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }} ({{ client.phone }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    {% if is_owner %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Unidade Física</label>
+                        <select id="unitSelect" name="unit_id" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <option value="">Selecione uma unidade...</option>
+                            {% for u in units %}
+                                <option value="{{ u.id }}">{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Profissional (Barbeiro)</label>
+                        <div id="barberVisualGrid" class="saas-barber-grid"></div>
+                        <input type="hidden" name="employee_id" id="hiddenBarberId" required>
+                        {% if not is_owner %}
+                            <input type="hidden" id="unitSelect" value="{{ current_unit.id }}">
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Serviços Realizados (Segure CTRL para vários)</label>
+                        <div id="serviceCheckboxGrid" class="saas-service-grid"></div>
+                    </div>
+                    
+                    <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Data no Passado</label>
+                            <input type="date" name="date" id="appointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;" onchange="triggerSlotFetch()">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Hora de Atendimento <small id="timeLoader" style="color:#FF7A00; display:none;"><i class="fas fa-spinner fa-spin"></i></small></label>
+                            <select name="time" id="appointmentTime" class="form-control time-dropdown disabled-look" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                                <option value="">Preencha dados acima...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="status" value="completed">
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Observações de Histórico</label>
+                        <textarea name="notes" id="appointmentNotes" class="form-control" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                <div class="appointmentModal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btnModal btnModal-outline" onclick="closeNewAppointmentModal()" style="padding: 10px 20px; border: 1px solid #cbd5e0; color: #4a5568; background: transparent; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                    <button type="submit" class="btnModal btnModal-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;"><i class="fas fa-save"></i> Lançar</button>
+                </div>
+            </form>
+        </div>        
+    </div>
+
     <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div class="appointmentModal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 90%;">
             <div class="appointmentModal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
@@ -283,30 +395,29 @@
                     {% if is_owner or is_manager %}
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Profissional (Barbeiro)</label>
-                        <select name="employee_id" id="editBarberSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                        </select>
+                        <div id="editBarberVisualGrid" class="saas-barber-grid"></div>
+                        <input type="hidden" name="employee_id" id="editHiddenBarberId" required>
                     </div>
+                    {% else %}
+                        <input type="hidden" name="employee_id" id="editHiddenBarberId" value="{{ request.user.employees.first.id }}">
                     {% endif %}
 
                     <div class="form-group" style="margin-bottom: 15px;">
-                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Serviço Realizado</label>
-                        <select name="service_id" id="editServiceSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                            {% if not is_owner and not is_manager %}
-                                {% for svc in barber_services %}
-                                    <option value="{{ svc.id }}">{{ svc.name }} - R$ {{ svc.price }}</option>
-                                {% endfor %}
-                            {% endif %}
-                        </select>
+                        <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Serviços</label>
+                        <div id="editServiceCheckboxGrid" class="saas-service-grid"></div>
                     </div>
                     
                     <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
                         <div class="form-group" style="flex: 1;">
                             <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Data</label>
-                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;" onchange="triggerEditSlotFetch()">
                         </div>
                         <div class="form-group" style="flex: 1;">
-                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Hora</label>
-                            <input type="time" name="time" id="editAppointmentTime" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Hora <small id="editTimeLoader" style="color:#FF7A00; display:none;"><i class="fas fa-spinner fa-spin"></i></small></label>
+                            <select name="time" id="editAppointmentTime" class="form-control time-dropdown" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                                <option value="">Carregando...</option>
+                            </select>
+                            <input type="hidden" id="originalTime">
                         </div>
                     </div>
                     
@@ -334,11 +445,12 @@
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
         const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
+        const API_SLOTS_URL = "{% url 'scheduling:get_slots' %}";
         const URL_HISTORY_GENERAL = "{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}";
     </script>
     <script src="{% static 'schedule/js/agendamentos.js' %}"></script>
-    
     <script src="{% static 'geral/js/script.js' %}"></script>
+    
     {% if messages %}
         <script>
             document.addEventListener('DOMContentLoaded', function() {

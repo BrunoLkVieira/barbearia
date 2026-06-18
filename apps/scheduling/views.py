@@ -61,11 +61,10 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     if is_owner:
         if unit_slug:
             current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-        units = Unit.objects.filter(barbershop=barbershop, is_active=True)
-        if current_unit:
             barbers_qs = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
         else:
             barbers_qs = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation__iexact='barbeiro', is_active=True).distinct()
+        units = Unit.objects.filter(barbershop=barbershop, is_active=True)
     else:
         current_unit = emp.unit
         units = [current_unit]
@@ -87,6 +86,10 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
 
     if request.method == "POST":
         action = request.POST.get('action')
+        
+        if is_cashier and action in ["create_appointment", "edit_appointment", "delete_appointment"]:
+            messages.error(request, "Acesso Negado: Seu cargo permite apenas visualizar e finalizar pagamentos.")
+            return redirect(f"{request.path}?date={current_date}")
 
         try:
             if action in ["create_appointment", "edit_appointment"]:
@@ -104,26 +107,25 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
                     return redirect(f"{request.path}?date={current_date}")
 
-                # ARQUITETURA: Trava de Timezone local aplicada SOMENTE para criação.
-                # Permite a edição (ex: mudar status para Cancelado/Finalizado) de horários que já passaram no dia de hoje.
                 if action == "create_appointment":
                     target_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
                     target_time_obj = datetime.strptime(time_str, '%H:%M').time()
                     if target_date_obj < today or (target_date_obj == today and target_time_obj <= localtime(now()).time()):
-                        messages.error(request, "Erro: Não é possível criar um agendamento em um horário que já passou.")
+                        messages.error(request, "Erro: Não é possível realizar um agendamento em um horário que já passou.")
                         return redirect(f"{request.path}?date={current_date}")
 
-                barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
-                client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'completed'])
+                # CORREÇÃO: Agendamentos Finalizados OCUPAM espaço na agenda. Só ignora cancelados!
+                barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
+                client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
                 
                 if action == "edit_appointment":
                     barber_conflict = barber_conflict.exclude(id=appointment_id)
                     client_conflict = client_conflict.exclude(id=appointment_id)
                 
-                if barber_conflict.exists() and status_val not in ['cancelled', 'completed']:
+                if barber_conflict.exists() and status_val not in ['cancelled', 'Cancelado']:
                     messages.error(request, "Conflito: Este barbeiro já possui um agendamento ativo neste horário.")
                     return redirect(f"{request.path}?date={current_date}")
-                if client_conflict.exists() and status_val not in ['cancelled', 'completed']:
+                if client_conflict.exists() and status_val not in ['cancelled', 'Cancelado']:
                     messages.error(request, "Conflito: Este cliente já possui um agendamento marcado neste horário.")
                     return redirect(f"{request.path}?date={current_date}")
 
@@ -165,8 +167,8 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, msg)
                 
             elif action == "delete_appointment":
-                if not is_owner and not is_manager and not is_cashier:
-                    messages.error(request, "Acesso Negado: Apenas gerente, caixa ou titular podem excluir registros.")
+                if not is_owner and not is_manager:
+                    messages.error(request, "Acesso Negado: Apenas gerente ou titular podem excluir registros.")
                     return redirect(f"{request.path}?date={current_date}")
                     
                 app_id = request.POST.get("appointment_id")
@@ -210,8 +212,8 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     for app in appointments:
         app.total_duration_calc = sum([(getattr(s.service, 'duration', 30) or 30) for s in app.services.all()])
 
-    total_appointments = appointments.exclude(status='cancelled').count()
-    total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
+    total_appointments = appointments.exclude(status__in=['cancelled', 'Cancelado']).count()
+    total_revenue = sum(app.total_price for app in appointments if app.status not in ['cancelled', 'Cancelado'])
     completed_appointments = appointments.filter(status='completed').count()
     completed_revenue = sum(app.total_price for app in appointments if app.status == 'completed')
 
@@ -231,6 +233,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
 @owner_or_employee_required
 def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+    today = localdate()
     
     is_owner = (request.user == barbershop.owner_user)
     emp = get_tenant_employee(request.user, barbershop)
@@ -241,9 +244,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     gerente_unit = None
     
     if emp:
-        is_manager = emp.roles.filter(occupation=Role.Occupation.GERENTE).exists()
-        is_cashier = emp.roles.filter(occupation=Role.Occupation.CAIXA).exists() and not is_manager
-        is_barber = emp.roles.filter(occupation=Role.Occupation.BARBEIRO).exists()
+        is_manager = emp.roles.filter(occupation__iexact='gerente').exists()
+        is_cashier = emp.roles.filter(occupation__iexact='caixa').exists() and not is_manager
+        is_barber = emp.roles.filter(occupation__iexact='barbeiro').exists()
         if is_manager or is_cashier:
             gerente_unit = emp.unit
 
@@ -272,51 +275,110 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
             messages.error(request, "Acesso Negado: Caixas não têm permissão para editar o histórico.")
             return redirect(request.path)
 
-        if action == "edit_appointment":
+        # Cobre Lançamento Retroativo (create) e Edição Retroativa (edit)
+        if action in ["create_appointment", "edit_appointment"]:
             app_id = request.POST.get("appointment_id")
-            appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
-            
-            if not is_owner:
-                if is_manager and appointment.unit != current_unit:
-                    messages.error(request, "Acesso Negado.")
-                    return redirect(request.path)
-                elif not is_manager and appointment.employee != emp:
-                    messages.error(request, "Acesso Negado.")
-                    return redirect(request.path)
+            client_id = request.POST.get("client_id")
+            unit_id = request.POST.get("unit_id") if is_owner else current_unit.id
+            employee_id = request.POST.get("employee_id") if (is_owner or is_manager) else emp.id
+            date_str = request.POST.get("date")
+            time_str = request.POST.get("time")
+            status_val = request.POST.get("status", "completed")
+            notes_str = request.POST.get("notes", "")
+            service_ids = request.POST.getlist('service_id')
 
-            appointment.client_id = request.POST.get("client_id")
-            appointment.unit_id = request.POST.get("unit_id") if is_owner else current_unit.id
-            appointment.employee_id = request.POST.get("employee_id") if (is_owner or is_manager) else emp.id
-            appointment.date = request.POST.get("date")
-            appointment.time = request.POST.get("time")
-            appointment.status = request.POST.get("status")
-            appointment.notes = request.POST.get("notes")
+            if not service_ids or not time_str:
+                messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
+
+            # ---------------------------------------------------------------------
+            # REGRA DE OURO: Bloqueio de Agendamento Pendente no Passado
+            # ---------------------------------------------------------------------
+            target_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            target_time_obj = datetime.strptime(time_str, '%H:%M').time()
+            is_past = target_date_obj < today or (target_date_obj == today and target_time_obj <= localtime(now()).time())
             
-            new_service_id = request.POST.get("service_id")
-            if new_service_id:
-                new_service = get_object_or_404(BarberService, id=new_service_id)
+            if is_past and status_val == 'scheduled':
+                messages.error(request, "Erro de Negócio: Lançamentos retroativos não podem ficar com o status 'Pendente'. Salve como Finalizado ou Cancelado.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
+            # ---------------------------------------------------------------------
+
+            # TRAVA DE COLISÃO
+            barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
+            client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
+
+            if action == "edit_appointment":
+                barber_conflict = barber_conflict.exclude(id=app_id)
+                client_conflict = client_conflict.exclude(id=app_id)
+
+            if barber_conflict.exists() and status_val not in ['cancelled', 'Cancelado']:
+                messages.error(request, "Conflito: Este barbeiro possui outro agendamento válido neste horário.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
+            
+            if client_conflict.exists() and status_val not in ['cancelled', 'Cancelado']:
+                messages.error(request, "Conflito: Este cliente possui outro agendamento válido neste horário.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
+
+            target_emp = get_object_or_404(Employee, id=employee_id, unit__barbershop=barbershop)
+            target_unit = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+            target_client = get_object_or_404(Client, id=client_id, barbershop=barbershop)
+
+            if action == "create_appointment":
+                appointment = Appointment.objects.create(
+                    client=target_client, employee=target_emp, barbershop=barbershop,
+                    unit=target_unit, date=date_str, time=time_str, status=status_val,
+                    total_price=0, notes=notes_str, is_paid=(status_val == 'completed')
+                )
+                msg = "Lançamento Retroativo criado com sucesso no histórico!"
+            else:
+                appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
+                if not is_owner:
+                    if is_manager and appointment.unit != current_unit:
+                        messages.error(request, "Acesso Negado.")
+                        return redirect(f"{request.path}?{request.GET.urlencode()}")
+                    elif not is_manager and appointment.employee != emp:
+                        messages.error(request, "Acesso Negado.")
+                        return redirect(f"{request.path}?{request.GET.urlencode()}")
+
+                appointment.client = target_client
+                appointment.employee = target_emp
+                appointment.unit = target_unit
+                appointment.date = date_str
+                appointment.time = time_str
+                appointment.status = status_val
+                appointment.notes = notes_str
+                
+                if status_val == 'completed': appointment.is_paid = True
+                elif status_val in ['cancelled', 'scheduled']: appointment.is_paid = False
+
                 appointment.services.all().delete()
-                AppointmentService.objects.create(appointment=appointment, service=new_service, price_at_sale=new_service.price)
-                appointment.total_price = new_service.price
+                msg = "Histórico de agendamento atualizado com sucesso!"
+
+            total_price = Decimal('0.00')
+            for sid in service_ids:
+                svc = get_object_or_404(BarberService, id=sid)
+                AppointmentService.objects.create(appointment=appointment, service=svc, price_at_sale=svc.price)
+                total_price += svc.price
             
+            appointment.total_price = total_price
             appointment.save()
-            messages.success(request, "Agendamento atualizado!")
-            return redirect(request.path)
+            messages.success(request, msg)
+            return redirect(f"{request.path}?{request.GET.urlencode()}")
 
         elif action == "delete_appointment":
             if not is_owner and not is_manager:
                 messages.error(request, "Acesso Negado.")
-                return redirect(request.path)
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
             
             app_id = request.POST.get("appointment_id")
             appointment = get_object_or_404(Appointment, id=app_id, barbershop=barbershop)
             if is_manager and not is_owner and appointment.unit != current_unit:
                 messages.error(request, "Acesso Negado.")
-                return redirect(request.path)
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
                 
             appointment.delete()
-            messages.success(request, "Excluído!")
-            return redirect(request.path)
+            messages.success(request, "Excluído permanentemente do histórico!")
+            return redirect(f"{request.path}?{request.GET.urlencode()}")
 
     date_filter = request.GET.get('date_filter', '')
     month_filter = request.GET.get('month_filter', '')
@@ -337,7 +399,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     if service_filter: appointments = appointments.filter(services__service__base_service_id=service_filter)
     if status_filter: appointments = appointments.filter(status=status_filter)
 
-    appointments = appointments.distinct().order_by('date', 'time')
+    appointments = appointments.distinct().order_by('-date', '-time') 
 
     total_filtered_appointments = appointments.count()
     total_filtered_revenue = appointments.filter(status='completed').aggregate(total=Sum('total_price'))['total'] or 0.00
@@ -358,18 +420,17 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         barbers_list = [emp]
         filter_services = BaseService.objects.filter(barberservice__employee=emp).distinct()
 
-    barber_services_list = BarberService.objects.filter(employee=emp) if is_barber and not is_owner and not is_manager else []
-
     context = {
         'barbershop': barbershop, 'units': units, 'current_unit': current_unit, 'page_obj': page_obj,
         'date_filter': date_filter, 'month_filter': month_filter, 'barber_filter': barber_filter,
         'service_filter': service_filter, 'status_filter': status_filter,
         'total_filtered_appointments': total_filtered_appointments, 'total_filtered_revenue': total_filtered_revenue,
-        'employees': barbers_list, 'filter_services': filter_services, 'barber_services': barber_services_list,
+        'employees': barbers_list, 'filter_services': filter_services,
         'clients_list': clients_list, 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber,
     }
 
     return render(request, "scheduling/agendamentos.html", context)
+
 
 # ==========================================
 # ENDPOINTS DA API E MOTOR DE AGENDA SAAS
@@ -422,12 +483,14 @@ def get_available_slots(request):
     if duration <= 0: duration = 30
     
     app_id = request.GET.get('exclude_app_id') 
+    # API Mágica: Permite requisitar slots passados se solicitado (ex: Histórico Retroativo)
+    allow_past = request.GET.get('allow_past', 'false').lower() == 'true'
 
     emp = get_object_or_404(Employee, id=emp_id)
     try: target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError: return JsonResponse({'slots': []})
 
-    if target_date < localdate(): return JsonResponse({'slots': []})
+    if not allow_past and target_date < localdate(): return JsonResponse({'slots': []})
 
     if UnitHoliday.objects.filter(unit=emp.unit, date=target_date).exists():
         return JsonResponse({'slots': []})
@@ -441,7 +504,7 @@ def get_available_slots(request):
     if not workday or (not workday.morning_available and not workday.afternoon_available):
         return JsonResponse({'slots': []})
 
-    apps = Appointment.objects.filter(employee=emp, date=target_date).exclude(status__in=['cancelled', 'completed'])
+    apps = Appointment.objects.filter(employee=emp, date=target_date).exclude(status__in=['cancelled', 'Cancelado'])
     if app_id: apps = apps.exclude(id=app_id)
 
     booked_intervals = []
@@ -463,11 +526,12 @@ def get_available_slots(request):
         while curr + timedelta(minutes=duration) <= end:
             slot_end = curr + timedelta(minutes=duration)
             
-            if target_date == localdate() and curr.time() <= current_local_time:
+            # Se for hoje, o horário do slot deve ser maior que a hora atual (Somente na Agenda. Retroativo pula isso).
+            if not allow_past and target_date == localdate() and curr.time() <= current_local_time:
                 curr += timedelta(minutes=30)
                 continue
                 
-            conflict = any(curr < b_end and slot_end > b_start for b_start, b_end in booked_intervals)
+            conflict = any(max(curr, b_start) < min(slot_end, b_end) for b_start, b_end in booked_intervals)
             
             if not conflict:
                 slots.append(curr.strftime('%H:%M'))
