@@ -61,10 +61,11 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     if is_owner:
         if unit_slug:
             current_unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
+        units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+        if current_unit:
             barbers_qs = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
         else:
             barbers_qs = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation__iexact='barbeiro', is_active=True).distinct()
-        units = Unit.objects.filter(barbershop=barbershop, is_active=True)
     else:
         current_unit = emp.unit
         units = [current_unit]
@@ -86,10 +87,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
 
     if request.method == "POST":
         action = request.POST.get('action')
-        
-        if is_cashier and action in ["create_appointment", "edit_appointment", "delete_appointment"]:
-            messages.error(request, "Acesso Negado: Seu cargo permite apenas visualizar e finalizar pagamentos.")
-            return redirect(f"{request.path}?date={current_date}")
 
         try:
             if action in ["create_appointment", "edit_appointment"]:
@@ -114,7 +111,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                         messages.error(request, "Erro: Não é possível realizar um agendamento em um horário que já passou.")
                         return redirect(f"{request.path}?date={current_date}")
 
-                # CORREÇÃO: Agendamentos Finalizados OCUPAM espaço na agenda. Só ignora cancelados!
                 barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
                 client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
                 
@@ -167,6 +163,10 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, msg)
                 
             elif action == "delete_appointment":
+                if is_cashier:
+                    messages.error(request, "Acesso Negado: Seu cargo (Caixa) não tem permissão para excluir registros.")
+                    return redirect(f"{request.path}?date={current_date}")
+                    
                 if not is_owner and not is_manager:
                     messages.error(request, "Acesso Negado: Apenas gerente ou titular podem excluir registros.")
                     return redirect(f"{request.path}?date={current_date}")
@@ -271,16 +271,11 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     if request.method == "POST":
         action = request.POST.get("action")
         
-        if is_cashier and not is_owner:
-            messages.error(request, "Acesso Negado: Caixas não têm permissão para editar o histórico.")
-            return redirect(request.path)
-
-        # Cobre Lançamento Retroativo (create) e Edição Retroativa (edit)
         if action in ["create_appointment", "edit_appointment"]:
             app_id = request.POST.get("appointment_id")
             client_id = request.POST.get("client_id")
             unit_id = request.POST.get("unit_id") if is_owner else current_unit.id
-            employee_id = request.POST.get("employee_id") if (is_owner or is_manager) else emp.id
+            employee_id = request.POST.get("employee_id") if (is_owner or is_manager or is_cashier) else emp.id
             date_str = request.POST.get("date")
             time_str = request.POST.get("time")
             status_val = request.POST.get("status", "completed")
@@ -291,9 +286,6 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
                 messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
                 return redirect(f"{request.path}?{request.GET.urlencode()}")
 
-            # ---------------------------------------------------------------------
-            # REGRA DE OURO: Bloqueio de Agendamento Pendente no Passado
-            # ---------------------------------------------------------------------
             target_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             target_time_obj = datetime.strptime(time_str, '%H:%M').time()
             is_past = target_date_obj < today or (target_date_obj == today and target_time_obj <= localtime(now()).time())
@@ -301,9 +293,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
             if is_past and status_val == 'scheduled':
                 messages.error(request, "Erro de Negócio: Lançamentos retroativos não podem ficar com o status 'Pendente'. Salve como Finalizado ou Cancelado.")
                 return redirect(f"{request.path}?{request.GET.urlencode()}")
-            # ---------------------------------------------------------------------
 
-            # TRAVA DE COLISÃO
             barber_conflict = Appointment.objects.filter(employee_id=employee_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
             client_conflict = Appointment.objects.filter(client_id=client_id, date=date_str, time=time_str).exclude(status__in=['cancelled', 'Cancelado'])
 
@@ -336,7 +326,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
                     if is_manager and appointment.unit != current_unit:
                         messages.error(request, "Acesso Negado.")
                         return redirect(f"{request.path}?{request.GET.urlencode()}")
-                    elif not is_manager and appointment.employee != emp:
+                    elif not is_manager and not is_cashier and appointment.employee != emp:
                         messages.error(request, "Acesso Negado.")
                         return redirect(f"{request.path}?{request.GET.urlencode()}")
 
@@ -366,6 +356,10 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
             return redirect(f"{request.path}?{request.GET.urlencode()}")
 
         elif action == "delete_appointment":
+            if is_cashier:
+                messages.error(request, "Acesso Negado: Caixas não têm permissão para excluir do histórico.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
+                
             if not is_owner and not is_manager:
                 messages.error(request, "Acesso Negado.")
                 return redirect(f"{request.path}?{request.GET.urlencode()}")
@@ -431,10 +425,6 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
 
     return render(request, "scheduling/agendamentos.html", context)
 
-
-# ==========================================
-# ENDPOINTS DA API E MOTOR DE AGENDA SAAS
-# ==========================================
 @login_required 
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
@@ -483,7 +473,6 @@ def get_available_slots(request):
     if duration <= 0: duration = 30
     
     app_id = request.GET.get('exclude_app_id') 
-    # API Mágica: Permite requisitar slots passados se solicitado (ex: Histórico Retroativo)
     allow_past = request.GET.get('allow_past', 'false').lower() == 'true'
 
     emp = get_object_or_404(Employee, id=emp_id)
@@ -526,7 +515,6 @@ def get_available_slots(request):
         while curr + timedelta(minutes=duration) <= end:
             slot_end = curr + timedelta(minutes=duration)
             
-            # Se for hoje, o horário do slot deve ser maior que a hora atual (Somente na Agenda. Retroativo pula isso).
             if not allow_past and target_date == localdate() and curr.time() <= current_local_time:
                 curr += timedelta(minutes=30)
                 continue

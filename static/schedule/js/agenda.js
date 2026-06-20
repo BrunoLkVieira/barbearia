@@ -277,12 +277,10 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
         selectEl.classList.remove('disabled-look');
         selectEl.innerHTML = '<option value="">Selecione o horário desejado...</option>';
 
-        // CORREÇÃO: Garante que slots seja um array, mesmo se vier vazio
         let slots = data.slots || [];
         const editDateEl = document.getElementById('editAppointmentDate');
         const initialEditDate = editDateEl ? editDateEl.defaultValue : null;
 
-        // INJEÇÃO FORÇADA: Se existe um horário original e a data não mudou, empurra ele para o array
         if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
             slots.push(presetTime);
             slots.sort(); // Mantém em ordem cronológica
