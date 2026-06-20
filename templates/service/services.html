@@ -4,262 +4,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serviços - Barbearia Executiva</title>
+    <title>Catálogo de Serviços - Orbly Barber</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'service/css/desktop/services.css' %}">
-    <link rel="stylesheet" href="{% static 'service/css/desktop/modals/newService.css' %}">
-
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'service/css/mobile/service.css' %}">
-    <link rel="stylesheet" href="{% static 'service/css/mobile/modals/newService.css' %}">
-
 
     <style>
-        #tab-catalogo-fixo.active {
-            background-color: #ff7300 !important; /* Cor laranja da sua logo */
-            color: white !important;
-            border-radius: 5px;
+        .swal2-container {z-index: 9999 !important;}
+        .saas-barber-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 10px; max-height: 250px; overflow-y: auto; padding: 5px;
         }
+        .saas-barber-card {
+            border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fff; transition: all 0.2s;
+        }
+        .saas-barber-card:hover { border-color: #cbd5e0; }
+        .saas-barber-card:has(input:checked) { border-color: #FF7A00; background: #fffaf5; box-shadow: 0 2px 6px rgba(255,122,0,0.1); }
+        .saas-barber-card input { display: none; }
+        .saas-avatar {
+            width: 35px; height: 35px; border-radius: 50%; background: #2c3e50; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; transition: all 0.2s;
+        }
+        .saas-barber-card:has(input:checked) .saas-avatar { background: #FF7A00; }
+        .saas-info { display: flex; flex-direction: column; width: 100%;}
+        .saas-name { font-weight: 700; font-size: 0.85rem; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .saas-unit { font-size: 0.7rem; color: #718096; }
     </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-
-
     {% include 'geral/header.html' %}
     
-   <div class="nav-bar">
-        <div class="nav-tabs">
-            <a href="#"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="#"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
+    <div class="nav-bar">
+        {% include "geral/nav.html" %}
+        <div class="stats">
+            {% if is_owner %}
+            <div class="unit-filter">
+                <select id="unitSelectFilter"
+                        data-general-url="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"
+                        data-unit-url-template="{% url 'services:list_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
+                    
+                    <option value="geral" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>
+                    {% for u in units %}
+                        <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
+                            {{ u.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            {% if not is_owner %}
+            <div class="stat-box" style="background: transparent; border: none; font-weight: bold; color: #4a5568;">
+                {{ current_unit.name|default:"Sua Unidade" }}
+            </div>
+            {% endif %}
 
-            <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}">
-                <div id="tab-catalogo-fixo" class="nav-tab active">
-                    <i class="fas fa-credit-card"></i> Catálogo
-                </div>
-            </a>
-
-            <a href="#"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            {% comment %} <a href="#"><div class="nav-tab"><i class="fas fa-chart-line"></i> Dashboard</div></a> {% endcomment %}
-
-            <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
-                <div class="nav-tab">
-                    <i class="fas fa-store"></i> Minha Barbearia
-                </div>
-            </a>
-
-            <a href="{% url 'barbershop:myWebsite' barbershop_slug=barbershop.slug %}">
-                <div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div>
-            </a>
-        </div>
-        
-        <div class="nav-content">
-            <div class="stats">
-                {% if request.user.user_type == "dono" %}
-                    <div class="unit-filter">
-                        <select id="unitFilterSelect" 
-                            data-general-url="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"
-                            data-unit-url-template="{% url 'services:list_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
-                        
-                            <option value="geral" {% if not unit %}selected{% endif %}>Geral</option>
-                            
-                            {% for u in units %}
-                                <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
-                                    {{ u.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                {% endif %}
-                
-                <div class="stat-box">
-                    <div class="stat-value">{{ services.count }}</div>
-                    <div class="stat-label">Serviços</div>
-                </div>
+            <div class="stat-box" title="Serviços cadastrados e visíveis">
+                <div class="stat-value">{{ services_list|length }}</div>
+                <div class="stat-label">Serviços no Catálogo</div>
             </div>
         </div>
-    </div>'
+    </div>
 
-   <div class="pages-options-Container">
-        <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}">
-            <div class="page-option active"><i class="fas fa-scissors"></i> Serviços</div>
+    <div class="pages-options-Container">
+        <a href="">
+            <div class="page-option active"><i class="fas fa-scissors"></i> Catálogo de Serviços</div>
         </a>
-      
     </div>
     
     <div class="main-content">
-        <div class="services-container">
-            <div class="content-header">
-                <h2><i class="fas fa-scissors"></i> Serviços</h2>
-                <button class="btn btn-primary" onclick="openModal()">
-                    <i class="fas fa-plus"></i> Novo Serviço
-                </button>
+        <div class="services-container" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
+            <div class="content-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="font-size: 1.5rem; color: #2c3e50;"><i class="fas fa-scissors" style="color: #FF7A00;"></i> Serviços Operacionais</h2>
+                
+                <div style="display: flex; gap: 15px;">
+                    <input type="text" id="serviceSearch" placeholder="Pesquisar barbeiro ou serviço..." onkeyup="filterServicesTable()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #cbd5e0; outline: none; width: 250px;">
+                    
+                    {% if is_owner or is_manager %}
+                    <button class="btn btn-primary" onclick="openModal()" style="background: linear-gradient(135deg, #FF7A00, #d35400); border: none; font-weight: bold; padding: 10px 20px; border-radius: 8px; color: white; cursor: pointer;">
+                        <i class="fas fa-plus"></i> Novo Serviço
+                    </button>
+                    {% endif %}
+                </div>
             </div>
             
-            <div class="services-table">
-                <div class="services-header">
-                    <div>Nome</div>
-                    <div>Responsável</div> <div>Preço</div>
+            <div class="services-table" style="overflow-x: auto;">
+                <div class="services-header" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 100px; padding: 15px 20px; background: #f8f9fa; font-weight: bold; border-radius: 8px; border: 1px solid #eaecef;">
+                    <div>Nome do Serviço</div>
+                    <div>Profissionais Vinculados</div> 
+                    <div>Preço</div>
                     <div>Duração</div>
-                    <div>Ações</div>
+                    {% if is_owner or is_manager %}<div>Ações</div>{% endif %}
                 </div>
 
-                {% for service in services %}
-                <div class="service-row">
-                    <div class="service-name">{{ service.name }}</div>
-                    
-                    <div class="service-employee">
-                        <i class="fas fa-user-tie"></i> {{ service.employee.user.name }} 
-                        <small>({{ service.employee.unit.name }})</small>
-                    </div>
-
-                    <div class="service-price">R$ {{ service.price }}</div>
-                    <div class="service-duration"><i class="fas fa-clock"></i> {{ service.duration }} min</div>
-                    
-                    <div class="service-actions">
-                        <div class="action-btn edit" 
-                            onclick="editService('{{ service.id }}', '{{ service.name }}', '{{ service.price }}', '{{ service.duration }}', '{{ service.employee.id }}', '{{ service.base_service.id }}')">
-                            <i class="fas fa-edit"></i>
+                <div id="servicesTableBody">
+                    {% for svc in services_list %}
+                    <div class="service-row" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 100px; padding: 15px 20px; border-bottom: 1px solid #eaecef; align-items: center;">
+                        <div class="service-name" style="font-weight: 600; color: #2d3748;">
+                            <i class="{{ svc.base_service_icon }}" style="color: #a0aec0; margin-right: 8px;"></i>
+                            {{ svc.name|title }}
                         </div>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('Excluir este serviço?')">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="service_id" value="{{ service.id }}">
-                            <button type="submit" class="action-btn delete"><i class="fas fa-trash"></i></button>
-                        </form>
+                        
+                        <div class="service-employee" style="font-size: 0.9rem; line-height: 1.4;">
+                            <span style="color: #2c3e50;">{{ svc.employee_names|join:", " }}</span>
+                            <br><small style="color: #718096; font-weight: 600;"><i class="fas fa-store-alt"></i> {{ svc.unit_name }}</small>
+                        </div>
+
+                        <div class="service-price" style="font-weight: bold; color: #27ae60;">R$ {{ svc.price }}</div>
+                        <div class="service-duration" style="color: #4a5568;"><i class="far fa-clock" style="color: #3498db;"></i> {{ svc.duration }} min</div>
+                        
+                        <div class="service-actions" style="display: flex; gap: 10px;">
+                            {% if is_owner or is_manager %}
+                                <div class="action-btn edit" title="Editar Serviço" style="width: 32px; height: 32px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #3498db; border: 1px solid #eaecef;"
+                                    onclick="editService('{{ svc.ids|join:',' }}', '{{ svc.name|escapejs }}', '{{ svc.price }}', '{{ svc.duration }}', '{{ svc.base_service_id }}', '{{ svc.unit_id }}', '{{ svc.employee_ids|join:',' }}')">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Isso excluirá o serviço da agenda de TODOS os barbeiros listados nesta linha. Deseja continuar?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="service_ids" value="{{ svc.ids|join:',' }}">
+                                    <button type="submit" class="action-btn delete" title="Excluir Serviço" style="width: 32px; height: 32px; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #e74c3c; border: none;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span style="color: #cbd5e0; font-size: 0.85rem;"><i class="fas fa-lock"></i> S/ Permissão</span>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% empty %}
+                    <div style="padding: 40px; text-align: center; color: #a0aec0;">
+                        <i class="fas fa-box-open" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+                        <p>Nenhum serviço configurado nesta unidade.</p>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <p style="padding: 20px; text-align: center;">Nenhum serviço cadastrado.</p>
-                {% endfor %}
             </div>
         </div>
     </div>
-    
-    <footer>
-        <div class="total-display">
-            <div class="footer-first-row">
-                Total de serviços: <strong> {{ services.count }}</strong>
-            </div>
-        </div>
-        
-    </footer>
 
-    <!-- Modal de Novo Serviço -->
-    <div id="serviceModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-scissors"></i> Novo Serviço</h2>
-                <button class="close-btn" id="closeModal" onclick="closeModal()">
+    {% if is_owner or is_manager %}
+    <div id="serviceModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 550px; width: 90%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
+                <h2 style="color: #2c3e50; margin: 0;"><i class="fas fa-magic" style="color: #FF7A00;"></i> <span id="modalTitleText">Novo Serviço</span></h2>
+                <button type="button" class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <form id="serviceForm" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" id="modalAction" value="create">
-                    <input type="hidden" name="service_id" id="modalServiceId">
-                        
-                        <div class="form-group select-barbers-group">
-                            <label class="form-label main-label">
-                                <i class="fas fa-users icon-label"></i>
-                                Selecione o(s) Barbeiro(s) Responsável(is) *
-                            </label>
-                            
-                            <div class="barber-list" id="serviceBarbersList">
-                                {% for emp in employees %}
-                                <label class="barber-item">
-                                    <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="barber-checkbox">
-                                    
-                                    <div class="barber-avatar">
-                                        {{ emp.user.name|slice:":1"|upper }}{{ emp.user.last_name|slice:":1"|upper }}
-                                    </div>
-                                    
-                                    <div class="modal-barber-name">
-                                        {{ emp.user.name }} {{ emp.user.last_name }}
-                                    </div>
-                                </label>
-                                {% endfor %}
-                            </div>
-                            
-                            <p class="selection-instruction-text">
-                                No modo <strong>criação</strong>, você pode selecionar vários. Na <strong>edição</strong>, selecione apenas um.
-                            </p>
-                        </div>
-                        
-                    </div>
-                    <div class="form-group">
-                        <label for="baseService">Serviço Base (Admin) *</label>
-                        <select id="baseService" name="base_service" required>
-                            <option value="">Selecione um serviço base</option>
-                            {% for bs in base_services %}
-                                <option value="{{ bs.id }}">{{ bs.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="serviceName">Nome do Serviço *</label>
-                        <input type="text" id="serviceName" name="name" placeholder="Ex: Corte Executivo" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="servicePrice">Preço (R$) *</label>
-                        <input type="number" id="servicePrice" name="price" placeholder="Ex: 45.90" step="0.01" required>
-                    </div>
-                    
-                   <div class="form-group">
-                        <label for="serviceDuration">Duração *</label>
-                        <select id="serviceDuration" name="duration" required>
-                            <option value="">Selecione a duração</option>
-                            <option value="15">15 minutos</option>
-                            <option value="30">30 minutos</option>
-                            <option value="45">45 minutos</option>
-                            <option value="60">1 hora</option>
-                            <option value="75">1 hora e 15 minutos</option>
-                            <option value="90">1 hora e 30 minutos</option>
-                        </select>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
             
+            <form id="serviceForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="modalAction" value="create">
+                <input type="hidden" name="service_ids" id="modalServiceId">
+                    
+                <div class="form-group select-barbers-group" id="barbersSelectionBlock" style="margin-bottom: 15px;">
+                    <label class="form-label main-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">
+                        <i class="fas fa-users" style="color:#3498db;"></i> Atribuir a quais Barbeiros? <small style="font-weight:normal; color:#e74c3c;">(Obrigatório)</small>
+                    </label>
+                    <p id="editUnitWarning" style="display:none; font-size:0.8rem; color:#f39c12; margin-bottom: 5px;">* Na edição, apenas barbeiros da mesma unidade podem ser sincronizados.</p>
+                    <div class="saas-barber-grid">
+                        {% for emp in modal_employees %}
+                        <label class="saas-barber-card" data-unit-id="{{ emp.unit.id }}">
+                            <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="barber-checkbox hidden-checkbox">
+                            <div class="saas-avatar">{{ emp.user.name|slice:":2"|upper }}</div>
+                            <div class="saas-info">
+                                <span class="saas-name">{{ emp.user.name }}</span>
+                                <span class="saas-unit">{{ emp.unit.name }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                    
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="baseService" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Categoria Estrutural (Ícone) *</label>
+                    <select id="baseService" name="base_service" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                        <option value="">Selecione uma categoria base...</option>
+                        {% for bs in base_services %}
+                            <option value="{{ bs.id }}">{{ bs.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="serviceName" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Nome Comercial *</label>
+                    <input type="text" id="serviceName" name="name" placeholder="Ex: Degradê Navalhado" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="servicePrice" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Preço (R$) *</label>
+                        <input type="number" id="servicePrice" name="price" placeholder="Ex: 45.00" step="0.01" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1;">
+                        <label for="serviceDuration" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Duração *</label>
+                        <select id="serviceDuration" name="duration" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <option value="">Tempo de corte...</option>
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">1 Hora</option>
+                            <option value="75">1 h 15 min</option>
+                            <option value="90">1 h 30 min</option>
+                            <option value="120">2 Horas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 10px 20px; border: 1px solid #cbd5e0; color: #4a5568; background: transparent; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Salvar Operação</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const unitFilter = document.getElementById('unitFilterSelect');
-            if (unitFilter) {
-                unitFilter.addEventListener('change', function() {
-                    const selectedValue = this.value;
-                    if (selectedValue === 'geral') {
-                        window.location.href = this.dataset.generalUrl;
-                    } else {
-                        const urlTemplate = this.dataset.unitUrlTemplate;
-                        window.location.href = urlTemplate.replace('__SLUG__', selectedValue);
-                    }
-                });
-            }
-        });
-    </script>
+    {% endif %}
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'service/js/service.js' %}"></script>
+
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                }
+            });
+            
+            {% for message in messages %}
+                var iconType = "{{ message.tags }}";
+                if (iconType.includes("error")) iconType = "error";
+                else if (iconType.includes("success")) iconType = "success";
+                else if (iconType.includes("warning")) iconType = "warning";
+                else iconType = "info";
+
+                Toast.fire({
+                    icon: iconType,
+                    title: "{{ message }}"
+                });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
 </body>
 </html>

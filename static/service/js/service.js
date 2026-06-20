@@ -1,68 +1,104 @@
-const modal = document.getElementById('serviceModal');
-const serviceForm = document.getElementById('serviceForm');
-const modalTitle = document.querySelector('#serviceModal h2');
-const modalAction = document.getElementById('modalAction');
-const modalServiceId = document.getElementById('modalServiceId');
+document.addEventListener('DOMContentLoaded', function() {
+    const unitFilter = document.getElementById('unitSelectFilter');
+    if (unitFilter) {
+        unitFilter.addEventListener('change', function() {
+            const selectedValue = this.value;
+            if (selectedValue === 'geral') {
+                window.location.href = this.dataset.generalUrl;
+            } else {
+                const urlTemplate = this.dataset.unitUrlTemplate;
+                window.location.href = urlTemplate.replace('__SLUG__', selectedValue);
+            }
+        });
+    }
 
-// --- CONTROLE DO MODAL ---
+    const serviceForm = document.getElementById('serviceForm');
+    if(serviceForm) {
+        serviceForm.addEventListener('submit', function(e) {
+            const checkedBoxes = document.querySelectorAll('.barber-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Atenção',
+                    text: 'Você deve vincular este serviço a pelo menos um barbeiro!',
+                    icon: 'warning',
+                    confirmButtonColor: '#FF7A00'
+                });
+            }
+        });
+    }
+});
+
+function filterServicesTable() {
+    let input = document.getElementById('serviceSearch').value.toLowerCase();
+    let rows = document.querySelectorAll('.service-row');
+
+    rows.forEach(row => {
+        let textContent = row.textContent.toLowerCase();
+        if (textContent.includes(input)) {
+            row.style.display = 'grid';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+const modal = document.getElementById('serviceModal');
 
 function openModal() {
-    serviceForm.reset();
-    
-    // Limpa todos os barbeiros selecionados (permite selecionar vários depois)
-    const checkboxes = document.querySelectorAll('.barber-checkbox');
-    checkboxes.forEach(cb => cb.checked = false);
+    const form = document.getElementById('serviceForm');
+    if(!form) return;
+    form.reset();
 
-    modalTitle.innerHTML = '<i class="fas fa-scissors"></i> Novo Serviço';
-    modalAction.value = 'create';
-    modalServiceId.value = '';
+    document.querySelectorAll('.saas-barber-card').forEach(card => {
+        card.style.display = 'flex';
+        card.querySelector('input').checked = false;
+    });
+
+    document.getElementById('modalTitleText').innerText = 'Novo Serviço no Catálogo';
+    document.getElementById('modalAction').value = 'create';
+    document.getElementById('modalServiceId').value = '';
+    document.getElementById('editUnitWarning').style.display = 'none';
     
     modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-    modal.style.display = 'none';
-    document.body.style.overflow = 'auto';
+    if(modal) modal.style.display = 'none';
 }
 
-// Fecha no X ou clicando fora
-document.getElementById('closeModal').onclick = closeModal;
-window.onclick = e => { if (e.target === modal) closeModal(); };
+window.onclick = e => { 
+    if (e.target === modal) {
+        closeModal();
+    }
+};
 
-// --- FUNÇÕES CRUD ---
+function editService(group_ids, name, price, duration, base_service_id, unit_id, employee_ids_str) {
+    if(!modal) return;
+    
+    document.getElementById('modalTitleText').innerText = 'Sincronizar/Editar Serviço';
+    document.getElementById('modalAction').value = 'update';
+    document.getElementById('modalServiceId').value = group_ids; 
+    document.getElementById('editUnitWarning').style.display = 'block';
 
-function editService(id, name, price, duration, employeeId, baseId) {
-    modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Serviço';
-    modalAction.value = "update";
-    modalServiceId.value = id;
-
-    // Preenche campos básicos
     document.getElementById('serviceName').value = name;
-    document.getElementById('servicePrice').value = price.replace('R$ ', '').replace(',', '.').trim();
+    document.getElementById('servicePrice').value = price.replace(',', '.'); 
     document.getElementById('serviceDuration').value = duration;
-    document.getElementById('baseService').value = baseId;
+    document.getElementById('baseService').value = base_service_id;
 
-    // Na EDIÇÃO, marca apenas o dono desse serviço específico
-    const checkboxes = document.querySelectorAll('.barber-checkbox');
-    checkboxes.forEach(cb => {
-        cb.checked = (cb.value == employeeId);
+    const employeeIdsArray = employee_ids_str ? employee_ids_str.split(',') : [];
+
+    document.querySelectorAll('.saas-barber-card').forEach(card => {
+        const input = card.querySelector('input');
+        
+        if (card.getAttribute('data-unit-id') === unit_id) {
+            card.style.display = 'flex'; 
+            input.checked = employeeIdsArray.includes(input.value);
+        } else {
+            card.style.display = 'none'; 
+            input.checked = false;
+        }
     });
 
     modal.style.display = 'flex';
 }
-
-// --- LÓGICA DE SELEÇÃO ---
-
-document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('barber-checkbox')) {
-        // Se estiver EDITANDO, a gente força seleção única para não bugar o banco
-        if (modalAction.value === 'update') {
-            const checkboxes = document.querySelectorAll('.barber-checkbox');
-            checkboxes.forEach(cb => {
-                if (cb !== e.target) cb.checked = false;
-            });
-        }
-        // Se estiver CRIANDO, não tem lógica nenhuma, pode marcar todos!
-    }
-});
