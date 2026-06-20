@@ -218,10 +218,11 @@ async function loadServicesCheckboxes(employeeId, containerId, preSelectedIds = 
         if (data.services && data.services.length > 0) {
             data.services.forEach(svc => {
                 const isChecked = preSelectedIds.includes(svc.id.toString());
+                const iconClass = svc.icon || 'fas fa-cut';
                 const html = `
                     <label class="saas-service-card ${isChecked ? 'selected' : ''}">
                         <input type="checkbox" name="service_id" value="${svc.id}" data-duration="${svc.duration}" class="hidden-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleServiceCard(this); ${isEdit ? 'triggerEditSlotFetch()' : 'triggerSlotFetch()'}">
-                        <div class="saas-service-icon"><i class="fas fa-cut"></i></div>
+                        <div class="saas-service-icon"><i class="${iconClass}"></i></div>
                         <div class="saas-service-details">
                             <span class="saas-service-title">${svc.name}</span>
                             <span class="saas-service-price">R$ ${svc.price.toFixed(2)}</span>
@@ -267,7 +268,7 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
     loader.style.display = 'inline';
 
     try {
-        let url = `${API_SLOTS_URL}?employee_id=${empId}&date=${dateStr}&duration=${totalDuration}`;
+        let url = `${API_SLOTS_URL}?employee_id=${empId}&date=${dateStr}&duration=${totalDuration}&allow_past=true`;
         if (excludeAppId) url += `&exclude_app_id=${excludeAppId}`;
 
         const response = await fetch(url);
@@ -291,6 +292,7 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
                 const isSelected = (presetTime === slot && dateStr === initialEditDate) ? 'selected' : '';
                 selectEl.innerHTML += `<option value="${slot}" ${isSelected}>${slot}</option>`;
             });
+            selectEl.disabled = false;
         } else {
             selectEl.innerHTML = '<option value="">S/ Horário P/ Esta Duração</option>';
             selectEl.classList.add('disabled-look');
@@ -316,7 +318,6 @@ function openNewAppointmentModal() {
         const managerUnit = document.getElementById('managerUnitId');
         const hiddenBarberId = document.getElementById('hiddenBarberId');
 
-        // Gatilho do Barbeiro Solitário Corrigido
         if (!barberGrid && hiddenBarberId && hiddenBarberId.value) {
             loadServicesCheckboxes(hiddenBarberId.value, 'serviceCheckboxGrid');
         } else if (unitSel && unitSel.value) {
@@ -408,6 +409,7 @@ async function loadExtraServicesCheckboxes(employeeId, containerId, excludeIdsAr
             data.services.forEach(svc => {
                 if (!excludeIdsArray.includes(svc.id.toString())) {
                     renderedCards++;
+                    const iconClass = svc.icon || 'fas fa-cut';
                     const html = `
                         <label class="custom-service-card" style="padding: 10px 15px; margin-bottom: 8px;">
                             <input type="checkbox" name="extra_service_id" value="${svc.id}" data-price="${svc.price}" class="hidden-checkbox" onchange="toggleServiceCard(this); calculateFinishTotal();">
@@ -417,7 +419,7 @@ async function loadExtraServicesCheckboxes(employeeId, containerId, excludeIdsAr
                             <div class="svc-meta" style="color: #27ae60; font-weight: 800; font-size:1.1rem; margin-top:5px;">
                                 + R$ ${svc.price.toFixed(2)}
                             </div>
-                            <div class="svc-check-icon" style="top:5px; right:5px; font-size:1.2rem;"><i class="fas fa-check-circle"></i></div>
+                            <div class="svc-check-icon" style="top:5px; right:5px; font-size:1.2rem;"><i class="${iconClass}"></i></div>
                         </label>
                     `;
                     container.innerHTML += html;

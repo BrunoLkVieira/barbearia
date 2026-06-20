@@ -147,7 +147,9 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     appointment.notes = notes_str
                     
                     if status_val == 'completed': appointment.is_paid = True
-                    elif status_val in ['cancelled', 'scheduled']: appointment.is_paid = False
+                    elif status_val in ['cancelled', 'scheduled']: 
+                        appointment.is_paid = False
+                        appointment.payment_type = None
 
                     appointment.services.all().delete()
                     msg = "Agendamento atualizado com sucesso!"
@@ -207,7 +209,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     if not is_owner and not is_manager and not is_cashier:
         appointments_query = appointments_query.filter(employee=emp)
 
-    appointments = appointments_query.order_by('time').prefetch_related('services__service')
+    appointments = appointments_query.order_by('time').prefetch_related('services__service__base_service')
 
     for app in appointments:
         app.total_duration_calc = sum([(getattr(s.service, 'duration', 30) or 30) for s in app.services.all()])
@@ -280,6 +282,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
             time_str = request.POST.get("time")
             status_val = request.POST.get("status", "completed")
             notes_str = request.POST.get("notes", "")
+            payment_type = request.POST.get("payment_type")
             service_ids = request.POST.getlist('service_id')
 
             if not service_ids or not time_str:
@@ -317,7 +320,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
                 appointment = Appointment.objects.create(
                     client=target_client, employee=target_emp, barbershop=barbershop,
                     unit=target_unit, date=date_str, time=time_str, status=status_val,
-                    total_price=0, notes=notes_str, is_paid=(status_val == 'completed')
+                    total_price=0, notes=notes_str, 
+                    is_paid=(status_val == 'completed'),
+                    payment_type=payment_type if status_val == 'completed' else None
                 )
                 msg = "Lançamento Retroativo criado com sucesso no histórico!"
             else:
@@ -338,8 +343,13 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
                 appointment.status = status_val
                 appointment.notes = notes_str
                 
-                if status_val == 'completed': appointment.is_paid = True
-                elif status_val in ['cancelled', 'scheduled']: appointment.is_paid = False
+                if status_val == 'completed': 
+                    appointment.is_paid = True
+                    if payment_type:
+                        appointment.payment_type = payment_type
+                elif status_val in ['cancelled', 'scheduled']: 
+                    appointment.is_paid = False
+                    appointment.payment_type = None
 
                 appointment.services.all().delete()
                 msg = "Histórico de agendamento atualizado com sucesso!"
@@ -380,7 +390,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     service_filter = request.GET.get('service_filter', '')
     status_filter = request.GET.get('status_filter', '')
 
-    appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service')
+    appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service__base_service')
     
     if date_filter: appointments = appointments.filter(date=date_filter)
     if month_filter:
@@ -425,6 +435,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
 
     return render(request, "scheduling/agendamentos.html", context)
 
+
 @login_required 
 def get_employees_by_unit(request):
     unit_id = request.GET.get('unit_id')
@@ -451,12 +462,13 @@ def get_services_by_employee(request):
     if not employee_id or employee_id == 'null': 
         return JsonResponse({'services': []})
     
-    services = BarberService.objects.filter(employee_id=employee_id)
+    services = BarberService.objects.filter(employee_id=employee_id).select_related('base_service')
     data = [{
         'id': svc.id, 
         'name': svc.name, 
         'price': float(svc.price) if svc.price else 0.0,
-        'duration': getattr(svc, 'duration', 30) or 30
+        'duration': getattr(svc, 'duration', 30) or 30,
+        'icon': svc.base_service.icon if getattr(svc, 'base_service', None) else 'fas fa-cut'
     } for svc in services]
     return JsonResponse({'services': data})
 

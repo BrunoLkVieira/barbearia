@@ -123,11 +123,13 @@
                 <div class="time-slot {% if appointment.status == 'cancelled' %}cancelled-slot{% elif appointment.status == 'completed' %}completed-slot{% endif %}" 
                      data-barber="{{ appointment.employee.id }}" 
                      data-status="{{ appointment.status }}">
+                    
                     <div class="time-info">
                         <div class="order">{{ forloop.counter }}</div>
                         <div class="time">{{ appointment.time|time:"H:i" }}</div>
                         <div class="duration">{{ appointment.total_duration_calc }} min</div>
                     </div>
+                    
                     <div class="client-info">
                         <div class="client-header">
                             <div class="client-name">
@@ -135,51 +137,71 @@
                                 {{ appointment.client.first_name }} {{ appointment.client.last_name }}
                                 
                                 {% if appointment.status == 'completed' %}
-                                    <span style="font-size: 0.75rem; background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Finalizado</span>
+                                    <span class="status-badge status-completed">Finalizado</span>
                                 {% elif appointment.status == 'cancelled' %}
-                                    <span style="font-size: 0.75rem; background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Cancelado</span>
+                                    <span class="status-badge status-cancelled">Cancelado</span>
                                 {% else %}
-                                    <span style="font-size: 0.75rem; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; margin-left: 10px; font-weight: 500;">Agendado</span>
+                                    <span class="status-badge status-pending">Agendado</span>
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="service-details">
-                            <div class="detail-item" style="grid-column: span 2;">
-                                <div class="detail-label">Serviço(s):</div>
-                                <div class="detail-value">
-                                    {% for item in appointment.services.all %}
-                                        {{ item.service.name }}{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
+                        
+                        <div class="service-details-grid">
+                            <!-- Coluna Esquerda: Serviços e Barbeiro -->
+                            <div class="detail-group">
+                                <div class="detail-line">
+                                    <span class="detail-label">Serviço(s):</span>
+                                    <span class="detail-value">
+                                        {% for item in appointment.services.all %}
+                                            <span style="display: inline-block; margin-right: 8px;">
+                                                <i class="{{ item.service.base_service.icon|default:'fas fa-cut' }}" style="color: #FF7A00; margin-right: 4px;"></i>{{ item.service.name }}{% if not forloop.last %},{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Barbeiro:</div>
-                                <div class="detail-value">
-                                    <span style="background: #f0f5ff; padding: 2px 8px; border-radius: 6px; color: #2980b9; font-size: 0.85rem; font-weight: 600;">
-                                        <i class="fas fa-cut" style="margin-right: 4px;"></i> {{ appointment.employee.user.name }}
+                                <div class="detail-line">
+                                    <span class="detail-label">Barbeiro:</span>
+                                    <span class="detail-value">
+                                        <span style="background: #f0f5ff; padding: 3px 10px; border-radius: 6px; color: #2980b9; font-size: 0.85rem; font-weight: 600;">
+                                            <i class="fas fa-cut" style="margin-right: 4px;"></i> {{ appointment.employee.user.name }}
+                                        </span>
                                     </span>
                                 </div>
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Contato:</div>
-                                <div class="detail-value">{{ appointment.client.phone|default:"Não informado" }}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Total:</div>
-                                <div class="detail-value" style="font-weight: 700; color: #27ae60;">R$ {{ appointment.total_price }}</div>
-                            </div>
-                            {% if appointment.notes %}
-                            <div class="detail-item" style="grid-column: span 2; margin-top: 5px;">
-                                <div class="detail-label"><i class="fas fa-sticky-note" style="color: #f39c12;"></i> Obs:</div>
-                                <div class="detail-value" style="font-style: italic; color: #7f8c8d; font-size: 0.9rem;">
-                                    {{ appointment.notes }}
+
+                            <!-- Coluna Direita: Contato e Financeiro -->
+                            <div class="detail-group">
+                                <div class="detail-line">
+                                    <span class="detail-label">Contato:</span>
+                                    <span class="detail-value">{{ appointment.client.phone|default:"Não informado" }}</span>
+                                </div>
+                                <div class="detail-line">
+                                    <span class="detail-label">Total:</span>
+                                    <span class="detail-value total-price">
+                                        R$ {{ appointment.total_price }}
+                                        {% if appointment.status == 'completed' and appointment.payment_type %}
+                                            <span class="payment-badge-agenda">
+                                                {% if appointment.payment_type == 'cash' %}💵 DINHEIRO
+                                                {% elif appointment.payment_type == 'card' %}💳 CARTÃO
+                                                {% elif appointment.payment_type == 'pix' %}❖ PIX
+                                                {% else %}{{ appointment.payment_type|upper }}{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
-                            {% endif %}
                         </div>
+
+                        <!-- Observações em destaque no fundo -->
+                        {% if appointment.notes %}
+                        <div class="appointment-notes">
+                            <i class="fas fa-sticky-note" style="color: #f39c12; margin-right: 5px;"></i> <strong>Obs:</strong> {{ appointment.notes }}
+                        </div>
+                        {% endif %}
                     </div>
+                    
                     <div class="client-actions">
-                        <div class="action-btn" onclick="openEditAppointmentModal(this)"
+                        <div class="action-btn edit" onclick="openEditAppointmentModal(this)" title="Editar Agendamento"
                                 data-id="{{ appointment.id }}"
                                 data-client-id="{{ appointment.client.id }}"
                                 data-unit-id="{{ appointment.unit.id }}"
@@ -188,17 +210,18 @@
                                 data-date="{{ appointment.date|date:'Y-m-d' }}"
                                 data-time="{{ appointment.time|time:'H:i' }}"
                                 data-status="{{ appointment.status }}"
+                                data-payment="{{ appointment.payment_type|default:'' }}"
                                 data-notes="{{ appointment.notes|default:'' }}">
                             <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
 
                         {% if is_owner or is_manager %}
-                        <form method="POST" class="delete-form-wrapper" onsubmit="return confirm('Tem certeza que deseja excluir definitivamente este agendamento?');">
+                        <form method="POST" class="delete-form-wrapper form-delete-app">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete_appointment">
                             <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                            <button type="submit" class="action-btn btn-delete">
+                            <button type="button" class="action-btn btn-delete btn-delete-swal" title="Excluir Agendamento">
                                 <i class="fas fa-trash"></i>
                                 <span>Excluir</span>
                             </button>
@@ -206,7 +229,7 @@
                         {% endif %}
 
                         {% if not appointment.is_paid and appointment.status != 'completed' and appointment.status != 'cancelled' %}
-                        <div class="action-btn finish-btn" onclick="openFinishModal(this)"
+                        <div class="action-btn finish-btn" onclick="openFinishModal(this)" title="Finalizar e Pagar"
                              data-id="{{ appointment.id }}"
                              data-client-name="{{ appointment.client.first_name }} {{ appointment.client.last_name }}"
                              data-barber-name="{{ appointment.employee.user.name }}"
@@ -243,6 +266,7 @@
         </div>
     </div>
 
+    <!-- MODAL FINALIZAR SERVIÇO -->
     <div class="endServiceModal-overlay" id="finishModal" style="display: none;">
         <div class="endServiceModal">
             <div class="endServiceModal-header">
@@ -327,6 +351,7 @@
         </div>
     </div>
 
+    <!-- MODAL NOVO AGENDAMENTO -->
     <div id="appointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div class="appointmentModal-content">
             <div class="appointmentModal-header">
@@ -372,6 +397,7 @@
                         <input type="hidden" name="employee_id" id="hiddenBarberId" required>
                     </div>
                     {% else %}
+                    <!-- É um Barbeiro comum: Vê apenas a si próprio na UI -->
                     <input type="hidden" name="unit_id" value="{{ current_unit.id }}">
                     <input type="hidden" name="employee_id" id="hiddenBarberId" value="{{ employees.0.id }}" required>
                     <div class="form-group">
@@ -415,6 +441,7 @@
         </div>        
     </div>
 
+    <!-- MODAL EDITAR AGENDAMENTO -->
     <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div class="appointmentModal-content">
             <div class="appointmentModal-header">
@@ -493,6 +520,16 @@
                             <option value="cancelled">❌ Cancelado</option>
                         </select>
                     </div>
+
+                    <div class="form-group" id="editPaymentGroup" style="display: none;">
+                        <label class="form-label">Forma de Pagamento Recebida</label>
+                        <select name="payment_type" id="editPaymentSelect" class="form-control">
+                            <option value="cash">💵 Dinheiro</option>
+                            <option value="card">💳 Cartão (Débito/Crédito)</option>
+                            <option value="pix">❖ PIX</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="editAppointmentNotes" class="form-label">Observações</label>
                         <textarea name="notes" id="editAppointmentNotes" class="form-control" rows="2"></textarea>
@@ -506,6 +543,7 @@
         </div>        
     </div>
 
+    <!-- APIs Injetadas -->
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
         const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
@@ -516,30 +554,43 @@
     <script src="{% static 'schedule/js/agenda.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
 
-    {% if messages %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 4000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.onmouseenter = Swal.stopTimer;
-                    toast.onmouseleave = Swal.resumeTimer;
-                }
+            // Notificações Base Padrão
+            {% if messages %}
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                {% for message in messages %}
+                    var iconType = "{{ message.tags }}";
+                    if (iconType.includes("error")) iconType = "error";
+                    else if (iconType.includes("success")) iconType = "success";
+                    else if (iconType.includes("warning")) iconType = "warning";
+                    else iconType = "info";
+                    Toast.fire({ icon: iconType, title: "{{ message }}" });
+                {% endfor %}
+            {% endif %}
+
+            // Substituição do confirm() nativo para os botões de Excluir da Tabela
+            const deleteButtons = document.querySelectorAll('.btn-delete-swal');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const form = this.closest('.form-delete-app');
+                    Swal.fire({
+                        title: 'Confirmar Exclusão',
+                        text: "Esta ação apagará o registro definitivamente.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e74c3c',
+                        cancelButtonColor: '#a0aec0',
+                        confirmButtonText: 'Sim, excluir!',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
             });
-            {% for message in messages %}
-                var iconType = "{{ message.tags }}";
-                if (iconType.includes("error")) iconType = "error";
-                else if (iconType.includes("success")) iconType = "success";
-                else if (iconType.includes("warning")) iconType = "warning";
-                else iconType = "info";
-                Toast.fire({ icon: iconType, title: "{{ message }}" });
-            {% endfor %}
         });
     </script>
-    {% endif %}
 </body>
 </html>

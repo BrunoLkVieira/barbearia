@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Redirecionamento da Unidade Global
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Lógica Modal Novo Retroativo
     const unitSelect = document.getElementById('unitSelect');
     const hiddenBarberId = document.getElementById('hiddenBarberId');
 
@@ -34,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Lógica Modal Edit
     const editUnitSelect = document.getElementById('editUnitSelect');
     const editHiddenBarberId = document.getElementById('editHiddenBarberId');
 
@@ -56,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Observers para Data/Hora (Bloqueio Dinâmico de Pendente no Passado)
     const newDateInput = document.getElementById('appointmentDate');
     const newTimeInput = document.getElementById('appointmentTime');
     if (newDateInput) newDateInput.addEventListener('change', () => enforcePastStatusRule('appointmentDate', 'appointmentTime', 'newStatusSelect'));
@@ -64,11 +60,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const editDateInput = document.getElementById('editAppointmentDate');
     const editTimeInput = document.getElementById('editAppointmentTime');
+    const editStatusSelect = document.getElementById('editStatusSelect');
+    
     if (editDateInput) editDateInput.addEventListener('change', () => enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect'));
     if (editTimeInput) editTimeInput.addEventListener('change', () => enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect'));
+    
+    // Mostra/Oculta o Forma de Pagamento no Editar quando o status é Finalizado
+    if (editStatusSelect) {
+        editStatusSelect.addEventListener('change', function() {
+            const paymentGroup = document.getElementById('editPaymentGroup');
+            if(this.value === 'completed') {
+                paymentGroup.style.display = 'block';
+                document.getElementById('editPaymentSelect').required = true;
+            } else {
+                paymentGroup.style.display = 'none';
+                document.getElementById('editPaymentSelect').required = false;
+            }
+        });
+    }
 });
 
-// ====================== REGRAS DE UX ======================
+function filterHistoryTable() {
+    const input = document.getElementById('historyClientSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('.history-table tbody tr');
+
+    rows.forEach(row => {
+        // A coluna 1 é a do Cliente na tabela (0: Data, 1: Cliente, 2: Serviço)
+        const clientCell = row.cells[1];
+        if (clientCell) {
+            const textContent = clientCell.textContent.toLowerCase();
+            row.style.display = textContent.includes(input) ? '' : 'none';
+        }
+    });
+}
+
 function enforcePastStatusRule(dateId, timeId, statusId) {
     const dateVal = document.getElementById(dateId).value;
     const timeVal = document.getElementById(timeId).value;
@@ -90,10 +115,10 @@ function enforcePastStatusRule(dateId, timeId, statusId) {
     
     if (isPast && statusSel.value === 'scheduled') {
         statusSel.value = 'completed'; 
+        statusSel.dispatchEvent(new Event('change')); // Força a exibição do Input Forma de Pagamento
     }
 }
 
-// ====================== UTILITÁRIOS ======================
 function changePage(pageNum) {
     document.getElementById('pageInput').value = pageNum;
     document.getElementById('filterForm').submit();
@@ -164,10 +189,11 @@ async function loadServicesCheckboxes(employeeId, containerId, preSelectedIds = 
         if (data.services && data.services.length > 0) {
             data.services.forEach(svc => {
                 const isChecked = preSelectedIds.includes(svc.id.toString());
+                const iconClass = svc.icon || 'fas fa-cut';
                 const html = `
                     <label class="saas-service-card ${isChecked ? 'selected' : ''}">
                         <input type="checkbox" name="service_id" value="${svc.id}" data-duration="${svc.duration}" class="hidden-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleServiceCard(this); ${isEdit ? 'triggerEditSlotFetch()' : 'triggerSlotFetch()'}">
-                        <div class="saas-service-icon"><i class="fas fa-cut"></i></div>
+                        <div class="saas-service-icon"><i class="${iconClass}"></i></div>
                         <div class="saas-service-details">
                             <span class="saas-service-title">${svc.name}</span>
                             <span class="saas-service-price">R$ ${svc.price.toFixed(2)}</span>
@@ -225,7 +251,7 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
 
         if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
             slots.push(presetTime);
-            slots.sort();
+            slots.sort(); 
         }
 
         if (slots.length > 0) {
@@ -235,7 +261,6 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
             });
             selectEl.disabled = false;
             
-            // Dispara validação de Past Time no Dropdown
             const isEdit = selectId === 'editAppointmentTime';
             enforcePastStatusRule(isEdit ? 'editAppointmentDate' : 'appointmentDate', selectId, isEdit ? 'editStatusSelect' : 'newStatusSelect');
         } else {
@@ -248,7 +273,6 @@ async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, l
     }
 }
 
-// ====================== ABERTURA DE MODAIS ======================
 function openNewAppointmentModal() {
     const appointmentModal = document.getElementById('appointmentModalContainer');
     if (appointmentModal) {
@@ -258,15 +282,6 @@ function openNewAppointmentModal() {
         if (barberGrid) barberGrid.innerHTML = '';
         document.getElementById('serviceCheckboxGrid').innerHTML = '';
         resetTimeSelect('appointmentTime');
-        
-        // Adiciona um ID no select de status do modal de criação (se faltar no HTML adicione no seu template)
-        let statusSel = document.querySelector('#appointmentForm select[name="status"]');
-        if(!statusSel) {
-            const hiddenStatus = document.querySelector('#appointmentForm input[name="status"]');
-            if(hiddenStatus) {
-                hiddenStatus.outerHTML = `<select name="status" id="newStatusSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0; font-weight: bold; margin-bottom: 15px;"><option value="completed">✅ Finalizado (Completado)</option><option value="scheduled">⏱️ Agendado (Na Fila)</option></select>`;
-            }
-        }
         
         const unitSel = document.getElementById('unitSelect');
         const hiddenBarberId = document.getElementById('hiddenBarberId');
@@ -304,6 +319,7 @@ async function openEditAppointmentModal(btn) {
     const date = btn.getAttribute('data-date');
     const time = btn.getAttribute('data-time');
     const status = btn.getAttribute('data-status');
+    const payment = btn.getAttribute('data-payment');
     const notes = btn.getAttribute('data-notes');
 
     document.getElementById('editAppointmentId').value = id;
@@ -318,7 +334,13 @@ async function openEditAppointmentModal(btn) {
     dateInput.value = date;
     dateInput.defaultValue = date; 
     
-    document.getElementById('editStatusSelect').value = status;
+    const statusSelect = document.getElementById('editStatusSelect');
+    statusSelect.value = status;
+    
+    const editPaymentSelect = document.getElementById('editPaymentSelect');
+    if(editPaymentSelect) editPaymentSelect.value = payment || 'cash';
+    statusSelect.dispatchEvent(new Event('change')); 
+
     document.getElementById('editAppointmentNotes').value = notes || ''; 
     document.getElementById('editHiddenBarberId').value = barberId;
     document.getElementById('originalTime').value = time;
