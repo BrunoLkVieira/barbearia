@@ -857,8 +857,10 @@ def api_login(request, barbershop_slug):
             user = authenticate(request, cpf=cpf, password=password)
             
         if user is not None:
+            # 1. Realiza o login no sistema (Sessão garantida)
             login(request, user)
             
+            # 2. Tenta criar o vínculo do Client de forma isolada e segura
             try:
                 barbershop = Barbershop.objects.get(slug=barbershop_slug)
                 client = Client.objects.filter(user=user, barbershop=barbershop).first()
@@ -877,6 +879,7 @@ def api_login(request, barbershop_slug):
                         cpf=user.cpf
                     )
             except Exception as e:
+                # Se falhar, loga o erro no console, mas NÃO derruba o login do usuário
                 print(f"[Aviso Orbly] Falha ao gerar perfil Client on-the-fly: {e}")
             
             return JsonResponse({'status': 'success'})
@@ -951,6 +954,7 @@ def api_cancel_appointment(request, barbershop_slug):
             barbershop__slug=barbershop_slug,
             status='scheduled'
         )
+        # CORREÇÃO DO STATUS PARA O PADRÃO DO BANCO
         appointment.status = 'cancelled'
         appointment.save()
         return JsonResponse({'status': 'success'})
@@ -969,7 +973,8 @@ def process_booking_api(request, barbershop_slug):
         data = json.loads(request.body)
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
         
-        first_n = request.user.name.split()[0] if request.user.name else "Cliente"
+        # CORREÇÃO DE VÍNCULO: Se o usuário logou pela rede mas nunca agendou aqui, cria o Client na hora!
+        first_n = request.user.name.split()[0] if request.user.name else ""
         last_n = " ".join(request.user.name.split()[1:]) if request.user.name and len(request.user.name.split()) > 1 else ""
         
         client, created = Client.objects.get_or_create(
@@ -983,6 +988,9 @@ def process_booking_api(request, barbershop_slug):
                 'cpf': request.user.cpf
             }
         )
+        
+        if client.is_blocked:
+            return JsonResponse({'status': 'error', 'message': 'Sua conta possui uma restrição nesta unidade. Entre em contato com a barbearia.'}, status=403)
         
         employee = Employee.objects.get(id=data.get('barber_id'))
         unit = Unit.objects.get(id=data.get('unit_id'))
@@ -1051,6 +1059,8 @@ def api_get_services(request, barbershop_slug):
     data = []
     for s in services:
         icon_str = s.base_service.icon if s.base_service and s.base_service.icon else 'fas fa-cut'
+        
+        # Correção de fallback para garantir compatibilidade com FontAwesome 6
         if not icon_str.startswith('fa'):
             icon_str = f'fas {icon_str}'
         elif not icon_str.startswith('fas ') and not icon_str.startswith('fab '):
@@ -1121,6 +1131,7 @@ def api_get_available_times(request, barbershop_slug):
             if not appt.time: continue
             app_start = datetime.combine(target_date, appt.time)
             
+            # Cálculo cirúrgico do tempo de duração do agendamento 
             app_duration = 0
             for s in appt.services.all():
                 if s.service:
