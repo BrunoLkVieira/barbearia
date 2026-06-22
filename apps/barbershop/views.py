@@ -869,12 +869,17 @@ def api_login(request, barbershop_slug):
             login(request, user)
             
             barbershop = Barbershop.objects.get(slug=barbershop_slug)
+            
+            # Garante a criação segura manipulando nomes vazios
+            first_n = user.name.split()[0] if user.name else ""
+            last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
+            
             Client.objects.get_or_create(
                 user=user, 
                 barbershop=barbershop,
                 defaults={
-                    'first_name': user.name.split()[0] if user.name else "",
-                    'last_name': " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else "",
+                    'first_name': first_n,
+                    'last_name': last_n,
                     'email': user.email,
                     'phone': user.phone,
                     'cpf': user.cpf
@@ -882,9 +887,9 @@ def api_login(request, barbershop_slug):
             )
             return JsonResponse({'status': 'success'})
         else:
-            return JsonResponse({'status': 'error', 'message': 'CPF ou senha inválidos.'}, status=401)
+            return JsonResponse({'status': 'error', 'message': 'CPF ou senha incorretos. Tente novamente.'}, status=401)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Ocorreu um erro no servidor. Tente novamente.'}, status=400)
 
 
 @require_POST
@@ -897,10 +902,13 @@ def api_register(request, barbershop_slug):
         phone = re.sub(r'\D', '', data.get('phone', ''))
         password = data.get('password')
         
+        if len(cpf) != 11:
+            return JsonResponse({'status': 'error', 'message': 'O CPF deve conter exatamente 11 dígitos.'}, status=400)
+            
         if User.objects.filter(email=email).exists():
-            return JsonResponse({'status': 'error', 'message': 'Este e-mail já está em uso.'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Este e-mail já pertence a uma conta na rede Orbly. Por favor, faça login.'}, status=400)
         if User.objects.filter(cpf=cpf).exists():
-            return JsonResponse({'status': 'error', 'message': 'Este CPF já está cadastrado.'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Este CPF já possui cadastro. Por favor, feche esta tela e faça Login.'}, status=400)
             
         user = User.objects.create_user(
             cpf=cpf,
@@ -912,11 +920,14 @@ def api_register(request, barbershop_slug):
         )
         
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
+        first_n = name.split()[0] if name else ""
+        last_n = " ".join(name.split()[1:]) if name and len(name.split()) > 1 else ""
+        
         Client.objects.create(
             user=user, 
             barbershop=barbershop,
-            first_name=name.split()[0],
-            last_name=" ".join(name.split()[1:]) if len(name.split()) > 1 else "",
+            first_name=first_n,
+            last_name=last_n,
             email=email,
             phone=phone,
             cpf=cpf
@@ -925,7 +936,7 @@ def api_register(request, barbershop_slug):
         login(request, user)
         return JsonResponse({'status': 'success'})
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Falha ao registrar. Verifique os dados e tente novamente.'}, status=400)
 
 
 @require_POST
@@ -946,13 +957,14 @@ def api_cancel_appointment(request, barbershop_slug):
             barbershop__slug=barbershop_slug,
             status='scheduled'
         )
-        appointment.status = 'cancelado'
+        # CORREÇÃO DO STATUS PARA O PADRÃO DO BANCO
+        appointment.status = 'cancelled'
         appointment.save()
         return JsonResponse({'status': 'success'})
     except Appointment.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Agendamento não encontrado.'}, status=404)
+        return JsonResponse({'status': 'error', 'message': 'Agendamento não encontrado ou já processado.'}, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Não foi possível cancelar o agendamento no momento.'}, status=400)
 
 
 @require_POST
@@ -962,23 +974,38 @@ def process_booking_api(request, barbershop_slug):
 
     try:
         data = json.loads(request.body)
-        client = Client.objects.get(user=request.user, barbershop__slug=barbershop_slug)
+        barbershop = Barbershop.objects.get(slug=barbershop_slug)
+        
+        # CORREÇÃO DE VÍNCULO: Se o usuário logou pela rede mas nunca agendou aqui, cria o Client na hora!
+        first_n = request.user.name.split()[0] if request.user.name else ""
+        last_n = " ".join(request.user.name.split()[1:]) if request.user.name and len(request.user.name.split()) > 1 else ""
+        
+        client, created = Client.objects.get_or_create(
+            user=request.user, 
+            barbershop=barbershop,
+            defaults={
+                'first_name': first_n,
+                'last_name': last_n,
+                'email': request.user.email,
+                'phone': request.user.phone,
+                'cpf': request.user.cpf
+            }
+        )
+        
         employee = Employee.objects.get(id=data.get('barber_id'))
         unit = Unit.objects.get(id=data.get('unit_id'))
         
-        # Cria a reserva mãe
         appointment = Appointment.objects.create(
             client=client,
             employee=employee,
-            barbershop=client.barbershop,
+            barbershop=barbershop,
             unit=unit,
             date=data.get('date'),
             time=data.get('time'),
             status='scheduled'
         )
         
-        # Atrela os serviços e soma o valor
-        total_price = 0
+        total_price = Decimal('0.00')
         service_ids = data.get('service_id')
         if not isinstance(service_ids, list):
             service_ids = [service_ids]
@@ -997,7 +1024,7 @@ def process_booking_api(request, barbershop_slug):
 
         return JsonResponse({'status': 'success'})
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Não foi possível concluir o agendamento. Horário indisponível.'}, status=400)
 
 
 @require_GET

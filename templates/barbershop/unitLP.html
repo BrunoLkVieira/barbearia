@@ -7,7 +7,7 @@
     <title>{{ barbershop.name }} - Agendar</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
-    <!-- styles -->
+    
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/reset.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/header.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/sections.css' %}">
@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/about.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/footer.css' %}">
 
-    <!-- MODALS -->
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/modal-base.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/login.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/unitLP/modals/schedule.css' %}">
@@ -30,14 +29,29 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/mobileV.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unitLP/resp.css' %}">
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        // Variável global capturando estado de autenticação do Django e Agendamentos Ativos
         const IS_AUTHENTICATED = "{{ request.user.is_authenticated|yesno:'true,false' }}" === "true";
         const HAS_ACTIVE_APPOINTMENT = "{{ has_active_appointment|yesno:'true,false' }}" === "true";
     </script>
     
     <style>
-        /* INTERCEPT MODAL CSS */
+        .swal2-container {z-index: 99999 !important;}
+        
+        /* Blur do Hero para destacar Logo e Texto */
+        .hero-content-wrapper {
+            backdrop-filter: blur(2px);
+            background: rgba(0, 0, 0, 0.45);
+            padding: 30px 40px;
+            border-radius: 16px;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
         #authPromptModal { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
         #authPromptModal .modal-content { background: #2D3748; border-radius: 12px; padding: 40px 25px; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); position: relative; text-align: center; }
         #authPromptModal .close-modal, #appointmentsModal .close-modal { position: absolute; top: 15px; right: 20px; color: #A0AEC0; font-size: 1.5rem; background: none; border: none; cursor: pointer; transition: color 0.2s; }
@@ -49,22 +63,18 @@
         .btn-prompt { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
         .btn-auth { background: #ED8936; color: #fff; }
         
-        /* CORREÇÃO DO BOTÃO WPP: ALTO CONTRASTE */
         .btn-wpp { background-color: #25D366 !important; color: #ffffff !important; border: 2px solid #25D366 !important; }
         .btn-wpp i { color: #ffffff !important; font-size: 1.3rem; }
         .btn-wpp:hover { background-color: #128C7E !important; border-color: #128C7E !important; }
 
-        /* HEADER DOS MODAIS COM ÍCONES */
         .modal-header h2 { display: flex; align-items: center; gap: 12px; }
         .modal-header h2 i { color: #ED8936; font-size: 1.6rem; }
 
-        /* DROPDOWN */
         .user-profile-dropdown { position: relative; display: inline-block; }
         .profile-dropdown-content { display: none; position: absolute; right: 0; top: 110%; background: #2D3748; border-radius: 8px; min-width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; border: 1px solid rgba(255,255,255,0.1); }
         .profile-dropdown-content a { display: block; padding: 12px 15px; color: #F7FAFC; text-decoration: none; transition: background 0.2s; }
         .profile-dropdown-content a:hover { background: rgba(255,255,255,0.05); }
 
-        /* REDESIGN DOS SERVIÇOS EM CARDS */
         .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
         .service-card { background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .service-card i { font-size: 2.2rem; color: #4a5568; transition: color 0.2s ease; margin-bottom: 5px; }
@@ -73,21 +83,15 @@
         .service-price { font-weight: 800; color: #2D3748; font-size: 1.1rem; }
         .service-duration { font-size: 0.8rem; color: #718096; background: #edf2f7; padding: 3px 8px; border-radius: 20px;}
 
-        /* REDESIGN DOS HORÁRIOS */
         .time-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; margin-top: 15px; max-height: 200px; overflow-y: auto; padding: 5px;}
         .time-slot-btn { background: #ffffff; border: 2px solid #cbd5e0; border-radius: 8px; padding: 12px 5px; font-weight: 700; color: #4a5568; cursor: pointer; transition: all 0.2s ease; }
         .time-slot-btn:hover { border-color: #a0aec0; }
         .time-slot-btn.selected { background: #ED8936; color: white; border-color: #ED8936; transform: scale(1.05);}
     
-        /* CORREÇÃO DO BOTÃO WPP: ALTO CONTRASTE */
         .btn-wpp { background-color: #25D366 !important; border: 2px solid #25D366 !important; }
         .btn-wpp, .btn-wpp * { color: #ffffff !important; text-decoration: none; }
         .btn-wpp i { font-size: 1.3rem; }
         .btn-wpp:hover { background-color: #128C7E !important; border-color: #128C7E !important; transform: translateY(-2px); }
-
-        /* HEADER DOS MODAIS COM ÍCONES */
-        .modal-header h2 { display: flex; align-items: center; gap: 12px; }
-        .modal-header h2 i { color: #ED8936; font-size: 1.6rem; }
     </style>
 </head>
 
@@ -95,9 +99,11 @@
     <header>
         <div class="header-container">
             <div class="logo">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Da barbearia" class="logo-img">
+    
+                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Orbly" class="logo-img">
+            
                 <div class="logo-content">
-                    <h1>Orbly Barber</h1>
+                    <h1>{{ barbershop.name }}</h1>
                     <div class="unit-filter">
                         <select onchange="location.href=this.value">
                             {% for u in units %}
@@ -149,9 +155,15 @@
                 {% endfor %}
             </div>
             <div class="container hero-content">
-                <h1>{{ barbershop.name }} - {{ unit.name }}</h1>
-                <p>{{ barbershop.description|default:"Cortes premium exclusivos com os melhores barbeiros da região." }}</p>
-                <a href="#" class="btn" id="heroScheduleBtn">Agendar Horário</a>
+                <div class="hero-content-wrapper">
+                    {% if barbershop.logo %}
+                        <img src="{{ barbershop.logo.url }}" alt="Logo" style="max-width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ED8936; margin-bottom: 15px; object-fit: cover;">
+                    {% endif %}
+                    <h1 style="color: white; margin-bottom: 5px;">{{ barbershop.name }}</h1>
+                    <h3 style="color: #ED8936; font-weight: 500; margin-bottom: 15px; font-size: 1.1rem;">{{ unit.name }}</h3>
+                    <p style="color: #e2e8f0; font-size: 1.05rem;">{{ barbershop.description|default:"Cortes premium exclusivos com os melhores barbeiros da região." }}</p>
+                    <a href="#" class="btn" id="heroScheduleBtn" style="margin-top: 20px;">Agendar Horário</a>
+                </div>
             </div> 
         </section>
 
@@ -173,7 +185,7 @@
                     <div class="about-text">
                         <div class="text-block">
                             <h3>A Unidade {{ unit.name }}</h3>
-                            <p>{{ unit.about_text|default:"Bem-vindo à nossa barbearia." }}</p>
+                            <p>{{ unit.about_text|default:"Bem-vindo à nossa barbearia. Oferecemos o melhor cuidado para seu visual." }}</p>
                         </div>
                     </div>
 
@@ -182,7 +194,7 @@
                             {% if unit.about_image %}
                                 <img src="{{ unit.about_image.url }}" alt="Sobre a {{ unit.name }}">
                             {% else %}
-                                <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior">
+                                <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70" alt="Interior da Barbearia">
                             {% endif %}
                         </div>
                     </div>
@@ -193,7 +205,7 @@
                     <div class="team-grid">
                         {% for barber in barbers %}
                             <div class="team-card">
-                                <div class="team-avatar" style="background-color: #1a2a3a; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; color: white; font-weight: bold; font-size: 1.2rem; width: 80px; height: 80px; margin: 0 auto 15px;">
+                                <div class="team-avatar" style="background-color: #1a2a3a; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; color: white; font-weight: bold; font-size: 1.2rem; width: 80px; height: 80px; margin: 0 auto 15px; border: 2px solid #ED8936;">
                                     {% if barber.user.photo %}
                                         <img src="{{ barber.user.photo.url }}" alt="{{ barber.user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
                                     {% else %}
@@ -206,17 +218,20 @@
                                     <p class="specialty" style="color: #FF7A00; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px;">
                                         {{ barber.specialty|default:"Barbeiro Profissional" }}
                                     </p>
-                                    <p class="bio" style="font-size: 0.85rem; color: #ccc;">
+                                    <p class="bio" style="font-size: 0.85rem; color: #718096;">
                                         {{ barber.bio|default:"" }}
                                     </p>
                                 </div>
                             </div>
+                        {% empty %}
+                            <p style="text-align: center; color: #a0aec0; width: 100%;">Ainda não há profissionais visíveis para esta unidade.</p>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </section>
 
+        {% if hairstyles or products %}
         <section class="gallery-section">
             <div class="section-title">
                 <h2>GALERIA</h2>
@@ -224,22 +239,24 @@
             </div>
             
             <div class="btnArea">
+                {% if hairstyles %}
                 <button class="btnFoto ativo" onclick="mostrarGaleria('cortes')">
                     <i class="fas fa-cut"></i>
                     <p class="btnText">CORTES</p>
                 </button>
+                {% endif %}
                 
+                {% if products %}
                 <button class="btnFoto" onclick="mostrarGaleria('produtos')">
                     <i class="fas fa-shopping-bag"></i>
                     <p class="btnText">PRODUTOS</p>
                 </button>
+                {% endif %}
             </div>
             
             <div class="carouselContainer">
                 <button class="arrow left" onclick="scrollCarousel(-1)">‹</button>
-                
                 <div class="carousel" id="carousel"></div>
-                
                 <button class="arrow right" onclick="scrollCarousel(1)">›</button>
             </div>
 
@@ -250,6 +267,7 @@
                 {% for p in products %}<img src="{{ p.image.url }}">{% endfor %}
             </div>
         </section>
+        {% endif %}
 
         <section class="location" id="location">
             <div class="container">
@@ -259,7 +277,10 @@
                 <div class="location-container">
                     <div class="location-info">
                         <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
-                        <p class="loc-desc"><i class="fas fa-info-circle"></i> Venha conhecer nossa unidade em {{ unit.city }}. Oferecemos um ambiente exclusivo com localização privilegiada e fácil acesso para sua total comodidade.</p>
+                        <p class="loc-desc" style="display: flex; align-items: flex-start; gap: 10px;">
+                            <i class="fas fa-info-circle" style="font-size: 1rem; color: #FF7A00; margin-top: 2px;"></i> 
+                            <span style="font-size: 1rem;">Venha conhecer nossa unidade em {{ unit.city|default:"sua cidade" }}. Oferecemos um ambiente exclusivo com localização privilegiada e fácil acesso para sua total comodidade.</span>
+                        </p>
                         
                         <div class="hours">
                             <h4><i class="far fa-clock"></i> HORÁRIOS DE FUNCIONAMENTO</h4>
@@ -277,11 +298,11 @@
                             <h4><i class="fas fa-map-pin"></i> ENDEREÇO</h4>
                             <div class="address-item">
                                 <i class="fas fa-road"></i>
-                                <p>{{ unit.street_address }}, {{ unit.number_address }}</p>
+                                <p>{{ unit.street_address|default:"Endereço" }}, {{ unit.number_address|default:"S/N" }}</p>
                             </div>
                             <div class="address-item">
                                 <i class="fas fa-city"></i>
-                                <p>{{ unit.neighborhood }}, {{ unit.city }} - {{ unit.state }}</p>
+                                <p>{{ unit.neighborhood|default:"Bairro" }}, {{ unit.city|default:"Cidade" }} - {{ unit.state|default:"UF" }}</p>
                             </div>
                         </div>
                     </div>
@@ -296,22 +317,19 @@
         </section>
     </main>
 
-    <footer>
-        <div class="social-links">
-            {% if unit.instagram_link %}<a href="{{ unit.instagram_link }}"><i class="fab fa-instagram"></i> Instagram</a>{% endif %}
-            {% if unit.whatsapp_number %}<a href="https://wa.me/{{ unit.whatsapp_number }}"><i class="fab fa-whatsapp"></i> WhatsApp</a>{% endif %}
+    <footer style="background: #1a202c; padding: 30px 20px; text-align: center; color: #a0aec0; border-top: 4px solid #ED8936;">
+        <div class="social-links" style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
+            {% if unit.instagram_link %}<a href="{{ unit.instagram_link }}" style="color: #fff; font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-instagram"></i></a>{% endif %}
+            {% if unit.whatsapp_number %}<a href="https://wa.me/55{{ unit.whatsapp_number }}" style="color: #fff; font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-whatsapp"></i></a>{% endif %}
         </div>
-        <div class="copyright">
-            © 2026 OrblyCode. Todos os direitos reservados.
+        <div class="copyright" style="font-size: 0.9rem;">
+            © 2026 Orbly Barber Solutions. Todos os direitos reservados.
         </div>
     </footer>
 
-    <!-- ========================================== -->
-    <!-- MODAL INTERCEPTADOR DE AUTENTICAÇÃO        -->
-    <!-- ========================================== -->
     <div class="modal" id="authPromptModal" aria-hidden="true" style="display: none; z-index: 9999;">
         <div class="modal-content">
-            <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">&times;</button>
+            <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">×</button>
             <div class="icon-wrapper">
                 <i class="fas fa-calendar-check"></i>
             </div>
@@ -329,10 +347,10 @@
             {% endif %}
         </div>
     </div>
-    <!-- Modal "Meu Agendamento" (Cancelamento) -->
+
     <div class="modal" id="appointmentsModal" aria-hidden="true" style="display: none; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);">
         <div class="modal-content" style="background: #2D3748; border-radius: 12px; padding: 30px; max-width: 400px; color: #F7FAFC; border: 1px solid rgba(255,255,255,0.1); margin: 10% auto; position: relative;">
-            <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">&times;</button>
+            <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">×</button>
             
             <h2 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items:center; gap: 10px;">
                 <i class="fas fa-calendar-alt" style="color: #ED8936;"></i> Meu Agendamento
@@ -356,19 +374,19 @@
             {% endif %}
         </div>
     </div>
-    <!-- Modal de Login -->
+
     <div class="modal modal-login" id="loginModal" aria-hidden="true" style="display: none;">
         <div class="modal-content login-modal-content">
             <div class="modal-header">
                 <h2 id="loginModalTitle"><i class="fas fa-sign-in-alt"></i> Login</h2>
-                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+                <button class="close-modal" aria-label="Fechar modal">×</button>
             </div>
             <form id="loginForm" method="POST">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="loginCpf">CPF</label>
-                        <input type="text" id="loginCpf" required placeholder="Somente números" maxlength="14">
+                        <input type="text" id="loginCpf" required placeholder="Apenas números" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
                     </div>
                     <div class="form-group password-container">
                         <label for="loginPassword">Senha</label>
@@ -386,12 +404,11 @@
         </div>
     </div>
 
-    <!-- Modal de Registro -->
     <div class="modal modal-register" id="registerModal" aria-hidden="true" style="display: none;">
         <div class="modal-content register-modal-content">
             <div class="modal-header">
                 <h2 id="registerModalTitle"><i class="fas fa-user-plus"></i> Criar Conta</h2>
-                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+                <button class="close-modal" aria-label="Fechar modal">×</button>
             </div>
             <form id="registerForm" method="POST" autocomplete="off">
                 {% csrf_token %}
@@ -406,11 +423,11 @@
                     </div>
                     <div class="form-group">
                         <label for="registerCpf">CPF (somente números)</label>
-                        <input type="text" id="registerCpf" pattern="\d{11}" maxlength="11" required inputmode="numeric">
+                        <input type="text" id="registerCpf" pattern="\d{11}" maxlength="11" required inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
                     </div>
                     <div class="form-group">
                         <label for="registerPhone">Telefone (DDD + 9 dígitos)</label>
-                        <input type="tel" id="registerPhone" pattern="[0-9]{11}" maxlength="11" required>
+                        <input type="tel" id="registerPhone" pattern="[0-9]{11}" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')">
                     </div>
                     <div class="form-group password-container">
                         <label for="registerPassword">Senha</label>
@@ -434,12 +451,11 @@
         </div>
     </div>
 
-    <!-- Modal de Agendamento -->
     <div class="modal modal-schedule" id="scheduleModal" aria-hidden="true" style="display: none;">
         <div class="modal-content schedule-modal-content">
             <div class="modal-header">
                 <h2 id="scheduleModalTitle"><i class="fas fa-cut"></i> Agendar Horário</h2>
-                <button class="close-modal" aria-label="Fechar modal">&times;</button>
+                <button class="close-modal" aria-label="Fechar modal">×</button>
             </div>
 
             <div class="progress-indicator">
@@ -466,7 +482,6 @@
                 <div id="stepBarber" class="step-content" style="display: none;">
                     <h3 class="barber-selection-title">Escolha seu barbeiro</h3>
                     <div class="barber-grid" id="dynamicBarberGrid">
-                        <!-- Preenchido via JS -->
                         <p style="text-align: center; color: #7f8c8d; width: 100%;">Selecione uma unidade primeiro.</p>
                     </div>
                     <input type="hidden" id="barberSelect" required>
@@ -482,7 +497,7 @@
                 <div id="stepDatetime" class="step-content" style="display: none;">
                     <div class="form-group">
                         <label for="appointmentDate"><i class="far fa-calendar-alt"></i> Escolha a Data</label>
-                        <input type="date" id="appointmentDate" min="" required style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; width: 100%;">
+                        <input type="date" id="appointmentDate" min="{{ today|date:'Y-m-d' }}" required style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; width: 100%;">
                     </div>
                     
                     <div class="form-group">
@@ -494,22 +509,22 @@
                 </div>
                 
                 <div id="stepConfirm" class="step-content" style="display: none;">
-                    <h3><i class="fas fa-clipboard-check"></i> Resumo do Agendamento</h3>
-                    <div class="appointment-summary" style="margin-bottom: 20px;">
-                        <p><strong><i class="fas fa-store"></i> Local:</strong> <span id="summaryLocation"></span></p>
-                        <p><strong><i class="fas fa-user-tie"></i> Barbeiro:</strong> <span id="summaryBarber"></span></p>
-                        <p><strong><i class="fas fa-cut"></i> Serviço:</strong> <span id="summaryService"></span></p>
-                        <p><strong><i class="far fa-calendar-alt"></i> Data e Hora:</strong> <span id="summaryDatetime"></span></p>
+                    <h3><i class="fas fa-clipboard-check" style="color: #ED8936;"></i> Resumo do Agendamento</h3>
+                    <div class="appointment-summary" style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eaecef;">
+                        <p style="margin-bottom: 8px;"><strong><i class="fas fa-store" style="color: #4a5568; width: 20px;"></i> Local:</strong> <span id="summaryLocation"></span></p>
+                        <p style="margin-bottom: 8px;"><strong><i class="fas fa-user-tie" style="color: #4a5568; width: 20px;"></i> Barbeiro:</strong> <span id="summaryBarber"></span></p>
+                        <p style="margin-bottom: 8px;"><strong><i class="fas fa-cut" style="color: #4a5568; width: 20px;"></i> Serviço:</strong> <span id="summaryService"></span></p>
+                        <p style="margin-bottom: 0;"><strong><i class="far fa-calendar-alt" style="color: #4a5568; width: 20px;"></i> Data/Hora:</strong> <span id="summaryDatetime" style="color: #ED8936; font-weight: bold;"></span></p>
                     </div>
                     
-                    <div class="cancellation-policy" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
-                        <h4 style="margin-bottom: 10px;">Política de Cancelamento:</h4>
-                        <ul style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px; padding-left: 20px;">
+                    <div class="cancellation-policy" style="background: #fffaf0; padding: 15px; border-radius: 8px; border: 1px dashed #fbd38d;">
+                        <h4 style="margin-bottom: 10px; color: #dd6b20;">Política de Cancelamento:</h4>
+                        <ul style="font-size: 0.85rem; color: #718096; margin-bottom: 15px; padding-left: 20px;">
                             <li>Cancelamentos devem ser feitos com antecedência pelo sistema.</li>
                             <li>Faltas sem aviso prévio podem resultar em restrição de conta.</li>
                         </ul>
-                        <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer;">
-                            <input type="checkbox" id="acceptPolicy" required> Eu li e concordo com as políticas
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: bold; cursor: pointer; color: #2d3748;">
+                            <input type="checkbox" id="acceptPolicy" required> Eu li e concordo
                         </label>
                     </div>
                 </div>
@@ -522,7 +537,28 @@
         </div>
     </div>
 
-    <!-- Scripts do Sistema -->
+    <script>
+        window.alert = function(message) {
+            let iconType = 'warning';
+            let title = 'Aviso';
+            
+            if(message.toLowerCase().includes('sucesso') || message.toLowerCase().includes('concluído')) {
+                iconType = 'success';
+                title = 'Sucesso!';
+            } else if (message.toLowerCase().includes('erro') || message.toLowerCase().includes('falha') || message.toLowerCase().includes('inválido')) {
+                iconType = 'error';
+                title = 'Ops...';
+            }
+
+            Swal.fire({
+                title: title,
+                text: message,
+                icon: iconType,
+                confirmButtonColor: '#ED8936',
+                confirmButtonText: 'Entendi'
+            });
+        };
+    </script>
     
     <script src="{% static 'barbershop/js/UnitLP/auth-system.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/schedule-modal.js' %}"></script>
