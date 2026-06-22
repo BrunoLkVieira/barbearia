@@ -25,6 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const hoursContainer = document.querySelector('.location-container');
     if (hoursContainer) {
         hoursContainer.style.height = 'auto';
-        hoursContainer.style.minHeight = '450px'; // Mantém uma altura mínima estética
+        hoursContainer.style.minHeight = '450px'; 
     }
 });

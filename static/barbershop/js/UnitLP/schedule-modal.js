@@ -13,10 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const BARBERSHOP_SLUG = window.location.pathname.split('/')[1];
 
-    // Impede o usuário de selecionar um dia no passado no Input Date
-    const today = new Date().toLocaleDateString('en-CA').split('/').join('-');
-    if (dateInput) dateInput.min = today;
-
     let bookingCache = {
         unit_id: null,
         barber_id: null,
@@ -164,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 3. Listener do Calendário -> Consulta Horários (Dinamico e protegido contra Double Booking)
+    // 3. Listener do Calendário -> Consulta Horários
     if (dateInput) {
         dateInput.addEventListener('change', async function() {
             bookingCache.date = this.value;
@@ -250,17 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentStep = document.querySelector('.progress-step.active').dataset.step;
             const currentIndex = stepsOrder.indexOf(currentStep);
 
-            if (currentStep === 'location' && (!bookingCache.unit_id || bookingCache.unit_id === "")) return alert("Selecione uma unidade para continuar.");
-            if (currentStep === 'barber' && !bookingCache.barber_id) return alert("Selecione o profissional de sua preferência.");
-            if (currentStep === 'service' && bookingCache.service_id.length === 0) return alert("Clique em pelo menos um serviço que deseja realizar.");
+            if (currentStep === 'location' && (!bookingCache.unit_id || bookingCache.unit_id === "")) return window.alert("Selecione uma unidade para continuar.");
+            if (currentStep === 'barber' && !bookingCache.barber_id) return window.alert("Selecione o profissional de sua preferência.");
+            if (currentStep === 'service' && bookingCache.service_id.length === 0) return window.alert("Clique em pelo menos um serviço que deseja realizar.");
             
             if (currentStep === 'datetime') {
-                if (!bookingCache.date) return alert("Por favor, selecione uma data no calendário.");
-                if (!bookingCache.time) return alert("Por favor, selecione um dos horários disponíveis.");
+                if (!bookingCache.date) return window.alert("Por favor, selecione uma data no calendário.");
+                if (!bookingCache.time) return window.alert("Por favor, selecione um dos horários disponíveis.");
             }
 
             if (currentStep === 'confirm') {
-                if (!document.getElementById('acceptPolicy').checked) return alert("É necessário aceitar as políticas de cancelamento para prosseguir.");
+                if (!document.getElementById('acceptPolicy').checked) return window.alert("É necessário aceitar as políticas de cancelamento para prosseguir.");
 
                 const payload = {
                     unit_id: bookingCache.unit_id,
@@ -284,16 +280,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     const result = await res.json();
                     
-                    if (res.ok) {
-                        alert('Agendamento confirmado com sucesso! Te esperamos lá.');
-                        window.location.reload(); 
+                    if (res.ok && result.status === 'success') {
+                        window.Toast.fire({ icon: 'success', title: 'Agendamento confirmado com sucesso! Te esperamos lá.' });
+                        setTimeout(() => window.location.reload(), 2000); 
                     } else {
-                        alert(result.message);
+                        window.Toast.fire({ icon: 'error', title: result.message || 'Erro ao agendar' });
                         btn.disabled = false;
                         btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Agendamento';
                     }
                 } catch (err) {
-                    alert("Falha de comunicação com o servidor.");
+                    window.Toast.fire({ icon: 'error', title: 'Falha de comunicação com o servidor.' });
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-check-circle"></i> Confirmar Agendamento';
                 }

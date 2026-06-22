@@ -14,7 +14,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Count, Sum, Min, Case, When, Value, IntegerField
-from django.utils.timezone import now
+from django.utils.timezone import localdate, localtime, now
 from django.contrib.auth import authenticate, login, logout as auth_logout, get_user_model
 from django.views.decorators.http import require_POST, require_GET
 
@@ -137,7 +137,6 @@ def update_user_system_access(user):
 def UnitView(request, barbershop_slug):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
-    # ORDENAÇÃO: Ativos primeiro, depois por nome
     units = Unit.objects.filter(barbershop=barbershop).annotate(employee_count=Count('employees')).order_by('-is_active', 'name')
     active_units_count = units.filter(is_active=True).count()
     gerente_unit = get_user_unit_if_manager(request.user, barbershop)
@@ -147,7 +146,6 @@ def UnitView(request, barbershop_slug):
         name = request.POST.get("name", "").strip()
 
         if action == "create":
-            # TRAVA DE LIMITE SAAS
             if units.count() >= barbershop.max_units:
                 return JsonResponse({'is_valid': False, 'errors': [f'Limite atingido! O plano atual permite operar até {barbershop.max_units} unidade(s).']}, status=400)
 
@@ -197,7 +195,6 @@ def UnitView(request, barbershop_slug):
     return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit})
 
 
-
 @login_required
 @owner_or_gerente_required
 def EmployeeView(request, barbershop_slug, unit_slug=None):
@@ -221,7 +218,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     owner_employee = Employee.objects.filter(user=barbershop.owner_user, unit__barbershop=barbershop).first()
     owner_in_list = base_employees.filter(user=barbershop.owner_user).first()
     
-    # ORDENAÇÃO HEAVY MODELS (Banco de Dados): Gerente > Caixa > Barbeiro > Nenhum
     regular_employees = base_employees.exclude(user=barbershop.owner_user).annotate(
         role_priority=Min(
             Case(
@@ -303,7 +299,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             emp_id = request.POST.get("employee_id")
             emp_target = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
             
-            # BLINDAGEM: Gerente não edita o dono nem a si mesmo.
             if not is_owner:
                 if emp_target.user == barbershop.owner_user:
                     messages.error(request, "Ação negada: Você não tem permissão para editar os dados do Titular.")
@@ -446,7 +441,6 @@ def check_employee_data(request):
 
     cpf_digits = re.sub(r'\D', '', data['cpf'])
     
-    # --- NOVA TRAVA: VALIDAÇÃO DE 11 DÍGITOS ---
     if len(cpf_digits) != 11:
         errors.append("CPF Inválido: O CPF deve conter exatamente 11 números.")
     
@@ -847,9 +841,6 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
     return render(request, "barbershop/unitLP.html", context)
 
 
-
-
-
 # =========================================================
 # APIs ASYNC DA LANDING PAGE (ISOLADAS DO CORE)
 # =========================================================
@@ -868,23 +859,26 @@ def api_login(request, barbershop_slug):
         if user is not None:
             login(request, user)
             
-            barbershop = Barbershop.objects.get(slug=barbershop_slug)
+            try:
+                barbershop = Barbershop.objects.get(slug=barbershop_slug)
+                client = Client.objects.filter(user=user, barbershop=barbershop).first()
+                
+                if not client:
+                    first_n = user.name.split()[0] if user.name else "Cliente"
+                    last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
+                    
+                    Client.objects.create(
+                        user=user, 
+                        barbershop=barbershop,
+                        first_name=first_n,
+                        last_name=last_n,
+                        email=user.email,
+                        phone=user.phone,
+                        cpf=user.cpf
+                    )
+            except Exception as e:
+                print(f"[Aviso Orbly] Falha ao gerar perfil Client on-the-fly: {e}")
             
-            # Garante a criação segura manipulando nomes vazios
-            first_n = user.name.split()[0] if user.name else ""
-            last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
-            
-            Client.objects.get_or_create(
-                user=user, 
-                barbershop=barbershop,
-                defaults={
-                    'first_name': first_n,
-                    'last_name': last_n,
-                    'email': user.email,
-                    'phone': user.phone,
-                    'cpf': user.cpf
-                }
-            )
             return JsonResponse({'status': 'success'})
         else:
             return JsonResponse({'status': 'error', 'message': 'CPF ou senha incorretos. Tente novamente.'}, status=401)
@@ -920,7 +914,7 @@ def api_register(request, barbershop_slug):
         )
         
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
-        first_n = name.split()[0] if name else ""
+        first_n = name.split()[0] if name else "Cliente"
         last_n = " ".join(name.split()[1:]) if name and len(name.split()) > 1 else ""
         
         Client.objects.create(
@@ -957,7 +951,6 @@ def api_cancel_appointment(request, barbershop_slug):
             barbershop__slug=barbershop_slug,
             status='scheduled'
         )
-        # CORREÇÃO DO STATUS PARA O PADRÃO DO BANCO
         appointment.status = 'cancelled'
         appointment.save()
         return JsonResponse({'status': 'success'})
@@ -976,8 +969,7 @@ def process_booking_api(request, barbershop_slug):
         data = json.loads(request.body)
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
         
-        # CORREÇÃO DE VÍNCULO: Se o usuário logou pela rede mas nunca agendou aqui, cria o Client na hora!
-        first_n = request.user.name.split()[0] if request.user.name else ""
+        first_n = request.user.name.split()[0] if request.user.name else "Cliente"
         last_n = " ".join(request.user.name.split()[1:]) if request.user.name and len(request.user.name.split()) > 1 else ""
         
         client, created = Client.objects.get_or_create(
@@ -1059,8 +1051,6 @@ def api_get_services(request, barbershop_slug):
     data = []
     for s in services:
         icon_str = s.base_service.icon if s.base_service and s.base_service.icon else 'fas fa-cut'
-        
-        # Correção de fallback para garantir compatibilidade com FontAwesome 6
         if not icon_str.startswith('fa'):
             icon_str = f'fas {icon_str}'
         elif not icon_str.startswith('fas ') and not icon_str.startswith('fab '):
@@ -1093,6 +1083,15 @@ def api_get_available_times(request, barbershop_slug):
         return JsonResponse({'slots': []})
 
     try:
+        # Pega a data e hora local exata (Respeitando o fuso horário do Brasil)
+        current_local_dt = localtime(now())
+        current_local_date = current_local_dt.date()
+        current_local_time = current_local_dt.time()
+
+        # Bloqueia clientes de agendarem em dias que já passaram
+        if target_date < current_local_date:
+            return JsonResponse({'slots': []})
+
         db_weekday = (target_date.weekday() + 1) % 7 
         employee = get_object_or_404(Employee, id=barber_id)
 
@@ -1112,7 +1111,7 @@ def api_get_available_times(request, barbershop_slug):
         except EmployeeWorkDay.DoesNotExist:
             return JsonResponse({'slots': []})
 
-        # --- BUGFIX RESOLVIDO AQUI: Blindagem da Query e Mapeamento de Horários ---
+        # --- Blindagem da Query e Mapeamento de Horários ---
         appointments = Appointment.objects.filter(
             employee=employee, date=target_date
         ).exclude(status__in=['cancelado', 'Cancelado', 'canceled', 'cancelled']).prefetch_related('services__service')
@@ -1122,7 +1121,6 @@ def api_get_available_times(request, barbershop_slug):
             if not appt.time: continue
             app_start = datetime.combine(target_date, appt.time)
             
-            # Cálculo cirúrgico do tempo de duração do agendamento 
             app_duration = 0
             for s in appt.services.all():
                 if s.service:
@@ -1134,7 +1132,6 @@ def api_get_available_times(request, barbershop_slug):
             booked_periods.append((app_start, app_end))
 
         available_slots = []
-        now_time = datetime.now() 
 
         def generate_slots(start_t, end_t):
             if not start_t or not end_t: return
@@ -1152,7 +1149,11 @@ def api_get_available_times(request, barbershop_slug):
                         break
                         
                 if not conflict:
-                    if curr >= now_time: 
+                    # Se for o dia de HOJE, só permite horários que ainda não passaram
+                    if target_date == current_local_date:
+                        if curr.time() >= current_local_time: 
+                            available_slots.append(curr.strftime('%H:%M'))
+                    else:
                         available_slots.append(curr.strftime('%H:%M'))
                 
                 # O Pulo da Grade: Mantém a barra em 30 min, gerando respiro caso existam quebras.

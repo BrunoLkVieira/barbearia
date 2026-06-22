@@ -37,11 +37,15 @@
     </script>
     
     <style>
+        /* Força o SweetAlert a ficar ACIMA de todos os modais da página */
+        .swal2-container-high-z {
+            z-index: 999999 !important;
+        }
         .swal2-container {z-index: 99999 !important;}
         
         /* Blur do Hero para destacar Logo e Texto */
         .hero-content-wrapper {
-            backdrop-filter: blur(2px);
+            backdrop-filter: blur(8px);
             background: rgba(0, 0, 0, 0.45);
             padding: 30px 40px;
             border-radius: 16px;
@@ -54,7 +58,7 @@
 
         #authPromptModal { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
         #authPromptModal .modal-content { background: #2D3748; border-radius: 12px; padding: 40px 25px; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); position: relative; text-align: center; }
-        #authPromptModal .close-modal, #appointmentsModal .close-modal { position: absolute; top: 15px; right: 20px; color: #A0AEC0; font-size: 1.5rem; background: none; border: none; cursor: pointer; transition: color 0.2s; }
+        #authPromptModal .close-modal, #appointmentsModal .close-modal, #cancelConfirmModal .close-modal { position: absolute; top: 15px; right: 20px; color: #A0AEC0; font-size: 1.5rem; background: none; border: none; cursor: pointer; transition: color 0.2s; }
         #authPromptModal .icon-wrapper { display: inline-flex; align-items: center; justify-content: center; width: 70px; height: 70px; background: rgba(237, 137, 54, 0.15); border-radius: 50%; margin-bottom: 20px; }
         #authPromptModal .icon-wrapper i { font-size: 2.2rem; color: #ED8936; }
         #authPromptModal h2 { color: #F7FAFC; margin-bottom: 12px; font-size: 1.6rem; font-weight: 700; }
@@ -99,8 +103,9 @@
     <header>
         <div class="header-container">
             <div class="logo">
-    
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Orbly" class="logo-img">
+                
+                    <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="Logo Orbly" class="logo-img">
+                
             
                 <div class="logo-content">
                     <h1>{{ barbershop.name }}</h1>
@@ -278,7 +283,7 @@
                     <div class="location-info">
                         <h3><i class="fas fa-cut"></i> Venha nos visitar</h3>
                         <p class="loc-desc" style="display: flex; align-items: flex-start; gap: 10px;">
-                            <i class="fas fa-info-circle" style="font-size: 1rem; color: #FF7A00; margin-top: 2px;"></i> 
+                            <i class="fas fa-info-circle" style="font-size: 1.8rem; color: #FF7A00; margin-top: 2px;"></i> 
                             <span style="font-size: 1rem;">Venha conhecer nossa unidade em {{ unit.city|default:"sua cidade" }}. Oferecemos um ambiente exclusivo com localização privilegiada e fácil acesso para sua total comodidade.</span>
                         </p>
                         
@@ -348,6 +353,7 @@
         </div>
     </div>
 
+    <!-- Modal "Meu Agendamento" -->
     <div class="modal" id="appointmentsModal" aria-hidden="true" style="display: none; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);">
         <div class="modal-content" style="background: #2D3748; border-radius: 12px; padding: 30px; max-width: 400px; color: #F7FAFC; border: 1px solid rgba(255,255,255,0.1); margin: 10% auto; position: relative;">
             <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">×</button>
@@ -363,7 +369,7 @@
                     <p style="margin-bottom: 8px; font-size: 0.95rem;"><strong>Unidade:</strong> {{ active_appointment.unit.name }}</p>
                     <p style="margin-bottom: 0; font-size: 0.95rem;"><strong>Status:</strong> <span style="color: #48BB78; font-weight: 600;">Confirmado</span></p>
                 </div>
-                <button class="btn-prompt" style="background: #E53E3E; color: white;" onclick="window.cancelAppointment({{ active_appointment.id }})">
+                <button class="btn-prompt" style="background: #E53E3E; color: white;" onclick="window.openCancelModal({{ active_appointment.id }})">
                     <i class="fas fa-times-circle"></i> Cancelar Agendamento
                 </button>
             {% else %}
@@ -375,6 +381,26 @@
         </div>
     </div>
 
+    <!-- Modal Nativo de Confirmação de Cancelamento -->
+    <div class="modal" id="cancelConfirmModal" aria-hidden="true" style="display: none; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);">
+        <div class="modal-content" style="background: #2D3748; border-radius: 12px; padding: 30px; max-width: 400px; color: #F7FAFC; border: 1px solid rgba(255,255,255,0.1); margin: 10% auto; position: relative; text-align: center;">
+            <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">×</button>
+            
+            <div class="icon-wrapper" style="display: inline-flex; align-items: center; justify-content: center; width: 70px; height: 70px; background: rgba(229, 62, 62, 0.15); border-radius: 50%; margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2.2rem; color: #E53E3E;"></i>
+            </div>
+            
+            <h2 style="margin-bottom: 12px; font-size: 1.6rem; font-weight: 700;">Cancelar Agendamento?</h2>
+            <p style="color: #A0AEC0; margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5;">Deseja realmente cancelar este horário? Esta ação não pode ser desfeita.</p>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-prompt" style="background: #718096; color: white; flex: 1;" onclick="document.getElementById('cancelConfirmModal').style.display='none'">Voltar</button>
+                <button class="btn-prompt" id="confirmCancelBtn" style="background: #E53E3E; color: white; flex: 1;" onclick="window.executeCancel()">Sim, cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Login -->
     <div class="modal modal-login" id="loginModal" aria-hidden="true" style="display: none;">
         <div class="modal-content login-modal-content">
             <div class="modal-header">
@@ -404,6 +430,7 @@
         </div>
     </div>
 
+    <!-- Modal de Registro -->
     <div class="modal modal-register" id="registerModal" aria-hidden="true" style="display: none;">
         <div class="modal-content register-modal-content">
             <div class="modal-header">
@@ -451,6 +478,7 @@
         </div>
     </div>
 
+    <!-- Modal de Agendamento -->
     <div class="modal modal-schedule" id="scheduleModal" aria-hidden="true" style="display: none;">
         <div class="modal-content schedule-modal-content">
             <div class="modal-header">
@@ -497,7 +525,7 @@
                 <div id="stepDatetime" class="step-content" style="display: none;">
                     <div class="form-group">
                         <label for="appointmentDate"><i class="far fa-calendar-alt"></i> Escolha a Data</label>
-                        <input type="date" id="appointmentDate" min="{{ today|date:'Y-m-d' }}" required style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; width: 100%;">
+                        <input type="date" id="appointmentDate" required style="margin-bottom: 15px; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e0; width: 100%;">
                     </div>
                     
                     <div class="form-group">
@@ -538,24 +566,87 @@
     </div>
 
     <script>
-        window.alert = function(message) {
-            let iconType = 'warning';
-            let title = 'Aviso';
-            
-            if(message.toLowerCase().includes('sucesso') || message.toLowerCase().includes('concluído')) {
-                iconType = 'success';
-                title = 'Sucesso!';
-            } else if (message.toLowerCase().includes('erro') || message.toLowerCase().includes('falha') || message.toLowerCase().includes('inválido')) {
-                iconType = 'error';
-                title = 'Ops...';
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('appointmentDate');
+            if(dateInput) {
+                const localToday = new Date();
+                const yyyy = localToday.getFullYear();
+                const mm = String(localToday.getMonth() + 1).padStart(2, '0');
+                const dd = String(localToday.getDate()).padStart(2, '0');
+                dateInput.min = `${yyyy}-${mm}-${dd}`;
             }
+        });
 
-            Swal.fire({
-                title: title,
-                text: message,
-                icon: iconType,
-                confirmButtonColor: '#ED8936',
-                confirmButtonText: 'Entendi'
+        // 1. TOAST GLOBAL 
+        window.Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            background: '#2D3748',
+            color: '#F7FAFC',
+            customClass: {
+                container: 'swal2-container-high-z' 
+            }
+        });
+
+        // 2. INTERCEPTADOR DE ALERTA BLINDADO
+        window.alert = function(message) {
+            if (!message) return;
+            
+            let msgStr = String(message).toLowerCase(); 
+            let iconType = 'warning';
+            
+            if(msgStr.includes('sucesso') || msgStr.includes('concluído') || msgStr.includes('agendado') || msgStr.includes('realizado')) {
+                iconType = 'success';
+            } else if (msgStr.includes('erro') || msgStr.includes('falha') || msgStr.includes('inválido') || msgStr.includes('indisponível')) {
+                iconType = 'error';
+            }
+            
+            window.Toast.fire({ icon: iconType, title: String(message) });
+        };
+
+        // 3. FLUXO DE CANCELAMENTO (MODAL NATIVO + FETCH)
+        let appointmentToCancel = null;
+
+        window.openCancelModal = function(appointmentId) {
+            appointmentToCancel = appointmentId;
+            document.getElementById('appointmentsModal').style.display = 'none'; // Esconde modal info
+            document.getElementById('cancelConfirmModal').style.display = 'flex'; // Mostra modal native de confirmação
+        };
+
+        window.executeCancel = function() {
+            if (!appointmentToCancel) return;
+            
+            const btn = document.getElementById('confirmCancelBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+
+            fetch(`/${window.location.pathname.split('/')[1]}/api/appointment/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : ''
+                },
+                body: JSON.stringify({ appointment_id: appointmentToCancel })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    window.Toast.fire({ icon: 'success', title: 'Agendamento cancelado com sucesso!' });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    window.Toast.fire({ icon: 'error', title: data.message || 'Erro ao cancelar.' });
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            })
+            .catch(err => {
+                window.Toast.fire({ icon: 'error', title: 'Erro de conexão com o servidor.' });
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             });
         };
     </script>
