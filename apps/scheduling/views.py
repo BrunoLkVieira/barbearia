@@ -1,5 +1,6 @@
 import json
 import re
+import threading
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from django.utils.timezone import localdate, localtime, now
@@ -8,13 +9,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.db.models import Prefetch
 
 from apps.barbershop.models import Barbershop, Unit, Employee, Role, EmployeeWorkDay, EmployeeAbsence, UnitHoliday
 from apps.client.models import Client
 from apps.service.models import BarberService, BaseService 
 from apps.scheduling.models import Appointment, AppointmentService
+
+try:
+    from .utils import send_appointment_notification
+except ImportError:
+    send_appointment_notification = None
 
 def get_tenant_employee(user, barbershop):
     if user.is_authenticated:
@@ -162,6 +168,10 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     
                 appointment.total_price = total_price
                 appointment.save()
+
+                if action == "create_appointment" and send_appointment_notification:
+                    send_appointment_notification(appointment.id)
+
                 messages.success(request, msg)
                 
             elif action == "delete_appointment":
@@ -389,6 +399,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     barber_filter = request.GET.get('barber_filter', '')
     service_filter = request.GET.get('service_filter', '')
     status_filter = request.GET.get('status_filter', '')
+    search_query = request.GET.get('search', '').strip() # RECEBE O NOME DA URL AQUI
 
     appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service__base_service')
     
@@ -402,6 +413,16 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     if barber_filter: appointments = appointments.filter(employee_id=barber_filter)
     if service_filter: appointments = appointments.filter(services__service__base_service_id=service_filter)
     if status_filter: appointments = appointments.filter(status=status_filter)
+
+    # LÓGICA DE FILTRO VIA REDIRECIONAMENTO
+    if search_query:
+        search_terms = search_query.split()
+        for term in search_terms:
+            appointments = appointments.filter(
+                Q(client__first_name__icontains=term) |
+                Q(client__last_name__icontains=term) |
+                Q(client__phone__icontains=term)
+            )
 
     appointments = appointments.distinct().order_by('-date', '-time') 
 
@@ -427,7 +448,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     context = {
         'barbershop': barbershop, 'units': units, 'current_unit': current_unit, 'page_obj': page_obj,
         'date_filter': date_filter, 'month_filter': month_filter, 'barber_filter': barber_filter,
-        'service_filter': service_filter, 'status_filter': status_filter,
+        'service_filter': service_filter, 'status_filter': status_filter, 'search_query': search_query,
         'total_filtered_appointments': total_filtered_appointments, 'total_filtered_revenue': total_filtered_revenue,
         'employees': barbers_list, 'filter_services': filter_services,
         'clients_list': clients_list, 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber,
@@ -491,7 +512,11 @@ def get_available_slots(request):
     try: target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError: return JsonResponse({'slots': []})
 
-    if not allow_past and target_date < localdate(): return JsonResponse({'slots': []})
+    current_local_dt = localtime(now())
+    current_local_date = current_local_dt.date()
+    current_local_time = current_local_dt.time()
+
+    if not allow_past and target_date < current_local_date: return JsonResponse({'slots': []})
 
     if UnitHoliday.objects.filter(unit=emp.unit, date=target_date).exists():
         return JsonResponse({'slots': []})
@@ -517,7 +542,6 @@ def get_available_slots(request):
         booked_intervals.append((app_start, app_end))
 
     slots = []
-    current_local_time = localtime(now()).time()
 
     def generate_for_period(start_time, end_time):
         if not start_time or not end_time: return
@@ -527,18 +551,18 @@ def get_available_slots(request):
         while curr + timedelta(minutes=duration) <= end:
             slot_end = curr + timedelta(minutes=duration)
             
-            if not allow_past and target_date == localdate() and curr.time() <= current_local_time:
-                curr += timedelta(minutes=30)
-                continue
-                
             conflict = any(max(curr, b_start) < min(slot_end, b_end) for b_start, b_end in booked_intervals)
             
             if not conflict:
-                slots.append(curr.strftime('%H:%M'))
+                if not allow_past and target_date == current_local_date:
+                    if curr.time() >= current_local_time:
+                        slots.append(curr.strftime('%H:%M'))
+                else:
+                    slots.append(curr.strftime('%H:%M'))
             
             curr += timedelta(minutes=30)
 
     if workday.morning_available: generate_for_period(workday.start_morning_work, workday.end_morning_work)
     if workday.afternoon_available: generate_for_period(workday.start_afternoon_work, workday.end_afternoon_work)
 
-    return JsonResponse({'slots': slots})
+    return JsonResponse({'slots': sorted(list(set(slots)))})

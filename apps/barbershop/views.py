@@ -1180,3 +1180,41 @@ def api_get_available_times(request, barbershop_slug):
     except Exception as e:
         print(f"Erro Backend Orbly (Available Times): {e}") 
         return JsonResponse({'slots': []})
+    
+
+@transaction.atomic
+def confirm_online_booking(request, barbershop_slug):
+    """
+    View acionada pelo cliente final na Landing Page Pública ao confirmar a reserva.
+    """
+    tenant = get_object_or_404(Barbershop, slug=barbershop_slug)
+    global_user = request.user  # Usuário logado na plataforma global Orbly
+    
+    # 1. UPSERT INTELIGENTE: Busca pelo telefone (Vínculo Offline -> Online)
+    client, created = Client.objects.get_or_create(
+        barbershop=tenant,
+        phone=global_user.phone,
+        defaults={
+            'user': global_user,
+            'first_name': global_user.name.split()[0],
+            'last_name': " ".join(global_user.name.split()[1:]) if len(global_user.name.split()) > 1 else "",
+            'email': global_user.email,
+        }
+    )
+
+    # 2. Se o cliente foi achado (criado no balcão) mas ainda era "órfão" de conta online
+    if not created and client.user is None:
+        client.user = global_user
+        # Opcional: Atualizar dados caso o online seja mais completo que o do balcão
+        client.email = global_user.email 
+        client.save(update_fields=['user', 'email'])
+
+    # 3. Salva o agendamento apontando para o perfil unificado
+    appointment = Appointment.objects.create(
+        customer=global_user, # Histórico global
+        client=client,        # Histórico local do tenant (Unificado)
+        barbershop=tenant,
+        # ... time, date, employee, etc.
+    )
+    
+    return JsonResponse({'status': 'success', 'message': 'Agendamento confirmado!'})
