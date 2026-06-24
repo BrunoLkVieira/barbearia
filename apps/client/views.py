@@ -123,6 +123,7 @@ def ClientListView(request, barbershop_slug):
         'total_geral': total_geral,
         'is_owner': is_owner,
         'is_manager': is_manager,
+        
     }
     
     return render(request, 'client/clientes.html', context)

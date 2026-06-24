@@ -63,7 +63,15 @@
                 </select>
             </div>
             {% endif %}
-            
+            {% if not is_owner %}
+            <div class="stat-box" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
+                {% if current_unit %}
+                    {{ current_unit.name }}
+                {% else %}
+                    {{ request.user.employees.first.unit.name }}
+                {% endif %}
+            </div>
+            {% endif %}
             <div class="stat-box" title="Baseado nos filtros aplicados abaixo">
                 <div class="stat-value">{{ total_filtered_appointments }}</div>
                 <div class="stat-label">Agendamentos</div>

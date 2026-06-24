@@ -757,6 +757,7 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
         "media_banners": unit.media.filter(media_type="banner").order_by('order') if unit else [],
         "media_hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
         "media_products": unit.media.filter(media_type="product").order_by('order') if unit else [],
+        'active_tab': 'website',
     }
     return render(request, "barbershop/myWebsite.html", context)
 

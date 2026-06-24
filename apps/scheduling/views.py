@@ -236,7 +236,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
         'appointments': appointments, 'clients_list': clients_list, 'current_date': current_date, 'today': today,
         'total_appointments': total_appointments, 'total_revenue': total_revenue,
         'completed_appointments': completed_appointments, 'completed_revenue': completed_revenue,
-        'active_tab': 'agenda', 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber
+        'active_tab': 'schedule', 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber
     }
     return render(request, 'scheduling/agenda.html', context)
 
@@ -452,6 +452,7 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         'total_filtered_appointments': total_filtered_appointments, 'total_filtered_revenue': total_filtered_revenue,
         'employees': barbers_list, 'filter_services': filter_services,
         'clients_list': clients_list, 'is_owner': is_owner, 'is_manager': is_manager, 'is_cashier': is_cashier, 'is_barber': is_barber,
+        'active_tab': 'history',
     }
 
     return render(request, "scheduling/agendamentos.html", context)

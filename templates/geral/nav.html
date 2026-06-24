@@ -1,7 +1,7 @@
 <div class="nav-bar">
     <div class="nav-tabs">
-        <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'agenda' %}active{% endif %}"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-        <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'clientes' %}active{% endif %}"><i class="fas fa-users"></i> Clientes</div></a>
+        <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'schedule' %}active{% endif %}"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+        <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'clients' %}active{% endif %}"><i class="fas fa-users"></i> Clientes</div></a>
 
         <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}">
             <div class="nav-tab {% if active_tab == 'catalog' or 'servicos' in request.path %}active{% endif %}">
