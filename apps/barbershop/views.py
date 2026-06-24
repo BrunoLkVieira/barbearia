@@ -24,6 +24,7 @@ from apps.scheduling.models import Appointment, AppointmentService
 from apps.service.models import BarberService
 from apps.user.utils.validators import validate_user_data
 
+
 User = get_user_model()
 
 # ==========================================
@@ -857,30 +858,37 @@ def api_login(request, barbershop_slug):
             user = authenticate(request, cpf=cpf, password=password)
             
         if user is not None:
-            # 1. Realiza o login no sistema (Sessão garantida)
             login(request, user)
             
-            # 2. Tenta criar o vínculo do Client de forma isolada e segura
             try:
                 barbershop = Barbershop.objects.get(slug=barbershop_slug)
+                # Verifica se este User global já está vinculado à barbearia
                 client = Client.objects.filter(user=user, barbershop=barbershop).first()
                 
                 if not client:
-                    first_n = user.name.split()[0] if user.name else "Cliente"
-                    last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
-                    
-                    Client.objects.create(
-                        user=user, 
-                        barbershop=barbershop,
-                        first_name=first_n,
-                        last_name=last_n,
-                        email=user.email,
-                        phone=user.phone,
-                        cpf=user.cpf
-                    )
+                    # MERGE O2O: Busca cliente offline do balcão pelo telefone exato
+                    user_phone = re.sub(r'\D', '', user.phone) if user.phone else ""
+                    offline_client = Client.objects.filter(
+                        barbershop=barbershop, 
+                        phone__icontains=user_phone, 
+                        user__isnull=True
+                    ).first()
+
+                    if offline_client:
+                        # Associa a conta global ao cliente do balcão
+                        offline_client.user = user
+                        offline_client.email = user.email
+                        offline_client.cpf = user.cpf
+                        offline_client.save(update_fields=['user', 'email', 'cpf'])
+                    else:
+                        first_n = user.name.split()[0] if user.name else "Cliente"
+                        last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
+                        Client.objects.create(
+                            user=user, barbershop=barbershop, first_name=first_n,
+                            last_name=last_n, email=user.email, phone=user.phone, cpf=user.cpf
+                        )
             except Exception as e:
-                # Se falhar, loga o erro no console, mas NÃO derruba o login do usuário
-                print(f"[Aviso Orbly] Falha ao gerar perfil Client on-the-fly: {e}")
+                print(f"[Aviso Orbly] Falha ao unificar perfil Client no Login: {e}")
             
             return JsonResponse({'status': 'success'})
         else:
@@ -903,37 +911,110 @@ def api_register(request, barbershop_slug):
             return JsonResponse({'status': 'error', 'message': 'O CPF deve conter exatamente 11 dígitos.'}, status=400)
             
         if User.objects.filter(email=email).exists():
-            return JsonResponse({'status': 'error', 'message': 'Este e-mail já pertence a uma conta na rede Orbly. Por favor, faça login.'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Este e-mail já pertence a uma conta. Por favor, faça login.'}, status=400)
         if User.objects.filter(cpf=cpf).exists():
             return JsonResponse({'status': 'error', 'message': 'Este CPF já possui cadastro. Por favor, feche esta tela e faça Login.'}, status=400)
             
+        # 1. Cria a conta global Orbly
         user = User.objects.create_user(
-            cpf=cpf,
-            email=email,
-            password=password,
-            name=name,
-            phone=phone,
-            user_type='cliente'
+            cpf=cpf, email=email, password=password, name=name, phone=phone, user_type='cliente'
         )
         
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
-        first_n = name.split()[0] if name else "Cliente"
-        last_n = " ".join(name.split()[1:]) if name and len(name.split()) > 1 else ""
         
-        Client.objects.create(
-            user=user, 
-            barbershop=barbershop,
-            first_name=first_n,
-            last_name=last_n,
-            email=email,
-            phone=phone,
-            cpf=cpf
-        )
+        # 2. MERGE O2O: Verifica se a recepcionista já cadastrou o número no balcão
+        offline_client = Client.objects.filter(
+            barbershop=barbershop, 
+            phone__icontains=phone, 
+            user__isnull=True
+        ).first()
+
+        if offline_client:
+            # Funde o histórico do balcão com a nova conta online
+            offline_client.user = user
+            offline_client.email = email
+            offline_client.cpf = cpf
+            # Se o balcão só salvou o primeiro nome, atualizamos com o nome completo
+            if " " not in offline_client.first_name and " " in name:
+                offline_client.first_name = name.split()[0]
+                offline_client.last_name = " ".join(name.split()[1:])
+            offline_client.save()
+        else:
+            # Cliente 100% novo na barbearia
+            first_n = name.split()[0] if name else "Cliente"
+            last_n = " ".join(name.split()[1:]) if name and len(name.split()) > 1 else ""
+            Client.objects.create(
+                user=user, barbershop=barbershop, first_name=first_n,
+                last_name=last_n, email=email, phone=phone, cpf=cpf
+            )
         
         login(request, user)
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': 'Falha ao registrar. Verifique os dados e tente novamente.'}, status=400)
+
+
+@require_POST
+def process_booking_api(request, barbershop_slug):
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Sessão expirada. Faça login novamente.'}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        barbershop = Barbershop.objects.get(slug=barbershop_slug)
+        
+        # Como o Merge O2O já aconteceu no Login/Register, a query aqui é direta e limpa
+        client = Client.objects.filter(user=request.user, barbershop=barbershop).first()
+
+        # Fallback de integridade caso ocorra um descasamento de sessão
+        if not client:
+            user_phone = re.sub(r'\D', '', request.user.phone) if request.user.phone else ""
+            client = Client.objects.filter(barbershop=barbershop, phone__icontains=user_phone, user__isnull=True).first()
+            if client:
+                client.user = request.user
+                client.save(update_fields=['user'])
+            else:
+                first_n = request.user.name.split()[0] if request.user.name else "Cliente"
+                client = Client.objects.create(user=request.user, barbershop=barbershop, first_name=first_n, phone=request.user.phone)
+
+        if client.is_blocked:
+            return JsonResponse({'status': 'error', 'message': 'Sua conta possui restrição nesta barbearia.'}, status=403)
+        
+        employee = Employee.objects.get(id=data.get('barber_id'))
+        unit = Unit.objects.get(id=data.get('unit_id'))
+        
+        appointment = Appointment.objects.create(
+            client=client,
+            employee=employee,
+            barbershop=barbershop,
+            unit=unit,
+            date=data.get('date'),
+            time=data.get('time'),
+            status='scheduled'
+        )
+        
+        total_price = Decimal('0.00')
+        service_ids = data.get('service_id')
+        if not isinstance(service_ids, list):
+            service_ids = [service_ids]
+            
+        for s_id in service_ids:
+            service = BarberService.objects.get(id=s_id)
+            AppointmentService.objects.create(
+                appointment=appointment,
+                service=service,
+                price_at_sale=service.price
+            )
+            total_price += service.price
+            
+        appointment.total_price = total_price
+        
+        with transaction.atomic():
+            appointment.save()
+
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Não foi possível concluir o agendamento. Horário indisponível.'}, status=400)
 
 
 @require_POST
@@ -964,67 +1045,6 @@ def api_cancel_appointment(request, barbershop_slug):
         return JsonResponse({'status': 'error', 'message': 'Não foi possível cancelar o agendamento no momento.'}, status=400)
 
 
-@require_POST
-def process_booking_api(request, barbershop_slug):
-    if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'Sessão expirada. Faça login novamente.'}, status=401)
-
-    try:
-        data = json.loads(request.body)
-        barbershop = Barbershop.objects.get(slug=barbershop_slug)
-        
-        # CORREÇÃO DE VÍNCULO: Se o usuário logou pela rede mas nunca agendou aqui, cria o Client na hora!
-        first_n = request.user.name.split()[0] if request.user.name else ""
-        last_n = " ".join(request.user.name.split()[1:]) if request.user.name and len(request.user.name.split()) > 1 else ""
-        
-        client, created = Client.objects.get_or_create(
-            user=request.user, 
-            barbershop=barbershop,
-            defaults={
-                'first_name': first_n,
-                'last_name': last_n,
-                'email': request.user.email,
-                'phone': request.user.phone,
-                'cpf': request.user.cpf
-            }
-        )
-        
-        if client.is_blocked:
-            return JsonResponse({'status': 'error', 'message': 'Sua conta possui uma restrição nesta unidade. Entre em contato com a barbearia.'}, status=403)
-        
-        employee = Employee.objects.get(id=data.get('barber_id'))
-        unit = Unit.objects.get(id=data.get('unit_id'))
-        
-        appointment = Appointment.objects.create(
-            client=client,
-            employee=employee,
-            barbershop=barbershop,
-            unit=unit,
-            date=data.get('date'),
-            time=data.get('time'),
-            status='scheduled'
-        )
-        
-        total_price = Decimal('0.00')
-        service_ids = data.get('service_id')
-        if not isinstance(service_ids, list):
-            service_ids = [service_ids]
-            
-        for s_id in service_ids:
-            service = BarberService.objects.get(id=s_id)
-            AppointmentService.objects.create(
-                appointment=appointment,
-                service=service,
-                price_at_sale=service.price
-            )
-            total_price += service.price
-            
-        appointment.total_price = total_price
-        appointment.save()
-
-        return JsonResponse({'status': 'success'})
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': 'Não foi possível concluir o agendamento. Horário indisponível.'}, status=400)
 
 
 @require_GET
@@ -1181,40 +1201,3 @@ def api_get_available_times(request, barbershop_slug):
         print(f"Erro Backend Orbly (Available Times): {e}") 
         return JsonResponse({'slots': []})
     
-
-@transaction.atomic
-def confirm_online_booking(request, barbershop_slug):
-    """
-    View acionada pelo cliente final na Landing Page Pública ao confirmar a reserva.
-    """
-    tenant = get_object_or_404(Barbershop, slug=barbershop_slug)
-    global_user = request.user  # Usuário logado na plataforma global Orbly
-    
-    # 1. UPSERT INTELIGENTE: Busca pelo telefone (Vínculo Offline -> Online)
-    client, created = Client.objects.get_or_create(
-        barbershop=tenant,
-        phone=global_user.phone,
-        defaults={
-            'user': global_user,
-            'first_name': global_user.name.split()[0],
-            'last_name': " ".join(global_user.name.split()[1:]) if len(global_user.name.split()) > 1 else "",
-            'email': global_user.email,
-        }
-    )
-
-    # 2. Se o cliente foi achado (criado no balcão) mas ainda era "órfão" de conta online
-    if not created and client.user is None:
-        client.user = global_user
-        # Opcional: Atualizar dados caso o online seja mais completo que o do balcão
-        client.email = global_user.email 
-        client.save(update_fields=['user', 'email'])
-
-    # 3. Salva o agendamento apontando para o perfil unificado
-    appointment = Appointment.objects.create(
-        customer=global_user, # Histórico global
-        client=client,        # Histórico local do tenant (Unificado)
-        barbershop=tenant,
-        # ... time, date, employee, etc.
-    )
-    
-    return JsonResponse({'status': 'success', 'message': 'Agendamento confirmado!'})
