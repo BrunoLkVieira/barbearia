@@ -44,34 +44,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const userSidebar = document.querySelector('.user-sidebar');
     const chevronIcon = document.getElementById('chevronIcon');
 
-    userProfile.addEventListener('click', function (e) {
-        e.stopPropagation();
-        
-        // Verifica se o modal está visível
-        const isVisible = userSidebar.classList.contains('show');
-        
-        // Se estiver visível (clicando para fechar)
-        if (isVisible) {
-            userSidebar.classList.remove('show');
-            chevronIcon.classList.remove('rotate');
-        } 
-        // Se não estiver visível (clicando para abrir)
-        else {
-            userSidebar.classList.add('show');
-            chevronIcon.classList.add('rotate');
-        }
-    });
+    if(userProfile && userSidebar && chevronIcon) {
+        userProfile.addEventListener('click', function (e) {
+            e.stopPropagation();
+            
+            // Verifica se o modal está visível
+            const isVisible = userSidebar.classList.contains('show');
+            
+            // Se estiver visível (clicando para fechar)
+            if (isVisible) {
+                userSidebar.classList.remove('show');
+                chevronIcon.classList.remove('rotate');
+            } 
+            // Se não estiver visível (clicando para abrir)
+            else {
+                userSidebar.classList.add('show');
+                chevronIcon.classList.add('rotate');
+            }
+        });
 
-    // Fecha ao clicar fora
-    document.addEventListener('click', function (e) {
-        if (!userProfile.contains(e.target)) {
-            userSidebar.classList.remove('show');
-            chevronIcon.classList.remove('rotate');
-        }
-    });
+        // Fecha a sidebar do usuário ao clicar fora (aqui faz sentido fechar ao clicar fora!)
+        document.addEventListener('click', function (e) {
+            if (!userProfile.contains(e.target)) {
+                userSidebar.classList.remove('show');
+                chevronIcon.classList.remove('rotate');
+            }
+        });
+    }
 });
-
-
-
-
-

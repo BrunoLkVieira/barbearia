@@ -67,11 +67,7 @@ function closeModal() {
     if(modal) modal.style.display = 'none';
 }
 
-window.onclick = e => { 
-    if (e.target === modal) {
-        closeModal();
-    }
-};
+
 
 function editService(group_ids, name, price, duration, base_service_id, unit_id, employee_ids_str) {
     if(!modal) return;

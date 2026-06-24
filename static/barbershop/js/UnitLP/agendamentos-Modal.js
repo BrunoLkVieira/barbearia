@@ -36,12 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Fechar modal clicando fora
-    appointmentsModal.addEventListener('click', function(e) {
-        if (e.target === appointmentsModal) {
-            closeAppointmentsModal();
-        }
-    });
+
 
     
 });

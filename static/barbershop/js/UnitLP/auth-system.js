@@ -27,14 +27,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Fechar modais (e dropdowns) ao clicar no fundo escuro
+    // Apenas fecha o Dropdown do Perfil se clicar fora (Sem afetar modais)
     window.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal')) {
-            e.target.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        // Fecha dropdown se clicar fora
         if (profileContent && profileBtn && !profileBtn.contains(e.target) && !profileContent.contains(e.target)) {
             profileContent.style.display = 'none';
         }
