@@ -1,8 +1,9 @@
 import time
+from decimal import Decimal
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from decimal import Decimal
+from django.db.models import ProtectedError # IMPORTAÇÃO CRÍTICA AQUI
 
 from apps.barbershop.models import Barbershop, Unit, Employee
 from .models import BarberService, BaseService
@@ -69,8 +70,13 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                 svcs_to_delete = BarberService.objects.filter(id__in=[i for i in group_ids if i], employee__unit__barbershop=barbershop)
                 if is_manager and not is_owner:
                     svcs_to_delete = svcs_to_delete.filter(employee__unit=current_unit)
-                svcs_to_delete.delete()
-                messages.success(request, "Serviço excluído da grade dos barbeiros selecionados!")
+                
+                # TRATAMENTO DE INTEGRIDADE RELACIONAL (PROTECTED ERROR)
+                try:
+                    svcs_to_delete.delete()
+                    messages.success(request, "Serviço excluído da grade dos barbeiros selecionados!")
+                except ProtectedError:
+                    messages.error(request, "Falha na exclusão: Este serviço possui agendamentos no histórico. Para ocultá-lo, edite-o e desmarque os barbeiros.")
 
             elif action in ["create", "update"]:
                 base_service_id = request.POST.get('base_service') or None
@@ -110,15 +116,19 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                     existing_emp_ids = set(existing_svcs.values_list('employee_id', flat=True))
                     new_emp_ids = set(map(int, employee_ids))
 
-                    for svc in existing_svcs:
-                        if svc.employee_id in new_emp_ids:
-                            svc.name = name
-                            svc.price = price
-                            svc.duration = duration
-                            svc.base_service_id = base_service_id
-                            svc.save()
-                        else:
-                            svc.delete()
+                    # TRATAMENTO DE INTEGRIDADE NO UPDATE
+                    try:
+                        for svc in existing_svcs:
+                            if svc.employee_id in new_emp_ids:
+                                svc.name = name
+                                svc.price = price
+                                svc.duration = duration
+                                svc.base_service_id = base_service_id
+                                svc.save()
+                            else:
+                                svc.delete()
+                    except ProtectedError:
+                        messages.warning(request, "Atenção: Não foi possível remover um barbeiro do serviço pois ele possui agendamentos atrelados. As demais alterações foram salvas.")
 
                     for emp_id in (new_emp_ids - existing_emp_ids):
                         target_emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
@@ -136,7 +146,6 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
         except Exception as e:
             messages.error(request, f"Ocorreu um erro no processamento: {str(e)}")
 
-        # Redirecionamento blindado com Timestamp para forçar atualização no navegador
         return redirect(f"{request.path}?_={int(time.time())}")
 
     raw_services = BarberService.objects.filter(employee__unit__barbershop=barbershop)

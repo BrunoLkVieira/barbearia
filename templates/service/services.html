@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{% static 'service/css/mobile/service.css' %}">
 
     <style>
-        .swal2-container {z-index: 9999 !important;}
+        .swal2-container {z-index: 99999 !important;}
         .saas-barber-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 10px; max-height: 250px; overflow-y: auto; padding: 5px;
         }
@@ -128,11 +128,11 @@
                                     onclick="editService('{{ svc.ids|join:',' }}', '{{ svc.name|escapejs }}', '{{ svc.price }}', '{{ svc.duration }}', '{{ svc.base_service_id }}', '{{ svc.unit_id }}', '{{ svc.employee_ids|join:',' }}')">
                                     <i class="fas fa-edit"></i>
                                 </div>
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Isso excluirá o serviço da agenda de TODOS os barbeiros listados nesta linha. Deseja continuar?')">
+                                <form method="POST" style="display:inline;" class="form-delete-service">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="service_ids" value="{{ svc.ids|join:',' }}">
-                                    <button type="submit" class="action-btn delete" title="Excluir Serviço" style="width: 32px; height: 32px; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #e74c3c; border: none;">
+                                    <button type="button" class="action-btn delete btn-delete-swal" title="Excluir Serviço" style="width: 32px; height: 32px; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #e74c3c; border: none;">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -234,36 +234,82 @@
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'service/js/service.js' %}"></script>
 
-    {% if messages %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // ==========================================
+            // 1. CONFIGURAÇÃO GARANTIDA DO TOAST (Notificações top-right)
+            // ==========================================
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 4000,
+                timer: 5000,
                 timerProgressBar: true,
+                background: '#ffffff',
+                color: '#2d3748',
+                customClass: { container: 'swal2-container-high-z' },
                 didOpen: (toast) => {
                     toast.onmouseenter = Swal.stopTimer;
                     toast.onmouseleave = Swal.resumeTimer;
                 }
             });
-            
-            {% for message in messages %}
-                var iconType = "{{ message.tags }}";
-                if (iconType.includes("error")) iconType = "error";
-                else if (iconType.includes("success")) iconType = "success";
-                else if (iconType.includes("warning")) iconType = "warning";
-                else iconType = "info";
 
-                Toast.fire({
-                    icon: iconType,
-                    title: "{{ message }}"
+            // ==========================================
+            // 2. RENDERIZAÇÃO DAS MENSAGENS DO BACKEND (Sucesso e Erro)
+            // ==========================================
+            {% if messages %}
+                {% for message in messages %}
+                    var msgType = "{{ message.tags }}";
+                    
+                    // Padroniza as tags do Django para os ícones do SweetAlert
+                    if (msgType.includes("error") || msgType.includes("danger")) {
+                        msgType = "error";
+                    } else if (msgType.includes("success")) {
+                        msgType = "success";
+                    } else if (msgType.includes("warning")) {
+                        msgType = "warning";
+                    } else {
+                        msgType = "info";
+                    }
+
+                    // Dispara a notificação bonita
+                    Toast.fire({
+                        icon: msgType,
+                        title: "{{ message|escapejs }}"
+                    });
+                {% endfor %}
+            {% endif %}
+
+            // ==========================================
+            // 3. POPUP DE CONFIRMAÇÃO DE EXCLUSÃO
+            // ==========================================
+            const deleteButtons = document.querySelectorAll('.btn-delete-swal');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Impede o recarregamento imediato da página
+                    const form = this.closest('.form-delete-service');
+                    
+                    Swal.fire({
+                        title: 'Atenção!',
+                        text: "Isso excluirá o serviço da agenda de TODOS os barbeiros listados nesta linha. Deseja continuar?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e74c3c',
+                        cancelButtonColor: '#a0aec0',
+                        confirmButtonText: 'Sim, excluir!',
+                        cancelButtonText: 'Cancelar',
+                        background: '#ffffff',
+                        customClass: {
+                            container: 'swal2-container-high-z'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit(); // Envia o formulário se o usuário confirmar
+                        }
+                    });
                 });
-            {% endfor %}
+            });
         });
     </script>
-    {% endif %}
-
 </body>
 </html>
