@@ -64,17 +64,23 @@ function triggerUpload(type) {
     document.getElementById('fileInput').click();
 }
 
-// DELETE GALERIA
+// DELETE GALERIA (Padronizado igual Agenda e Clientes)
 function deleteMedia(id) {
     Swal.fire({
-        title: 'Remover imagem?',
+        title: 'Confirmar Exclusão',
+        text: "Esta ação apagará a imagem definitivamente do seu site.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#FF7A00',
-        confirmButtonText: 'Sim, deletar'
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#a0aec0',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar',
+        background: '#ffffff',
+        customClass: { container: 'swal2-container-high-z' }
     }).then((result) => {
         if (result.isConfirmed) {
-            // NOVO: Salva a posição antes de deletar a imagem
+            // Desativa a trava de 'alterações não salvas' pois isso é um submit programático
+            isFormDirty = false;
             sessionStorage.setItem('myWebsiteScroll', window.scrollY);
             document.getElementById('deleteMediaId').value = id;
             document.getElementById('deleteForm').submit();
@@ -95,26 +101,69 @@ function saveNewOrder(container) {
     });
 }
 
+// ============================================================
+// SISTEMA "UNSAVED CHANGES" COM INDICADOR VISUAL
+// ============================================================
+let isFormDirty = false;
+
+function setFormDirty() {
+    if (!isFormDirty) {
+        isFormDirty = true;
+        
+        // 1. Mostra a Tag de "Alterações pendentes"
+        const badge = document.getElementById('unsavedBadge');
+        if (badge) badge.style.display = 'inline-block';
+        
+        // 2. Exibe o Botão "Salvar Agora" no Topo da tela (Ação imediata)
+        const topSaveBtn = document.getElementById('topSaveBtn');
+        if (topSaveBtn) {
+            topSaveBtn.style.display = 'inline-flex';
+            topSaveBtn.style.alignItems = 'center';
+            topSaveBtn.style.gap = '8px';
+        }
+        
+        // 3. Muda o botão do rodapé para vermelho chamativo
+        const saveBtn = document.getElementById('saveChangesBtn');
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Salvar Alterações';
+            saveBtn.style.background = '#e74c3c';
+            saveBtn.style.border = 'none';
+            saveBtn.style.boxShadow = '0 4px 12px rgba(231, 76, 60, 0.4)';
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
     updateHeaderDate();
 
-    // ============================================================
-    // NOVO: SISTEMA DE RESTAURAÇÃO DE SCROLL (Anti-pulo da tela)
-    // ============================================================
+    // RESTAURAÇÃO DE SCROLL
     const savedScroll = sessionStorage.getItem('myWebsiteScroll');
     if (savedScroll !== null) {
-        // Se houver uma posição salva na sessão, a tela é forçada para lá instantaneamente
         window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
-        // Limpa a memória para que navegações normais no menu não caiam no meio da página
         sessionStorage.removeItem('myWebsiteScroll');
     }
     
-    // NOVO: Intercepta também o botão principal de 'Salvar Alterações' (Right Column)
-    const mainForm = document.querySelector('.right-column form');
+    // Escuta qualquer digitação ou envio de foto e ativa o visual de alerta!
+    const formInputs = document.querySelectorAll('#websiteFormInfo input, #websiteFormInfo textarea, #fileInput');
+    formInputs.forEach(input => {
+        input.addEventListener('change', setFormDirty);
+        input.addEventListener('input', setFormDirty);
+    });
+
+    const mainForm = document.getElementById('websiteFormInfo');
     if (mainForm) {
         mainForm.addEventListener('submit', () => {
+            isFormDirty = false; // Desarma a trava ao salvar
             sessionStorage.setItem('myWebsiteScroll', window.scrollY);
         });
     }
+
+    // Trava Nativa Anti-Fuga (Exibe o aviso nativo se tentar fechar a guia)
+    window.addEventListener('beforeunload', (e) => {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 });

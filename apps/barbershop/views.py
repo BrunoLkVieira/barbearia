@@ -701,8 +701,21 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
 @owner_or_gerente_required
 def MyWebsiteView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
-    units = barbershop.units.all()
-    unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
+    
+    is_owner = (request.user == barbershop.owner_user)
+    gerente_unit = get_user_unit_if_manager(request.user, barbershop)
+    
+    # CONTROLE RÍGIDO DE ACESSO
+    if is_owner:
+        units = barbershop.units.all()
+        unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
+    else:
+        # Se for gerente, ele só enxerga a própria unidade dele
+        units = [gerente_unit]
+        unit = gerente_unit
+        # Se o gerente tentar acessar a aba "Geral" ou a unidade de outro, chutamos ele pra dele
+        if not unit_slug or unit_slug != gerente_unit.slug:
+            return redirect('barbershop:myWebsite_unit', barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
 
     if request.method == "POST":
         if request.content_type == 'application/json':
@@ -715,21 +728,22 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
         action = request.POST.get("action")
 
         if action == "save_info":
-            if not unit:
-                barbershop.name = request.POST.get("businessName")
+            if not unit and is_owner:
+                # REMOVIDO: A atualização do nome da barbearia daqui
                 barbershop.foundation_date = request.POST.get("businessData") or None
                 barbershop.description = request.POST.get("businessDescription")
                 if request.FILES.get("logo"): barbershop.logo = request.FILES.get("logo")
                 barbershop.save()
+                messages.success(request, "Informações da barbearia salvas!")
                 return redirect('barbershop:myWebsite', barbershop_slug=barbershop.slug)
-            else:
+            elif unit:
                 unit.whatsapp_number = request.POST.get("whatsapp")
                 unit.instagram_link = request.POST.get("instagram")
                 unit.about_text = request.POST.get("aboutText")
                 if request.FILES.get("about_image"): unit.about_image = request.FILES.get("about_image")
                 unit.save()
-            messages.success(request, "Alterações salvas!")
-            return redirect(request.path)
+                messages.success(request, "Alterações salvas com sucesso!")
+                return redirect(request.path)
 
         elif action == "add_media":
             m_type = request.POST.get("media_type")
@@ -753,11 +767,12 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
 
     context = {
         "barbershop": barbershop, "unit": unit, "units": units,
-        "active_units_count": units.filter(is_active=True).count(),
+        "active_units_count": units.filter(is_active=True).count() if is_owner else 1,
         "media_banners": unit.media.filter(media_type="banner").order_by('order') if unit else [],
         "media_hairstyles": unit.media.filter(media_type="hairstyle").order_by('order') if unit else [],
         "media_products": unit.media.filter(media_type="product").order_by('order') if unit else [],
         'active_tab': 'website',
+        'is_owner': is_owner,
     }
     return render(request, "barbershop/myWebsite.html", context)
 

@@ -65,6 +65,7 @@
 
         <div class="nav-content">
             <div class="stats">
+                {% if is_owner %}
                 <div class="unit-filter">
                     <select onchange="location.href=this.value">
                         <option value="{% url 'barbershop:myWebsite' barbershop.slug %}" {% if not unit %}selected{% endif %}>Geral (Barbearia)</option>
@@ -73,11 +74,15 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% else %}
+                <div class="stat-box" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
+                    {{ unit.name }}
+                </div>
+                {% endif %}
 
-                
                 <div class="stat-box">
                     <div class="stat-value">{{ active_units_count }}</div>
-                    <div class="stat-label">Unidades</div>
+                    <div class="stat-label">Unidades Visíveis</div>
                 </div>
             </div>
         </div>
@@ -85,19 +90,31 @@
 
     <div class="main-content">
         <div class="section-header" style="margin-bottom: 20px;">
-            <div class="section-title" style="font-size: 20px; font-weight: bold; color: #333;">
-                <i class="fas fa-pen"></i> Editar Website
+            <div class="section-title" style="font-size: 20px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 10px;">
+                <div><i class="fas fa-pen"></i> Editar Website</div>
+                <div id="unsavedBadge" style="display: none; background: #fff5eb; color: #e74c3c; font-size: 12px; padding: 4px 10px; border-radius: 12px; border: 1px solid #fbd38d;">
+                    <i class="fas fa-exclamation-triangle"></i> Alterações pendentes
+                </div>
             </div>
             
-            {% if unit %}
-                <a href="{% url 'barbershop:unitLP_unit' barbershop.slug unit.slug %}" target="_blank" class="view-lp-btn">
-                    <i class="fas fa-external-link-alt"></i> Visualizar Unidade
-                </a>
-            {% else %}
-                <a href="{% url 'barbershop:unitLP' barbershop.slug %}" target="_blank" class="view-lp-btn">
-                    <i class="fas fa-external-link-alt"></i> Visualizar Geral
-                </a>
-            {% endif %}
+            <!-- Grupo de botões no topo -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- NOVO BOTÃO DE SALVAR NO TOPO (Oculto por padrão, acionado pelo JS) -->
+                <!-- O atributo form="websiteFormInfo" conecta este botão ao form lá embaixo -->
+                <button type="submit" form="websiteFormInfo" id="topSaveBtn" class="btn btn-primary" style="display: none; background-color: #e74c3c; border: none; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); transition: all 0.3s; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; color: white;">
+                    <i class="fas fa-save"></i> Salvar Agora
+                </button>
+
+                {% if unit %}
+                    <a href="{% url 'barbershop:unitLP_unit' barbershop.slug unit.slug %}" target="_blank" class="view-lp-btn">
+                        <i class="fas fa-external-link-alt"></i> Visualizar Unidade
+                    </a>
+                {% else %}
+                    <a href="{% url 'barbershop:unitLP' barbershop.slug %}" target="_blank" class="view-lp-btn">
+                        <i class="fas fa-external-link-alt"></i> Visualizar Geral
+                    </a>
+                {% endif %}
+            </div>
         </div>
         <div class="form-container">
             <div class="left-column">
@@ -156,7 +173,7 @@
             </div>
             
             <div class="right-column">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" id="websiteFormInfo" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="save_info">
                     
@@ -167,12 +184,8 @@
                             <input type="file" name="logo" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label><i class="fas fa-signature"></i> Nome da Barbearia</label>
-                            <input type="text" name="businessName" class="form-control" value="{{ barbershop.name }}">
-                        </div>
-                        <div class="form-group">
                             <label><i class="fas fa-calendar-check"></i> Data de Fundação</label>
-                            <input type="date" name="businessData" class="form-control" value="{{ barbershop.foundation_date|date:'Y-m-d' }}">
+                            <input type="date" name="businessData" class="form-control" value="{{ barbershop.foundation_date|date:'Y-m-d'|default:'' }}">
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-align-left"></i> Descrição da Marca</label>
@@ -210,7 +223,7 @@
                         </div>
                     {% endif %}
                     
-                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;"><i class="fas fa-save"></i> Salvar Alterações</button>
+                    <button type="submit" id="saveChangesBtn" class="btn btn-primary" style="width:100%; margin-top:20px; transition: all 0.3s;"><i class="fas fa-save"></i> Salvar Alterações</button>
                 </form>
             </div>
         </div>
@@ -226,7 +239,48 @@
         <input type="hidden" name="media_id" id="deleteMediaId">
     </form>
 
+    <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/myWebsite.js' %}"></script>
-    {% if messages %}<script>{% for m in messages %}Swal.fire({ icon: '{{ m.tags }}', title: '{{ m }}', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });{% endfor %}</script>{% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Configuração Garantida do Toast (Padrão Orbly Claro)
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#ffffff',
+                color: '#2d3748',
+                customClass: { container: 'swal2-container-high-z' },
+                didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                }
+            });
+
+            // 2. Renderização das Mensagens do Backend
+            {% if messages %}
+                {% for message in messages %}
+                    var msgType = "{{ message.tags }}";
+                    
+                    if (msgType.includes("error") || msgType.includes("danger")) {
+                        msgType = "error";
+                    } else if (msgType.includes("success")) {
+                        msgType = "success";
+                    } else if (msgType.includes("warning")) {
+                        msgType = "warning";
+                    } else {
+                        msgType = "info";
+                    }
+
+                    Toast.fire({
+                        icon: msgType,
+                        title: "{{ message|escapejs }}"
+                    });
+                {% endfor %}
+            {% endif %}
+        });
+    </script>
 </body>
 </html>
