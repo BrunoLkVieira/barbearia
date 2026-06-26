@@ -224,10 +224,13 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     for app in appointments:
         app.total_duration_calc = sum([(getattr(s.service, 'duration', 30) or 30) for s in app.services.all()])
 
-    total_appointments = appointments.exclude(status__in=['cancelled', 'Cancelado']).count()
-    total_revenue = sum(app.total_price for app in appointments if app.status not in ['cancelled', 'Cancelado'])
+    # CORREÇÃO 1: Contador do Menu Header conta apenas Pendentes
+    total_appointments = appointments.filter(status='scheduled').count()
+    
+    # CORREÇÃO 2: Caixa Realizado e Previsão
+    total_revenue = sum(app.total_price for app in appointments if app.status == 'scheduled')
     completed_appointments = appointments.filter(status='completed').count()
-    completed_revenue = sum(app.total_price for app in appointments if app.status == 'completed')
+    completed_revenue = appointments.filter(status='completed').aggregate(total=Sum('total_price'))['total'] or Decimal('0.00')
 
     clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
 

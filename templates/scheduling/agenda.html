@@ -211,8 +211,8 @@
                                 data-time="{{ appointment.time|time:'H:i' }}"
                                 data-status="{{ appointment.status }}"
                                 data-payment="{{ appointment.payment_type|default:'' }}"
-                                data-notes="{{ appointment.notes|default:'' }}">
-                            <i class="fas fa-edit"></i>
+                                data-notes="{{ appointment.notes|default:'' }}"
+                                data-total="{{ appointment.total_price|stringformat:'s' }}"> <i class="fas fa-edit"></i>
                             <span>Editar</span>
                         </div>
 
@@ -514,7 +514,7 @@
                     
                     <div class="form-group">
                         <label for="editStatusSelect" class="form-label">Status do Atendimento</label>
-                        <select name="status" id="editStatusSelect" class="form-control" required>
+                        <select name="status" id="editStatusSelect" class="form-control" onchange="toggleEditPaymentField()" required>
                             <option value="scheduled">⏱️ Agendado (Pendente)</option>
                             <option value="completed">✅ Finalizado</option>
                             <option value="cancelled">❌ Cancelado</option>

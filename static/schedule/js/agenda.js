@@ -119,7 +119,7 @@ function initBarberFilter() {
             sessionStorage.setItem('activeBarberId', clickedBarberId);
 
             let completedCount = 0;
-            let completedRevenue = 0;
+            let completedRevenue = 0.0;
             let visualOrder = 1;
 
             timeSlots.forEach(slot => {
@@ -133,11 +133,23 @@ function initBarberFilter() {
                     
                     if (slotStatus === 'completed') {
                         completedCount++;
-                        const priceText = slot.querySelector('.detail-value[style*="color: #27ae60"]');
-                        if (priceText) {
-                            const price = parseFloat(priceText.innerText.replace('R$ ', '').replace(',', '.'));
-                            if (!isNaN(price)) completedRevenue += price;
+                        // PEGA O VALOR REAL DO BOTÃO FINALIZAR (Secreto) ou recai para o Data Attr da linha
+                        const finishBtn = slot.querySelector('.finish-btn');
+                        const editBtn = slot.querySelector('.edit');
+                        let priceStr = "0";
+                        
+                        if (editBtn && editBtn.hasAttribute('data-total')) {
+                            priceStr = editBtn.getAttribute('data-total');
+                        } else if (finishBtn && finishBtn.hasAttribute('data-total')) {
+                            priceStr = finishBtn.getAttribute('data-total');
+                        } else {
+                            // Tenta pegar do elemento texto
+                            const priceText = slot.querySelector('.total-price');
+                            if (priceText) priceStr = priceText.innerText.replace('R$', '').trim().replace(',', '.');
                         }
+                        
+                        const price = parseFloat(priceStr.replace(',', '.'));
+                        if (!isNaN(price)) completedRevenue += price;
                     }
                 } else {
                     slot.style.display = "none";
@@ -372,6 +384,11 @@ async function openEditAppointmentModal(btn) {
     document.getElementById('editHiddenBarberId').value = barberId;
     document.getElementById('originalTime').value = time;
 
+    // Seta a forma de pagamento (se existir) e atualiza a visibilidade do campo
+    const payment = btn.getAttribute('data-payment');
+    if (payment) document.getElementById('editPaymentSelect').value = payment;
+    toggleEditPaymentField();
+
     const unitSelect = document.getElementById('editUnitSelect');
     if (unitSelect) unitSelect.value = unitId;
 
@@ -497,4 +514,19 @@ function openFinishModal(btn) {
 function closeFinishModal() {
     const finishModal = document.getElementById('finishModal');
     if (finishModal) { finishModal.style.display = 'none'; document.body.style.overflow = ''; }
+}
+
+
+function toggleEditPaymentField() {
+    const statusVal = document.getElementById('editStatusSelect').value;
+    const paymentGroup = document.getElementById('editPaymentGroup');
+    const paymentSelect = document.getElementById('editPaymentSelect');
+    
+    if (statusVal === 'completed') {
+        paymentGroup.style.display = 'block';
+        paymentSelect.setAttribute('required', 'required');
+    } else {
+        paymentGroup.style.display = 'none';
+        paymentSelect.removeAttribute('required');
+    }
 }
