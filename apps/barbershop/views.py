@@ -193,7 +193,7 @@ def UnitView(request, barbershop_slug):
             messages.success(request, "Unidade excluída com sucesso.")
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
-    return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit})
+    return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit, "is_owner": True, "is_manager": False, "active_tab": "barbershop",})
 
 
 @login_required
@@ -400,8 +400,10 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         "regular_employees_active_count": regular_employees_active_count,
         "consumed_slots": consumed_slots,
         "is_owner": is_owner,
+        "is_manager": gerente_unit is not None,
         "gerente_unit": gerente_unit,
         "role_choices": Role.Occupation.choices,
+        "active_tab": "barbershop",
     }
     return render(request, "barbershop/employee.html", context)
 
@@ -694,6 +696,7 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
         "is_owner": is_owner, "is_manager": is_manager, "is_cashier": is_cashier, "gerente_unit": gerente_unit,
         "time_options": time_options, "workdays_json": json.dumps(workdays_data),
         "unit_workdays_json": unit_data_dict, "unit_workdays": unit_workdays_list, "current_employee": current_employee, 
+        "active_tab": "barbershop",
     }
     return render(request, "barbershop/workDay.html", context)
 
@@ -773,6 +776,7 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
         "media_products": unit.media.filter(media_type="product").order_by('order') if unit else [],
         'active_tab': 'website',
         'is_owner': is_owner,
+        'is_manager': gerente_unit is not None,
     }
     return render(request, "barbershop/myWebsite.html", context)
 

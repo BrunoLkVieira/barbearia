@@ -29,10 +29,13 @@
                 <div class="sidebar-menu">
                     <a href="#" class="sidebar-item"><i class="fas fa-user"></i><span>Meu Perfil</span></a>
                     
+                    {% if is_owner or is_manager %}
                     <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">
                         <i class="fas fa-credit-card"></i><span>Catálogo</span>
                     </a>
-                    <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">
+                    {% endif %}
+                    
+                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}" class="sidebar-item mobile-sidebar">
                         <i class="fas fa-store"></i><span>Minha Barbearia</span>
                     </a>
                     

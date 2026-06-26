@@ -67,24 +67,18 @@
 
     <div class="pages-options-Container">
         {% if is_owner %}
-            <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
-                <div class="page-option "><i class="fas fa-store"></i> Unidades</div>
-            </a>
+        <a href="{% url 'barbershop:units' barbershop.slug %}">
+            <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
+        </a>
         {% endif %}
 
-        {% if is_owner or is_manager or is_cashier %}    
-            {% if is_owner %}
-                <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}">
-                    <div class="page-option "><i class="fas fa-users"></i> Funcionarios</div>
-                </a>
-            {% elif is_manager or is_cashier %}
-                <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}">
-                    <div class="page-option "><i class="fas fa-users"></i> Funcionarios</div>
-                </a>
-            {% endif %}
+        {% if is_owner or is_manager %}
+        <a href="{% if is_owner %}{% url 'barbershop:employee_general' barbershop.slug %}{% else %}{% url 'barbershop:employee_unit' barbershop.slug gerente_unit.slug %}{% endif %}">
+            <div class="page-option"><i class="fas fa-users"></i> Funcionários</div>
+        </a>
         {% endif %}
-    
-        <a href="">
+
+        <a href="#">
             <div class="page-option active"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
     </div>

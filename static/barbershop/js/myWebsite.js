@@ -1,13 +1,3 @@
-// ATUALIZAR DATA NO HEADER
-function updateHeaderDate() {
-    const dateEl = document.getElementById('currentDate');
-    if (dateEl) {
-        const now = new Date();
-        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-        dateEl.textContent = now.toLocaleDateString('pt-BR', options);
-    }
-}
-
 // DRAG & DROP
 let draggedItem = null;
 
@@ -135,7 +125,6 @@ function setFormDirty() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initDragAndDrop();
-    updateHeaderDate();
 
     // RESTAURAÇÃO DE SCROLL
     const savedScroll = sessionStorage.getItem('myWebsiteScroll');

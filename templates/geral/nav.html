@@ -1,13 +1,16 @@
 <div class="nav-bar">
     <div class="nav-tabs">
         <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'schedule' %}active{% endif %}"><i class="fas fa-calendar-days"></i> Agenda</div></a>
+        
         <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}"><div class="nav-tab {% if active_tab == 'clients' %}active{% endif %}"><i class="fas fa-users"></i> Clientes</div></a>
 
+        {% if is_owner or is_manager %}
         <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}">
             <div class="nav-tab {% if active_tab == 'catalog' or 'servicos' in request.path %}active{% endif %}">
                 <i class="fas fa-credit-card"></i> Catálogo
             </div>
         </a>
+        {% endif %}
 
         <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}">
             <div class="nav-tab {% if active_tab == 'history' %}active{% endif %}">
@@ -15,14 +18,16 @@
             </div>
         </a>
         
-        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}">
+        <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}">
             <div class="nav-tab {% if active_tab == 'barbershop' or 'unidades' in request.path or 'funcionarios' in request.path or 'funcionamento' in request.path %}active{% endif %}">
                 <i class="fas fa-store"></i> Minha Barbearia
             </div>
         </a>
 
+        {% if is_owner or is_manager %}
         <a href="{% url 'barbershop:myWebsite' barbershop_slug=barbershop.slug %}">
             <div class="nav-tab {% if active_tab == 'website' %}active{% endif %}"><i class="fas fa-pen"></i> Meu Website</div>
         </a>
+        {% endif %}
     </div>
 </div>
