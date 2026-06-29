@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Agenda Executiva - Barbearia</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,8 +29,9 @@
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         
-        <div class="stats">
-            <div class="unit-filter" {% if not is_owner %}style="display:none;"{% endif %}>
+        <!-- Oculto no Mobile via CSS -->
+        <div class="stats desktop-only">
+            <div class="unit-filter desktop-unit-filter" {% if not is_owner %}style="display:none;"{% endif %}>
                 <select id="unitSelectFilter">
                     {% if is_owner %}<option value="geral" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>{% endif %}
                     {% for u in units %}
@@ -58,8 +59,45 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO (Django) 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-dashboard mobile-only">
+        <!-- 1. Filtros no topo -->
+        <div class="mobile-filters-row">
+            <input type="date" id="mobileDateFilter" class="form-control" value="{{ current_date|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}">
+            <select id="mobileBarberSelect" class="form-control">
+                <option value="all">Todos os Barbeiros</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.user.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- 2. Cards de Resumo 2x2 (Embaixo dos filtros) -->
+        <div class="mobile-stats-grid">
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #FF7A00;">{{ total_appointments|default:"0" }}</span>
+                <span class="m-stat-label">Agendamentos</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #FF7A00;">R$ {{ total_revenue|default:"0,00" }}</span>
+                <span class="m-stat-label">Previsão</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #27ae60;">{{ completed_appointments|default:"0" }}</span>
+                <span class="m-stat-label">Finalizados</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #27ae60;">R$ {{ completed_revenue|default:"0,00" }}</span>
+                <span class="m-stat-label">Caixa Realizado</span>
+            </div>
+        </div>
+    </div>
+
     <div class="main-content">
-        <div class="barbers">
+        <!-- Barbeiros (Desktop Only) -->
+        <div class="barbers desktop-only">
             <div class="section-title">
                 <i class="fas fa-user"></i>
                 <span>Barbeiros</span>
@@ -93,8 +131,10 @@
             </div>
         </div>
         
+        <!-- Lista de Agendamentos -->
         <div class="schedule">
-            <div class="agenda-header">
+            <!-- Header Tabela (Desktop Only) -->
+            <div class="agenda-header desktop-only">
                 <div class="agenda-title">
                     <div class="agenda-row">
                         <i class="fas fa-calendar-days"></i>
@@ -112,7 +152,7 @@
                 </div>
             </div>
             
-            <div class="schedule-header">
+            <div class="schedule-header desktop-only">
                 <div>Horário</div>
                 <div>Cliente e Detalhes</div>
                 <div>Ações</div>
@@ -120,12 +160,16 @@
             
             <div class="schedule-container">
                 {% for appointment in appointments %}
+                
+                <!-- O CARD (Listagem) -->
                 <div class="time-slot {% if appointment.status == 'cancelled' %}cancelled-slot{% elif appointment.status == 'completed' %}completed-slot{% endif %}" 
+                     data-appointment-id="{{ appointment.id }}"
                      data-barber="{{ appointment.employee.id }}" 
-                     data-status="{{ appointment.status }}">
+                     data-status="{{ appointment.status }}"
+                     onclick="openMobileSheet('{{ appointment.id }}', event)">
                     
                     <div class="time-info">
-                        <div class="order">{{ forloop.counter }}</div>
+                        <div class="order desktop-only">{{ forloop.counter }}</div>
                         <div class="time">{{ appointment.time|time:"H:i" }}</div>
                         <div class="duration">{{ appointment.total_duration_calc }} min</div>
                     </div>
@@ -133,56 +177,56 @@
                     <div class="client-info">
                         <div class="client-header">
                             <div class="client-name">
-                                <i class="fas fa-user"></i>
+                                <i class="fas fa-user desktop-only"></i>
                                 {{ appointment.client.first_name }} {{ appointment.client.last_name }}
                                 
                                 {% if appointment.status == 'completed' %}
-                                    <span class="status-badge status-completed">Finalizado</span>
+                                    <span class="status-badge status-completed">FINALIZADO</span>
                                 {% elif appointment.status == 'cancelled' %}
-                                    <span class="status-badge status-cancelled">Cancelado</span>
+                                    <span class="status-badge status-cancelled">CANCELADO</span>
                                 {% else %}
-                                    <span class="status-badge status-pending">Agendado</span>
+                                    <span class="status-badge status-pending">AGENDADO</span>
                                 {% endif %}
                             </div>
                         </div>
                         
                         <div class="service-details-grid">
-                            <!-- Coluna Esquerda: Serviços e Barbeiro -->
                             <div class="detail-group">
                                 <div class="detail-line">
-                                    <span class="detail-label">Serviço(s):</span>
+                                    <span class="detail-label desktop-only">Serviço(s):</span>
                                     <span class="detail-value">
                                         {% for item in appointment.services.all %}
                                             <span style="display: inline-block; margin-right: 8px;">
                                                 <i class="{{ item.service.base_service.icon|default:'fas fa-cut' }}" style="color: #FF7A00; margin-right: 4px;"></i>{{ item.service.name }}{% if not forloop.last %},{% endif %}
                                             </span>
+                                        {% empty %}
+                                            Sem serviços
                                         {% endfor %}
                                     </span>
                                 </div>
                                 <div class="detail-line">
-                                    <span class="detail-label">Barbeiro:</span>
+                                    <span class="detail-label desktop-only">Barbeiro:</span>
                                     <span class="detail-value">
-                                        <span style="background: #f0f5ff; padding: 3px 10px; border-radius: 6px; color: #2980b9; font-size: 0.85rem; font-weight: 600;">
+                                        <span class="desktop-barber-badge">
                                             <i class="fas fa-cut" style="margin-right: 4px;"></i> {{ appointment.employee.user.name }}
                                         </span>
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Coluna Direita: Contato e Financeiro -->
                             <div class="detail-group">
                                 <div class="detail-line">
-                                    <span class="detail-label">Contato:</span>
+                                    <span class="detail-label desktop-only">Contato:</span>
                                     <span class="detail-value">{{ appointment.client.phone|default:"Não informado" }}</span>
                                 </div>
                                 <div class="detail-line">
-                                    <span class="detail-label">Total:</span>
+                                    <span class="detail-label desktop-only">Total:</span>
                                     <span class="detail-value total-price">
                                         R$ {{ appointment.total_price }}
                                         {% if appointment.status == 'completed' and appointment.payment_type %}
                                             <span class="payment-badge-agenda">
-                                                {% if appointment.payment_type == 'cash' %}💵 DINHEIRO
-                                                {% elif appointment.payment_type == 'card' %}💳 CARTÃO
+                                                {% if appointment.payment_type == 'cash' %}💵 DIN
+                                                {% elif appointment.payment_type == 'card' %}💳 CAR
                                                 {% elif appointment.payment_type == 'pix' %}❖ PIX
                                                 {% else %}{{ appointment.payment_type|upper }}{% endif %}
                                             </span>
@@ -192,7 +236,6 @@
                             </div>
                         </div>
 
-                        <!-- Observações em destaque no fundo -->
                         {% if appointment.notes %}
                         <div class="appointment-notes">
                             <i class="fas fa-sticky-note" style="color: #f39c12; margin-right: 5px;"></i> <strong>Obs:</strong> {{ appointment.notes }}
@@ -200,7 +243,8 @@
                         {% endif %}
                     </div>
                     
-                    <div class="client-actions">
+                    <!-- Ações Desktop Invisíveis no Mobile -->
+                    <div class="client-actions desktop-only">
                         <div class="action-btn edit" onclick="openEditAppointmentModal(this)" title="Editar Agendamento"
                                 data-id="{{ appointment.id }}"
                                 data-client-id="{{ appointment.client.id }}"
@@ -244,15 +288,74 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- 📱 BOTTOM SHEET DO AGENDAMENTO X (Nativo Django) -->
+                <div class="mobile-only">
+                    <div class="bottom-sheet-overlay" id="bs-overlay-{{ appointment.id }}" onclick="closeMobileSheet('{{ appointment.id }}')"></div>
+                    <div class="bottom-sheet" id="bs-sheet-{{ appointment.id }}">
+                        <div class="bottom-sheet-handle"></div>
+                        <div class="bs-content">
+                            <!-- Status do lado do nome! -->
+                            <div class="bs-title-row">
+                                <h3>{{ appointment.client.first_name }} {{ appointment.client.last_name }}</h3>
+                                {% if appointment.status == 'completed' %}
+                                    <span class="bs-status-badge status-completed">FINALIZADO</span>
+                                {% elif appointment.status == 'cancelled' %}
+                                    <span class="bs-status-badge status-cancelled">CANCELADO</span>
+                                {% else %}
+                                    <span class="bs-status-badge status-pending">AGENDADO</span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="bs-phone"><i class="fab fa-whatsapp"></i> <span>{{ appointment.client.phone|default:"Não informado" }}</span></p>
+                            
+                            <div class="bs-divider"></div>
+                            
+                            <div class="bs-details">
+                                <p><strong>Serviços:</strong> 
+                                    {% for item in appointment.services.all %}
+                                        {{ item.service.name }}{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        Nenhum serviço
+                                    {% endfor %}
+                                </p>
+                                <p><strong>Profissional:</strong> {{ appointment.employee.user.name }}</p>
+                                <h2 class="bs-total">R$ {{ appointment.total_price }}</h2>
+                            </div>
+
+                            <div class="bs-actions">
+                                {% if not appointment.is_paid and appointment.status != 'completed' and appointment.status != 'cancelled' %}
+                                <button class="bs-btn bs-btn-primary" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('.time-slot[data-appointment-id=\'{{ appointment.id }}\'] .finish-btn').click();">
+                                    <i class="fas fa-check-circle"></i> Finalizar Agendamento
+                                </button>
+                                {% endif %}
+                                
+                                <div class="bs-secondary-actions">
+                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('.time-slot[data-appointment-id=\'{{ appointment.id }}\'] .edit').click();">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                    
+                                    {% if is_owner or is_manager %}
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('.time-slot[data-appointment-id=\'{{ appointment.id }}\'] .btn-delete-swal').click();">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {% empty %}
-                <div style="text-align: center; padding: 40px; color: #7f8c8d;">
+                <div style="text-align: center; padding: 40px; color: #7f8c8d; background: #fff; border-radius: 12px; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                     <i class="fas fa-calendar-xmark" style="font-size: 2.5rem; margin-bottom: 10px; display: block;"></i>
                     Nenhum agendamento encontrado para esta exibição.
                 </div>
                 {% endfor %}
             </div>
 
-            <div class="schedule-footer">
+            <!-- Footer Desktop -->
+            <div class="schedule-footer desktop-only">
                 <div class="footer-stat">
                     <span class="footer-label"><i class="fas fa-check-double"></i> Agendamentos Finalizados:</span>
                     <span class="footer-value">{{ completed_appointments|default:"0" }}</span>
@@ -262,10 +365,50 @@
                     <span class="footer-value total-cash">R$ {{ completed_revenue|default:"0,00" }}</span>
                 </div>
             </div>
-
         </div>
     </div>
 
+    <!-- 📱 MENU MOBILE DRAWER E NAVEGAÇÃO -->
+    <div class="mobile-only">
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3>Menu Principal</h3>
+                <div class="bs-menu-list">
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}"><i class="fas fa-store"></i> Minha Barbearia</a>
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item active">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+        
+        <button id="mobileNewAppBtn" class="btnNewAppointment-mobile" onclick="openNewAppointmentModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAIS ORIGINAIS COMPLETOS (NÃO MEXA)      -->
+    <!-- ========================================== -->
+    
     <!-- MODAL FINALIZAR SERVIÇO -->
     <div class="endServiceModal-overlay" id="finishModal" style="display: none;">
         <div class="endServiceModal">
@@ -397,7 +540,7 @@
                         <input type="hidden" name="employee_id" id="hiddenBarberId" required>
                     </div>
                     {% else %}
-                    <!-- É um Barbeiro comum: Vê apenas a si próprio na UI -->
+                    <!-- É um Barbeiro comum -->
                     <input type="hidden" name="unit_id" value="{{ current_unit.id }}">
                     <input type="hidden" name="employee_id" id="hiddenBarberId" value="{{ employees.0.id }}" required>
                     <div class="form-group">
@@ -438,7 +581,7 @@
                     <button type="submit" class="btnModal btnModal-primary">Agendar</button>
                 </div>
             </form>
-        </div>        
+        </div>      
     </div>
 
     <!-- MODAL EDITAR AGENDAMENTO -->
@@ -540,10 +683,66 @@
                     <button type="submit" class="btnModal btnModal-primary">Salvar Alterações</button>
                 </div>
             </form>
-        </div>        
+        </div>      
     </div>
 
-    <!-- APIs Injetadas -->
+    <!-- Scripts injetados p/ layout mobile perfeito -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 820) {
+                // Sincronizar o Filtro Central do Mobile com o Desktop Oculto
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
+                }
+
+                // Sincronizar Filtro de Data
+                const mobileDate = document.getElementById('mobileDateFilter');
+                if(mobileDate) {
+                    mobileDate.addEventListener('change', function() {
+                        const baseUrl = window.location.pathname;
+                        window.location.href = `${baseUrl}?date=${this.value}`;
+                    });
+                }
+
+                // Sincronizar Filtro de Barbeiro
+                const mobileBarber = document.getElementById('mobileBarberSelect');
+                if(mobileBarber) {
+                    mobileBarber.addEventListener('change', function() {
+                        const card = document.querySelector(`.barber-card[data-barber-id="${this.value}"]`);
+                        if(card) card.click();
+                    });
+                }
+            }
+        });
+
+        // Gavetas
+        function openMobileSheet(appId, event) {
+            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
+            document.getElementById('bs-overlay-' + appId).classList.add('active');
+            document.getElementById('bs-sheet-' + appId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileSheet(appId) {
+            document.getElementById('bs-overlay-' + appId).classList.remove('active');
+            document.getElementById('bs-sheet-' + appId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
+
+    <!-- APIs e Restante dos scripts nativos -->
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";
         const API_SERVICES_URL = "{% url 'scheduling:get_services' %}";
@@ -554,9 +753,9 @@
     <script src="{% static 'schedule/js/agenda.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
 
+    <!-- SweetAlert Nativos -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Notificações Base Padrão
             {% if messages %}
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
                 {% for message in messages %}
@@ -569,7 +768,6 @@
                 {% endfor %}
             {% endif %}
 
-            // Substituição do confirm() nativo para os botões de Excluir da Tabela
             const deleteButtons = document.querySelectorAll('.btn-delete-swal');
             deleteButtons.forEach(btn => {
                 btn.addEventListener('click', function() {

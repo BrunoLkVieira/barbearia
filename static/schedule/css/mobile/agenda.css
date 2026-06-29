@@ -1,348 +1,282 @@
+/* ==================================================
+   MOBILE-FIRST UI/UX CSS (Morpher Edition V8 - Contraste e Respiro)
+   Arquivo: mobile/agenda.css
+================================================== */
+
 @media (max-width: 820px) {
+    /* --- 1. CONFIGURAÇÕES BASE E PROFUNDIDADE --- */
     body {
-        background-color: #f5f7fa;
+        /* Fundo cinza-azulado elegante. Cria o contraste perfeito com os cards brancos */
+        background-color: #eaf0f6; 
         display: flex;
         flex-direction: column;
         min-height: 100vh;
         color: #333;
         position: relative;
         overflow-x: hidden;
-    }
-    
-    /* Main Content */
-    .main-content {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        padding: 10px;
-        gap: 20px;
-    }
-    
-    /* Barbers Column */
-    .barbers {
-        width: 100%;
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 20px 10px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .section-title {
-        padding: 0 20px;
-        font-weight: 600;
-        color: #2c3e50;
-        border-bottom: 1px solid #eaecef;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 1.2rem;
+        padding-bottom: 85px; /* Espaço pro FAB e Nav Bottom */
     }
 
-    .section-title i{
-        margin-left: 10px;
-    }
+    .mobile-only { display: block !important; }
+    .desktop-only { display: none !important; }
     
-    .barber-list {
-        padding: 0;
-        height: 10rem;
-        overflow-x: auto;
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .barber-card {
-        display: flex;
-        align-items: center;
-        min-width: 7em;
-        height: 8em;
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border-left: 3px solid transparent;
-        background-color: #f8f9fa;
-    }
-    
-    .barber-card.active {
-        background-color: #fff5eb;
-        border-left: 3px solid #e67e22;
-        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.15);
-    }
-    
-    .barber-avatar {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #e67e22, #d35400);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 500;
-        margin-right: 10px;
-        font-size: .8rem;
-    }
-    
-    .barber-info {
-        flex: 1;
-    }
-    
-    .barber-name {
-        font-weight: 500;
-        color: #2c3e50;
-        margin-bottom: 1px;
-        font-size: .8rem;
-    }
-    
-    .barber-specialty {
-        font-size: 0.8rem;
-        color: #7f8c8d;
-    }
-    
-    
-    /* Schedule Column */
-    .schedule {
-        flex: 1;
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        height: calc(85vh - 115px);
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .agenda-header {
+    .nav-bar > .nav-tabs, 
+    .user-sidebar .mobile-sidebar { display: none !important; }
+
+    /* Remove padding do main-content pra gente controlar o espaçamento 100% no mobile */
+    .main-content { padding: 0; margin: 0; }
+
+    /* --- 2. HEADER E FILTRO CENTRALIZADO VERTICALMENTE --- */
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 12px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        width: 95%;
-        margin-bottom: 8px;
-        margin: auto;
-        padding: 10px 0;
-
-        border-bottom: 1px solid #eaecef;
-    }
-    
-    .agenda-title {
-        font-weight: 600;
-        color: #2c3e50;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        background: linear-gradient(135deg, #1a233a, #0d1322);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     }
 
-    .agenda-row{
-        display: flex;
-        gap: 5px;
-        font-size: 1.1rem;
-    }
+    .logo-content h1 { display: none !important; }
 
-    .agenda-row i{
-        color: #e67e22;
-        font-size: 1.2rem;
-        margin-top: 1px;
-    }
-
-    .agenda-title h2{
-        font-size: .9rem;
-        font-weight: 600;
-        color: #2c3e50;
+    /* Centralização Absoluta do Filtro de Unidade */
+    .desktop-unit-filter {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 105;
+        width: auto;
     }
     
-    .agenda-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: end;
-    }
-    
-    .time-filter {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        justify-content: right;
-    }
-    
-    .time-filter select {
-        padding: 9px 6px;
-        border: 1px solid #d1d9e0;
-        border-radius: 6px;
-        background-color: #f8f9fa;
-        color: #2c3e50;
-        font-size: 0.95rem;
-        width: 90%;
-    }
-
-    .btnNewAppointment {
-        padding: 9px 6px;
-        border: 1px solid #d1d9e0;
-        border-radius: 6px;        
-        background: linear-gradient(135deg, #e67e22, #d35400);
-        color: white;
-        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-        font-size: .68rem;
-        width: 90%;
-    }
-    
-    /* Corpinho do scroll de agendamentos */
-    .schedule-container {
-        overflow-y: auto;
-        max-height: 54vh;
-        display: flex;
-        flex-direction: column;
-        margin-top: 10px;
-        padding: 10px;
-        gap: 10px;
-    }
-    
-    .schedule-header {
-        display: none;
-    }
-    
-    /* Schedule Each Item */
-    .time-slot {
-        display: flex;
-        flex-direction: column;
-        padding-bottom: 12px;
-        border-radius: 10px;
-        margin-top: 5px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-        background-color: #ffffff;
-        border: 1px solid #eaecef;
-        transition: all 0.3s ease;
-        gap: 15px;
-    }
-    
-    .time-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px;
-        background-color: #d1d9e0;
-        border-radius: 8px 8px 0 0;
-        background-color: #3498db;
-    }
-
-    .order{
-        color: #e8f5e9;
-        font-weight: 400;
-        font-size: 1.2rem;
-    }
-
-    .time {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #2c3e50;
-    }
-    
-    .duration {
-        font-size: 0.85rem;
+    .desktop-unit-filter select {
+        padding: 6px 15px;
+        border-radius: 20px;
+        background-color: rgba(255, 255, 255, 0.15);
         color: #fff;
-    }
-    
-    .client-info {
-        padding: 0 20px;
-    }
-    
-    .client-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-    
-    .client-name {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.85rem;
         font-weight: 600;
-        font-size: 1.1rem;
-        color: #2c3e50;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        text-align: center;
+        outline: none;
+        appearance: none;
     }
-    
-    .client-name i {
-        color: #3498db;
+    .desktop-unit-filter select option {
+        background-color: #2c3e50;
+        color: #ffffff;
     }
-    
-    .status.pending {
-        background-color: #fff8e1;
-        color: #f57f17;
-    }
-    
-    .service-details {
+
+    /* Limpando resíduos do Desktop */
+    .barbers, .agenda-header, .schedule-header, .schedule-footer { display: none !important; }
+    .nav-bar { display: none !important; }
+
+
+    /* --- 3. DASHBOARD (FILTROS + CARDS DE RESUMO) --- */
+    .mobile-dashboard {
+        /* Adicionado padding-top de 20px para desgrudar do header */
+        padding: 20px 15px 10px 15px; 
         display: flex;
         flex-direction: column;
+        gap: 20px; /* Excelente espaçamento entre a linha de Filtros e o Grid de Stats */
+    }
+
+    /* Linha de Filtros (Data e Barbeiros) */
+    .mobile-filters-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 10px;
+        
+    }
+    .mobile-filters-row input, .mobile-filters-row select {
+        width: 50%;
+        padding: 12px;
+        border: 1px solid #e56008; /* Borda visível para contraste */
+        border-radius: 12px;
+        background-color: #ffffff; 
+        font-size: 0.95rem;
+        color: #2c3e50;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04); /* Sombra para descolar do fundo cinza */
+    }
+
+    /* Grid 2x2 para Stats */
+    .mobile-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 15px;
     }
     
-    .detail-item {
+    .m-stat-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 18px 10px;
         display: flex;
-    }
-    
-    .detail-label {
-        width: 100px;
-        font-size: 0.8rem;
-        color: #000;
-    }
-    
-    .detail-value {
-        font-weight: 500;
-        font-size: 0.9rem;
-        color: #2c3e50;
-    }
-    
-    .payment-status {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-    
-    .paid {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-    }
-    
-    .not-paid {
-        background-color: #ffebee;
-        color: #c62828;
-    }
-    
-    .client-actions {
-        display: flex;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
-        align-items: center;
-        gap: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Sombra de app nativo */
+        border: 1px solid #e2e8f0; /* Borda suave para fechar o card */
     }
     
-    .action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: left;
-        width: 45%;
-        gap: 8px;
-        padding: 8px 15px;
-        border-radius: 6px;
-        background-color: #f8f9fa;
-        color: #2c3e50;
-        font-size: .9rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid #eaecef;
+    .m-stat-val { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+    .m-stat-label { font-size: 0.75rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Título sutil separador para a lista */
+    .mobile-section-title {
+        font-size: 1.15rem;
+        color: #1a233a;
+        margin: 15px 0 5px 0; /* Espaço extra em cima para desgrudar dos cards 2x2 */
+        padding-left: 5px;
+        font-weight: 800;
+    }
+
+
+    /* --- 4. LISTA DE AGENDAMENTOS (O CARD) --- */
+    .schedule { background: transparent; padding: 0; box-shadow: none; height: auto; }
+    .schedule-container { 
+        padding: 20px 15px 25px 15px; /* Margens laterais e embaixo */
+        margin: 10px 0 0 0; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 16px; /* Espaço perfeito entre um agendamento e outro */
+        overflow: visible; 
+       
+    }
+
+    .time-slot {
+        display: block; position: relative;
+        padding: 55px 15px 15px 15px; 
+        border-radius: 14px; background-color: #ffffff;
+        border: 1px solid #e2e8f0; /* Borda sutil fechando o cartão */
+        border-left: 6px solid #3498db; 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); /* Sombra projetada */
+        margin: 0; cursor: pointer;
     }
     
-    .action-btn i {
-        color: #e67e22;
+    .completed-slot { border-left-color: #27ae60; }
+    .cancelled-slot { border-left-color: #e74c3c; opacity: 0.85; }
+
+    .time-info, .client-info { background: transparent !important; border: none !important; margin: 0; padding: 0; display: block; }
+    
+    .time-info .time { position: absolute; top: 16px; left: 15px; font-size: 1.35rem; font-weight: 800; color: #1a233a; }
+    .time-info .duration { position: absolute; top: 20px; left: 85px; font-size: 0.85rem; color: #95a5a6; }
+    
+    .status-badge {
+        position: absolute; top: 16px; right: 15px;
+        font-size: 0.65rem; padding: 6px 12px; margin: 0;
+        border-radius: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-completed { background-color: #e8f5e9 !important; color: #2e7d32 !important; border: 1px solid #c8e6c9;}
+    .status-pending { background-color: #e3f2fd !important; color: #1565c0 !important; border: 1px solid #bbdefb;}
+    .status-cancelled { background-color: #ffebee !important; color: #c62828 !important; border: 1px solid #ffcdd2;}
+
+    .client-header { margin: 0; }
+    .client-name { font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin-bottom: 10px; display: block; }
+    
+    .service-details-grid { display: flex; flex-direction: column; gap: 8px; }
+    .detail-group { display: block; gap: 0; }
+    
+    .detail-group:nth-child(1) .detail-line:nth-child(1) .detail-value {
+        display: block; font-size: 0.95rem; color: #7f8c8d; font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
     }
     
+    .detail-group:nth-child(1) .detail-line:nth-child(2) { float: left; margin-top: 8px; }
+    .detail-group:nth-child(2) .detail-line:nth-child(2) { float: right; margin-top: 8px; }
     
+    .desktop-barber-badge { background: transparent !important; padding: 0 !important; color: #95a5a6 !important; font-weight: 600 !important; font-size: 0.85rem;}
+    .total-price { font-size: 1.15rem !important; font-weight: 800; color: #2c3e50;}
+    
+    .service-details-grid::after { content: ""; clear: both; display: table; }
+    .appointment-notes { margin-top: 15px; font-size: 0.85rem; padding: 10px 12px; background: #fff9e6; border: 1px solid #fce8a6; border-radius: 8px; color: #d35400; font-weight: 500;}
+
+
+    /* --- 5. FLOATING ACTION BUTTON --- */
+    .btnNewAppointment-mobile {
+        position: fixed; bottom: 85px; right: 20px;
+        width: 65px; height: 65px; border-radius: 50%; 
+        background: linear-gradient(135deg, #FF7A00, #d35400);
+        color: white; font-size: 1.8rem;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 90; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4); border: none; cursor: pointer;
+    }
+
+
+    /* --- 6. BOTTOM NAVIGATION BAR --- */
+    .mobile-bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
+        display: flex; justify-content: space-around; padding: 12px 0;
+        padding-bottom: env(safe-area-inset-bottom, 12px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08); z-index: 99;
+        border-top: 1px solid #e2e8f0;
+    }
+    .mobile-bottom-nav .nav-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;
+    }
+    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; }
+    .mobile-bottom-nav .nav-item.active { color: #FF7A00; font-weight: 700; }
+    .mobile-bottom-nav .nav-item.active i { color: #FF7A00; }
+
+
+    /* --- 7. BOTTOM SHEETS (Gaveta de Ações) --- */
+    .bottom-sheet-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+    
+    .bottom-sheet {
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+        border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
+        padding-bottom: env(safe-area-inset-bottom, 15px); box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+    }
+    .bottom-sheet.active { transform: translateY(0); }
+    .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
+    
+    .bs-content { padding: 0 25px 25px 25px; }
+    
+    .bs-title-row {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 10px;
+    }
+    .bs-title-row h3 { margin: 0; font-size: 1.35rem; color: #1a233a; font-weight: 800; flex: 1;}
+    
+    .bs-status-badge {
+        font-size: 0.65rem; padding: 5px 10px; border-radius: 12px; 
+        font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+
+    .bs-phone { color: #27ae60; font-weight: 700; font-size: 1rem; margin-bottom: 15px; }
+    .bs-divider { height: 1px; background: #eaecef; margin: 15px 0; }
+    .bs-details p { font-size: 0.95rem; color: #7f8c8d; margin-bottom: 8px; }
+    .bs-details strong { color: #2c3e50; }
+    .bs-total { font-size: 1.8rem; color: #27ae60; font-weight: 800; margin: 15px 0; text-align: right; }
+
+    .bs-actions { display: flex; flex-direction: column; gap: 12px; }
+    .bs-secondary-actions { display: flex; gap: 12px; width: 100%; }
+    
+    .bs-btn {
+        width: 100%; padding: 15px; border-radius: 12px; font-size: 1.05rem; font-weight: 700;
+        border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .bs-btn-primary { background: #27ae60; color: white; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);}
+    .bs-btn-secondary { background: #f8f9fa; border: 1px solid #dcdde1; color: #2c3e50; flex: 1; }
+    .bs-btn-danger { background: #fff0f0; border: 1px solid #ffcccc; color: #e74c3c; flex: 1; }
+
+    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
+    .bs-menu-list a {
+        padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50; 
+        text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;
+    }
+    .bs-menu-list a i { color: #FF7A00; font-size: 1.3rem; width: 25px; text-align: center; }
+    
+    .endServiceModal, .appointmentModal-content { width: 100%; height: 100%; border-radius: 0; }
+}
+
+@media (min-width: 821px) {
+    .mobile-only { display: none !important; }
 }
