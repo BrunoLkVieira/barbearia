@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
+            // CORREÇÃO: Limpa a memória do barbeiro pra não bugar na próxima unidade
+            sessionStorage.removeItem('activeBarberId'); 
+            
             const unitSlug = this.value;
             const urlParams = new URLSearchParams(window.location.search);
             const dateParam = urlParams.get('date');
@@ -102,73 +105,156 @@ function initBarberFilter() {
     const barberCards = document.querySelectorAll(".barbers .barber-card");
     const timeSlots = document.querySelectorAll(".time-slot");
     const titleName = document.querySelector(".agenda-barber-name");
+    const mobileSelect = document.getElementById('mobileBarberSelect');
     
-    const totalCountEl = document.querySelector(".schedule-footer .footer-stat:nth-child(1) .footer-value");
-    const totalRevenueEl = document.querySelector(".schedule-footer .footer-stat:nth-child(2) .footer-value");
+    // Captura os elementos de números SEM precisar de IDs (Lê pela estrutura do HTML)
+    const desktopStatVals = document.querySelectorAll(".nav-bar .stats .stat-box .stat-value"); 
+    const mobileStatVals = document.querySelectorAll(".mobile-stats-grid .m-stat-card .m-stat-val"); 
+    const footerStatVals = document.querySelectorAll(".schedule-footer .footer-stat .footer-value"); 
 
+    // Cria a mensagem de VAZIO via JS se ela não existir
+    const scheduleContainer = document.querySelector('.schedule-container');
+    let jsEmptyMsg = document.getElementById('js-empty-msg');
+    
+    // Verifica se o Django já jogou a mensagem nativa dele
+    const djangoEmptyMsg = scheduleContainer ? Array.from(scheduleContainer.children).find(el => !el.classList.contains('time-slot') && el.id !== 'js-empty-msg') : null;
+
+    if (!djangoEmptyMsg && !jsEmptyMsg && scheduleContainer) {
+        jsEmptyMsg = document.createElement('div');
+        jsEmptyMsg.id = 'js-empty-msg';
+        jsEmptyMsg.style.cssText = "text-align: center; padding: 40px; color: #7f8c8d; display: none; background: #fff; border-radius: 12px; margin-top: 10px; border: 1px solid #edf2f7; font-weight: 600;";
+        jsEmptyMsg.innerHTML = '<i class="fas fa-calendar-xmark" style="font-size: 2.5rem; margin-bottom: 10px; display: block; color: #cbd5e0;"></i>Nenhum agendamento para este barbeiro.';
+        scheduleContainer.appendChild(jsEmptyMsg);
+    }
+
+    // Função central que roda a matemática e filtra a tela
+    function applyFilter(selectedId) {
+        let totalCount = 0; let totalRev = 0.0;
+        let compCount = 0; let compRev = 0.0;
+        let visualOrder = 1; let visibleSlots = 0;
+
+        timeSlots.forEach(slot => {
+            const slotBarberId = slot.getAttribute("data-barber");
+            const slotStatus = slot.getAttribute("data-status"); 
+            
+            if (selectedId === "all" || slotBarberId === selectedId) {
+                slot.style.display = ""; // Mostra o card
+                visibleSlots++;
+                
+                const orderElement = slot.querySelector('.order');
+                if (orderElement) orderElement.innerText = visualOrder++;
+                
+                // Extrai o preço do card de forma cega (seja PC ou Mobile)
+                let priceStr = "0";
+                const priceAttr = slot.getAttribute('data-price-raw');
+                if (priceAttr) {
+                    priceStr = priceAttr;
+                } else {
+                    const priceText = slot.querySelector('.total-price');
+                    if (priceText) {
+                        let match = priceText.innerText.match(/R\$\s*([\d\.,]+)/);
+                        if(match) priceStr = match[1];
+                    }
+                }
+                
+                const price = parseFloat(priceStr.replace(/\./g, '').replace(',', '.'));
+                
+                if (slotStatus !== 'cancelled') {
+                    totalCount++;
+                    if (!isNaN(price)) totalRev += price;
+                }
+
+                if (slotStatus === 'completed') {
+                    compCount++;
+                    if (!isNaN(price)) compRev += price;
+                }
+            } else {
+                slot.style.display = "none"; // Esconde o card
+            }
+        });
+
+        // Mostra a mensagem de VAZIO se a filtragem zerar a tela e o Django não tiver agido
+        if (jsEmptyMsg && timeSlots.length > 0) {
+            jsEmptyMsg.style.display = visibleSlots === 0 ? 'block' : 'none';
+        }
+
+        const formatMoney = (val) => `R$ ${val.toFixed(2).replace('.', ',')}`;
+
+        // Atualiza números do Desktop
+        if (desktopStatVals.length >= 2) {
+            desktopStatVals[0].innerText = totalCount;
+            desktopStatVals[1].innerText = formatMoney(totalRev);
+        }
+
+        // Atualiza números do Mobile
+        if (mobileStatVals.length >= 4) {
+            mobileStatVals[0].innerText = totalCount;
+            mobileStatVals[1].innerText = formatMoney(totalRev);
+            mobileStatVals[2].innerText = compCount;
+            mobileStatVals[3].innerText = formatMoney(compRev);
+        }
+
+        // Atualiza números dos Footers
+        footerStatVals.forEach((val, idx) => {
+            if(idx % 2 === 0) val.innerText = compCount; // Ímpar/Par por causa de múltiplos footers
+            else val.innerText = formatMoney(compRev);
+        });
+    }
+
+    // Ação: Ao clicar no botão do Desktop
     barberCards.forEach(card => {
         card.addEventListener("click", () => {
             barberCards.forEach(c => c.classList.remove("active"));
             card.classList.add("active");
             
-            if (titleName) {
-                titleName.innerText = card.querySelector(".barber-name").innerText;
-            }
+            if (titleName) titleName.innerText = card.querySelector(".barber-name").innerText;
 
-            const clickedBarberId = card.getAttribute("data-barber-id");
-            sessionStorage.setItem('activeBarberId', clickedBarberId);
-
-            let completedCount = 0;
-            let completedRevenue = 0.0;
-            let visualOrder = 1;
-
-            timeSlots.forEach(slot => {
-                const slotBarberId = slot.getAttribute("data-barber");
-                const slotStatus = slot.getAttribute("data-status"); 
-                
-                if (clickedBarberId === "all" || slotBarberId === clickedBarberId) {
-                    slot.style.display = "";
-                    const orderElement = slot.querySelector('.order');
-                    if (orderElement) orderElement.innerText = visualOrder++;
-                    
-                    if (slotStatus === 'completed') {
-                        completedCount++;
-                        // PEGA O VALOR REAL DO BOTÃO FINALIZAR (Secreto) ou recai para o Data Attr da linha
-                        const finishBtn = slot.querySelector('.finish-btn');
-                        const editBtn = slot.querySelector('.edit');
-                        let priceStr = "0";
-                        
-                        if (editBtn && editBtn.hasAttribute('data-total')) {
-                            priceStr = editBtn.getAttribute('data-total');
-                        } else if (finishBtn && finishBtn.hasAttribute('data-total')) {
-                            priceStr = finishBtn.getAttribute('data-total');
-                        } else {
-                            // Tenta pegar do elemento texto
-                            const priceText = slot.querySelector('.total-price');
-                            if (priceText) priceStr = priceText.innerText.replace('R$', '').trim().replace(',', '.');
-                        }
-                        
-                        const price = parseFloat(priceStr.replace(',', '.'));
-                        if (!isNaN(price)) completedRevenue += price;
-                    }
-                } else {
-                    slot.style.display = "none";
-                }
-            });
-
-            if (totalCountEl) totalCountEl.innerText = completedCount;
-            if (totalRevenueEl) totalRevenueEl.innerText = `R$ ${completedRevenue.toFixed(2).replace('.', ',')}`;
+            const selectedId = card.getAttribute("data-barber-id");
+            sessionStorage.setItem('activeBarberId', selectedId);
+            
+            if(mobileSelect) mobileSelect.value = selectedId; // Sincroniza o Mobile
+            
+            applyFilter(selectedId);
         });
     });
 
-    const savedBarberId = sessionStorage.getItem('activeBarberId');
-    if (savedBarberId) {
-        const cardToActivate = document.querySelector(`.barbers .barber-card[data-barber-id="${savedBarberId}"]`);
-        if (cardToActivate) cardToActivate.click(); 
-    } else {
-        const autoCard = document.querySelector(".barbers .barber-card.active");
-        if(autoCard) autoCard.click();
+    // Ação: Ao mudar o Dropdown no Mobile
+    if (mobileSelect) {
+        // Remove listeners duplicados caso existam recriando o nó
+        const newSelect = mobileSelect.cloneNode(true);
+        mobileSelect.parentNode.replaceChild(newSelect, mobileSelect);
+        
+        newSelect.addEventListener('change', function() {
+            const selectedId = this.value;
+            sessionStorage.setItem('activeBarberId', selectedId);
+            
+            // Sincroniza o Desktop
+            barberCards.forEach(c => c.classList.remove("active"));
+            const targetCard = document.querySelector(`.barbers .barber-card[data-barber-id="${selectedId}"]`);
+            if (targetCard) {
+                targetCard.classList.add("active");
+                if (titleName) titleName.innerText = targetCard.querySelector(".barber-name").innerText;
+            }
+
+            applyFilter(selectedId);
+        });
     }
+
+    // Inicialização ao carregar a página
+    const savedBarberId = sessionStorage.getItem('activeBarberId') || "all";
+    const currentSelect = document.getElementById('mobileBarberSelect');
+    
+    if (currentSelect) currentSelect.value = savedBarberId;
+    
+    barberCards.forEach(c => c.classList.remove("active"));
+    const initialCard = document.querySelector(`.barbers .barber-card[data-barber-id="${savedBarberId}"]`);
+    if (initialCard) {
+        initialCard.classList.add("active");
+        if (titleName) titleName.innerText = initialCard.querySelector(".barber-name").innerText;
+    }
+
+    // Dispara a matemática inicial
+    applyFilter(savedBarberId);
 }
 
 // ====================== GERAÇÃO DA MALHA DO BARBEIRO ======================

@@ -105,6 +105,9 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 time_str = request.POST.get('time')
                 status_val = request.POST.get('status', 'scheduled')
                 notes_str = request.POST.get('notes', '')
+                
+                # CORREÇÃO 1: Resgatar o tipo de pagamento do Form
+                payment_type = request.POST.get('payment_type') 
 
                 if not service_ids or not time_str:
                     messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
@@ -152,7 +155,11 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     appointment.status = status_val
                     appointment.notes = notes_str
                     
-                    if status_val == 'completed': appointment.is_paid = True
+                    # CORREÇÃO 2: Salvar o pagamento caso o status seja Finalizado
+                    if status_val == 'completed': 
+                        appointment.is_paid = True
+                        if payment_type: 
+                            appointment.payment_type = payment_type
                     elif status_val in ['cancelled', 'scheduled']: 
                         appointment.is_paid = False
                         appointment.payment_type = None
@@ -175,6 +182,7 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, msg)
                 
             elif action == "delete_appointment":
+            # .... MANTENHA O RESTANTE DO SEU CÓDIGO INTACTO ...
                 if is_cashier:
                     messages.error(request, "Acesso Negado: Seu cargo (Caixa) não tem permissão para excluir registros.")
                     return redirect(f"{request.path}?date={current_date}")
