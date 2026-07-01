@@ -1,10 +1,9 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ barbershop.name }} - Orbly Barber</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     
@@ -15,17 +14,15 @@
     
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/unit.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newUnit.css' %}">
 
     <style>.swal2-container {z-index: 9999;}</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script src="{% static 'geral/js/notification.js' %}"></script>
 </head>
 <body>
     {% include "geral/header.html" %}
     
-    <div class="nav-bar">
+    <div class="nav-bar desktop-only">
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
@@ -37,8 +34,7 @@
         </div>
     </div>
 
-
-    <div class="pages-options-Container">
+    <div class="pages-options-Container desktop-only">
         {% if request.user.user_type == "dono" %}
             <a href="">
                 <div class="page-option active" title="Gerenciar unidades físicas"><i class="fas fa-store"></i> Unidades</div>
@@ -70,9 +66,24 @@
         {% endif %}
     </div>
     
+    <div class="mobile-only mobile-dashboard">
+        <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 25px 0; font-size: 1.8rem; font-weight: 800;">Unidades</h2>
+        
+        <div class="mobile-stats-grid">
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #FF7A00;">{{ units.count }} / {{ barbershop.max_units }}</span>
+                <span class="m-stat-label">Plano de Unid.</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #27ae60;">{{ active_units_count }}</span>
+                <span class="m-stat-label">Em Operação</span>
+            </div>
+        </div>
+    </div>
+
     <div class="main-content">
         <div class="section">
-            <div class="page-header">
+            <div class="page-header desktop-only">
                 <div class="page-title">
                     <i class="fas fa-store"></i>
                     <span>Gerenciamento de Unidades</span>
@@ -85,7 +96,7 @@
             </div>
             
             <div class="units-table-container">
-                <div class="table-header">
+                <div class="table-header desktop-only">
                     <div>Unidade</div>
                     <div>Endereço</div>
                     <div>Funcionários</div>
@@ -93,7 +104,8 @@
                 </div>
 
                 {% for unit in units %}
-                    <div class="table-row" style="{% if not unit.is_active %}opacity: 0.6; background: #fdfdfd;{% endif %}"
+                    <div class="table-row m-unit-card {% if not unit.is_active %}inactive{% endif %}" 
+                        onclick="openMobileSheet('{{ unit.id }}', event)"
                         data-id="{{ unit.id }}" 
                         data-cep="{{ unit.cep_address }}" 
                         data-street="{{ unit.street_address }}" 
@@ -104,7 +116,19 @@
                         data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
                         data-instagram="{{ unit.instagram_link|default:'' }}"
                         data-active="{{ unit.is_active }}">
-                        <div class="unit-cell">
+                        
+                        <div class="m-unit-title mobile-only">
+                            <i class="fas fa-store"></i> {{ unit.name }}
+                        </div>
+                        <div class="m-unit-badge mobile-only">
+                            {% if unit.is_active %}
+                                <span class="status-badge status-completed">ATIVA</span>
+                            {% else %}
+                                <span class="status-badge status-cancelled">INATIVA</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="unit-cell desktop-only">
                             <div class="unit-icon" style="{% if not unit.is_active %}filter: grayscale(1);{% endif %}">
                                 <i class="fas fa-store"></i>
                             </div>
@@ -124,10 +148,11 @@
                         </div>
 
                         <div class="unit-employees">
-                            <span title="Total de funcionários nesta unidade">{{ unit.employee_count }}</span>
+                            <i class="fas fa-users mobile-only" style="color: #a0aec0; width: 16px; margin-right: 4px;"></i>
+                            <span title="Total de funcionários nesta unidade">{{ unit.employee_count }} {% if unit.employee_count == 1 %}Funcionário{% else %}Funcionários{% endif %}</span>
                         </div>
 
-                        <div class="unit-actions">
+                        <div class="unit-actions desktop-only">
                             <div class="action-btn edit" title="Editar informações da unidade"
                                 data-id="{{ unit.id }}"
                                 data-name="{{ unit.name }}"
@@ -153,82 +178,51 @@
                             </form>
                         </div>
                     </div>
+
+                    <div class="mobile-only">
+                        <div class="bottom-sheet-overlay" id="bs-overlay-{{ unit.id }}" onclick="closeMobileSheet('{{ unit.id }}')"></div>
+                        <div class="bottom-sheet" id="bs-sheet-{{ unit.id }}">
+                            <div class="bottom-sheet-handle"></div>
+                            <div class="bs-content">
+                                <div class="bs-title-row">
+                                    <h3><i class="fas fa-store" style="color:#FF7A00; margin-right: 8px;"></i>{{ unit.name }}</h3>
+                                    {% if unit.is_active %}
+                                        <span class="bs-status-badge status-completed">ATIVA</span>
+                                    {% else %}
+                                        <span class="bs-status-badge status-cancelled">INATIVA</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="bs-divider"></div>
+                                
+                                <div class="bs-details">
+                                    <p><i class="fas fa-map-marker-alt" style="color: #3498db; width:20px;"></i> <strong>Endereço:</strong><br> <span style="margin-left:25px; color:#2c3e50;">{{ unit.street_address }}, {{ unit.number_address }} - {{ unit.city }}/{{ unit.state }}</span></p>
+                                    <p><i class="fas fa-user-tie" style="color: #FF7A00; width:20px;"></i> <strong>Equipe:</strong> {{ unit.employee_count }} Funcionários alocados</p>
+                                    {% if unit.whatsapp_number %}
+                                    <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>WhatsApp:</strong> {{ unit.whatsapp_number }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <div class="bs-actions" style="margin-top: 20px;">
+                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ unit.id }}'); document.querySelector('.table-row[data-id=\'{{ unit.id }}\'] .edit').click();">
+                                        <i class="fas fa-edit"></i> Editar Filial
+                                    </button>
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ unit.id }}'); document.querySelector('#delete-unit-desktop-form-{{ unit.id }} .delete').click();">
+                                        <i class="fas fa-trash"></i> Excluir Filial
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 {% empty %}
-                    <div style="text-align:center; padding: 20px;">Nenhuma unidade cadastrada.</div>
+                    <div style="text-align:center; padding: 40px; color: #a0aec0; background: #fff; border-radius: 12px;">Nenhuma unidade cadastrada.</div>
                 {% endfor %}
             </div>
-
-            <div class="units-mobile-table-container">    
-                {% for unit in units %}
-                    <div class="table-row" style="{% if not unit.is_active %}opacity: 0.6; background: #fdfdfd;{% endif %}"
-                    data-id="{{ unit.id }}" 
-                    data-cep="{{ unit.cep_address }}" 
-                    data-street="{{ unit.street_address }}" 
-                    data-number="{{ unit.number_address }}" 
-                    data-neighborhood="{{ unit.neighborhood|default:'' }}"
-                    data-city="{{ unit.city|default:'' }}"
-                    data-state="{{ unit.state|default:'' }}"
-                    data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
-                    data-instagram="{{ unit.instagram_link|default:'' }}"
-                    data-active="{{ unit.is_active }}">
-                     <div class="unit-cell">
-                         <div class="unit-icon" style="{% if not unit.is_active %}filter: grayscale(1);{% endif %}">
-                             <i class="fas fa-store"></i>
-                         </div>
-                         
-                         <div class="unit-info">
-                             <div class="unit-name">{{ unit.name }}</div>
-                             {% if unit.is_active %}
-                                <span class="unit-status status-active" title="Recebendo clientes">Ativa</span>
-                            {% else %}
-                                <span class="unit-status status-inactive" title="Operação suspensa temporariamente">Inativa</span>
-                            {% endif %}
-                         </div>
-                     </div>
-
-                     <div class="employee-phone">
-                         <span class="cell-label">Unidade:</span>
-                         <i class="fas fa-map-marker-alt"></i>
-                         <span>{{ unit.street_address }}, {{ unit.number_address }}</span>
-                     </div>
-
-                     <div class="employee-role">
-                         <span class="cell-label">Funcionários:</span>
-                         <i class="fas fa-user-tie"></i>
-                         <div class="employee-quantity type-good" title="Total de funcionários">{{ unit.employee_count }}</div>
-                     </div>
-         
-                     <div class="unit-actions">
-                         <div class="action-btn edit" title="Editar unidade" 
-                            data-id="{{ unit.id }}"
-                            data-name="{{ unit.name }}"
-                            data-cep="{{ unit.cep_address }}"
-                            data-street="{{ unit.street_address }}"
-                            data-number="{{ unit.number_address }}"
-                            data-neighborhood="{{ unit.neighborhood|default:'' }}"
-                            data-city="{{ unit.city|default:'' }}"
-                            data-state="{{ unit.state|default:'' }}"
-                            data-whatsapp="{{ unit.whatsapp_number|default:'' }}"
-                            data-instagram="{{ unit.instagram_link|default:'' }}"
-                            data-active="{{ unit.is_active|yesno:'True,False' }}">
-                            <i class="fas fa-edit"></i>
-                         </div>
-                         <form method="POST" style="display:inline;" id="delete-unit-mobile-form-{{ unit.id }}">
-                            {% csrf_token %}
-                            <input type="hidden" name="unit_id" value="{{ unit.id }}">
-                            <input type="hidden" name="action" value="delete">
-                            <button type="button" class="action-btn delete" title="Excluir unidade" onclick="confirmDelete('delete-unit-mobile-form-{{ unit.id }}', 'Tem certeza que deseja excluir esta unidade? O histórico financeiro será perdido.')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                     </div>
-                 </div>
-               {% endfor %}
-             </div>
         </div>
     </div>
 
-    <footer>
+    <footer class="desktop-only">
         <div class="total-display">
             <div class="footer-first-row" style="font-size: 0.95rem;">
                 Unidades do Plano: <strong id="footerConsumedUnits" title="Vagas da assinatura">{{ units.count }}</strong> / <strong>{{ barbershop.max_units }}</strong>
@@ -237,13 +231,69 @@
                 Operações Ativas: <strong>{{ active_units_count }}</strong>
             </div>
         </div>
-
-        <div class="actions">
-            <!-- Espaço reservado para ações globais futuras -->
-        </div>
+        <div class="actions"></div>
     </footer>
     
-    <!-- Modal para Nova Unidade/Edição -->
+    <div class="mobile-only">
+        <button class="m-fab-btn" onclick="document.getElementById('newUnitBtn').click();">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item active" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3 style="margin-bottom:15px; color:#1a233a;"><i class="fas fa-bars" style="color:#FF7A00; margin-right: 8px;"></i>Menu Principal</h3>
+                
+                <div class="bs-menu-list">
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                </div>
+
+                {% if request.user.user_type != "funcionario" %}
+                <div class="bs-divider" style="height: 1px; background: #eaecef; margin: 15px 0;"></div>
+                <h4 style="margin:0 0 10px 0; color:#7f8c8d; font-size: 0.85rem; text-transform:uppercase;">Gestão de Barbearia</h4>
+                <div class="bs-menu-list" style="margin-top:0;">
+                    
+                    {% if request.user.user_type == "dono" %}
+                        <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-store"></i> Unidades</a>
+                    {% endif %}
+
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% elif request.user.user_type == "gerente" and gerente_unit %}
+                        <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% endif %}
+                    
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% elif request.user.user_type == "gerente" %}
+                        <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% endif %}
+
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
     <div class="modal-overlay" id="unitModal">
         <div class="modal">
             <div class="modal-header">
@@ -340,29 +390,43 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
-    {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3500,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer)
-                        toast.addEventListener('mouseleave', Swal.resumeTimer)
-                    }
-                });
-                {% for message in messages %}
-                    Toast.fire({
-                        icon: '{{ message.tags }}', 
-                        title: '{{ message }}'
-                    });
-                {% endfor %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true,
+                didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
             });
-        </script>
-    {% endif %}
-    
+            {% if messages %}
+                {% for message in messages %}
+                    Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
+                {% endfor %}
+            {% endif %}
+        });
+
+        // Controles das Gavetas Mobile
+        function openMobileSheet(id, event) {
+            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
+            document.getElementById('bs-overlay-' + id).classList.add('active');
+            document.getElementById('bs-sheet-' + id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileSheet(id) {
+            document.getElementById('bs-overlay-' + id).classList.remove('active');
+            document.getElementById('bs-sheet-' + id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Menu Bottom Sheet
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
 </body>
 </html>
