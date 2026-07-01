@@ -1,0 +1,295 @@
+/* ==================================================
+   MOBILE-FIRST UI/UX CSS - HISTÓRICO (Morpher Edition V5)
+   Arquivo: mobile/agendamentos.css
+================================================== */
+
+@media (max-width: 820px) {
+    /* --- 1. CONFIGURAÇÕES BASE E PROFUNDIDADE --- */
+    body {
+        background-color: #eaf0f6; 
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        color: #333;
+        position: relative;
+        overflow-x: hidden;
+        padding-bottom: 85px; 
+    }
+
+    .mobile-only { display: block !important; }
+    .desktop-only { display: none !important; }
+    
+    .nav-bar > .nav-tabs, 
+    .user-sidebar .mobile-sidebar { display: none !important; }
+    
+    .main-content { padding: 0; margin: 0; display: flex; flex-direction: column; overflow: visible;}
+
+    /* --- 2. HEADER E FILTRO DE UNIDADE MÁGICO --- */
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 0 15px; 
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #1a233a, #0d1322);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        height: 60px; 
+        box-sizing: border-box;
+    }
+    .logo-content h1 { display: none !important; }
+    
+    .pages-options-Container { display: none !important; } 
+
+    .nav-bar { display: contents !important; }
+    .nav-bar > * { display: none !important; } 
+    .nav-bar .stats { display: contents !important; }
+    .nav-bar .stats .stat-box { display: none !important; } 
+    
+    .nav-bar .unit-filter {
+        display: block !important;
+        position: fixed;
+        top: 30px; 
+        left: 50%;
+        transform: translate(-50%, -50%); 
+        z-index: 105;
+    }
+    .nav-bar .unit-filter select {
+        padding: 6px 15px;
+        border-radius: 20px;
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        outline: none;
+        appearance: none;
+        height: 32px; 
+    }
+    .nav-bar .unit-filter select option {
+        background-color: #2c3e50;
+        color: #ffffff;
+    }
+
+    /* --- 3. DASHBOARD DE RESUMO --- */
+    .mobile-dashboard {
+        padding: 20px 15px 10px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .mobile-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .mobile-stats-grid.single-col { grid-template-columns: 1fr; }
+    
+    .m-stat-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 18px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+        border: 1px solid #e2e8f0; 
+    }
+    .m-stat-val { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+    .m-stat-label { font-size: 0.75rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .mobile-search-filter-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin: 20px 0;
+    }
+
+    .m-search-form {
+        flex: 1;
+        position: relative;
+    }
+    .m-search-form i {
+        position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #7f8c8d;
+    }
+    .m-search-form input {
+        width: 100%;
+        padding: 14px 15px 14px 45px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background-color: #ffffff;
+        font-size: 0.95rem; font-weight: 500; color: #2c3e50;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        box-sizing: border-box;
+    }
+    .m-search-form input:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15); outline: none;}
+
+    .m-filter-btn {
+        width: 48px; height: 48px; flex-shrink: 0;
+        border-radius: 14px; border: 1px solid #e2e8f0;
+        background-color: #ffffff; color: #1a233a; font-size: 1.2rem;
+        display: flex; justify-content: center; align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04); cursor: pointer; position: relative;
+    }
+    .m-filter-btn .filter-badge {
+        position: absolute; top: 8px; right: 8px; width: 10px; height: 10px;
+        background-color: #e74c3c; border-radius: 50%; border: 2px solid #fff;
+    }
+
+    .mobile-section-title {
+        font-size: 1.15rem; color: #1a233a; margin: 10px 0 0 0; padding-left: 5px; font-weight: 800;
+    }
+
+    /* --- 4. LISTA DE HISTÓRICO (O CARD) --- */
+    .history-container { background: transparent; padding: 0; box-shadow: none; height: auto; }
+    .table-container { padding: 5px 15px 25px 15px; margin: 0; display: flex; flex-direction: column; gap: 16px; overflow: visible; border: none;}
+
+    .time-slot {
+        display: block; position: relative;
+        padding: 55px 15px 15px 15px; 
+        border-radius: 14px; background-color: #ffffff;
+        border: 1px solid #e2e8f0; 
+        border-left: 6px solid #3498db; 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); 
+        margin: 20px 0; cursor: pointer;
+    }
+    
+    .completed-slot { border-left-color: #27ae60; }
+    .cancelled-slot { border-left-color: #e74c3c; opacity: 0.85; }
+
+    .time-info, .client-info { background: transparent !important; border: none !important; margin: 0; padding: 0; display: block; }
+    
+    .time-info .time { position: absolute; top: 16px; left: 15px; font-size: 1.15rem; font-weight: 800; color: #1a233a; }
+    
+    .status-badge {
+        position: absolute; top: 16px; right: 15px;
+        font-size: 0.65rem; padding: 6px 12px; margin: 0;
+        border-radius: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-completed { background-color: #e8f5e9 !important; color: #2e7d32 !important; border: 1px solid #c8e6c9;}
+    .status-pending { background-color: #e3f2fd !important; color: #1565c0 !important; border: 1px solid #bbdefb;}
+    .status-cancelled { background-color: #ffebee !important; color: #c62828 !important; border: 1px solid #ffcdd2;}
+
+    .client-name { font-size: 1.15rem; font-weight: 700; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; gap:10px;}
+    
+    .client-name .client-avatar { 
+        width: 35px; height: 35px; min-width: 35px; border-radius: 50%; 
+        font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #FF7A00, #d35400) !important; color: #ffffff !important; 
+    }
+
+    .service-details-grid { display: flex; flex-direction: column; gap: 8px; }
+    .detail-group { display: block; gap: 0; }
+    
+    .detail-group:nth-child(1) .detail-line:nth-child(1) .detail-value {
+        display: block; font-size: 0.95rem; color: #7f8c8d; font-weight: 500;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+    }
+    
+    .detail-group:nth-child(1) .detail-line:nth-child(2) { float: left; margin-top: 8px; }
+    .detail-group:nth-child(1) .detail-line:nth-child(2) .total-price { float: right; }
+    
+    .desktop-barber-badge { background: transparent !important; padding: 0 !important; color: #95a5a6 !important; font-weight: 600 !important; font-size: 0.85rem;}
+    .total-price { font-size: 1.15rem !important; font-weight: 800; color: #2c3e50;}
+    .payment-badge-agenda { font-size: 0.70rem; background: #e2e8f0; color: #4a5568; padding: 4px 8px; border-radius: 12px; font-weight: 700;}
+    
+    .service-details-grid::after { content: ""; clear: both; display: table; }
+
+    /* --- 5. PAGINAÇÃO MOBILE --- */
+    .mobile-pagination { display: flex; gap: 10px; padding: 0 15px 20px 15px; }
+    .m-btn-page {
+        flex: 1; padding: 14px; background: #ffffff; border: 1px solid #e2e8f0;
+        border-radius: 12px; color: #1a233a; font-weight: 700; text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04); display: flex; justify-content: center; align-items: center; gap: 8px; cursor:pointer;
+    }
+    .m-btn-next { color: #FF7A00; border-color: #FF7A00; background: #fff5eb; }
+
+    /* --- 6. FLOATING ACTION BUTTON --- */
+    .btnNewApp-mobile {
+        position: fixed; bottom: 85px; right: 20px; width: 65px; height: 65px; border-radius: 50%; 
+        background: linear-gradient(135deg, #FF7A00, #d35400); color: white; font-size: 1.8rem;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 90; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4); border: none; cursor: pointer;
+    }
+
+    /* --- 7. BOTTOM NAVIGATION BAR --- */
+    .mobile-bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
+        display: flex; justify-content: space-around; padding: 12px 0;
+        border-top: 1px solid #e2e8f0; z-index: 99;
+    }
+    .mobile-bottom-nav .nav-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;
+    }
+    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
+    
+    /* Na página de histórico o ícone de Menu ficará ativo por padrão */
+    .mobile-bottom-nav .nav-item:last-child { color: #FF7A00; font-weight: 700; }
+    .mobile-bottom-nav .nav-item:last-child i { color: #FF7A00; }
+
+    /* --- 8. BOTTOM SHEETS --- */
+    .bottom-sheet-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+    
+    .bottom-sheet {
+        position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
+        border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
+        padding-bottom: env(safe-area-inset-bottom, 15px);
+    }
+    .bottom-sheet.active { transform: translateY(0); }
+    .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
+    
+    .bs-content { padding: 0 25px 25px 25px; }
+    
+    .bs-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 10px;}
+    .bs-title-row h3 { margin: 0; font-size: 1.35rem; color: #1a233a; font-weight: 800; flex: 1;}
+    .bs-status-badge { font-size: 0.65rem; padding: 5px 10px; border-radius: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;}
+    
+    .bs-phone { color: #2c3e50; font-weight: 700; font-size: 1rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;}
+    .bs-divider { height: 1px; background: #eaecef; margin: 15px 0; }
+    .bs-details p { font-size: 0.95rem; color: #7f8c8d; margin-bottom: 8px; }
+    .bs-details strong { color: #2c3e50; }
+    .bs-total { font-size: 1.8rem; color: #27ae60; font-weight: 800; margin: 15px 0; text-align: right; }
+
+    .bs-actions { display: flex; flex-direction: column; gap: 12px; }
+    .bs-secondary-actions { display: flex; gap: 12px; width: 100%; }
+    
+    .bs-btn {
+        width: 100%; padding: 15px; border-radius: 12px; font-size: 1.05rem; font-weight: 700;
+        border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .bs-btn-primary { background: linear-gradient(135deg, #FF7A00, #d35400); color: white; box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);}
+    .bs-btn-secondary { background: #f8f9fa; border: 1px solid #dcdde1; color: #2c3e50; flex: 1; }
+    .bs-btn-danger { background: #fff0f0; border: 1px solid #ffcccc; color: #e74c3c; flex: 1; }
+
+    /* MENU CORRIGIDO: Ícones Inativos Cinzas / Link Ativo Laranja */
+    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
+    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
+    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
+    
+    /* A Mágica de Seleção Segura (Cobre classe .active ou a URL do Django) */
+    .bs-menu-list a.active,
+    .bs-menu-list a[href*="histor"] { color: #FF7A00 !important; }
+    
+    .bs-menu-list a.active i,
+    .bs-menu-list a[href*="histor"] i { color: #FF7A00 !important; }
+
+    /* Estilizando o Formulário dentro da Gaveta de Filtros Avançados */
+    .form-group { margin-bottom: 12px; }
+    .form-label { font-weight: 600; color: #2c3e50; margin-bottom: 8px; display: block; font-size: 0.9rem;}
+    .form-control {
+        width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 10px; 
+        font-size: 0.95rem; color: #2c3e50; background: #f8f9fa; box-sizing: border-box;
+    }
+    .form-control:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15); outline: none; background: #fff;}
+}
+@media (min-width: 821px) { .mobile-only { display: none !important; } }
