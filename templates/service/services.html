@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Serviços - Orbly Barber</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
@@ -39,11 +39,12 @@
 <body>
     {% include 'geral/header.html' %}
     
-    <div class="nav-bar">
+    <div class="nav-bar desktop-only">
         {% include "geral/nav.html" %}
         <div class="stats">
             {% if is_owner %}
-            <div class="unit-filter">
+            <!-- Filtro de Unidade que será sugado pro Header no Mobile via CSS -->
+            <div class="unit-filter desktop-unit-filter">
                 <select id="unitSelectFilter"
                         data-general-url="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"
                         data-unit-url-template="{% url 'services:list_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
@@ -68,22 +69,38 @@
             </div>
             {% endif %}
 
-            <div class="stat-box" title="Serviços cadastrados e visíveis">
+            <div class="stat-box desktop-only" title="Serviços cadastrados e visíveis">
                 <div class="stat-value">{{ services_list|length }}</div>
                 <div class="stat-label">Serviços no Catálogo</div>
             </div>
         </div>
     </div>
 
-    <div class="pages-options-Container">
+    <div class="pages-options-Container desktop-only">
         <a href="">
             <div class="page-option active"><i class="fas fa-scissors"></i> Serviços</div>
         </a>
     </div>
     
+    <!-- ========================================== -->
+    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-only mobile-dashboard">
+        <p class="m-catalog-count">{{ services_list|length }} Serviços no Catálogo</p>
+        <div class="m-search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Pesquisar barbeiro ou serviço..." oninput="
+                let deskInput = document.getElementById('serviceSearch');
+                deskInput.value = this.value;
+                deskInput.dispatchEvent(new Event('keyup'));
+                if(typeof filterServicesTable === 'function') filterServicesTable();
+            ">
+        </div>
+    </div>
+
     <div class="main-content">
-        <div class="services-container" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 25px;">
-            <div class="content-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 15px; margin-bottom: 20px;">
+        <div class="services-container">
+            <div class="content-header desktop-only" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eaecef; padding-bottom: 15px; margin-bottom: 20px;">
                 <h2 style="font-size: 1.5rem; color: #2c3e50;"><i class="fas fa-scissors" style="color: #FF7A00;"></i> Serviços Operacionais</h2>
                 
                 <div style="display: flex; gap: 15px;">
@@ -98,7 +115,8 @@
             </div>
             
             <div class="services-table" style="overflow-x: auto;">
-                <div class="services-header" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 100px; padding: 15px 20px; background: #f8f9fa; font-weight: bold; border-radius: 8px; border: 1px solid #eaecef;">
+                <!-- Header Tabela Desktop -->
+                <div class="services-header desktop-only" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 100px; padding: 15px 20px; background: #f8f9fa; font-weight: bold; border-radius: 8px; border: 1px solid #eaecef;">
                     <div>Nome do Serviço</div>
                     <div>Profissionais Vinculados</div> 
                     <div>Preço</div>
@@ -108,27 +126,29 @@
 
                 <div id="servicesTableBody">
                     {% for svc in services_list %}
-                    <div class="service-row" style="display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 100px; padding: 15px 20px; border-bottom: 1px solid #eaecef; align-items: center;">
-                        <div class="service-name" style="font-weight: 600; color: #2d3748;">
-                            <i class="{{ svc.base_service_icon }}" style="color: #a0aec0; margin-right: 8px;"></i>
-                            {{ svc.name|title }}
+                    <!-- O Card de Serviço (Desktop = Linha | Mobile = Card Clicável) -->
+                    <div class="service-row" onclick="openMobileSheet('{{ forloop.counter }}', event)">
+                        <div class="service-name">
+                            <i class="{{ svc.base_service_icon }} desktop-icon" style="color: #a0aec0; margin-right: 8px;"></i>
+                            <div class="m-svc-icon mobile-only"><i class="{{ svc.base_service_icon }}"></i></div>
+                            <span class="m-svc-title">{{ svc.name|title }}</span>
                         </div>
                         
-                        <div class="service-employee" style="font-size: 0.9rem; line-height: 1.4;">
-                            <span style="color: #2c3e50;">{{ svc.employee_names|join:", " }}</span>
-                            <br><small style="color: #718096; font-weight: 600;"><i class="fas fa-store-alt"></i> {{ svc.unit_name }}</small>
+                        <div class="service-employee">
+                            <span class="m-svc-team" style="color: #2c3e50;">Profissionais: {{ svc.employee_names|join:", " }}</span>
+                            <br class="desktop-only"><small class="desktop-only" style="color: #718096; font-weight: 600;"><i class="fas fa-store-alt"></i> {{ svc.unit_name }}</small>
                         </div>
 
-                        <div class="service-price" style="font-weight: bold; color: #27ae60;">R$ {{ svc.price }}</div>
-                        <div class="service-duration" style="color: #4a5568;"><i class="far fa-clock" style="color: #3498db;"></i> {{ svc.duration }} min</div>
+                        <div class="service-price">R$ {{ svc.price }}</div>
+                        <div class="service-duration"><i class="far fa-clock" style="color: #3498db;"></i> {{ svc.duration }} min</div>
                         
-                        <div class="service-actions" style="display: flex; gap: 10px;">
+                        <div class="service-actions desktop-only">
                             {% if is_owner or is_manager %}
                                 <div class="action-btn edit" title="Editar Serviço" style="width: 32px; height: 32px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #3498db; border: 1px solid #eaecef;"
                                     onclick="editService('{{ svc.ids|join:',' }}', '{{ svc.name|escapejs }}', '{{ svc.price }}', '{{ svc.duration }}', '{{ svc.base_service_id }}', '{{ svc.unit_id }}', '{{ svc.employee_ids|join:',' }}')">
                                     <i class="fas fa-edit"></i>
                                 </div>
-                                <form method="POST" style="display:inline;" class="form-delete-service">
+                                <form method="POST" style="display:inline;" class="form-delete-service" id="del-form-{{ forloop.counter }}">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="service_ids" value="{{ svc.ids|join:',' }}">
@@ -141,8 +161,45 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    <!-- 📱 BOTTOM SHEET DO SERVIÇO (Mobile) -->
+                    <div class="mobile-only">
+                        <div class="bottom-sheet-overlay" id="bs-overlay-{{ forloop.counter }}" onclick="closeMobileSheet('{{ forloop.counter }}')"></div>
+                        <div class="bottom-sheet" id="bs-sheet-{{ forloop.counter }}">
+                            <div class="bottom-sheet-handle"></div>
+                            <div class="bs-content">
+                                <div class="bs-header-info">
+                                    <div class="bs-icon"><i class="{{ svc.base_service_icon }}"></i></div>
+                                    <div class="bs-title-price">
+                                        <h3>{{ svc.name|title }}</h3>
+                                        <span class="bs-price">R$ {{ svc.price }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bs-divider"></div>
+                                
+                                <div class="bs-details">
+                                    <p><i class="far fa-clock" style="color: #3498db; width:20px;"></i> <strong>Duração:</strong> {{ svc.duration }} minutos</p>
+                                    <p><i class="fas fa-users" style="color: #FF7A00; width:20px;"></i> <strong>Equipe vinculada:</strong><br>
+                                        <span style="display:block; margin-top:5px; color:#2c3e50; line-height:1.5;">{{ svc.employee_names|join:", " }}</span>
+                                    </p>
+                                </div>
+
+                                {% if is_owner or is_manager %}
+                                <div class="bs-actions" style="margin-top: 20px;">
+                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ forloop.counter }}'); document.querySelectorAll('.service-row')[{{ forloop.counter0 }}].querySelector('.edit').click();">
+                                        <i class="fas fa-edit"></i> Editar Serviço
+                                    </button>
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ forloop.counter }}'); document.querySelector('#del-form-{{ forloop.counter }} .btn-delete-swal').click();">
+                                        <i class="fas fa-trash"></i> Excluir Serviço
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     {% empty %}
-                    <div style="padding: 40px; text-align: center; color: #a0aec0;">
+                    <div style="padding: 40px; text-align: center; color: #a0aec0; background:#fff; border-radius:12px;">
                         <i class="fas fa-box-open" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
                         <p>Nenhum serviço configurado nesta unidade.</p>
                     </div>
@@ -152,79 +209,127 @@
         </div>
     </div>
 
+    <!-- 📱 MENU E NAVEGAÇÃO MOBILE -->
+    <div class="mobile-only">
+        {% if is_owner or is_manager %}
+        <!-- FAB: Novo Serviço -->
+        <button class="btnNewService-mobile" onclick="openModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+        {% endif %}
+
+        <!-- Nav Bottom -->
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item active" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+
+        <!-- Menu Drawer -->
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3>Menu Principal</h3>
+                <div class="bs-menu-list">
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}" class="active"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}"><i class="fas fa-store"></i> Minha Barbearia</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if is_owner or is_manager %}
-    <div id="serviceModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
-        <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 550px; width: 90%;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
-                <h2 style="color: #2c3e50; margin: 0;"><i class="fas fa-magic" style="color: #FF7A00;"></i> <span id="modalTitleText">Novo Serviço</span></h2>
+    <!-- MODAL DE SERVIÇO COM ROLAGEM INTERNA CORRIGIDA -->
+    <div id="serviceModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box;">
+        <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 550px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eaecef; flex-shrink: 0;">
+                <h2 style="color: #1a233a; margin: 0; font-size: 1.25rem; font-weight:800; display:flex; align-items:center; gap:8px;"><i class="fas fa-magic" style="color: #FF7A00;"></i> <span id="modalTitleText">Novo Serviço</span></h2>
                 <button type="button" class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <form id="serviceForm" method="POST">
+            <form id="serviceForm" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                 {% csrf_token %}
                 <input type="hidden" name="action" id="modalAction" value="create">
                 <input type="hidden" name="service_ids" id="modalServiceId">
                     
-                <div class="form-group select-barbers-group" id="barbersSelectionBlock" style="margin-bottom: 15px;">
-                    <label class="form-label main-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">
-                        <i class="fas fa-users" style="color:#3498db;"></i> Atribuir a quais Barbeiros? <small style="font-weight:normal; color:#e74c3c;">(Obrigatório)</small>
-                    </label>
-                    <p id="editUnitWarning" style="display:none; font-size:0.8rem; color:#f39c12; margin-bottom: 5px;">* Na edição, apenas barbeiros da mesma unidade podem ser sincronizados.</p>
-                    <div class="saas-barber-grid">
-                        {% for emp in modal_employees %}
-                        <label class="saas-barber-card" data-unit-id="{{ emp.unit.id }}">
-                            <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="barber-checkbox hidden-checkbox">
-                            <div class="saas-avatar">{{ emp.user.name|slice:":2"|upper }}</div>
-                            <div class="saas-info">
-                                <span class="saas-name">{{ emp.user.name }}</span>
-                                <span class="saas-unit">{{ emp.unit.name }}</span>
-                            </div>
+                <!-- A MÁGICA DO SCROLL FICA NESTA DIV -->
+                <div class="modal-body-scroll" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
+                    
+                    <div class="form-group select-barbers-group" id="barbersSelectionBlock" style="margin-bottom: 20px;">
+                        <label class="form-label main-label" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">
+                            <i class="fas fa-users" style="color:#3498db;"></i> Atribuir a quais Barbeiros? <small style="font-weight:normal; color:#e74c3c;">(Obrigatório)</small>
                         </label>
-                        {% endfor %}
+                        <p id="editUnitWarning" style="display:none; font-size:0.8rem; color:#f39c12; margin-bottom: 10px;">* Na edição, apenas barbeiros da mesma unidade podem ser sincronizados.</p>
+                        <div class="saas-barber-grid">
+                            {% for emp in modal_employees %}
+                            <label class="saas-barber-card" data-unit-id="{{ emp.unit.id }}">
+                                <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="barber-checkbox hidden-checkbox">
+                                <div class="saas-avatar">{{ emp.user.name|slice:":2"|upper }}</div>
+                                <div class="saas-info">
+                                    <span class="saas-name">{{ emp.user.name }}</span>
+                                    <span class="saas-unit">{{ emp.unit.name }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
-                    
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="baseService" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Categoria Estrutural (Ícone) *</label>
-                    <select id="baseService" name="base_service" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                        <option value="">Selecione uma categoria base...</option>
-                        {% for bs in base_services %}
-                            <option value="{{ bs.id }}">{{ bs.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="serviceName" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Nome Comercial *</label>
-                    <input type="text" id="serviceName" name="name" placeholder="Ex: Degradê Navalhado" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                </div>
-                
-                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="servicePrice" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Preço (R$) *</label>
-                        <input type="number" id="servicePrice" name="price" placeholder="Ex: 45.00" step="0.01" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                    </div>
-                    
-                    <div class="form-group" style="flex: 1;">
-                        <label for="serviceDuration" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Duração *</label>
-                        <select id="serviceDuration" name="duration" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                            <option value="">Tempo de corte...</option>
-                            <option value="15">15 min</option>
-                            <option value="30">30 min</option>
-                            <option value="45">45 min</option>
-                            <option value="60">1 Hora</option>
-                            <option value="75">1 h 15 min</option>
-                            <option value="90">1 h 30 min</option>
-                            <option value="120">2 Horas</option>
+                        
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="baseService" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Categoria Estrutural (Ícone) *</label>
+                        <select id="baseService" name="base_service" required class="modal-input-premium">
+                            <option value="">Selecione uma categoria base...</option>
+                            {% for bs in base_services %}
+                                <option value="{{ bs.id }}">{{ bs.name }}</option>
+                            {% endfor %}
                         </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="serviceName" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Nome Comercial *</label>
+                        <input type="text" id="serviceName" name="name" placeholder="Ex: Degradê Navalhado" required class="modal-input-premium">
+                    </div>
+                    
+                    <div class="mobile-row-inputs" style="display: flex; gap: 15px; margin-bottom: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="servicePrice" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Preço (R$) *</label>
+                            <input type="number" id="servicePrice" name="price" placeholder="Ex: 45.00" step="0.01" required class="modal-input-premium">
+                        </div>
+                        
+                        <div class="form-group" style="flex: 1;">
+                            <label for="serviceDuration" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Duração *</label>
+                            <select id="serviceDuration" name="duration" required class="modal-input-premium">
+                                <option value="">Tempo...</option>
+                                <option value="15">15 min</option>
+                                <option value="30">30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60">1 Hora</option>
+                                <option value="75">1 h 15 min</option>
+                                <option value="90">1 h 30 min</option>
+                                <option value="120">2 Horas</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 20px;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 10px 20px; border: 1px solid #cbd5e0; color: #4a5568; background: transparent; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Salvar Operação</button>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 15px 20px; border-top: 1px solid #eaecef; flex-shrink: 0; background: #fff;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 12px 15px; border: 1px solid #dcdde1; color: #2c3e50; background: transparent; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 15px; background: linear-gradient(135deg, #FF7A00, #d35400); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1; box-shadow: 0 4px 12px rgba(255,122,0,0.3);">Salvar Serviço</button>
                 </div>
             </form>
         </div>
@@ -236,59 +341,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ==========================================
-            // 1. CONFIGURAÇÃO GARANTIDA DO TOAST (Notificações top-right)
-            // ==========================================
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 5000,
-                timerProgressBar: true,
-                background: '#ffffff',
-                color: '#2d3748',
-                customClass: { container: 'swal2-container-high-z' },
-                didOpen: (toast) => {
-                    toast.onmouseenter = Swal.stopTimer;
-                    toast.onmouseleave = Swal.resumeTimer;
+            // Mover Filtro para o Header Mobile
+            if (window.innerWidth <= 820) {
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
                 }
+            }
+
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true,
+                background: '#ffffff', color: '#2d3748', customClass: { container: 'swal2-container-high-z' }
             });
 
-            // ==========================================
-            // 2. RENDERIZAÇÃO DAS MENSAGENS DO BACKEND (Sucesso e Erro)
-            // ==========================================
             {% if messages %}
                 {% for message in messages %}
                     var msgType = "{{ message.tags }}";
-                    
-                    // Padroniza as tags do Django para os ícones do SweetAlert
-                    if (msgType.includes("error") || msgType.includes("danger")) {
-                        msgType = "error";
-                    } else if (msgType.includes("success")) {
-                        msgType = "success";
-                    } else if (msgType.includes("warning")) {
-                        msgType = "warning";
-                    } else {
-                        msgType = "info";
-                    }
-
-                    // Dispara a notificação bonita
-                    Toast.fire({
-                        icon: msgType,
-                        title: "{{ message|escapejs }}"
-                    });
+                    if (msgType.includes("error") || msgType.includes("danger")) msgType = "error";
+                    else if (msgType.includes("success")) msgType = "success";
+                    else if (msgType.includes("warning")) msgType = "warning";
+                    else msgType = "info";
+                    Toast.fire({ icon: msgType, title: "{{ message|escapejs }}" });
                 {% endfor %}
             {% endif %}
 
-            // ==========================================
-            // 3. POPUP DE CONFIRMAÇÃO DE EXCLUSÃO
-            // ==========================================
             const deleteButtons = document.querySelectorAll('.btn-delete-swal');
             deleteButtons.forEach(btn => {
                 btn.addEventListener('click', function(e) {
-                    e.preventDefault(); // Impede o recarregamento imediato da página
+                    e.preventDefault();
                     const form = this.closest('.form-delete-service');
-                    
                     Swal.fire({
                         title: 'Atenção!',
                         text: "Isso excluirá o serviço da agenda de TODOS os barbeiros listados nesta linha. Deseja continuar?",
@@ -299,17 +382,36 @@
                         confirmButtonText: 'Sim, excluir!',
                         cancelButtonText: 'Cancelar',
                         background: '#ffffff',
-                        customClass: {
-                            container: 'swal2-container-high-z'
-                        }
+                        customClass: { container: 'swal2-container-high-z' }
                     }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit(); // Envia o formulário se o usuário confirmar
-                        }
+                        if (result.isConfirmed) form.submit();
                     });
                 });
             });
         });
+
+        // Controles das Gavetas Mobile
+        function openMobileSheet(id, event) {
+            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
+            document.getElementById('bs-overlay-' + id).classList.add('active');
+            document.getElementById('bs-sheet-' + id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileSheet(id) {
+            document.getElementById('bs-overlay-' + id).classList.remove('active');
+            document.getElementById('bs-sheet-' + id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
     </script>
 </body>
 </html>
