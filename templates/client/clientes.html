@@ -3,19 +3,16 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clientes - Barbearia Executiva</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'client/css/desktop/client.css' %}">
-    <link rel="stylesheet" href="{% static 'client/css/desktop/modals/newClient.css' %}">
-
+    
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'client/css/mobile/client.css' %}">
-    <link rel="stylesheet" href="{% static 'client/css/mobile/modals/newClient.css' %}">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>.swal2-container {z-index: 99999 !important;}</style>
@@ -27,15 +24,20 @@
     <div class="nav-bar">
         {% include 'geral/nav.html' %}
         
-        <div class="nav-content">
+        <div class="nav-content desktop-only">
             <div class="stats">
+                <div class="unit-filter desktop-unit-filter" {% if not is_owner %}style="display:none;"{% endif %}>
+                    <select id="unitSelectFilter" onchange="window.location.href='?unit='+this.value">
+                        {% if is_owner %}<option value="geral">Todas as Unidades</option>{% endif %}
+                        {% for u in units %}
+                            <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 {% if not is_owner %}
                 <div class="stat-box" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
-                    {% if current_unit %}
-                        {{ current_unit.name }}
-                    {% else %}
-                        {{ request.user.employees.first.unit.name }}
-                    {% endif %}
+                    {% if current_unit %}{{ current_unit.name }}{% else %}{{ request.user.employees.first.unit.name }}{% endif %}
                 </div>
                 {% endif %}
                 
@@ -47,8 +49,34 @@
         </div>
     </div>
     
+    <!-- ========================================== -->
+    <!-- 📱 BUSCA E FILTROS EXCLUSIVOS MOBILE 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-only mobile-header-section">
+        <div class="m-clients-info">
+            <span class="m-total-clients">{{ total_geral }} Clientes na base</span>
+            <div class="m-sort-wrapper">
+                <form method="GET" action="" id="mobileSortForm">
+                    <input type="hidden" name="search" value="{{ search_query }}">
+                    <select name="sort" onchange="document.getElementById('mobileSortForm').submit()">
+                        <option value="-created_at" {% if sort_filter == '-created_at' %}selected{% endif %}>Mais recentes</option>
+                        <option value="first_name" {% if sort_filter == 'first_name' %}selected{% endif %}>Nome (A-Z)</option>
+                        <option value="-first_name" {% if sort_filter == '-first_name' %}selected{% endif %}>Nome (Z-A)</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        <form method="GET" action="" class="m-search-bar">
+            <i class="fas fa-search"></i>
+            <!-- Enter no teclado mobile envia este form naturalmente -->
+            <input type="text" name="search" placeholder="Buscar nome ou telefone..." value="{{ search_query }}">
+            <input type="hidden" name="sort" value="{{ sort_filter }}">
+        </form>
+    </div>
+
     <div class="main-content">
-        <div class="page-header">
+        <!-- HEADER DESKTOP ONLY -->
+        <div class="page-header desktop-only">
             <div class="page-title">
                 <i class="fas fa-users"></i>
                 <span>Clientes Registrados</span>
@@ -58,8 +86,8 @@
             </button>
         </div>
         
-        <!-- BUSCA EM TEMPO REAL -->
-        <form method="GET" action="" class="search-section">
+        <!-- BUSCA DESKTOP ONLY -->
+        <form method="GET" action="" class="search-section desktop-only">
             <div class="search-container">
                 <div class="search-input">
                     <i class="fas fa-search"></i>
@@ -83,7 +111,7 @@
         </form>
         
         <div class="clients-table-container">
-            <div class="table-header">
+            <div class="table-header desktop-only">
                 <div>Cliente</div>
                 <div>Contato</div>
                 <div>E-mail</div>
@@ -94,7 +122,8 @@
             
             <div class="clients-tbody">
                 {% for client in clients %}
-                    <div class="table-row {% if client.is_blocked %}blocked-client{% endif %}">
+                    <!-- A MÁGICA: Ao clicar na linha (no mobile será o Card), abre a Gaveta -->
+                    <div class="table-row {% if client.is_blocked %}blocked-client{% endif %}" onclick="openMobileSheet('{{ client.id }}', event)">
                         <div class="client-cell">
                             <div class="client-avatar" {% if client.is_blocked %}style="background: #ffebee; color: #c62828;"{% endif %}>
                                 {{ client.first_name|slice:":1"|upper }}{{ client.last_name|slice:":1"|upper }}
@@ -118,30 +147,31 @@
                             <i class="fas fa-phone"></i>
                             <span>{{ client.phone }}</span>
                         </div>
-                        <div class="client-email">
+                        <div class="client-email desktop-only">
                             <i class="fas fa-envelope"></i>
                             <span>{{ client.email|default:"---" }}</span>
                         </div>
-                        <div class="client-visits" style="font-weight: bold; color: #27ae60;">
+                        <div class="client-visits">
                             <i class="fas fa-calendar-check"></i>
-                            <span>{{ client.completed_visits }}</span>
+                            <span>{{ client.completed_visits }} visitas</span>
                         </div>
                         <div class="client-last-visit">
                             <i class="fas fa-clock"></i>
-                            <span>{{ client.last_visit_date|date:"d/m/Y"|default:"Nenhuma" }}</span>
+                            <span>Última: {{ client.last_visit_date|date:"d/m/y"|default:"Nenhuma" }}</span>
                         </div>
-                        <div class="client-actions">
+                        
+                        <!-- Ações ocultas no mobile, disparadas pela gaveta -->
+                        <div class="client-actions desktop-only">
                             <div class="action-btn edit" title="Editar Cliente" onclick="editClient('{{ client.id }}', '{{ client.first_name }}', '{{ client.last_name }}', '{{ client.phone }}', '{{ client.email }}', '{{ client.is_blocked|yesno:'true,false' }}')">
                                 <i class="fas fa-edit"></i>
                             </div>
                             
-                            <!-- BOTAO DE REDIRECIONAMENTO COM QUERY STRING -->
-                            <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}?search={{ client.first_name|urlencode }}+{{ client.last_name|urlencode }}" class="action-btn history" title="Ver Histórico na Agenda" style="text-decoration: none;">
+                            <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}?search={{ client.first_name|urlencode }}+{{ client.last_name|urlencode }}" class="action-btn history" title="Ver Histórico" style="text-decoration: none;">
                                 <i class="fas fa-history"></i>
                             </a>
 
                             {% if is_owner or is_manager %}
-                            <form method="POST" style="display:inline;" class="form-delete-client">
+                            <form method="POST" style="display:inline;" class="form-delete-client" id="form-del-{{ client.id }}">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete">
                                 <input type="hidden" name="client_id" value="{{ client.id }}">
@@ -152,21 +182,88 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    <!-- ========================================== -->
+                    <!-- 📱 BOTTOM SHEET DO CLIENTE (Nativo Django) -->
+                    <!-- ========================================== -->
+                    <div class="mobile-only">
+                        <div class="bottom-sheet-overlay" id="bs-overlay-{{ client.id }}" onclick="closeMobileSheet('{{ client.id }}')"></div>
+                        <div class="bottom-sheet" id="bs-sheet-{{ client.id }}">
+                            <div class="bottom-sheet-handle"></div>
+                            <div class="bs-content">
+                                
+                                <div class="bs-client-header">
+                                    <div class="bs-big-avatar" {% if client.is_blocked %}style="background: #ffebee; color: #c62828;"{% endif %}>
+                                        {{ client.first_name|slice:":1"|upper }}{{ client.last_name|slice:":1"|upper }}
+                                    </div>
+                                    <div class="bs-client-title">
+                                        <h3 style="{% if client.is_blocked %}text-decoration: line-through; color: #a0aec0;{% endif %}">
+                                            {{ client.first_name }} {{ client.last_name }}
+                                        </h3>
+                                        {% if client.is_blocked %}
+                                            <span style="color: #e74c3c; font-weight: 700; font-size: 0.8rem;"><i class="fas fa-ban"></i> BLOQUEADO</span>
+                                        {% else %}
+                                            <span style="color: #f39c12; font-weight: 700; font-size: 0.8rem;"><i class="fas fa-star"></i> Cliente Padrão</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="bs-contact-info">
+                                    <p><i class="fab fa-whatsapp" style="color:#27ae60;"></i> {{ client.phone }}</p>
+                                    <p><i class="fas fa-envelope" style="color:#7f8c8d;"></i> {{ client.email|default:"Sem e-mail cadastrado" }}</p>
+                                </div>
+                                
+                                <div class="bs-divider"></div>
+
+                                <div class="bs-actions">
+                                    <button class="bs-btn bs-btn-primary" onclick="window.location.href='{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}?search={{ client.first_name|urlencode }}+{{ client.last_name|urlencode }}'">
+                                        <i class="fas fa-history"></i> Ver Histórico
+                                    </button>
+                                    
+                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ client.id }}'); editClient('{{ client.id }}', '{{ client.first_name }}', '{{ client.last_name }}', '{{ client.phone }}', '{{ client.email }}', '{{ client.is_blocked|yesno:'true,false' }}');">
+                                        <i class="fas fa-edit"></i> Editar Cadastro
+                                    </button>
+                                    
+                                    {% if is_owner or is_manager %}
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ client.id }}'); document.querySelector('#form-del-{{ client.id }} .btn-delete-swal').click();">
+                                        <i class="fas fa-trash"></i> Excluir Cliente
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 {% empty %}
-                <div style="padding: 40px; text-align: center; color: #a0aec0; width: 100%; grid-column: 1/-1;">
+                <div style="padding: 40px; text-align: center; color: #a0aec0; width: 100%; grid-column: 1/-1; background:#fff; border-radius:12px; margin-top:10px;">
                     <i class="fas fa-user-times" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                    <p>Nenhum cliente encontrado com estes filtros.</p>
+                    <p>Nenhum cliente encontrado.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
+
+        <!-- MOBILE PAGINATION (Botões Largos Premium) -->
+        {% if clients.has_other_pages %}
+        <div class="mobile-only mobile-pagination">
+            {% if clients.has_previous %}
+                <a href="?page={{ clients.previous_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="m-btn-page m-btn-prev">
+                    <i class="fas fa-arrow-left"></i> Página Anterior
+                </a>
+            {% endif %}
+            {% if clients.has_next %}
+                <a href="?page={{ clients.next_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="m-btn-page m-btn-next">
+                    Próxima Página <i class="fas fa-arrow-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
     
-    <footer class="clients-bottom-footer">
+    <!-- FOOTER DA TABELA DESKTOP ONLY -->
+    <footer class="clients-bottom-footer desktop-only">
         <div class="footer-stats">
             Exibindo página {{ clients.number }} de {{ clients.paginator.num_pages|default:"1" }}
         </div>
-        
         {% if clients.has_other_pages %}
         <div class="pagination">
             {% if clients.has_previous %}
@@ -187,53 +284,138 @@
         </div>
         {% endif %}
     </footer>
+
+    <!-- 📱 MENU MOBILE DRAWER E NAVEGAÇÃO -->
+    <div class="mobile-only">
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3>Menu Principal</h3>
+                <div class="bs-menu-list">
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}"><i class="fas fa-store"></i> Minha Barbearia</a>
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <!-- CLIENTES AGORA FICA ATIVO AQUI -->
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item active">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+        
+        <!-- FAB: NOVO CLIENTE -->
+        <button class="btnNewClient-mobile" onclick="openModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
     
-    <!-- MODAL CRIAR/EDITAR CLIENTE -->
-    <div class="modal-overlay" id="clientModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
-        <div class="modal-content" style="background: #fff; padding: 25px; border-radius: 12px; max-width: 450px; width: 90%;">
-            <div class="modal-header" style="display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
-                <h2 style="color: #2c3e50; font-size: 1.4rem; margin:0;"><i class="fas fa-user-plus" style="color: #FF7A00; margin-right: 8px;"></i> <span id="modalTitleText">Novo Cliente</span></h2>
+    <!-- MODAL CRIAR/EDITAR CLIENTE (Com a Correção do Flexbox!) -->
+    <div class="modal-overlay" id="clientModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box;">
+        <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eaecef; flex-shrink: 0;">
+                <h2 style="color: #1a233a; font-size: 1.25rem; margin:0; display:flex; align-items:center; gap:8px; font-weight:800;">
+                    <i class="fas fa-user-plus" style="color: #FF7A00;"></i> <span id="modalTitleText">Novo Cliente</span>
+                </h2>
                 <button type="button" class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
             </div>
             
-            <form id="clientForm" method="POST">
+            <!-- CORREÇÃO: Form com flex column e min-height: 0 para ativar rolagem -->
+            <form id="clientForm" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                 {% csrf_token %}
                 <input type="hidden" name="action" id="modalAction" value="create">
                 <input type="hidden" name="client_id" id="modalClientId">
                 
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="firstName" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Primeiro Nome *</label>
-                    <input type="text" name="first_name" id="firstName" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                </div>
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="lastName" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Sobrenome</label>
-                    <input type="text" name="last_name" id="lastName" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                </div>
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="clientPhone" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Telefone (Apenas Números) *</label>
-                    <input type="text" name="phone" id="clientPhone" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                </div>
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label for="clientEmail" style="display: block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">E-mail (Opcional)</label>
-                    <input type="email" name="email" id="clientEmail" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                <!-- CORREÇÃO: Rolagem interna do modal -->
+                <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="firstName" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Primeiro Nome *</label>
+                        <input type="text" name="first_name" id="firstName" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="lastName" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Sobrenome</label>
+                        <input type="text" name="last_name" id="lastName" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="clientPhone" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Telefone (Apenas Números) *</label>
+                        <input type="text" name="phone" id="clientPhone" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="clientEmail" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">E-mail (Opcional)</label>
+                        <input type="email" name="email" id="clientEmail" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 5px; background: #fff9e6; padding: 15px; border-radius: 10px; border: 1px dashed #fbd38d;">
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: 700; color: #d35400; cursor: pointer; margin: 0; font-size:0.95rem;">
+                            <input type="checkbox" name="is_blocked" id="isBlocked" value="true" style="width: 20px; height: 20px; cursor: pointer;">
+                            Bloquear Cliente
+                        </label>
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px; margin-left: 30px;">Impedir agendamentos via Orbly online.</small>
+                    </div>
                 </div>
                 
-                <!-- TRAVA ANTI SPAM -->
-                <div class="form-group" style="margin-bottom: 20px; background: #fff5eb; padding: 15px; border-radius: 8px; border: 1px dashed #fbd38d;">
-                    <label style="display: flex; align-items: center; gap: 10px; font-weight: bold; color: #c05621; cursor: pointer; margin: 0;">
-                        <input type="checkbox" name="is_blocked" id="isBlocked" value="true" style="width: 18px; height: 18px; cursor: pointer;">
-                        Bloquear agendamentos deste cliente
-                    </label>
-                    <small style="color: #718096; display: block; margin-top: 5px; margin-left: 28px;">Se marcado, este número/usuário não conseguirá agendar via Orbly online.</small>
-                </div>
-                
-                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #edf2f7; padding-top: 15px;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 10px 20px; border: 1px solid #cbd5e0; color: #4a5568; background: transparent; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: #FF7A00; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Salvar Cliente</button>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eaecef; padding: 15px 20px; flex-shrink: 0;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 12px 15px; border: 1px solid #dcdde1; color: #2c3e50; background: transparent; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 12px 15px; background: linear-gradient(135deg, #FF7A00, #d35400); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1; box-shadow: 0 4px 12px rgba(255,122,0,0.3);">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Scripts e lógicas de tela Mobile -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 820) {
+                // Centraliza filtro do header
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
+                }
+            }
+        });
+
+        // Gavetas dos Clientes
+        function openMobileSheet(clientId, event) {
+            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
+            document.getElementById('bs-overlay-' + clientId).classList.add('active');
+            document.getElementById('bs-sheet-' + clientId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileSheet(clientId) {
+            document.getElementById('bs-overlay-' + clientId).classList.remove('active');
+            document.getElementById('bs-sheet-' + clientId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Menu Geral
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'client/js/client.js' %}"></script>
@@ -258,7 +440,7 @@
                     const form = this.closest('.form-delete-client');
                     Swal.fire({
                         title: 'Excluir Cliente?',
-                        text: "Isso removerá o cadastro do cliente da sua base de dados permanentemente.",
+                        text: "Isso removerá o cadastro do cliente permanentemente.",
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#e74c3c',
