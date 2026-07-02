@@ -3,16 +3,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Funcionários - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newEmployee.css' %}">
+    
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <!-- ATENÇÃO: Certifique-se que o nome do seu CSS mobile é este -->
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
+    
     <style>.swal2-container {z-index: 9999;}</style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
@@ -20,12 +24,13 @@
 <body>
     {% include "geral/header.html" %}
     
-    <div class="nav-bar">
+    <div class="nav-bar desktop-only">
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
                 {% if is_owner %}
-                    <div class="unit-filter">
+                    <!-- FILTRO QUE IRÁ PARA O HEADER NO MOBILE -->
+                    <div class="unit-filter desktop-unit-filter">
                         <select id="unitFilterSelect" title="Filtrar por Unidade"
                             data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
                             data-unit-url-template="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
@@ -46,7 +51,7 @@
         </div>
     </div>
     
-    <div class="pages-options-Container">
+    <div class="pages-options-Container desktop-only">
         {% if is_owner %}
             <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}" title="Gerenciar unidades físicas"><div class="page-option "><i class="fas fa-store"></i> Unidades</div></a>
         {% endif %}
@@ -60,9 +65,33 @@
         {% endif %}
     </div>
 
+    <!-- ========================================== -->
+    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-only mobile-dashboard">
+        <h4 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.4rem; font-weight: 800;">Funcionários</h4>
+        
+        <div class="mobile-stats-grid">
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #FF7A00;">{{ consumed_slots }} / {{ barbershop.max_employees }}</span>
+                <span class="m-stat-label">Vagas Ocupadas</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #27ae60;">{% if owner_in_list %}{{ regular_employees_active_count|add:1 }}{% else %}{{ regular_employees_active_count }}{% endif %}</span>
+                <span class="m-stat-label">Ativos (Lista)</span>
+            </div>
+        </div>
+
+        {% if not owner_employee and is_owner %}
+        <button class="m-btn-act-owner" onclick="openOwnerCreationModal()">
+            <i class="fas fa-crown"></i> Ingressar na Operação
+        </button>
+        {% endif %}
+    </div>
+
     <div class="main-content">
         <div class="section">
-            <div class="section-header">
+            <div class="section-header desktop-only">
                 <div class="section-title"><i class="fas fa-users-cog"></i> Gerenciamento de Funcionários</div>
                 <div class="header-actions" style="display: flex; gap: 10px;">
                     {% if not owner_employee and is_owner %}
@@ -70,242 +99,275 @@
                             <i class="fas fa-crown"></i> Atuar na Operação
                         </button>
                     {% endif %}
-                    <button class="add-employee-btn" onclick="openEmployeeModal()" data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}" title="Adicionar um novo colaborador">
+                    <button class="add-employee-btn" id="newEmployeeBtn" onclick="openEmployeeModal()" data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}" title="Adicionar um novo colaborador">
                         <i class="fas fa-plus"></i> Novo Funcionário
                     </button>
                 </div>
             </div>
             
-            <table class="employees-table">
-                <thead>
-                    <tr>
-                        <th>Funcionário</th>
-                        <th>Unidade</th>
-                        <th>Cargo</th>
-                        <th>Status</th>
-                        <th>Celular</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if owner_in_list %}
-                        <tr style="border-left: 4px solid #c53030; background: #fffaf0;">
-                            <td>
-                                <div class="employee-name">
-                                    <div class="employee-avatar" style="background: #c53030;" title="Titular da Conta">
-                                        {{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}
-                                    </div>
-                                    <div style="font-weight: bold;">
-                                        {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }}
-                                        <i class="fas fa-crown" style="color: #c53030; margin-left: 5px; font-size: 12px;" title="Titular da Conta"></i>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>{{ owner_in_list.unit.name }}</td>
-                            <td>
-                                <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
-                                {% for role in owner_in_list.roles.all %}
-                                    {% if role.occupation == 'barbeiro' %}
-                                        <span class="employee-type type-barber">Barbeiro</span>
-                                    {% endif %}
-                                {% endfor %}
-                            </td>
-                            <td><span class="employee-active type-barber" title="Conta sempre ativa">Ativo</span></td>
-                            <td>{{ owner_in_list.user.phone|default:"---" }}</td>
-                            <td>
-                                <div class="employee-actions">
-                                    {% if is_owner %}
-                                        <div class="action-btn edit-btn" style="background:#fed7d7; color:#c53030; border-color:#feb2b2;" title="Editar seu próprio perfil na agenda"
-                                            data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
-                                            data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
-                                            data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
-                                            data-unit="{{ owner_in_list.unit.id }}" data-active="true"
-                                            data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                            data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                            data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
-                                            data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
-                                            data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
-                                        <form method="POST" style="display:inline;" id="delete-employee-form-{{ owner_in_list.id }}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="button" class="action-btn delete-btn" title="Sair da agenda desta filial" onclick="confirmDelete('delete-employee-form-{{ owner_in_list.id }}', 'Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <span style="color: #a0aec0; font-size: 0.85rem;" title="Restrito ao Titular"><i class="fas fa-lock"></i></span>
-                                    {% endif %}
-                                </div>
-                            </td>
+            <!-- Tabela Desktop -->
+            <div class="employees-table-container desktop-only" style="display: block;">
+                <table class="employees-table">
+                    <thead>
+                        <tr>
+                            <th>Funcionário</th>
+                            <th>Unidade</th>
+                            <th>Cargo</th>
+                            <th>Status</th>
+                            <th>Celular</th>
+                            <th>Ações</th>
                         </tr>
-                    {% endif %}
-
-                    {% for emp in regular_employees %}
-                        <tr style="{% if not emp.is_active %}opacity: 0.5; background: #fdfdfd;{% endif %}">
-                            <td>
-                                <div class="employee-name">
-                                    <div class="employee-avatar" style="{% if not emp.is_active %}filter: grayscale(1);{% endif %}">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
-                                    <div>{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                                </div>
-                            </td>
-                            <td>{{ emp.unit.name }}</td>
-                            <td>
-                                {% for role in emp.roles.all %}
-                                    <span class="employee-type type-barber" style="margin-right: 2px; display: inline-block;">{{ role.get_occupation_display }}</span>
-                                {% empty %}
-                                    <span class="employee-type type-none">Nenhum</span>
-                                {% endfor %}
-                            </td>
-                            <td>
-                                {% if emp.is_active %}
-                                    <span class="employee-active type-barber" title="Tem acesso ou está na agenda">Ativo</span>
-                                {% else %}
-                                    <span class="employee-active type-none" style="background:#e2e8f0; color:#4a5568;" title="Sem acesso e fora da agenda">Inativo</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ emp.user.phone|default:"---" }}</td>
-                            <td>
-                                <div class="employee-actions">
-                                    {% if is_owner or emp.user != request.user %}
-                                        <div class="action-btn edit-btn" title="Editar dados do funcionário"
-                                            data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
-                                            data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
-                                            data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
-                                            data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
-                                            data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                            data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
-                                            data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                            data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                            data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                            data-system-access="{{ emp.system_access|yesno:'true,false' }}">
-                                            <i class="fas fa-edit"></i>
+                    </thead>
+                    <tbody>
+                        {% if owner_in_list %}
+                            <tr style="border-left: 4px solid #c53030; background: #fffaf0;">
+                                <td>
+                                    <div class="employee-name">
+                                        <div class="employee-avatar" style="background: #c53030;" title="Titular da Conta">
+                                            {{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}
                                         </div>
-                                        <form method="POST" style="display:inline;" id="delete-employee-form-{{ emp.id }}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="employee_id" value="{{ emp.id }}">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="button" class="action-btn delete-btn" title="Excluir ou inativar funcionário" onclick="confirmDelete('delete-employee-form-{{ emp.id }}', 'Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        {% if not owner_in_list %}
-                        <tr><td colspan="6" style="text-align:center;">Nenhum funcionário cadastrado.</td></tr>
+                                        <div style="font-weight: bold;">
+                                            {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }}
+                                            <i class="fas fa-crown" style="color: #c53030; margin-left: 5px; font-size: 12px;" title="Titular da Conta"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ owner_in_list.unit.name }}</td>
+                                <td>
+                                    <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
+                                    {% for role in owner_in_list.roles.all %}
+                                        {% if role.occupation == 'barbeiro' %}
+                                            <span class="employee-type type-barber">Barbeiro</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td><span class="employee-active type-barber" title="Conta sempre ativa">Ativo</span></td>
+                                <td>{{ owner_in_list.user.phone|default:"---" }}</td>
+                                <td>
+                                    <div class="employee-actions">
+                                        {% if is_owner %}
+                                            <div class="action-btn edit-btn" style="background:#fed7d7; color:#c53030; border-color:#feb2b2;" title="Editar seu próprio perfil na agenda"
+                                                data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
+                                                data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
+                                                data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
+                                                data-unit="{{ owner_in_list.unit.id }}" data-active="true"
+                                                data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                                data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
+                                                data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
+                                                data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
+                                                data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                            <form method="POST" style="display:inline;" id="delete-employee-desktop-form-{{ owner_in_list.id }}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
+                                                <input type="hidden" name="action" value="delete">
+                                                <button type="button" class="action-btn delete-btn" title="Sair da agenda desta filial" onclick="confirmDelete('delete-employee-desktop-form-{{ owner_in_list.id }}', 'Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span style="color: #a0aec0; font-size: 0.85rem;" title="Restrito ao Titular"><i class="fas fa-lock"></i></span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
                         {% endif %}
-                    {% endfor %}
-                </tbody>
-            </table>
 
-            <div class="employees-table-container">
+                        {% for emp in regular_employees %}
+                            <tr style="{% if not emp.is_active %}opacity: 0.5; background: #fdfdfd;{% endif %}">
+                                <td>
+                                    <div class="employee-name">
+                                        <div class="employee-avatar" style="{% if not emp.is_active %}filter: grayscale(1);{% endif %}">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
+                                        <div class="employee-info">
+                                            <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                                            <div class="employee-plan">
+                                                <i class="fas fa-clock"></i>
+                                                {% if emp.is_active %} <span title="Tem acesso ou está na agenda">Ativo</span> {% else %} <span title="Sem acesso e fora da agenda">Inativo</span> {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ emp.unit.name }}</td>
+                                <td>
+                                    {% for role in emp.roles.all|slice:":1" %}
+                                        <span class="employee-type type-{{ role.occupation }}" style="margin-right: 2px;">{{ role.get_occupation_display }}</span>
+                                    {% empty %} <span class="employee-type type-none">Nenhum</span> {% endfor %}
+                                </td>
+                                <td>
+                                    {% if emp.is_active %}
+                                        <span class="employee-active type-barber" title="Tem acesso ou está na agenda">Ativo</span>
+                                    {% else %}
+                                        <span class="employee-active type-none" style="background:#e2e8f0; color:#4a5568;" title="Sem acesso e fora da agenda">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ emp.user.phone|default:"---" }}</td>
+                                <td>
+                                    <div class="employee-actions">
+                                        {% if is_owner or emp.user != request.user %}
+                                            <div class="action-btn edit-btn" title="Editar dados do funcionário"
+                                                data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
+                                                data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
+                                                data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
+                                                data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
+                                                data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                                data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
+                                                data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                                data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
+                                                data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
+                                                data-system-access="{{ emp.system_access|yesno:'true,false' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                            <form method="POST" style="display:inline;" id="delete-employee-desktop-form-{{ emp.id }}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="employee_id" value="{{ emp.id }}">
+                                                <input type="hidden" name="action" value="delete">
+                                                <button type="button" class="action-btn delete-btn" title="Excluir ou inativar funcionário" onclick="confirmDelete('delete-employee-desktop-form-{{ emp.id }}', 'Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            {% if not owner_in_list %}
+                            <tr><td colspan="6" style="text-align:center;">Nenhum funcionário cadastrado.</td></tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- LISTA DE CARDS MOBILE -->
+            <!-- ========================================== -->
+            <div class="employees-mobile-container mobile-only">
+                
                 {% if owner_in_list %}
-                    <div class="table-row" style="border-left: 4px solid #c53030; background: #fffaf0;">
-                        <div class="employee-cell">
-                            <div class="employee-avatar" style="background:#c53030;" title="Titular da Conta">{{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}</div>
-                            <div class="employee-info">
-                                <div class="employee-name">
-                                    {{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }} <i class="fas fa-crown" style="color: #c53030;" title="Titular da Conta"></i>
-                                </div>
-                                <div class="employee-plan"><i class="fas fa-clock"></i> <span title="Conta sempre ativa">Ativo</span></div>
-                            </div>
+                <div class="m-emp-card owner-card" onclick="openMobileSheet('{{ owner_in_list.id }}')">
+                    <div class="m-card-header">
+                        <div class="m-emp-avatar owner-avatar">{{ owner_in_list.user.name|slice:":1" }}{{ owner_in_list.user.last_name|slice:":1" }}</div>
+                        <div class="m-emp-info">
+                            <div class="m-emp-name">{{ owner_in_list.user.name }} {{ owner_in_list.user.last_name }} <i class="fas fa-crown"></i></div>
+                            <span class="m-emp-status status-active">Titular / Master</span>
                         </div>
-                        <div class="employee-role">
-                            <span class="cell-label">Cargo:</span><i class="fas fa-user-tie"></i>
-                            <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
+                    </div>
+                    <div class="m-card-body">
+                        <div class="m-info-line"><i class="fas fa-store"></i> {{ owner_in_list.unit.name }}</div>
+                        <div class="m-info-line"><i class="fas fa-user-tie"></i> 
+                            {% for role in owner_in_list.roles.all %}
+                                {{ role.get_occupation_display }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Administração
+                            {% endfor %}
                         </div>
-                        <div class="employee-actions">
+                    </div>
+                </div>
+
+                <!-- Gaveta do Owner -->
+                <div class="bottom-sheet-overlay" id="bs-overlay-{{ owner_in_list.id }}" onclick="closeMobileSheet('{{ owner_in_list.id }}')"></div>
+                <div class="bottom-sheet" id="bs-sheet-{{ owner_in_list.id }}">
+                    <div class="bottom-sheet-handle"></div>
+                    <div class="bs-content">
+                        <div class="bs-title-row">
+                            <h3><i class="fas fa-crown" style="color:#c53030; margin-right:8px;"></i>{{ owner_in_list.user.name }}</h3>
+                            <span class="bs-status-badge" style="background:#c53030; color:#fff;">TITULAR</span>
+                        </div>
+                        <div class="bs-divider"></div>
+                        <div class="bs-details">
+                            <p><i class="fas fa-store" style="color: #3498db; width:20px;"></i> <strong>Unidade:</strong> {{ owner_in_list.unit.name }}</p>
+                            <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ owner_in_list.user.phone|default:"Não informado" }}</p>
+                            <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ owner_in_list.user.email }}</p>
+                        </div>
+                        <div class="bs-actions" style="margin-top: 20px;">
                             {% if is_owner %}
-                                <div class="action-btn edit" style="background:#fed7d7; color:#c53030;" title="Editar seu próprio perfil na agenda"
-                                    data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
-                                    data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
-                                    data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
-                                    data-unit="{{ owner_in_list.unit.id }}" data-active="true"
-                                    data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                    data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                    data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
-                                    data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
-                                    data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
-                                    <i class="fas fa-edit"></i>
-                                </div>                      
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Sair da operação? Você continuará sendo o dono do sistema, mas sairá da agenda/lista de funcionários desta filial.');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="employee_id" value="{{ owner_in_list.id }}">
-                                    <input type="hidden" name="action" value="delete">
-                                    <button type="submit" class="action-btn delete" title="Sair da Operação"><i class="fas fa-trash"></i></button>
-                                </form>
+                            <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ owner_in_list.id }}'); document.querySelector('.employees-table .edit-btn[data-id=\'{{ owner_in_list.id }}\']').click();">
+                                <i class="fas fa-edit"></i> Editar Meu Perfil
+                            </button>
+                            <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ owner_in_list.id }}'); document.querySelector('#delete-employee-desktop-form-{{ owner_in_list.id }} .delete-btn').click();">
+                                <i class="fas fa-door-open"></i> Sair da Operação
+                            </button>
                             {% else %}
-                                <span style="color: #a0aec0; font-size: 0.85rem;" title="Restrito"><i class="fas fa-lock"></i></span>
+                            <p style="color: #e74c3c; font-size: 0.9rem; text-align: center;"><i class="fas fa-lock"></i> Somente o titular pode editar este perfil.</p>
                             {% endif %}
                         </div>
                     </div>
+                </div>
                 {% endif %}
 
                 {% for emp in regular_employees %}
-                    <div class="table-row" style="{% if not emp.is_active %}opacity: 0.6;{% endif %}">
-                        <div class="employee-cell">
-                            <div class="employee-avatar">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
-                            <div class="employee-info">
-                                <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                                <div class="employee-plan">
-                                    <i class="fas fa-clock"></i>
-                                    {% if emp.is_active %} <span title="Tem acesso ou está na agenda">Ativo</span> {% else %} <span title="Sem acesso e fora da agenda">Inativo</span> {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="employee-role">
-                            <span class="cell-label">Cargo:</span><i class="fas fa-user-tie"></i>
-                            {% for role in emp.roles.all|slice:":1" %}
-                                <span class="employee-type type-{{ role.occupation }}" style="margin-right: 2px;">{{ role.get_occupation_display }}</span>
-                            {% empty %} <span class="employee-type type-none">Nenhum</span> {% endfor %}
-                        </div>
-            
-                        <div class="employee-actions">
-                            {% if is_owner or emp.user != request.user %}
-                                <div class="action-btn edit" title="Editar dados do funcionário"
-                                    data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
-                                    data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
-                                    data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
-                                    data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
-                                    data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
-                                    data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
-                                    data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
-                                    data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                    data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
-                                    data-system-access="{{ emp.system_access|yesno:'true,false' }}">
-                                    <i class="fas fa-edit"></i>
-                                </div>                      
-
-                                <form method="POST" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir? Se houver histórico, ele será inativado preservando os dados.');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="employee_id" value="{{ emp.id }}">
-                                    <input type="hidden" name="action" value="delete">
-                                    <button type="submit" class="action-btn delete" title="Excluir ou inativar funcionário"><i class="fas fa-trash"></i></button>
-                                </form>
+                <div class="m-emp-card {% if not emp.is_active %}inactive{% endif %}" onclick="openMobileSheet('{{ emp.id }}')">
+                    <div class="m-card-header">
+                        <div class="m-emp-avatar">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
+                        <div class="m-emp-info">
+                            <div class="m-emp-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
+                            {% if emp.is_active %}
+                                <span class="m-emp-status status-active">Ativo no Sistema</span>
                             {% else %}
-                                <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
+                                <span class="m-emp-status status-inactive">Inativo (Sem Acesso)</span>
                             {% endif %}
                         </div>
                     </div>
+                    <div class="m-card-body">
+                        <div class="m-info-line"><i class="fas fa-store"></i> {{ emp.unit.name }}</div>
+                        <div class="m-info-line"><i class="fas fa-user-tie"></i> 
+                            {% for role in emp.roles.all %}
+                                {{ role.get_occupation_display }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Sem cargo
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gaveta do Funcionário -->
+                <div class="bottom-sheet-overlay" id="bs-overlay-{{ emp.id }}" onclick="closeMobileSheet('{{ emp.id }}')"></div>
+                <div class="bottom-sheet" id="bs-sheet-{{ emp.id }}">
+                    <div class="bottom-sheet-handle"></div>
+                    <div class="bs-content">
+                        <div class="bs-title-row">
+                            <h3><i class="fas fa-user" style="color:#FF7A00; margin-right:8px;"></i>{{ emp.user.name }} {{ emp.user.last_name }}</h3>
+                            {% if emp.is_active %}
+                                <span class="bs-status-badge status-completed">ATIVO</span>
+                            {% else %}
+                                <span class="bs-status-badge status-cancelled">INATIVO</span>
+                            {% endif %}
+                        </div>
+                        <div class="bs-divider"></div>
+                        <div class="bs-details">
+                            <p><i class="fas fa-store" style="color: #3498db; width:20px;"></i> <strong>Unidade:</strong> {{ emp.unit.name }}</p>
+                            <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ emp.user.phone|default:"Não informado" }}</p>
+                            <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ emp.user.email }}</p>
+                            <p><i class="fas fa-id-card" style="color: #95a5a6; width:20px;"></i> <strong>CPF:</strong> {{ emp.user.cpf }}</p>
+                        </div>
+                        <div class="bs-actions" style="margin-top: 20px;">
+                            {% if is_owner or emp.user != request.user %}
+                            <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ emp.id }}'); document.querySelector('.employees-table .edit-btn[data-id=\'{{ emp.id }}\']').click();">
+                                <i class="fas fa-edit"></i> Editar Cadastro
+                            </button>
+                            <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ emp.id }}'); document.querySelector('#delete-employee-desktop-form-{{ emp.id }} .delete-btn').click();">
+                                <i class="fas fa-user-slash"></i> Inativar / Excluir
+                            </button>
+                            {% else %}
+                            <p style="color: #e74c3c; font-size: 0.9rem; text-align: center;"><i class="fas fa-lock"></i> Você não pode editar suas próprias permissões.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
                 {% empty %}
                     {% if not owner_in_list %}
-                    <div style="text-align:center; padding: 20px;">Nenhum funcionário cadastrado.</div>
+                    <div style="text-align:center; padding: 40px; color: #a0aec0; background: #fff; border-radius: 12px;">Nenhum funcionário cadastrado.</div>
                     {% endif %}
                 {% endfor %}
             </div>
+
         </div>
     </div>
     
-    <footer style="position: fixed;  bottom: 0;
-    left: 0;
-    width: 100%;">
+    <footer class="desktop-only" style="position: fixed; bottom: 0; left: 0; width: 100%;">
         <div class="total-display">
             <div class="footer-first-row" style="font-size: 0.95rem;">
                 Vagas Consumidas: <strong id="footerConsumedSlots" title="Vagas da assinatura">{{ consumed_slots }}</strong> / <strong>{{ barbershop.max_employees }}</strong>
@@ -317,6 +379,74 @@
         </div>
     </footer>
 
+    <!-- 📱 GAVETAS E NAVEGAÇÃO MOBILE -->
+    <div class="mobile-only">
+        <!-- FAB Botão Novo Funcionário: Aciona direto o JS do Modal! -->
+        <button class="m-fab-btn" onclick="openEmployeeModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Nav Bottom -->
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item active" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+
+        <!-- Menu Drawer Otimizado -->
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3 style="margin-bottom:15px; color:#1a233a;"><i class="fas fa-bars" style="color:#FF7A00; margin-right: 8px;"></i>Menu Principal</h3>
+                
+                <div class="bs-menu-list">
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                </div>
+
+                {% if request.user.user_type != "funcionario" %}
+                <div class="bs-divider" style="height: 1px; background: #eaecef; margin: 15px 0;"></div>
+                <h4 style="margin:0 0 10px 0; color:#7f8c8d; font-size: 0.85rem; text-transform:uppercase;">Gestão de Barbearia</h4>
+                <div class="bs-menu-list" style="margin-top:0;">
+                    
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}"><i class="fas fa-store"></i> Unidades</a>
+                    {% endif %}
+
+                    <!-- ABA FUNCIONÁRIOS (A ATUAL) -->
+                    {% if request.user.user_type == "dono" %}
+                        <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% elif request.user.user_type == "gerente" and gerente_unit %}
+                        <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% endif %}
+                    
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% elif request.user.user_type == "gerente" %}
+                        <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% endif %}
+
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAIS RESTAURADOS ORIGINAIS DO SISTEMA    -->
+    <!-- ========================================== -->
     <div id="ownerModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <form method="POST" autocomplete="off">
@@ -359,7 +489,6 @@
                 </div>
                 
                 <div class="modal-body">
-                    
                     <div id="limitWarningBanner" style="display: none; background: #feebc8; border: 1px solid #f6ad55; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
                         <span style="color: #dd6b20; font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> Limite de Vagas Atingido</span>
                         <p style="font-size: 0.85rem; color: #7b341e; margin-top: 5px;">Seu plano atingiu o limite de barbeiros. Você só pode adicionar cargos administrativos gratuitos ou inativar antigos.</p>
@@ -472,18 +601,24 @@
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
-    {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500 });
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 820) {
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
+                }
+            }
+
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500 });
+            {% if messages %}
                 {% for message in messages %}
                     Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
                 {% endfor %}
-            });
-        </script>
-    {% endif %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+            {% endif %}
+
             const unitFilter = document.getElementById('unitFilterSelect');
             if (unitFilter) { 
                 unitFilter.addEventListener('change', function() {
@@ -492,7 +627,8 @@
                 });
             }
         });
-        
+
+        // Modais Globais Desktop/Mobile
         window.openOwnerCreationModal = function() {
             document.getElementById('ownerModal').style.display = 'flex';
             document.body.classList.add('modal-open');
@@ -500,6 +636,28 @@
         window.closeOwnerModal = function() {
             document.getElementById('ownerModal').style.display = 'none';
             document.body.classList.remove('modal-open');
+        }
+
+        // Gavetas Mobile
+        function openMobileSheet(id) {
+            document.getElementById('bs-overlay-' + id).classList.add('active');
+            document.getElementById('bs-sheet-' + id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMobileSheet(id) {
+            document.getElementById('bs-overlay-' + id).classList.remove('active');
+            document.getElementById('bs-sheet-' + id).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
         }
     </script>
 </body>
