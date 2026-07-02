@@ -3,25 +3,22 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Funcionamento - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/workDay.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/workDay.css' %}">
-
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/abscense.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/abscense.css' %}">
-    
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/editCalendar.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
-    
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/createHoliday.css' %}">
-    
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
+    
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/workDay.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/abscense.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/editCalendar.css' %}">
     
     <style>
         .swal2-container {z-index: 9999;}
@@ -30,7 +27,6 @@
         
         .main-content { padding-bottom: 100px; }
         footer { position: fixed; bottom: 0; right: 0; width: 100%; z-index: 100; }
-        
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
@@ -44,7 +40,7 @@
         <div class="nav-content">
             <div class="stats">
                 {% if is_owner %}
-                    <div class="unit-filter">
+                    <div class="unit-filter desktop-unit-filter">
                         <select id="unitFilterSelect" 
                                 data-general-url="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"
                                 data-unit-url-template="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
@@ -57,7 +53,7 @@
                     </div>
                 {% endif %}
 
-                <div class="stat-box">
+                <div class="stat-box desktop-only">
                     <div class="stat-value">{{ employees.count }}</div>
                     <div class="stat-label">Barbeiros na Operação</div>
                 </div>
@@ -65,7 +61,7 @@
         </div>
     </div>
 
-    <div class="pages-options-Container">
+    <div class="pages-options-Container desktop-only">
         {% if is_owner %}
         <a href="{% url 'barbershop:units' barbershop.slug %}">
             <div class="page-option"><i class="fas fa-store"></i> Unidades</div>
@@ -81,6 +77,23 @@
         <a href="#">
             <div class="page-option active"><i class="fas fa-clock"></i> Funcionamento</div>
         </a>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-only mobile-dashboard">
+        <h4 class="mobile-section-title">Funcionamento</h4>
+        <div class="mobile-stats-grid">
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #FF7A00;">{{ employees.count }}</span>
+                <span class="m-stat-label">Barbeiros Ativos</span>
+            </div>
+            <div class="m-stat-card">
+                <span class="m-stat-val" style="color: #27ae60; font-size: 0.95rem;">{{ holidays.first.date|date:"d/m/Y"|default:"Nenhum" }}</span>
+                <span class="m-stat-label">Próx. Fechamento</span>
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -229,7 +242,7 @@
         </div>
     </div>
     
-    <footer>
+    <footer class="desktop-only">
         <div class="total-display">
             <div class="footer-first-row-one-item">
                 Próximo fechamento/folga: <strong>{{ holidays.first.date|date:"d \d\e F, Y"|default:"Nenhum agendado" }}</strong>
@@ -237,6 +250,60 @@
         </div>
     </footer>
     
+    <!-- 📱 NAVEGAÇÃO E MENU MOBILE -->
+    <div class="mobile-only">
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item active" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3 style="margin-bottom:15px; color:#1a233a;"><i class="fas fa-bars" style="color:#FF7A00; margin-right: 8px;"></i>Menu Principal</h3>
+                
+                <div class="bs-menu-list">
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    {% endif %}
+                </div>
+
+                {% if request.user.user_type != "funcionario" %}
+                <div class="bs-divider" style="height: 1px; background: #eaecef; margin: 15px 0;"></div>
+                <h4 style="margin:0 0 10px 0; color:#7f8c8d; font-size: 0.85rem; text-transform:uppercase;">Gestão de Barbearia</h4>
+                <div class="bs-menu-list" style="margin-top:0;">
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}"><i class="fas fa-store"></i> Unidades</a>
+                    {% endif %}
+
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% elif request.user.user_type == "gerente" and gerente_unit %}
+                        <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% endif %}
+                    
+                    <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-clock"></i> Funcionamento</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAIS ORIGINAIS INTACTOS (SEU JS VAI FUNCIONAR)          -->
+    <!-- ========================================================= -->
     <div id="editModal" class="edit-modal">
         <div class="edit-modal-content">
             <div class="edit-modal-header">
@@ -275,7 +342,7 @@
                             </div>
                         </div>
 
-                        {% comment %} Bloco MANHÃ {% endcomment %}
+                        <!-- Bloco MANHÃ -->
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off morning" data-weekday="{{ weekday_index }}" data-period="morning">
@@ -302,7 +369,7 @@
                             {% endwith %}
                         {% endfor %}
     
-                        {% comment %} Bloco TARDE {% endcomment %}
+                        <!-- Bloco TARDE -->
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off afternoon" data-weekday="{{ weekday_index }}" data-period="afternoon">
@@ -334,7 +401,7 @@
             
             <div class="edit-modal-footer">
                 <button class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitBarberAgenda()">Salvar Grade na Agenda</button>
+                <button class="btn btn-primary" onclick="submitBarberAgenda()">Salvar Grade</button>
             </div>
         </div>
     </div>
@@ -353,7 +420,7 @@
                     <div class="holiday-modal-body">
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-tag"></i> Motivo do Fechamento</h3>
-                            <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional, Reforma..." class="holiday-input" required>
+                            <input type="text" name="name" id="holidayName" placeholder="Ex: Feriado Nacional..." class="holiday-input" required>
                         </div>
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
@@ -367,7 +434,7 @@
                 </form>
             </div>
         </div>
-      
+        
         <div id="editHolidayModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -381,14 +448,13 @@
                         <input type="hidden" name="holiday_id" id="editHolidayId">
                         
                         <div class="holiday-modal-section">
-                            <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia Especial</h3>
+                            <h3 class="modal-title"><i class="fas fa-tag"></i> Nome do Dia</h3>
                             <input type="text" name="name" class="holiday-input" required>
                         </div>
                         <div class="holiday-modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-day"></i> Data</h3>
                             <input type="date" name="date" class="holiday-input" required>
                         </div>
-                        
                         <div class="modal-footer">
                             <button type="button" class="btn btn-outline" onclick="closeEditHolidayModal()">Cancelar</button>
                             <button type="submit" class="btn btn-primary">Salvar Dia</button>
@@ -420,12 +486,10 @@
                                 {% endfor %}
                             </div>
                         </div>
-
                         <div class="modal-section">
                             <h3 class="modal-title"><i class="fas fa-comment-alt"></i> Motivo</h3>
-                            <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, Consulta, Licença..." required>
+                            <input type="text" name="reason" class="holiday-input" placeholder="Ex: Férias, Consulta..." required>
                         </div>
-                        
                         <div class="modal-section">
                             <h3 class="modal-title"><i class="fas fa-calendar-alt"></i> Período</h3>
                             <div class="date-inputs">
@@ -499,24 +563,18 @@
     <script>
         const workdaysData = {{ workdays_json|safe }};
         let activeTabPeriod = 'morning'; 
-        
-        // Passando flag de visão global para o Javascript interceptar
         const isGlobalView = {% if not unit %}true{% else %}false{% endif %};
-    </script>
 
-    {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
-                {% for message in messages %}
-                    Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
-                {% endfor %}
-            });
-        </script>
-    {% endif %}
-
-    <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // MÁGICA DO FILTRO: Move o dropdown pra dentro do Header no celular
+            if (window.innerWidth <= 820) {
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
+                }
+            }
+
             const unitFilter = document.getElementById('unitFilterSelect');
             if (unitFilter) { 
                 unitFilter.addEventListener('change', function() {
@@ -525,7 +583,26 @@
                     else { window.location.href = this.dataset.unitUrlTemplate.replace('__SLUG__', selectedValue); }
                 });
             }
+
+            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+            {% if messages %}
+                {% for message in messages %}
+                    Toast.fire({ icon: '{{ message.tags }}', title: '{{ message }}' });
+                {% endfor %}
+            {% endif %}
         });
+
+        // Controles Gavetas Mobile Menu
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
     </script>
 </body>
 </html>
