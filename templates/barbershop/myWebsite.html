@@ -3,14 +3,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Meu Site - {{ barbershop.name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS DESKTOP ORIGINAIS -->
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/myWebsite.css' %}">
-    <link rel="stylesheet" href="{% static 'geral/css/Mobile/style.css' %}">
-    <link rel="stylesheet" href="{% static 'barbershop/css/Mobile/myWebsite.css' %}">
+    
+    <!-- CSS MOBILE -->
+    <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
+    <link rel="stylesheet" href="{% static 'barbershop/css/mobile/myWebsite.css' %}">
+    
     <style>
+        /* MANTIDO PARA O DESKTOP NÃO QUEBRAR */
         .banner-images { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; min-height: 100px; }
         .banner-image-container { transition: all 0.3s ease; cursor: grab; position: relative; }
         .banner-image-container.dragging { opacity: 0; }
@@ -20,53 +26,23 @@
         .image-preview-admin { width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
         .edit-address-link { display: inline-block; margin-top: 10px; color: #FF7A00; font-size: 13px; text-decoration: none; font-weight: bold; }
 
-        /* Estilo do botão de visualizar site */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .view-lp-btn {
-            background-color: #fff;
-            color: #FF7A00;
-            border: 1px solid #FF7A00;
-            padding: 8px 16px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .view-lp-btn:hover {
-            background-color: #FF7A00;
-            color: #fff;
-            box-shadow: 0 4px 8px rgba(255, 122, 0, 0.2);
-        }
-
-        @media (max-width: 600px) {
-            .section-header { flex-direction: column; align-items: flex-start; }
-            .view-lp-btn { width: 100%; justify-content: center; }
-        }
+        .section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .view-lp-btn { background-color: #fff; color: #FF7A00; border: 1px solid #FF7A00; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+        .view-lp-btn:hover { background-color: #FF7A00; color: #fff; box-shadow: 0 4px 8px rgba(255, 122, 0, 0.2); }
+        @media (max-width: 600px) { .section-header { flex-direction: column; align-items: flex-start; } .view-lp-btn { width: 100%; justify-content: center; } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     {% include 'geral/header.html' %}
     
-    <div class="nav-bar">
+    <div class="nav-bar desktop-only">
         {% include 'geral/nav.html' %}
 
         <div class="nav-content">
             <div class="stats">
                 {% if is_owner %}
-                <div class="unit-filter">
+                <div class="unit-filter desktop-unit-filter">
                     <select onchange="location.href=this.value">
                         <option value="{% url 'barbershop:myWebsite' barbershop.slug %}" {% if not unit %}selected{% endif %}>Geral (Barbearia)</option>
                         {% for u in units %}
@@ -75,17 +51,24 @@
                     </select>
                 </div>
                 {% else %}
-                <div class="stat-box" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
+                <div class="stat-box desktop-unit-filter" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
                     {{ unit.name }}
                 </div>
                 {% endif %}
 
-                <div class="stat-box">
+                <div class="stat-box desktop-only">
                     <div class="stat-value">{{ active_units_count }}</div>
                     <div class="stat-label">Unidades Visíveis</div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
+    <!-- ========================================== -->
+    <div class="mobile-only mobile-dashboard">
+        <h4 class="mobile-section-title">Meu Website</h4>
     </div>
 
     <div class="main-content">
@@ -97,10 +80,7 @@
                 </div>
             </div>
             
-            <!-- Grupo de botões no topo -->
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <!-- NOVO BOTÃO DE SALVAR NO TOPO (Oculto por padrão, acionado pelo JS) -->
-                <!-- O atributo form="websiteFormInfo" conecta este botão ao form lá embaixo -->
+            <div style="display: flex; align-items: center; gap: 10px; width: 100%;" class="header-actions-mobile">
                 <button type="submit" form="websiteFormInfo" id="topSaveBtn" class="btn btn-primary" style="display: none; background-color: #e74c3c; border: none; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); transition: all 0.3s; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; color: white;">
                     <i class="fas fa-save"></i> Salvar Agora
                 </button>
@@ -116,6 +96,7 @@
                 {% endif %}
             </div>
         </div>
+        
         <div class="form-container">
             <div class="left-column">
                 {% if unit %}
@@ -146,7 +127,7 @@
                                 </div>
                             </div>
                             {% endfor %}
-                            <div class="add-banner-btn" onclick="triggerUpload('hairstyle')"><i class="fas fa-plus-circle"></i> Adicionar</div>
+                            <div class="add-banner-btn cortes" onclick="triggerUpload('hairstyle')"><i class="fas fa-plus-circle"></i> Adicionar</div>
                         </div>
                     </div>
                     <div class="banner-section">
@@ -161,13 +142,13 @@
                                 </div>
                             </div>
                             {% endfor %}
-                            <div class="add-banner-btn" onclick="triggerUpload('product')"><i class="fas fa-plus-circle"></i> Adicionar</div>
+                            <div class="add-banner-btn products" onclick="triggerUpload('product')"><i class="fas fa-plus-circle"></i> Adicionar</div>
                         </div>
                     </div>
                 {% else %}
-                    <div style="text-align:center; padding:100px 20px;">
-                        <i class="fas fa-arrow-up" style="font-size:40px; color:#FF7A00"></i>
-                        <p>Selecione uma unidade no filtro para gerenciar as fotos das galerias.</p>
+                    <div style="text-align:center; padding:100px 20px; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                        <i class="fas fa-arrow-up" style="font-size:40px; color:#FF7A00; margin-bottom: 15px;"></i>
+                        <p style="font-weight: 600; color: #2c3e50;">Selecione uma unidade no filtro para gerenciar as fotos das galerias.</p>
                     </div>
                 {% endif %}
             </div>
@@ -223,12 +204,69 @@
                         </div>
                     {% endif %}
                     
-                    <button type="submit" id="saveChangesBtn" class="btn btn-primary" style="width:100%; margin-top:20px; transition: all 0.3s;"><i class="fas fa-save"></i> Salvar Alterações</button>
+                    <button type="submit" id="saveChangesBtn" class="btn btn-primary btn-save-mobile" style="width:100%; margin-top:20px; transition: all 0.3s;"><i class="fas fa-save"></i> Salvar Alterações</button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- NAVEGAÇÃO MOBILE (BOTTOM NAV + MENUS) -->
+    <div class="mobile-only">
+        <nav class="mobile-bottom-nav">
+            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-calendar-days"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Clientes</span>
+            </a>
+            <div class="nav-item active" onclick="openMenuSheet()">
+                <i class="fas fa-bars"></i>
+                <span>Menu</span>
+            </div>
+        </nav>
+
+        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
+        <div class="bottom-sheet" id="menuBottomSheet">
+            <div class="bottom-sheet-handle"></div>
+            <div class="bs-content">
+                <h3 style="margin-bottom:15px; color:#1a233a;"><i class="fas fa-bars" style="color:#FF7A00; margin-right: 8px;"></i>Menu Principal</h3>
+                
+                <div class="bs-menu-list">
+                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
+                    {% if is_owner or is_manager %}
+                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
+                    <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-globe"></i> Meu Website</a>
+                    {% endif %}
+                </div>
+
+                {% if request.user.user_type != "funcionario" %}
+                <div class="bs-divider" style="height: 1px; background: #eaecef; margin: 15px 0;"></div>
+                <h4 style="margin:0 0 10px 0; color:#7f8c8d; font-size: 0.85rem; text-transform:uppercase;">Gestão de Barbearia</h4>
+                <div class="bs-menu-list" style="margin-top:0;">
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}"><i class="fas fa-store"></i> Unidades</a>
+                    {% endif %}
+
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% elif request.user.user_type == "gerente" and gerente_unit %}
+                        <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
+                    {% endif %}
+                    
+                    {% if request.user.user_type == "dono" %}
+                        <a href="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% elif request.user.user_type == "gerente" %}
+                        <a href="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-clock"></i> Funcionamento</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Forms Escondidos Originais -->
     <form id="uploadForm" method="POST" enctype="multipart/form-data" style="display:none;">
         {% csrf_token %}<input type="hidden" name="action" value="add_media">
         <input type="hidden" name="media_type" id="uploadMediaType">
@@ -243,44 +281,46 @@
     <script src="{% static 'barbershop/js/myWebsite.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 1. Configuração Garantida do Toast (Padrão Orbly Claro)
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 5000,
-                timerProgressBar: true,
-                background: '#ffffff',
-                color: '#2d3748',
-                customClass: { container: 'swal2-container-high-z' },
-                didOpen: (toast) => {
-                    toast.onmouseenter = Swal.stopTimer;
-                    toast.onmouseleave = Swal.resumeTimer;
+            // MÁGICA DO FILTRO: Move o dropdown pra dentro do Header no celular
+            if (window.innerWidth <= 820) {
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
                 }
+            }
+
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 5000,
+                timerProgressBar: true, background: '#ffffff', color: '#2d3748',
+                customClass: { container: 'swal2-container-high-z' },
+                didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
             });
 
-            // 2. Renderização das Mensagens do Backend
             {% if messages %}
                 {% for message in messages %}
                     var msgType = "{{ message.tags }}";
-                    
-                    if (msgType.includes("error") || msgType.includes("danger")) {
-                        msgType = "error";
-                    } else if (msgType.includes("success")) {
-                        msgType = "success";
-                    } else if (msgType.includes("warning")) {
-                        msgType = "warning";
-                    } else {
-                        msgType = "info";
-                    }
+                    if (msgType.includes("error") || msgType.includes("danger")) { msgType = "error"; } 
+                    else if (msgType.includes("success")) { msgType = "success"; } 
+                    else if (msgType.includes("warning")) { msgType = "warning"; } 
+                    else { msgType = "info"; }
 
-                    Toast.fire({
-                        icon: msgType,
-                        title: "{{ message|escapejs }}"
-                    });
+                    Toast.fire({ icon: msgType, title: "{{ message|escapejs }}" });
                 {% endfor %}
             {% endif %}
         });
+
+        // Controles Gavetas Mobile Menu
+        function openMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.add('active');
+            document.getElementById('menuBottomSheet').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenuSheet() {
+            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
+            document.getElementById('menuBottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
     </script>
 </body>
 </html>

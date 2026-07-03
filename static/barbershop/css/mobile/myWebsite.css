@@ -1,390 +1,180 @@
+/* ==================================================
+   MOBILE-FIRST UI/UX CSS - MEU WEBSITE (Morpher Edition V2)
+   Arquivo: barbershop/css/mobile/myWebsite.css
+================================================== */
+
 @media (max-width: 820px) {
+    /* --- 1. BASE E PROFUNDIDADE --- */
     body {
-        background-color: #f5f7fa;
-        color: #333;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+        background-color: #eaf0f6; display: flex; flex-direction: column; min-height: 100vh; color: #333;
+        position: relative; overflow-x: hidden; padding-bottom: 85px; 
     }
 
-    /* Main Content */
-    .main-content {
-        flex: 1;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+    .nav-bar > .nav-tabs, .user-sidebar .mobile-sidebar, .pages-options-Container { display: none !important; }
+
+    /* --- 2. HEADER E FILTRO TIPO "PÍLULA" (INTACTO) --- */
+    .nav-bar { display: none !important; }
+    
+    header {
+        position: sticky; top: 0; z-index: 100; padding: 0 15px; 
+        display: flex; justify-content: space-between; align-items: center;
+        background: linear-gradient(135deg, #1a233a, #0d1322); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); height: 60px; box-sizing: border-box;
+    }
+    .logo-content h1 { display: none !important; }
+    
+    header .desktop-unit-filter {
+        display: flex !important; position: absolute !important; left: 50% !important;
+        transform: translateX(-50%) !important; top: 50% !important; margin-top: -16px !important; z-index: 105;
+        align-items: center; justify-content: center;
+    }
+    header .desktop-unit-filter select, header .desktop-unit-filter.stat-box {
+        background-color: #2c3e50 !important; color: #ffffff !important; border: 1px solid #4a5568 !important;
+        border-radius: 20px !important; padding: 0 30px 0 15px !important; height: 32px !important; line-height: 32px !important;
+        font-size: 0.85rem !important; font-weight: 700 !important; text-align: center !important; appearance: none !important;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important; cursor: pointer; outline: none; white-space: nowrap; text-overflow: ellipsis; max-width: 200px;
     }
 
-    .section {
-        background-color: #ffffff;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-    }
-
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #eaecef;
-    }
-
-    .section-title {
-        font-size: 1.2em;
-        font-weight: 600;
-        color: #2c3e50;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    i {
-        color: #e67e22;
-    }
-
-    .btn-preview-Web{
-        padding: 10px 10px;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: .78rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        background-color: transparent;
-        border: 1px solid #e67e22;
-        color: #e67e22;
-    }
-
-    /* Formulário de edição */
+    /* --- 3. TÍTULO E BOTÃO VISUALIZAR --- */
+    .mobile-dashboard { padding: 20px 15px 5px 15px; display: flex; flex-direction: column; gap: 15px; }
+    .mobile-section-title { font-size: 1.8rem; color: #FF7A00; margin: 0 0 20px 0; padding-left: 0; font-weight: 800; text-align: center; }
+    
+    .section-header .section-title { font-size: 1.25rem !important; font-weight: 800 !important; color: #1a233a !important;}
+    .section-header .section-title i { color: #FF7A00 !important;}
+    
+    .header-actions-mobile { flex-direction: column !important; gap: 10px !important;}
+    .header-actions-mobile .view-lp-btn, .header-actions-mobile #topSaveBtn { width: 100% !important; justify-content: center !important; padding: 14px !important; border-radius: 12px !important; font-size: 1rem !important;}
+    
+    /* --- 4. FORMULARIO E GRID DE COLUNAS --- */
+    .main-content { padding: 0 15px; margin: 0; display: flex; flex-direction: column; overflow: visible; gap: 10px;}
+    
+    /* Quebra o Grid do Desktop para Flex Vertical */
     .form-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 25px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
     }
 
-    .left-column{
-       display: flex;
-       flex-direction: column;
+    /* --- 5. GALERIAS DE FOTOS (CORREÇÃO DOS BUGS DE VAZAMENTO) --- */
+    .banner-section {
+        background: #ffffff !important; padding: 20px !important; border-radius: 16px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important; margin-bottom: 20px !important; border: 1px solid #e2e8f0;
+    }
+    
+    .banner-title h3 { font-size: 1.15rem !important; font-weight: 800 !important; color: #1a233a !important; display:flex; align-items:center; gap:8px; margin: 0;}
+    .banner-title h3 i { color: #FF7A00 !important; }
+    
+    /* Grid de Imagens: 2 colunas perfeitas */
+    .banner-images {
+        display: grid !important; 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 12px !important; 
+        margin-top: 15px !important;
+    }
+    
+    /* A CAIXA BLINDADA (Prende a imagem e os botões dentro dela) */
+    .banner-image-container {
+        position: relative !important; /* Segura os botões absolutos */
+        overflow: hidden !important;   /* Corta a imagem gigante */
+        width: 100% !important; 
+        height: 140px !important; 
+        border-radius: 12px !important; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* A IMAGEM (Cortada com elegância) */
+    .banner-image {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important; /* Mantém a proporção sem distorcer */
+        display: block !important;
+    }
+    
+    /* OS BOTÕES DE AÇÃO (Fixos no canto da foto) */
+    .banner-actions {
+        position: absolute !important;
+        top: 8px !important;
+        right: 8px !important;
+        display: flex !important;
+        gap: 6px !important;
+        z-index: 10 !important;
+    }
+    
+    .banner-action-btn {
+        width: 32px !important; 
+        height: 32px !important; 
+        border-radius: 8px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+    }
+    
+    .banner-action-btn.delete-btn { color: #e74c3c !important; }
+    .banner-action-btn.move-btn { color: #2c3e50 !important; font-weight: bold !important; }
+
+    /* Botão de Adicionar (Esticado pra preencher o Card) */
+    .add-banner-btn {
+        width: 100% !important; 
+        height: 140px !important; 
+        border-radius: 12px !important; 
+        font-size: 0.95rem !important; 
+        display: flex !important;
+        flex-direction: column !important; 
+        align-items: center !important; 
+        justify-content: center !important;
+    }
+    .add-banner-btn i { font-size: 1.5rem !important; margin-bottom: 5px !important; }
+
+    /* --- 6. COLUNA DO FORMULÁRIO (Textos e Redes Sociais) --- */
+    .right-column {
+        background: #ffffff !important; padding: 20px !important; border-radius: 16px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important; margin-bottom: 20px !important; border: 1px solid #e2e8f0;
     }
 
-    .form-group {
-        margin-bottom: 20px;
-    }
-
+    .form-group { margin-bottom: 20px !important; }
     .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #2c3e50;
-        font-size: 0.95rem;
+        font-weight: 700 !important; color: #2c3e50 !important; margin-bottom: 8px !important; font-size: 0.95rem !important; display: flex; align-items: center; gap: 8px;
     }
+    .form-group label i { color: #3498db !important; }
 
     .form-control {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d9e0;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        background-color: #fff;
-        transition: all 0.3s ease;
+        width: 100% !important; padding: 14px !important; border: 1px solid #dcdde1 !important; border-radius: 12px !important; 
+        font-size: 1rem !important; color: #2c3e50 !important; background: #f8f9fa !important; box-sizing: border-box !important;
+    }
+    .form-control:focus { border-color: #FF7A00 !important; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15) !important; outline: none !important; background: #fff !important;}
+    
+    .image-preview-admin { width: 100% !important; height: auto !important; max-height: 180px !important; object-fit: cover !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important; margin-bottom: 12px !important;}
+    .map-preview iframe { width: 100% !important; border-radius: 12px !important; height: 180px !important;}
+    
+    .btn-save-mobile {
+        width: 100% !important; padding: 15px !important; border-radius: 12px !important; font-size: 1.1rem !important; font-weight: 800 !important;
+        background: linear-gradient(135deg, #FF7A00, #d35400) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3) !important;
     }
 
-    .form-control:focus {
-        border-color: #e67e22;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.2);
+    /* --- 7. BOTTOM NAVIGATION E MENU LATERAL --- */
+    .mobile-bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
+        display: flex; justify-content: space-around; padding: 12px 0; padding-bottom: env(safe-area-inset-bottom, 12px);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04); border-top: 1px solid #e2e8f0; z-index: 99;
     }
+    .mobile-bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;}
+    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
+    .mobile-bottom-nav .nav-item.active, .mobile-bottom-nav .nav-item.active i { color: #FF7A00; font-weight: 700; }
 
-    textarea.form-control {
-        min-height: 120px;
-        resize: vertical;
-    }
+    .bottom-sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
+    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); padding-bottom: env(safe-area-inset-bottom, 15px); box-shadow: 0 -10px 30px rgba(0,0,0,0.15);}
+    .bottom-sheet.active { transform: translateY(0); }
+    .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
+    .bs-content { padding: 0 25px 25px 25px; }
 
-    .form-select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #d1d9e0;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        background-color: #fff;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 16px 12px;
-    }
-
-    /* Banner e Imagens */
-    .banner-section {
-        margin-bottom: 20px;
-    }
-
-    .banner-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        font-size: .89rem;
-    }
-
-    .banner-images {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
-
-    .banner-image-container {
-        position: relative;
-        width: 150px;
-        height: 135px;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .banner-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        background-color: #e0e0e0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 0.9rem;
-    }
-
-    .banner-actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        display: flex;
-        gap: 8px;
-    }
-
-    .banner-action-btn {
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .delete-btn {
-        color: #c62828;
-    }
-
-    .move-btn {
-        color: #2c3e50;
-    }
-
-    .banner-action-btn:hover {
-        background: white;
-        transform: scale(1.1);
-    }
-
-    .add-banner-btn {
-        background: linear-gradient(135deg, #2c3e50, #1a2a6c);
-        color: white;
-        border-radius: 8px;
-        padding: 10px 15px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px dashed #e67e22;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: 150px;
-        height: 135px;
-        justify-content: center;
-        font-weight: 500;
-    }
-
-    .add-banner-btn:hover {
-        background: linear-gradient(135deg, #1a2a6c, #2c3e50);
-        transform: translateY(-3px);
-    }
-
-    .right-column{
-        width: 100%;
-    }
-    /* Preview de imagens */
-    .image-preview-container {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .image-preview {
-        width: 100%;
-        height: 200px;
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-    }
-
-    .image-preview img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .image-preview-placeholder {
-        color: #999;
-        font-size: 0.9rem;
-    }
-
-    .image-upload-btn {
-        background-color: #2c3e50;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        justify-content: center;
-    }
-
-    .image-upload-btn:hover {
-        background-color: #1a2a6c;
-    }
-
-    /* Redes Sociais */
-    .social-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .social-input-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .social-icon {
-        width: 50px;
-        height: 40px;
-        border-radius: 50%;
-        background: #ecf0f1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    .social-icon i{
-        color: #e67e22;
-    }
-
-    /* Botões de ação */
-    .actions-container {
-        display: flex;
-        justify-content: flex-end;
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .btn {
-        padding: 12px 25px;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1rem;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #e67e22, #d35400);
-        color: white;
-        box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-    }
-
-    .btn-primary i{
-        color: #fff;
-    }
-
-    .btn-outline {
-        background-color: transparent;
-        border: 1px solid #e67e22;
-        color: #e67e22;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-    }
-
-    /* Preview do site */
-    .preview-section {
-        background: linear-gradient(135deg, #1a2a6c, #2c3e50);
-        padding: 25px;
-        border-radius: 12px;
-        margin-top: 20px;
-    }
-
-    .preview-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        color: white;
-    }
-
-    .preview-container {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        height: 500px;
-        position: relative;
-    }
-
-    .preview-iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-
-    .preview-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        font-size: 1.2rem;
-        text-align: center;
-        padding: 20px;
-    }
+    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
+    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
+    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
+    .bs-menu-list a.active, .bs-menu-list a.active i { color: #FF7A00 !important; }
 }
+@media (min-width: 821px) { .mobile-only { display: none !important; } }
