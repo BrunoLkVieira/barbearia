@@ -14,11 +14,14 @@
     .mobile-only { display: block !important; }
     .nav-bar > .nav-tabs, .user-sidebar .mobile-sidebar, .pages-options-Container { display: none !important; }
     
+    /* Mágica da Nav-bar global */
+    .nav-bar { display: contents !important; }
+    .nav-bar > *:not(.mobile-nav-container):not(.nav-content) { display: none !important; }
+    .nav-bar .nav-content { display: contents !important; }
+    
     footer.desktop-only { display: none !important; }
 
     /* --- 2. HEADER E FILTRO TIPO "PÍLULA" (Igual a imagem Funcionários) --- */
-    .nav-bar { display: none !important; } /* Oculta a navbar antiga inteira */
-    
     header {
         position: sticky; top: 0; z-index: 100; padding: 0 15px; 
         display: flex; justify-content: space-between; align-items: center;
@@ -112,7 +115,8 @@
     .day-off-btn { width: 35px !important; height: 35px !important; border-radius: 8px !important; background: #f8f9fa !important; color: #e74c3c !important; border: 1px solid #eaecef !important; font-size: 0.9rem !important; display: flex !important; align-items:center !important; justify-content:center !important;}
     .day-off-btn:first-child { color: #3498db !important; }
 
-    /* --- 5. BOTTOM NAVIGATION E MENU LATERAL --- */
+    /* --- 5. BOTTOM NAVIGATION --- */
+    /* Mantido até você migrar pro style.css global */
     .mobile-bottom-nav {
         position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
         display: flex; justify-content: space-around; padding: 12px 0; 
@@ -121,18 +125,6 @@
     .mobile-bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;}
     .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
     .mobile-bottom-nav .nav-item.active, .mobile-bottom-nav .nav-item.active i { color: #FF7A00; font-weight: 700; }
-
-    .bottom-sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
-    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
-    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); }
-    .bottom-sheet.active { transform: translateY(0); }
-    .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
-    .bs-content { padding: 0 25px 25px 25px; }
-
-    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
-    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
-    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
-    .bs-menu-list a.active, .bs-menu-list a.active i { color: #FF7A00 !important; }
 
     /* --- 6. FORMATAÇÃO MÁGICA E SEGURA DOS MODAIS NATIVOS (.modal) --- */
     /* Respeitamos o JS, e formatamos o interior pra virar um APP */
@@ -146,22 +138,22 @@
     }
     
     .modal form { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; margin:0 !important; padding:0 !important; }
-    .modal-body, .holiday-modal-body { flex: 1 !important; overflow-y: auto !important; padding: 20px !important; min-height: 0 !important; margin-bottom:0 !important; }
+    .modal-body, .holiday-modal-body, .edit-modal-body { flex: 1 !important; overflow-y: auto !important; padding: 20px !important; min-height: 0 !important; margin-bottom:0 !important; }
     
-    .modal-header { padding: 20px !important; border-bottom: 1px solid #eaecef !important; background: #fff !important; flex-shrink: 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;}
-    .modal-header h2 { font-size: 1.25rem !important; margin: 0 !important; color: #1a233a !important; display: flex !important; gap: 8px !important;}
-    .modal-header h2 i { color: #FF7A00 !important; }
-    .modal-header .close-btn { color: #a0aec0 !important; background: transparent !important; border:none!important; font-size:1.5rem!important; cursor:pointer;}
+    .modal-header, .edit-modal-header { padding: 20px !important; border-bottom: 1px solid #eaecef !important; background: #fff !important; flex-shrink: 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;}
+    .modal-header h2, .edit-modal-header h2 { font-size: 1.25rem !important; margin: 0 !important; color: #1a233a !important; display: flex !important; gap: 8px !important;}
+    .modal-header h2 i, .edit-modal-header h2 i { color: #FF7A00 !important; }
+    .modal-header .close-btn, .edit-modal-header .close-btn { color: #a0aec0 !important; background: transparent !important; border:none!important; font-size:1.5rem!important; cursor:pointer;}
     
-    .modal-footer {
+    .modal-footer, .edit-modal-footer {
         flex-shrink: 0 !important; padding: 15px 20px !important; border-top: 1px solid #eaecef !important; background: #fff !important;
         display: flex !important; gap: 10px !important; justify-content: flex-end !important;
     }
-    .modal-footer .btn {
+    .modal-footer .btn, .edit-modal-footer .btn {
         flex: 1 !important; padding: 12px 15px !important; border-radius: 10px !important; font-size: 1rem !important; font-weight: 700 !important; cursor: pointer !important; border: none !important; justify-content: center !important; display:flex!important;
     }
-    .modal-footer .btn-primary { background: linear-gradient(135deg, #FF7A00, #d35400) !important; color: white !important; box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3) !important;}
-    .modal-footer .btn-outline { background: transparent !important; border: 1px solid #dcdde1 !important; color: #2c3e50 !important;}
+    .modal-footer .btn-primary, .edit-modal-footer .btn-primary { background: linear-gradient(135deg, #FF7A00, #d35400) !important; color: white !important; box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3) !important;}
+    .modal-footer .btn-outline, .edit-modal-footer .btn-outline { background: transparent !important; border: 1px solid #dcdde1 !important; color: #2c3e50 !important;}
 
     .holiday-input, .date-inputs input, .unit-time-inputs select {
         width: 100% !important; padding: 12px !important; border: 1px solid #dcdde1 !important; border-radius: 10px !important; 

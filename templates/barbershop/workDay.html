@@ -35,6 +35,7 @@
 <body>
     {% include "geral/header.html" %}
     
+    <!-- Navbar Global Limpa -->
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         <div class="nav-content">
@@ -249,57 +250,6 @@
             </div>
         </div>
     </footer>
-    
-    <!-- 📱 NAVEGAÇÃO E MENU MOBILE -->
-    <div class="mobile-only">
-        <nav class="mobile-bottom-nav">
-            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
-                <i class="fas fa-calendar-days"></i>
-                <span>Agenda</span>
-            </a>
-            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>Clientes</span>
-            </a>
-            <div class="nav-item active" onclick="openMenuSheet()">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
-            </div>
-        </nav>
-
-        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
-        <div class="bottom-sheet" id="menuBottomSheet">
-            <div class="bottom-sheet-handle"></div>
-            <div class="bs-content">
-                <h3 style="margin-bottom:15px; color:#1a233a;"><i class="fas fa-bars" style="color:#FF7A00; margin-right: 8px;"></i>Menu Principal</h3>
-                
-                <div class="bs-menu-list">
-                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
-                    {% if is_owner or is_manager %}
-                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
-                    {% endif %}
-                </div>
-
-                {% if request.user.user_type != "funcionario" %}
-                <div class="bs-divider" style="height: 1px; background: #eaecef; margin: 15px 0;"></div>
-                <h4 style="margin:0 0 10px 0; color:#7f8c8d; font-size: 0.85rem; text-transform:uppercase;">Gestão de Barbearia</h4>
-                <div class="bs-menu-list" style="margin-top:0;">
-                    {% if request.user.user_type == "dono" %}
-                        <a href="{% url 'barbershop:units' barbershop_slug=barbershop.slug %}"><i class="fas fa-store"></i> Unidades</a>
-                    {% endif %}
-
-                    {% if request.user.user_type == "dono" %}
-                        <a href="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
-                    {% elif request.user.user_type == "gerente" and gerente_unit %}
-                        <a href="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug=gerente_unit.slug %}"><i class="fas fa-users-cog"></i> Funcionários</a>
-                    {% endif %}
-                    
-                    <a href="#" class="active" onclick="closeMenuSheet()"><i class="fas fa-clock"></i> Funcionamento</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 
     <!-- ========================================================= -->
     <!-- MODAIS ORIGINAIS INTACTOS (SEU JS VAI FUNCIONAR)          -->
@@ -591,18 +541,6 @@
                 {% endfor %}
             {% endif %}
         });
-
-        // Controles Gavetas Mobile Menu
-        function openMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.add('active');
-            document.getElementById('menuBottomSheet').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
-            document.getElementById('menuBottomSheet').classList.remove('active');
-            document.body.style.overflow = '';
-        }
     </script>
 </body>
 </html>
