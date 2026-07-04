@@ -458,4 +458,41 @@
         color: #FF7A00;
         margin-right: .2rem;
     }
+
+    /* --- CSS DA LISTA DO MENU PRINCIPAL QUE ESTAVA FALTANDO --- */
+    .bs-menu-list { 
+        display: flex; 
+        flex-direction: column; 
+        margin-top: 15px; 
+    }
+    
+    .bs-menu-list a { 
+        padding: 18px 0; 
+        border-bottom: 1px solid #f1f2f6; 
+        color: #2c3e50 !important; 
+        text-decoration: none; 
+        font-weight: 600; 
+        font-size: 1.1rem; 
+        display: flex; 
+        align-items: center; 
+        gap: 15px;
+    }
+    
+    .bs-menu-list a i { 
+        color: #a0aec0 !important; 
+        font-size: 1.3rem; 
+        width: 25px; 
+        text-align: center; 
+    } 
+    
+    /* Cores do Link Ativo (Laranja) */
+    .bs-menu-list a.active, 
+    .bs-menu-list a[href*="service"] { 
+        color: #FF7A00 !important; 
+    }
+    
+    .bs-menu-list a.active i, 
+    .bs-menu-list a[href*="service"] i { 
+        color: #FF7A00 !important; 
+    }
 }

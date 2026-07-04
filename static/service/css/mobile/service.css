@@ -21,7 +21,12 @@
     
     .nav-bar > .nav-tabs, 
     .user-sidebar .mobile-sidebar,
-    .nav-bar, .pages-options-Container { display: none !important; }
+    .pages-options-Container { display: none !important; }
+    
+    .nav-bar { display: contents !important; }
+    .nav-bar > *:not(.mobile-nav-container):not(.stats) { display: none !important; }
+    .nav-bar .stats { display: contents !important; }
+    .nav-bar .stats .stat-box { display: none !important; }
 
     .main-content { padding: 0; margin: 0; display: flex; flex-direction: column; overflow: visible;}
 
@@ -122,22 +127,8 @@
         z-index: 90; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4); border: none; cursor: pointer;
     }
 
-    /* --- 6. BOTTOM NAVIGATION BAR E MENU --- */
-    .mobile-bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
-        display: flex; justify-content: space-around; padding: 12px 0;
-        border-top: 1px solid #e2e8f0; z-index: 99;
-    }
-    .mobile-bottom-nav .nav-item {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: #95a5a6 !important; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;
-    }
-    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6 !important; }
-    .mobile-bottom-nav .nav-item.active { color: #FF7A00 !important; font-weight: 700; }
-    .mobile-bottom-nav .nav-item.active i { color: #FF7A00 !important; }
 
-
-    /* --- 7. BOTTOM SHEETS --- */
+    /* --- 6. BOTTOM SHEETS --- */
     .bottom-sheet-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
@@ -173,13 +164,22 @@
     .bs-btn-secondary { background: #f8f9fa; border: 1px solid #dcdde1; color: #2c3e50; }
     .bs-btn-danger { background: #fff0f0; border: 1px solid #ffcccc; color: #e74c3c; }
 
-    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
-    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
-    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
-    .bs-menu-list a.active, .bs-menu-list a[href*="service"] { color: #FF7A00 !important; }
-    .bs-menu-list a.active i, .bs-menu-list a[href*="service"] i { color: #FF7A00 !important; }
+    /* --- 6. BOTTOM NAVIGATION BAR --- */
+    .mobile-bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
+        display: flex; justify-content: space-around; padding: 12px 0;
+        border-top: 1px solid #e2e8f0; z-index: 99;
+    }
+    .mobile-bottom-nav .nav-item {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #95a5a6 !important; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%; cursor: pointer;
+    }
+    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6 !important; }
+    
+    .mobile-bottom-nav .nav-item.active { color: #FF7A00 !important; font-weight: 700; }
+    .mobile-bottom-nav .nav-item.active i { color: #FF7A00 !important; }
 
-    /* --- 8. MODAIS DE CRIAÇÃO/EDIÇÃO CORRIGIDOS (TRAVADOS NO CENTRO) --- */
+    /* --- 7. MODAIS DE CRIAÇÃO/EDIÇÃO CORRIGIDOS (TRAVADOS NO CENTRO) --- */
     #serviceModal.modal-overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.6) !important; display: none; padding: 15px; box-sizing: border-box; z-index: 1000;
