@@ -19,6 +19,15 @@
     .mobile-only { display: block !important; }
     .desktop-only { display: none !important; }
     
+    .nav-bar > .nav-tabs,
+    .user-sidebar .mobile-sidebar,
+    .pages-options-Container { display: none !important; }
+
+    /* Mágica da Nav-bar global */
+    .nav-bar { display: contents !important; }
+    .nav-bar > *:not(.mobile-nav-container):not(.nav-content) { display: none !important; }
+    .nav-bar .nav-content { display: contents !important; }
+    
     .main-content { padding: 0; margin: 0; display: flex; flex-direction: column; overflow: visible;}
 
     /* --- 2. HEADER LIMPÍSSIMO --- */
@@ -96,19 +105,23 @@
         z-index: 90; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4); border: none; cursor: pointer;
     }
 
-    /* --- 6. BOTTOM NAVIGATION E MENU LATERAL --- */
+
+    /* --- 6. BOTTOM NAVIGATION BAR --- */
+    /* Mantido aqui para garantir que o menu da tela fique preso lá embaixo enquanto você não leva isso pro global */
     .mobile-bottom-nav {
         position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
-        display: flex; justify-content: space-around; padding: 12px 0; 
+        display: flex; justify-content: space-around; padding: 12px 0;
         border-top: 1px solid #e2e8f0; z-index: 99;
     }
     .mobile-bottom-nav .nav-item {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;
+        color: #95a5a6 !important; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%; cursor: pointer;
     }
-    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
-    .mobile-bottom-nav .nav-item.active { color: #FF7A00; font-weight: 700; }
-    .mobile-bottom-nav .nav-item.active i { color: #FF7A00; }
+    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6 !important; }
+    
+    .mobile-bottom-nav .nav-item.active { color: #FF7A00 !important; font-weight: 700; }
+    .mobile-bottom-nav .nav-item.active i { color: #FF7A00 !important; }
+
 
     /* --- 7. BOTTOM SHEETS (A Gaveta) --- */
     .bottom-sheet-overlay {
@@ -142,15 +155,6 @@
     }
     .bs-btn-secondary { background: #f8f9fa; border: 1px solid #dcdde1; color: #2c3e50; }
     .bs-btn-danger { background: #fff0f0; border: 1px solid #ffcccc; color: #e74c3c; }
-
-    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
-    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
-    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
-    
-    /* Highlight de abas ativas no Menu Mobile */
-    .bs-menu-list a.active { color: #FF7A00 !important; }
-    .bs-menu-list a.active i { color: #FF7A00 !important; }
-
 
     /* --- 8. MODAL ORIGINAL BLINDADO (NOVO/EDITAR) --- */
     /* Ao invés de quebrar o JS, alteramos apenas o CSS da classe ".modal" original do Desktop */
