@@ -470,36 +470,6 @@
         </button>
         {% endif %}
 
-        <nav class="mobile-bottom-nav">
-            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
-                <i class="fas fa-calendar-days"></i>
-                <span>Agenda</span>
-            </a>
-            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item">
-                <i class="fas fa-users"></i>
-                <span>Clientes</span>
-            </a>
-            <div class="nav-item" onclick="openMenuSheet()">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
-            </div>
-        </nav>
-
-        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
-        <div class="bottom-sheet" id="menuBottomSheet">
-            <div class="bottom-sheet-handle"></div>
-            <div class="bs-content">
-                <h3>Menu Principal</h3>
-                <div class="bs-menu-list">
-                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}" class="active"><i class="fas fa-history"></i> Histórico</a>
-                    {% if is_owner or is_manager %}
-                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
-                    {% endif %}
-                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}"><i class="fas fa-store"></i> Minha Barbearia</a>
-                </div>
-            </div>
-        </div>
-
         <div class="bottom-sheet-overlay" id="filterBottomSheetOverlay" onclick="closeFilterSheet()"></div>
         <div class="bottom-sheet" id="filterBottomSheet">
             <div class="bottom-sheet-handle"></div>
@@ -773,16 +743,6 @@
         function closeMobileSheet(appId) {
             document.getElementById('bs-overlay-' + appId).classList.remove('active');
             document.getElementById('bs-sheet-' + appId).classList.remove('active');
-            document.body.style.overflow = '';
-        }
-        function openMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.add('active');
-            document.getElementById('menuBottomSheet').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
-            document.getElementById('menuBottomSheet').classList.remove('active');
             document.body.style.overflow = '';
         }
         function openFilterSheet() {

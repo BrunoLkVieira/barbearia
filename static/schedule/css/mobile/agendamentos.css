@@ -29,7 +29,7 @@
         position: sticky;
         top: 0;
         z-index: 100;
-        padding: 0 15px; 
+        padding: 12px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -43,9 +43,12 @@
     .pages-options-Container { display: none !important; } 
 
     .nav-bar { display: contents !important; }
-    .nav-bar > * { display: none !important; } 
+    
+    /* AQUI ESTÁ A MÁGICA: Esconde os itens do desktop, mas SALVA o container do menu mobile e os stats */
+    .nav-bar > *:not(.mobile-nav-container):not(.stats) { display: none !important; } 
+    
     .nav-bar .stats { display: contents !important; }
-    .nav-bar .stats .stat-box { display: none !important; } 
+    .nav-bar .stats .stat-box { display: none !important; }
     
     .nav-bar .unit-filter {
         display: block !important;
