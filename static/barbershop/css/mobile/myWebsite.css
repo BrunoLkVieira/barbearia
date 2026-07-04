@@ -14,9 +14,12 @@
     .mobile-only { display: block !important; }
     .nav-bar > .nav-tabs, .user-sidebar .mobile-sidebar, .pages-options-Container { display: none !important; }
 
-    /* --- 2. HEADER E FILTRO TIPO "PÍLULA" (INTACTO) --- */
-    .nav-bar { display: none !important; }
+    /* Mágica da Nav-bar global */
+    .nav-bar { display: contents !important; }
+    .nav-bar > *:not(.mobile-nav-container):not(.nav-content) { display: none !important; }
+    .nav-bar .nav-content { display: contents !important; }
     
+    /* --- 2. HEADER E FILTRO TIPO "PÍLULA" (INTACTO) --- */
     header {
         position: sticky; top: 0; z-index: 100; padding: 0 15px; 
         display: flex; justify-content: space-between; align-items: center;
@@ -154,27 +157,5 @@
         width: 100% !important; padding: 15px !important; border-radius: 12px !important; font-size: 1.1rem !important; font-weight: 800 !important;
         background: linear-gradient(135deg, #FF7A00, #d35400) !important; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3) !important;
     }
-
-    /* --- 7. BOTTOM NAVIGATION E MENU LATERAL --- */
-    .mobile-bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
-        display: flex; justify-content: space-around; padding: 12px 0; padding-bottom: env(safe-area-inset-bottom, 12px);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04); border-top: 1px solid #e2e8f0; z-index: 99;
-    }
-    .mobile-bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;}
-    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
-    .mobile-bottom-nav .nav-item.active, .mobile-bottom-nav .nav-item.active i { color: #FF7A00; font-weight: 700; }
-
-    .bottom-sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
-    .bottom-sheet-overlay.active { opacity: 1; visibility: visible; }
-    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); padding-bottom: env(safe-area-inset-bottom, 15px); box-shadow: 0 -10px 30px rgba(0,0,0,0.15);}
-    .bottom-sheet.active { transform: translateY(0); }
-    .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
-    .bs-content { padding: 0 25px 25px 25px; }
-
-    .bs-menu-list { display: flex; flex-direction: column; margin-top: 15px; }
-    .bs-menu-list a { padding: 18px 0; border-bottom: 1px solid #f1f2f6; color: #2c3e50 !important; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
-    .bs-menu-list a i { color: #a0aec0 !important; font-size: 1.3rem; width: 25px; text-align: center; } 
-    .bs-menu-list a.active, .bs-menu-list a.active i { color: #FF7A00 !important; }
 }
 @media (min-width: 821px) { .mobile-only { display: none !important; } }
