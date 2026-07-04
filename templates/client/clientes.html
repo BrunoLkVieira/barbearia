@@ -22,6 +22,7 @@
     {% include 'geral/header.html' %}
     
     <div class="nav-bar">
+        <!-- O UNIVERSAL NAV (Traz as abas do PC e o Bottom Menu do Mobile) -->
         {% include 'geral/nav.html' %}
         
         <div class="nav-content desktop-only">
@@ -68,7 +69,6 @@
         </div>
         <form method="GET" action="" class="m-search-bar">
             <i class="fas fa-search"></i>
-            <!-- Enter no teclado mobile envia este form naturalmente -->
             <input type="text" name="search" placeholder="Buscar nome ou telefone..." value="{{ search_query }}">
             <input type="hidden" name="sort" value="{{ sort_filter }}">
         </form>
@@ -285,40 +285,8 @@
         {% endif %}
     </footer>
 
-    <!-- 📱 MENU MOBILE DRAWER E NAVEGAÇÃO -->
+    <!-- FAB: NOVO CLIENTE (Preservado para Mobile) -->
     <div class="mobile-only">
-        <div class="bottom-sheet-overlay" id="menuBottomSheetOverlay" onclick="closeMenuSheet()"></div>
-        <div class="bottom-sheet" id="menuBottomSheet">
-            <div class="bottom-sheet-handle"></div>
-            <div class="bs-content">
-                <h3>Menu Principal</h3>
-                <div class="bs-menu-list">
-                    {% if is_owner or is_manager %}
-                    <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-credit-card"></i> Catálogo de Serviços</a>
-                    {% endif %}
-                    <a href="{% if is_owner %}{% url 'barbershop:units' barbershop_slug=barbershop.slug %}{% elif is_manager %}{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}{% endif %}"><i class="fas fa-store"></i> Minha Barbearia</a>
-                    <a href="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}"><i class="fas fa-history"></i> Histórico</a>
-                </div>
-            </div>
-        </div>
-
-        <nav class="mobile-bottom-nav">
-            <a href="{% url 'scheduling:agenda' barbershop_slug=barbershop.slug %}" class="nav-item">
-                <i class="fas fa-calendar-days"></i>
-                <span>Agenda</span>
-            </a>
-            <!-- CLIENTES AGORA FICA ATIVO AQUI -->
-            <a href="{% url 'client:client_list' barbershop_slug=barbershop.slug %}" class="nav-item active">
-                <i class="fas fa-users"></i>
-                <span>Clientes</span>
-            </a>
-            <div class="nav-item" onclick="openMenuSheet()">
-                <i class="fas fa-bars"></i>
-                <span>Menu</span>
-            </div>
-        </nav>
-        
-        <!-- FAB: NOVO CLIENTE -->
         <button class="btnNewClient-mobile" onclick="openModal()">
             <i class="fas fa-plus"></i>
         </button>
@@ -335,13 +303,11 @@
                 <button type="button" class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
             </div>
             
-            <!-- CORREÇÃO: Form com flex column e min-height: 0 para ativar rolagem -->
             <form id="clientForm" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                 {% csrf_token %}
                 <input type="hidden" name="action" id="modalAction" value="create">
                 <input type="hidden" name="client_id" id="modalClientId">
                 
-                <!-- CORREÇÃO: Rolagem interna do modal -->
                 <div class="modal-body" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label for="firstName" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Primeiro Nome *</label>
@@ -381,7 +347,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.innerWidth <= 820) {
-                // Centraliza filtro do header
+                // Centraliza filtro do header (Desktop Hiding Logic)
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
@@ -391,7 +357,7 @@
             }
         });
 
-        // Gavetas dos Clientes
+        // Gavetas dos Clientes (Específico da tela de clientes)
         function openMobileSheet(clientId, event) {
             if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
             document.getElementById('bs-overlay-' + clientId).classList.add('active');
@@ -401,18 +367,6 @@
         function closeMobileSheet(clientId) {
             document.getElementById('bs-overlay-' + clientId).classList.remove('active');
             document.getElementById('bs-sheet-' + clientId).classList.remove('active');
-            document.body.style.overflow = '';
-        }
-        
-        // Menu Geral
-        function openMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.add('active');
-            document.getElementById('menuBottomSheet').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMenuSheet() {
-            document.getElementById('menuBottomSheetOverlay').classList.remove('active');
-            document.getElementById('menuBottomSheet').classList.remove('active');
             document.body.style.overflow = '';
         }
     </script>
