@@ -89,22 +89,21 @@ def ClientListView(request, barbershop_slug):
    # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
     search_query = request.GET.get('search', '').strip()
     sort_filter = request.GET.get('sort', '-created_at')
-    
-    # --- CORREÇÃO DO FILTRO DE UNIDADE AQUI ---
+    status_filter = request.GET.get('status', 'all')
+
     units = Unit.objects.filter(barbershop=barbershop, is_active=True)
     unit_slug = request.GET.get('unit', 'geral')
     current_unit = None
 
     all_clients = Client.objects.filter(barbershop=barbershop)
 
+    # Filtro de Unidade
     if unit_slug != 'geral':
         current_unit = units.filter(slug=unit_slug).first()
         if current_unit:
-            # Filtra clientes que já foram atendidos nesta unidade
             all_clients = all_clients.filter(appointments__unit=current_unit).distinct()
-    # ------------------------------------------
 
-    # Busca Inteligente (Aceita nome composto com espaços)
+    # Busca Inteligente
     if search_query:
         search_terms = search_query.split()
         for term in search_terms:
@@ -114,7 +113,13 @@ def ClientListView(request, barbershop_slug):
                 Q(phone__icontains=term)
             )
 
-    # Annotations (Apenas agendamentos CONCLUÍDOS)
+    # Filtro de Status (Ativos / Bloqueados) - APICADO ANTES DO ANNOTATE PARA PERFORMANCE
+    if status_filter == 'active':
+        all_clients = all_clients.filter(is_blocked=False)
+    elif status_filter == 'blocked':
+        all_clients = all_clients.filter(is_blocked=True)
+
+    # Annotations & Ordenação (ORM inteligente)
     all_clients = all_clients.annotate(
         completed_visits=Count('appointments', filter=Q(appointments__status='completed')),
         last_visit_date=Max('appointments__date', filter=Q(appointments__status='completed'))
@@ -131,12 +136,13 @@ def ClientListView(request, barbershop_slug):
         'clients': clients_page,
         'search_query': search_query,
         'sort_filter': sort_filter,
+        'status_filter': status_filter, # INJETADO NO CONTEXTO
         'active_tab': 'clients',
         'total_geral': total_geral,
         'is_owner': is_owner,
         'is_manager': is_manager,
-        'units': units,              # INJETADO
-        'current_unit': current_unit # INJETADO
+        'units': units,
+        'current_unit': current_unit
     }
     
     return render(request, 'client/clientes.html', context)

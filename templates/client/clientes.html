@@ -51,30 +51,53 @@
         </div>
     </div>
     
-    <!-- ========================================== -->
+ <!-- ========================================== -->
     <!-- 📱 BUSCA E FILTROS EXCLUSIVOS MOBILE 📱 -->
     <!-- ========================================== -->
-    <div class="mobile-only mobile-header-section">
-        <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 25px 0; font-size: 1.8rem; font-weight: 800;">Clientes</h2>
-        <div class="m-clients-info">
-            <span class="m-total-clients">{{ total_geral }} Clientes</span>
-            
-            <div class="m-sort-wrapper">
-                <form method="GET" action="" id="mobileSortForm">
+    <div class="mobile-only mobile-header-section" style="padding-bottom: 15px;">
+        <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 20px 0; font-size: 1.8rem; font-weight: 800;">Clientes</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Linha 1: Contagem e Selects Isolados -->
+            <div style="display: flex; gap: 8px; width: 100%; align-items: stretch;">
+                
+                <!-- Badge Total -->
+                <div style="display: flex; align-items: center; justify-content: center; padding: 0 12px; background: #fff; border: 1px solid #FF7A00; border-radius: 8px; font-weight: 700; color: #1a233a; font-size: 0.85rem; white-space: nowrap;">
+                    {{ total_geral }} Clientes
+                </div>
+
+                <!-- Formulário com Selects Lado a Lado (Bordas Resetadas) -->
+                <form method="GET" action="" id="mobileSortForm" style="flex: 1; display: flex; gap: 8px; margin: 0; padding: 0; border: none !important; background: transparent !important; box-shadow: none !important;">
                     <input type="hidden" name="search" value="{{ search_query }}">
-                    <select name="sort" onchange="document.getElementById('mobileSortForm').submit()">
-                        <option value="-created_at" {% if sort_filter == '-created_at' %}selected{% endif %}>Mais recentes</option>
-                        <option value="first_name" {% if sort_filter == 'first_name' %}selected{% endif %}>Nome (A-Z)</option>
-                        <option value="-first_name" {% if sort_filter == '-first_name' %}selected{% endif %}>Nome (Z-A)</option>
+                    <input type="hidden" name="unit" value="{{ current_unit.slug|default:'geral' }}">
+                    
+                    <select name="status" onchange="document.getElementById('mobileSortForm').submit()" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #dcdde1; border-radius: 8px; background-color: #fff; color: #2c3e50; font-size: 0.8rem; font-weight: 600; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Ativos</option>
+                        <option value="blocked" {% if status_filter == 'blocked' %}selected{% endif %}>Bloqueados</option>
+                    </select>
+
+                    <select name="sort" onchange="document.getElementById('mobileSortForm').submit()" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #dcdde1; border-radius: 8px; background-color: #fff; color: #2c3e50; font-size: 0.8rem; font-weight: 600; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <option value="-created_at" {% if sort_filter == '-created_at' %}selected{% endif %}>Recentes</option>
+                        <option value="created_at" {% if sort_filter == 'created_at' %}selected{% endif %}>Antigos</option>
+                        <option value="-completed_visits" {% if sort_filter == '-completed_visits' %}selected{% endif %}>+ Visitas</option>
+                        <option value="completed_visits" {% if sort_filter == 'completed_visits' %}selected{% endif %}>- Visitas</option>
+                        <option value="first_name" {% if sort_filter == 'first_name' %}selected{% endif %}>A-Z</option>
+                        <option value="-first_name" {% if sort_filter == '-first_name' %}selected{% endif %}>Z-A</option>
                     </select>
                 </form>
             </div>
+
+            <!-- Linha 2: Barra de Pesquisa (Bordas Resetadas) -->
+            <form method="GET" action="" class="m-search-bar" style="display: flex; position: relative; width: 100%; margin: 0; padding: 0; border: none !important; background: transparent !important; box-shadow: none !important;">
+                <input type="hidden" name="sort" value="{{ sort_filter }}">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="hidden" name="unit" value="{{ current_unit.slug|default:'geral' }}">
+                
+                <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #a0aec0;"></i>
+                <input type="text" name="search" placeholder="Buscar nome ou telefone..." value="{{ search_query }}" style="width: 100%; padding: 12px 15px 12px 35px; border-radius: 8px; border: 1px solid #dcdde1; font-size: 0.95rem; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            </form>
         </div>
-        <form method="GET" action="" class="m-search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" name="search" placeholder="Buscar nome ou telefone..." value="{{ search_query }}">
-            <input type="hidden" name="sort" value="{{ sort_filter }}">
-        </form>
     </div>
 
     <div class="main-content">
@@ -101,11 +124,26 @@
                 </button>
             </div>
             
-            <div class="filter-container">
+            <div class="filter-container" style="display: flex; gap: 15px;">
+                <!-- Manter a persistência de unidade na busca PC -->
+                <input type="hidden" name="unit" value="{{ current_unit.slug|default:'geral' }}">
+                
+                <div class="filter-item">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" onchange="this.form.submit()">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Ativos</option>
+                        <option value="blocked" {% if status_filter == 'blocked' %}selected{% endif %}>Bloqueados</option>
+                    </select>
+                </div>
+
                 <div class="filter-item">
                     <label for="sort">Ordenar por</label>
                     <select id="sort" name="sort" onchange="this.form.submit()">
                         <option value="-created_at" {% if sort_filter == '-created_at' %}selected{% endif %}>Mais recentes</option>
+                        <option value="created_at" {% if sort_filter == 'created_at' %}selected{% endif %}>Mais antigos</option>
+                        <option value="-completed_visits" {% if sort_filter == '-completed_visits' %}selected{% endif %}>Mais visitas</option>
+                        <option value="completed_visits" {% if sort_filter == 'completed_visits' %}selected{% endif %}>Menos visitas</option>
                         <option value="first_name" {% if sort_filter == 'first_name' %}selected{% endif %}>Nome (A-Z)</option>
                         <option value="-first_name" {% if sort_filter == '-first_name' %}selected{% endif %}>Nome (Z-A)</option>
                     </select>
@@ -249,12 +287,12 @@
         {% if clients.has_other_pages %}
         <div class="mobile-only mobile-pagination">
             {% if clients.has_previous %}
-                <a href="?page={{ clients.previous_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="m-btn-page m-btn-prev">
+                <a href="?page={{ num }}&sort={{ sort_filter }}&status={{ status_filter }}&search={{ search_query }}&unit={{ current_unit.slug|default:'geral' }}" class="m-btn-page m-btn-prev">
                     <i class="fas fa-arrow-left"></i> Página Anterior
                 </a>
             {% endif %}
             {% if clients.has_next %}
-                <a href="?page={{ clients.next_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="m-btn-page m-btn-next">
+                <a href="?page={{ num }}&sort={{ sort_filter }}&status={{ status_filter }}&search={{ search_query }}&unit={{ current_unit.slug|default:'geral' }}" class="m-btn-page m-btn-next">
                     Próxima Página <i class="fas fa-arrow-right"></i>
                 </a>
             {% endif %}
@@ -270,19 +308,19 @@
         {% if clients.has_other_pages %}
         <div class="pagination">
             {% if clients.has_previous %}
-                <a href="?page={{ clients.previous_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
+                <a href="?page={{ clients.previous_page_number }}&sort={{ sort_filter }}&status={{ status_filter }}&search={{ search_query }}&unit={{ current_unit.slug|default:'geral' }}" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
             {% endif %}
             
             {% for num in clients.paginator.page_range %}
                 {% if clients.number == num %}
                     <button class="pagination-btn active">{{ num }}</button>
                 {% else %}
-                    <a href="?page={{ num }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn">{{ num }}</a>
+                    <a href="?page={{ num }}&sort={{ sort_filter }}&status={{ status_filter }}&search={{ search_query }}&unit={{ current_unit.slug|default:'geral' }}" class="pagination-btn">{{ num }}</a>
                 {% endif %}
             {% endfor %}
             
             {% if clients.has_next %}
-                <a href="?page={{ clients.next_page_number }}&sort={{ sort_filter }}&search={{ search_query }}" class="pagination-btn"><i class="fas fa-chevron-right"></i></a>
+                <a href="?page={{ num }}&sort={{ sort_filter }}&status={{ status_filter }}&search={{ search_query }}&unit={{ current_unit.slug|default:'geral' }}" class="pagination-btn"><i class="fas fa-chevron-right"></i></a>
             {% endif %}
         </div>
         {% endif %}
