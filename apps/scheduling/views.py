@@ -524,11 +524,13 @@ def get_available_slots(request):
     try: target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError: return JsonResponse({'slots': []})
 
-    current_local_dt = localtime(now())
-    current_local_date = current_local_dt.date()
-    current_local_time = current_local_dt.time()
+    # 1. PEGA A DATA E HORA EXATA DO SERVIDOR (Respeitando TIME_ZONE do Django)
+    today_local = localdate()
+    time_now_local = localtime(now()).time()
 
-    if not allow_past and target_date < current_local_date: return JsonResponse({'slots': []})
+    # Bloqueia dias anteriores a hoje (A menos que seja um lançamento retroativo permitido)
+    if not allow_past and target_date < today_local: 
+        return JsonResponse({'slots': []})
 
     if UnitHoliday.objects.filter(unit=emp.unit, date=target_date).exists():
         return JsonResponse({'slots': []})
@@ -562,14 +564,22 @@ def get_available_slots(request):
         
         while curr + timedelta(minutes=duration) <= end:
             slot_end = curr + timedelta(minutes=duration)
+            conflict = False
             
-            conflict = any(max(curr, b_start) < min(slot_end, b_end) for b_start, b_end in booked_intervals)
-            
+            for b_start, b_end in booked_intervals:
+                if max(curr, b_start) < min(slot_end, b_end):
+                    conflict = True
+                    break
+                    
             if not conflict:
-                if not allow_past and target_date == current_local_date:
-                    if curr.time() >= current_local_time:
+                # BLINDAGEM MÁXIMA PARA O DIA DE HOJE!
+                # Independentemente do que o frontend pedir, se a data escolhida for HOJE,
+                # o sistema só libera se o horário do slot for MAIOR que o horário de agora.
+                if target_date == today_local:
+                    if curr.time() > time_now_local:
                         slots.append(curr.strftime('%H:%M'))
                 else:
+                    # Se for dia futuro (ou dia passado em modo retroativo), adiciona normal.
                     slots.append(curr.strftime('%H:%M'))
             
             curr += timedelta(minutes=30)
