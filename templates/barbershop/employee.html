@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/modals/newEmployee.css' %}">
     
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
-    <!-- ATENÇÃO: Certifique-se que o nome do seu CSS mobile é este -->
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
     
@@ -70,8 +69,9 @@
     <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
     <!-- ========================================== -->
     <div class="mobile-only mobile-dashboard">
-        <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 25px 0; font-size: 1.8rem; font-weight: 800;">Funcionários</h2>
+        <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.8rem; font-weight: 800;">Funcionários</h2>
         
+        <!-- RESTAURADO: CARDS DE QUANTIDADE NO MOBILE -->
         <div class="mobile-stats-grid">
             <div class="m-stat-card">
                 <span class="m-stat-val" style="color: #FF7A00;">{{ consumed_slots }} / {{ barbershop.max_employees }}</span>
@@ -82,6 +82,23 @@
                 <span class="m-stat-label">Ativos (Lista)</span>
             </div>
         </div>
+
+        <!-- TRACKER DE VAGAS MOBILE -->
+        {% if is_owner %}
+        <div class="limit-tracker" onclick="showLimitInfo()" style="margin-top: 10px;">
+            <div class="tracker-text">
+                <span class="tracker-title"><i class="fas fa-id-badge"></i> Limite do Plano</span>
+                <span class="tracker-numbers">
+                    <b>{{ consumed_slots }}</b> / {{ barbershop.max_employees }} 
+                    <i class="fas fa-info-circle info-icon"></i>
+                </span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill {% if consumed_slots >= barbershop.max_employees %}full{% endif %}" 
+                    style="width: {% widthratio consumed_slots barbershop.max_employees 100 %}%;"></div>
+            </div>
+        </div>
+        {% endif %}
 
         {% if not owner_employee and is_owner %}
         <button class="m-btn-act-owner" onclick="openOwnerCreationModal()">
@@ -106,8 +123,25 @@
                 </div>
             </div>
             
+            <!-- TRACKER DE VAGAS DESKTOP -->
+            {% if is_owner %}
+            <div class="limit-tracker desktop-only" onclick="showLimitInfo()" style="max-width: 600px; margin-bottom: 20px;">
+                <div class="tracker-text">
+                    <span class="tracker-title"><i class="fas fa-id-badge"></i> Assentos Ocupados (Plano atual)</span>
+                    <span class="tracker-numbers">
+                        <b>{{ consumed_slots }}</b> / {{ barbershop.max_employees }} 
+                        <i class="fas fa-info-circle info-icon"></i>
+                    </span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill {% if consumed_slots >= barbershop.max_employees %}full{% endif %}" 
+                        style="width: {% widthratio consumed_slots barbershop.max_employees 100 %}%;"></div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Tabela Desktop -->
-            <div class="employees-table-container desktop-only" style="display: block;">
+            <div class="employees-table-container desktop-only">
                 <table class="employees-table">
                     <thead>
                         <tr>
@@ -174,7 +208,7 @@
                                 </td>
                             </tr>
                         {% endif %}
-
+                        
                         {% for emp in regular_employees %}
                             <tr style="{% if not emp.is_active %}opacity: 0.5; background: #fdfdfd;{% endif %}">
                                 <td>
@@ -368,7 +402,7 @@
         </div>
     </div>
     
-    <footer class="desktop-only" style="position: fixed; bottom: 0; left: 0; width: 100%;">
+    <footer class="desktop-only" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50;">
         <div class="total-display">
             <div class="footer-first-row" style="font-size: 0.95rem;">
                 Vagas Consumidas: <strong id="footerConsumedSlots" title="Vagas da assinatura">{{ consumed_slots }}</strong> / <strong>{{ barbershop.max_employees }}</strong>
@@ -382,11 +416,10 @@
 
     <!-- 📱 GAVETAS E NAVEGAÇÃO MOBILE -->
     <div class="mobile-only">
-        <!-- FAB Botão Novo Funcionário: Aciona direto o JS do Modal! -->
+        <!-- FAB Botão Novo Funcionário -->
         <button class="m-fab-btn" onclick="openEmployeeModal()">
             <i class="fas fa-plus"></i>
         </button>
-        <!-- NAV E MENU ANTIGOS REMOVIDOS POIS VÊM DO GLOBAL AGORA! -->
     </div>
 
     <!-- ========================================== -->
@@ -593,6 +626,30 @@
             document.getElementById('bs-overlay-' + id).classList.remove('active');
             document.getElementById('bs-sheet-' + id).classList.remove('active');
             document.body.style.overflow = '';
+        }
+
+        // Função Vanilla JS para explicar a regra de negócio do Tenant
+        function showLimitInfo() {
+            Swal.fire({
+                title: 'Como funcionam as Vagas?',
+                html: `
+                    <div style="text-align: left; font-size: 14px; line-height: 1.6; color: #475569;">
+                        <p>O seu plano atual permite operar com até <b>{{ barbershop.max_employees }} profissionais</b> atuando na agenda.</p>
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+                        <ul style="padding-left: 20px; margin-bottom: 0;">
+                            <li style="margin-bottom: 8px;"><b>Barbeiros:</b> Consomem 1 vaga cada na rede.</li>
+                            <li style="margin-bottom: 8px;"><b>Titular (Você):</b> É 100% grátis e isento, mesmo se atender na cadeira.</li>
+                            <li><b>Gerentes e Caixas:</b> Não consomem vagas do plano (São grátis até o limite de 1 Gerente e 2 Caixas por unidade).</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonColor: '#FF7A00',
+                confirmButtonText: 'Entendido',
+                customClass: {
+                    container: 'swal2-container-high-z'
+                }
+            });
         }
     </script>
 </body>

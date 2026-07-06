@@ -72,6 +72,7 @@
         font-size: 1.4rem; color: #FF7A00; margin: 0; padding-left: 0; font-weight: 800; text-align: center;
     }
 
+    /* CARDS DE QUANTIDADE RETORNARAM */
     .mobile-stats-grid {
         display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
     }
@@ -93,10 +94,10 @@
     /* --- 4. LISTA DE FUNCIONÁRIOS (CARDS) --- */
     .section { background: transparent; padding: 0; box-shadow: none; border: none; min-height: auto;}
     
-    /* CORREÇÃO DO ESPAÇAMENTO VERTICAL ENTRE OS CARDS (GAP) */
+    /* CORREÇÃO DO ESPAÇAMENTO VERTICAL E O RESPIRO PARA O BOTÃO FLUTUANTE */
     .employees-mobile-container { 
-        padding: 5px 15px 25px 15px; margin: 0; 
-        display: flex; flex-direction: column; gap: 16px; /* Gap entre os cartões */
+        padding: 5px 15px 110px 15px !important; margin: 0; 
+        display: flex; flex-direction: column; 
         overflow: visible;
     }
 
@@ -104,7 +105,10 @@
         background: #ffffff; border-radius: 14px; padding: 16px;
         border: 1px solid #e2e8f0; border-left: 6px solid #27ae60; 
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); cursor: pointer; display: flex; flex-direction: column; gap: 12px;
-        margin: 20px 0 !important; /* Deixa o Gap do flexbox cuidar do espaçamento */
+        margin-bottom: 16px !important; /* GARANTINDO MARGIN ENTRE OS CARDS */
+    }
+    .m-emp-card:last-child {
+        margin-bottom: 0 !important;
     }
     .m-emp-card.inactive { border-left-color: #a0aec0; opacity: 0.8; }
     
@@ -244,5 +248,33 @@
         font-size: 0.95rem; color: #2c3e50; background: #f8f9fa; box-sizing: border-box;
     }
     .form-control:focus, .form-select:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15); outline: none; background: #fff;}
+
+    /* Estilo para o Tracker de Vagas MOBILE */
+    .limit-tracker {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .limit-tracker:active {
+        border-color: #FF7A00;
+        background-color: #fcfcfc;
+    }
+    .tracker-text {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    .tracker-title { color: #64748b; font-weight: 600; }
+    .tracker-numbers { color: #0f172a; }
+    .tracker-numbers b { color: #FF7A00; font-size: 16px; }
+    .info-icon { color: #94a3b8; margin-left: 6px;}
+    .progress-bar-bg { background: #f1f5f9; height: 8px; border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { background: #FF7A00; height: 100%; transition: width 0.5s ease; }
+    .progress-bar-fill.full { background: #e74c3c; }
 }
 @media (min-width: 821px) { .mobile-only { display: none !important; } }
