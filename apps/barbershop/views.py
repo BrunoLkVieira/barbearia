@@ -13,7 +13,7 @@ from django.http import JsonResponse
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Count, Sum, Min, Case, When, Value, IntegerField
+from django.db.models import Count, Sum, Min, Case, When, Value, IntegerField, ProtectedError
 from django.utils.timezone import localdate, localtime, now
 from django.contrib.auth import authenticate, login, logout as auth_logout, get_user_model
 from django.views.decorators.http import require_POST, require_GET
@@ -23,6 +23,7 @@ from apps.client.models import Client
 from apps.scheduling.models import Appointment, AppointmentService
 from apps.service.models import BarberService
 from apps.user.utils.validators import validate_user_data
+
 
 
 User = get_user_model()
@@ -189,8 +190,20 @@ def UnitView(request, barbershop_slug):
 
         if action == "delete":
             unit = get_object_or_404(Unit, pk=request.POST.get("unit_id"), barbershop=barbershop)
-            unit.delete()
-            messages.success(request, "Unidade excluída com sucesso.")
+            
+            try:
+                # Tenta deletar fisicamente (Hard Delete)
+                unit.delete()
+                messages.success(request, "Unidade excluída com sucesso.")
+            except ProtectedError:
+                # Fallback: Inativação Lógica (Soft Delete)
+                unit.is_active = False
+                unit.save()
+                messages.warning(
+                    request, 
+                    "Esta unidade possui histórico de agendamentos ou funcionários e não pode ser apagada. Ela foi inativada por segurança."
+                )
+            
             return redirect("barbershop:units", barbershop_slug=barbershop.slug)
 
     return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit, "is_owner": True, "is_manager": False, "active_tab": "barbershop",})

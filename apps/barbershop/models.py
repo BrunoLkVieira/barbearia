@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import time
+from django.db.models import Count, Q, ProtectedError
 
 class Barbershop(models.Model):
     name = models.CharField(max_length=150)
