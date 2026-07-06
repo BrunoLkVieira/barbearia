@@ -23,7 +23,7 @@
     .user-sidebar .mobile-sidebar { display: none !important; }
     
     /* REMOVE O FILTRO DE UNIDADE DESTA TELA E LIMPA O HEADER */
-    .unit-filter, .desktop-unit-filter { display: none !important; }
+   
     .nav-bar { display: none !important; } 
 
     .main-content { padding: 0; margin: 0; display: flex; flex-direction: column; overflow: visible;}
@@ -39,6 +39,19 @@
         align-items: center;
         background: linear-gradient(135deg, #1a233a, #0d1322);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .desktop-unit-filter select {
+        padding: 6px 15px;
+        border-radius: 20px;
+        background-color: #2c3e50 ;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.85rem;
+        
+        text-align: center;
+        outline: none;
+        appearance: none;
     }
     .logo-content h1 { display: none !important; }
 

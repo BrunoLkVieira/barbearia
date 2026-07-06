@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, Max
 from django.contrib.auth.decorators import login_required
 
-from apps.barbershop.models import Barbershop, Employee
+from apps.barbershop.models import Barbershop, Employee, Unit
 from .models import Client
 
 def get_tenant_employee(user, barbershop):
@@ -86,11 +86,23 @@ def ClientListView(request, barbershop_slug):
         
         return redirect(request.path)
 
-    # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
+   # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
     search_query = request.GET.get('search', '').strip()
     sort_filter = request.GET.get('sort', '-created_at')
+    
+    # --- CORREÇÃO DO FILTRO DE UNIDADE AQUI ---
+    units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+    unit_slug = request.GET.get('unit', 'geral')
+    current_unit = None
 
     all_clients = Client.objects.filter(barbershop=barbershop)
+
+    if unit_slug != 'geral':
+        current_unit = units.filter(slug=unit_slug).first()
+        if current_unit:
+            # Filtra clientes que já foram atendidos nesta unidade
+            all_clients = all_clients.filter(appointments__unit=current_unit).distinct()
+    # ------------------------------------------
 
     # Busca Inteligente (Aceita nome composto com espaços)
     if search_query:
@@ -123,7 +135,8 @@ def ClientListView(request, barbershop_slug):
         'total_geral': total_geral,
         'is_owner': is_owner,
         'is_manager': is_manager,
-        
+        'units': units,              # INJETADO
+        'current_unit': current_unit # INJETADO
     }
     
     return render(request, 'client/clientes.html', context)
