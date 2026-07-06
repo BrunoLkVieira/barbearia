@@ -745,7 +745,6 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
 
         if action == "save_info":
             if not unit and is_owner:
-                # REMOVIDO: A atualização do nome da barbearia daqui
                 barbershop.foundation_date = request.POST.get("businessData") or None
                 barbershop.description = request.POST.get("businessDescription")
                 if request.FILES.get("logo"): barbershop.logo = request.FILES.get("logo")
@@ -761,25 +760,31 @@ def MyWebsiteView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Alterações salvas com sucesso!")
                 return redirect(request.path)
 
+        # RETORNO ASSÍNCRONO JSON (EVITA RELOAD DA TELA)
         elif action == "add_media":
             m_type = request.POST.get("media_type")
             img = request.FILES.get("image")
             if unit and img:
                 count = unit.media.filter(media_type=m_type).count()
-                UnitMedia.objects.create(
+                new_media = UnitMedia.objects.create(
                     unit=unit, 
                     media_type=m_type, 
                     image=img, 
                     order=count + 1
                 )
-                messages.success(request, "Imagem adicionada com sucesso!")
-            return redirect(request.path)
+                return JsonResponse({
+                    'status': 'success',
+                    'media_id': new_media.id,
+                    'media_url': new_media.image.url,
+                    'media_type': m_type,
+                    'order': count + 1
+                })
+            return JsonResponse({'status': 'error', 'message': 'Falha ao processar imagem.'}, status=400)
 
         elif action == "delete_media":
             media_id = request.POST.get("media_id")
             UnitMedia.objects.filter(id=media_id).delete()
-            messages.success(request, "Imagem removida.")
-            return redirect(request.path)
+            return JsonResponse({'status': 'success'})
 
     context = {
         "barbershop": barbershop, "unit": unit, "units": units,

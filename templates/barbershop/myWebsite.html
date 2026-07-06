@@ -212,14 +212,17 @@
         </div>
     </div>
 
-    <!-- Forms Escondidos Originais -->
+    <!-- Forms Escondidos Otimizados para Fetch API -->
     <form id="uploadForm" method="POST" enctype="multipart/form-data" style="display:none;">
-        {% csrf_token %}<input type="hidden" name="action" value="add_media">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_media">
         <input type="hidden" name="media_type" id="uploadMediaType">
-        <input type="file" name="image" id="fileInput" onchange="sessionStorage.setItem('myWebsiteScroll', window.scrollY); this.form.submit();">
+        <input type="file" name="image" id="fileInput">
     </form>
+    
     <form id="deleteForm" method="POST" style="display:none;">
-        {% csrf_token %}<input type="hidden" name="action" value="delete_media">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_media">
         <input type="hidden" name="media_id" id="deleteMediaId">
     </form>
 
@@ -254,6 +257,78 @@
                     Toast.fire({ icon: msgType, title: "{{ message|escapejs }}" });
                 {% endfor %}
             {% endif %}
+
+            // =========================================================================
+            // ORBLY BARBER ARCHITECT: LÓGICA FETCH API PARA UPLOAD E DELETE ASSÍNCRONO
+            // Garante que subir imagens não dê reload na página nem apague os textos
+            // =========================================================================
+
+            window.triggerUpload = function(type) {
+                document.getElementById('uploadMediaType').value = type;
+                document.getElementById('fileInput').click();
+            };
+
+            document.getElementById('fileInput').addEventListener('change', async function() {
+                if (!this.files.length) return;
+                
+                const formData = new FormData(document.getElementById('uploadForm'));
+                
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        const container = document.querySelector(`.banner-images[data-type="${data.media_type}"]`);
+                        const addBtn = container.querySelector('.add-banner-btn');
+                        
+                        const div = document.createElement('div');
+                        div.className = 'banner-image-container';
+                        div.setAttribute('data-image-id', data.media_id);
+                        div.innerHTML = `
+                            <img class="banner-image" src="${data.media_url}">
+                            <div class="banner-actions">
+                                <div class="banner-action-btn move-btn"><i class="fas number-display">${data.order}</i></div>
+                                <div class="banner-action-btn delete-btn" onclick="deleteMedia('${data.media_id}')"><i class="fas fa-trash"></i></div>
+                            </div>
+                        `;
+                        container.insertBefore(div, addBtn);
+                        Toast.fire({ icon: 'success', title: 'Imagem adicionada com sucesso!' });
+                    }
+                } catch (e) {
+                    Toast.fire({ icon: 'error', title: 'Falha ao enviar a imagem.' });
+                }
+                
+                this.value = ''; // Reseta o input de arquivo
+            });
+
+            window.deleteMedia = async function(mediaId) {
+                const formData = new FormData(document.getElementById('deleteForm'));
+                formData.set('media_id', mediaId);
+                
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        const imgDiv = document.querySelector(`.banner-image-container[data-image-id="${mediaId}"]`);
+                        if (imgDiv) imgDiv.remove();
+                        Toast.fire({ icon: 'success', title: 'Imagem removida com sucesso!' });
+                    }
+                } catch (e) {
+                    Toast.fire({ icon: 'error', title: 'Falha ao remover a imagem.' });
+                }
+            };
+            
+            // Removemos as amarras do beforeunload ao clicar em salvar os textos explicitamente
+            document.getElementById('websiteFormInfo').addEventListener('submit', function() {
+                window.onbeforeunload = null;
+            });
         });
     </script>
 </body>
