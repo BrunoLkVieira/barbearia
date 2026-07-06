@@ -46,7 +46,7 @@
                                 data-general-url="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"
                                 data-unit-url-template="{% url 'barbershop:workday_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
                             
-                            <option value="geral" {% if not unit %}selected{% endif %}>Geral (Visão Ampla)</option>
+                            <option value="geral" {% if not unit %}selected{% endif %}>Todas as Unidades</option>
                             {% for u in units %}
                                 <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>{{ u.name }}</option>
                             {% endfor %}

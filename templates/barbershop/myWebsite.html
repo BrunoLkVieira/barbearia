@@ -45,7 +45,7 @@
                 {% if is_owner %}
                 <div class="unit-filter desktop-unit-filter">
                     <select onchange="location.href=this.value">
-                        <option value="{% url 'barbershop:myWebsite' barbershop.slug %}" {% if not unit %}selected{% endif %}>Geral (Barbearia)</option>
+                        <option value="{% url 'barbershop:myWebsite' barbershop.slug %}" {% if not unit %}selected{% endif %}>Todas as Unidades</option>
                         {% for u in units %}
                             <option value="{% url 'barbershop:myWebsite_unit' barbershop.slug u.slug %}" {% if unit and unit.id == u.id %}selected{% endif %}>{{ u.name }}</option>
                         {% endfor %}

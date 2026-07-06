@@ -35,7 +35,7 @@
                         <select id="unitFilterSelect" title="Filtrar por Unidade"
                             data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
                             data-unit-url-template="{% url 'barbershop:employee_unit' barbershop_slug=barbershop.slug unit_slug='__SLUG__' %}">
-                            <option value="geral" data-unit-id="" {% if not unit %}selected{% endif %}>Geral</option>
+                            <option value="geral" data-unit-id="" {% if not unit %}selected{% endif %}>Todas as Unidades</option>
                             {% for u in units %}
                                 <option value="{{ u.slug }}" data-unit-id="{{ u.id }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>
                                     {{ u.name }}

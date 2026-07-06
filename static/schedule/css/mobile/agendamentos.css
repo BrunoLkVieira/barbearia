@@ -29,14 +29,12 @@
         position: sticky;
         top: 0;
         z-index: 100;
-        padding: 12px 15px;
+        padding: 5px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         background: linear-gradient(135deg, #1a233a, #0d1322);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        height: 60px; 
-        box-sizing: border-box;
     }
     .logo-content h1 { display: none !important; }
     
@@ -52,8 +50,8 @@
     
     .nav-bar .unit-filter {
         display: block !important;
-        position: fixed;
-        top: 30px; 
+        position: absolute;
+        top: 45px; 
         left: 50%;
         transform: translate(-50%, -50%); 
         z-index: 105;
