@@ -61,8 +61,8 @@ AUTH_USER_MODEL='user.User'
 
 # Configurações de autenticação
 LOGIN_URL = 'user:login'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+
+LOGOUT_REDIRECT_URL = 'user:login'
 
 # Configurações de sessão
 SESSION_COOKIE_AGE = 86400  # 24 horas

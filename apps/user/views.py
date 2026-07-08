@@ -27,8 +27,6 @@ class UserRegisterView(View):
         password2 = request.POST.get('password2')
 
         # Validações básicas
-
-
         cpf = cpf.replace('.', '').replace('-', '')
 
         if User.objects.filter(cpf=cpf).exists():
@@ -44,6 +42,7 @@ class UserRegisterView(View):
         except ValidationError:
             messages.error(request, "Digite um e-mail válido.")
             return redirect('system_plan:landing_page')
+            
         # Criação do usuário
         user = User(
             name=name,
@@ -62,7 +61,6 @@ class UserRegisterView(View):
 
         messages.success(request, "Registro realizado! Verifique seu e-mail.")
         return redirect('user:login')
-
 
 
 class UserLoginView(View):
@@ -86,13 +84,21 @@ class UserLoginView(View):
                     if not barbershop.is_active:
                         messages.error(request, "Sua barbearia está desativada.")
                         return redirect("user:login")
+                        
                     login(request, user)
-                    return redirect("barbershop:workday_general", barbershop_slug=barbershop.slug)
+                    return redirect("scheduling:agenda", barbershop_slug=barbershop.slug)
 
                 elif user.user_type in ['funcionario', 'gerente']:
                     employee = Employee.objects.filter(user=user).select_related("unit__barbershop").first()
                     if not employee:
                         messages.error(request, "Você não está vinculado a nenhuma unidade de barbearia.")
+                        return redirect("user:login")
+
+                    # ============================================================
+                    # CORREÇÃO: Barra o acesso ANTES de logar e devolve pro Login!
+                    # ============================================================
+                    if not employee.system_access:
+                        messages.error(request, "Seu perfil não possui permissão de acesso ao sistema.")
                         return redirect("user:login")
 
                     unit = employee.unit
@@ -101,8 +107,9 @@ class UserLoginView(View):
                         messages.error(request, "A barbearia está desativada.")
                         return redirect("user:login")
 
+                    # Se passou em tudo, loga com sucesso e manda pra agenda dele!
                     login(request, user)
-                    return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=unit.slug)
+                    return redirect("scheduling:agenda_unit", barbershop_slug=barbershop.slug, unit_slug=unit.slug)
 
                 else:
                     messages.error(request, "Acesso negado.")
@@ -114,10 +121,6 @@ class UserLoginView(View):
             messages.error(request, "Preencha todos os campos corretamente.")
 
         return render(request, 'user/login.html', {'form': form})
-
-
-
-
 
 
 class UserLogoutView(View):
@@ -149,4 +152,3 @@ class VerifyEmailView(View):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             messages.error(request, 'Ocorreu um erro ao verificar o e-mail.')
         return redirect('user:register')
- 
