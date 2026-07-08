@@ -7,11 +7,9 @@
     <title>Meu Site - {{ barbershop.name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS DESKTOP ORIGINAIS -->
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/desktop/myWebsite.css' %}">
     
-    <!-- CSS MOBILE -->
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/myWebsite.css' %}">
     
@@ -36,7 +34,6 @@
 <body>
     {% include 'geral/header.html' %}
     
-    <!-- Navbar Global Limpa (sem desktop-only) -->
     <div class="nav-bar">
         {% include 'geral/nav.html' %}
 
@@ -52,8 +49,8 @@
                     </select>
                 </div>
                 {% else %}
-                <div class="stat-box desktop-unit-filter" style="background: transparent; border: none; font-weight: bold; color:#FF7A00; display: flex; align-items: center; justify-content: center;">
-                    {{ unit.name }}
+                <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ unit.name|default:"Unidade Atual" }}
                 </div>
                 {% endif %}
 
@@ -65,9 +62,6 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
-    <!-- ========================================== -->
     <div class="mobile-only mobile-dashboard">
         <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 25px 0; font-size: 1.8rem; font-weight: 800;">Meu Website</h2>
 
@@ -212,7 +206,6 @@
         </div>
     </div>
 
-    <!-- Forms Escondidos Otimizados para Fetch API -->
     <form id="uploadForm" method="POST" enctype="multipart/form-data" style="display:none;">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_media">

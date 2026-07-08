@@ -86,22 +86,27 @@ def ClientListView(request, barbershop_slug):
         
         return redirect(request.path)
 
-   # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
+    # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
     search_query = request.GET.get('search', '').strip()
     sort_filter = request.GET.get('sort', '-created_at')
     status_filter = request.GET.get('status', 'all')
 
     units = Unit.objects.filter(barbershop=barbershop, is_active=True)
     unit_slug = request.GET.get('unit', 'geral')
-    current_unit = None
+
+    # CORREÇÃO: Lógica de unidade estrita baseada no cargo
+    if is_owner:
+        current_unit = units.filter(slug=unit_slug).first() if unit_slug != 'geral' else None
+    else:
+        # Se for funcionário, crava na unidade dele e remove opções de outras unidades
+        current_unit = emp.unit if emp else None
+        units = [current_unit] if current_unit else []
 
     all_clients = Client.objects.filter(barbershop=barbershop)
 
     # Filtro de Unidade
-    if unit_slug != 'geral':
-        current_unit = units.filter(slug=unit_slug).first()
-        if current_unit:
-            all_clients = all_clients.filter(appointments__unit=current_unit).distinct()
+    if current_unit:
+        all_clients = all_clients.filter(appointments__unit=current_unit).distinct()
 
     # Busca Inteligente
     if search_query:
@@ -113,7 +118,7 @@ def ClientListView(request, barbershop_slug):
                 Q(phone__icontains=term)
             )
 
-    # Filtro de Status (Ativos / Bloqueados) - APICADO ANTES DO ANNOTATE PARA PERFORMANCE
+    # Filtro de Status (Ativos / Bloqueados)
     if status_filter == 'active':
         all_clients = all_clients.filter(is_blocked=False)
     elif status_filter == 'blocked':
@@ -136,7 +141,7 @@ def ClientListView(request, barbershop_slug):
         'clients': clients_page,
         'search_query': search_query,
         'sort_filter': sort_filter,
-        'status_filter': status_filter, # INJETADO NO CONTEXTO
+        'status_filter': status_filter,
         'active_tab': 'clients',
         'total_geral': total_geral,
         'is_owner': is_owner,

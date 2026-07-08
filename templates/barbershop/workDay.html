@@ -35,7 +35,6 @@
 <body>
     {% include "geral/header.html" %}
     
-    <!-- Navbar Global Limpa -->
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         <div class="nav-content">
@@ -51,6 +50,15 @@
                                 <option value="{{ u.slug }}" {% if unit and unit.slug == u.slug %}selected{% endif %}>{{ u.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                {% else %}
+                    <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                        <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> 
+                        {% if unit %}
+                            {{ unit.name }}
+                        {% else %}
+                            {{ request.user.employees.first.unit.name }}
+                        {% endif %}
                     </div>
                 {% endif %}
 
@@ -80,9 +88,6 @@
         </a>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
-    <!-- ========================================== -->
     <div class="mobile-only mobile-dashboard">
         <h4 class="mobile-section-title">Funcionamento</h4>
         <div class="mobile-stats-grid">
@@ -251,9 +256,6 @@
         </div>
     </footer>
 
-    <!-- ========================================================= -->
-    <!-- MODAIS ORIGINAIS INTACTOS (SEU JS VAI FUNCIONAR)          -->
-    <!-- ========================================================= -->
     <div id="editModal" class="edit-modal">
         <div class="edit-modal-content">
             <div class="edit-modal-header">
@@ -292,7 +294,6 @@
                             </div>
                         </div>
 
-                        <!-- Bloco MANHÃ -->
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off morning" data-weekday="{{ weekday_index }}" data-period="morning">
@@ -319,7 +320,6 @@
                             {% endwith %}
                         {% endfor %}
     
-                        <!-- Bloco TARDE -->
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
                                 <div class="day-edit off afternoon" data-weekday="{{ weekday_index }}" data-period="afternoon">
@@ -521,6 +521,7 @@
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
                     header.insertBefore(unitFilter, document.querySelector('.user-controls'));
                 }
             }

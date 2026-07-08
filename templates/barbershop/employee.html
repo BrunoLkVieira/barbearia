@@ -23,13 +23,11 @@
 <body>
     {% include "geral/header.html" %}
     
-    <!-- Navbar limpa e sem desktop-only -->
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         <div class="nav-content">
             <div class="stats">
                 {% if is_owner %}
-                    <!-- FILTRO QUE IRÁ PARA O HEADER NO MOBILE -->
                     <div class="unit-filter desktop-unit-filter">
                         <select id="unitFilterSelect" title="Filtrar por Unidade"
                             data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
@@ -42,7 +40,12 @@
                             {% endfor %}
                         </select>
                     </div>
+                {% else %}
+                    <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                        <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ unit.name|default:"Unidade Atual" }}
+                    </div>
                 {% endif %}
+                
                 <div class="stat-box" title="Total de funcionários listados">
                     <div class="stat-value">{% if owner_in_list %}{{ regular_employees.count|add:1 }}{% else %}{{ regular_employees.count }}{% endif %}</div>
                     <div class="stat-label">Funcionários</div>
@@ -65,13 +68,9 @@
         {% endif %}
     </div>
 
-    <!-- ========================================== -->
-    <!-- 📱 DASHBOARD MOBILE EXCLUSIVO 📱 -->
-    <!-- ========================================== -->
     <div class="mobile-only mobile-dashboard">
         <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.8rem; font-weight: 800;">Funcionários</h2>
         
-        <!-- RESTAURADO: CARDS DE QUANTIDADE NO MOBILE -->
         <div class="mobile-stats-grid">
             <div class="m-stat-card">
                 <span class="m-stat-val" style="color: #FF7A00;">{{ consumed_slots }} / {{ barbershop.max_employees }}</span>
@@ -83,7 +82,6 @@
             </div>
         </div>
 
-        <!-- TRACKER DE VAGAS MOBILE -->
         {% if is_owner %}
         <div class="limit-tracker" onclick="showLimitInfo()" style="margin-top: 10px;">
             <div class="tracker-text">
@@ -123,7 +121,6 @@
                 </div>
             </div>
             
-            <!-- TRACKER DE VAGAS DESKTOP -->
             {% if is_owner %}
             <div class="limit-tracker desktop-only" onclick="showLimitInfo()" style="max-width: 600px; margin-bottom: 20px;">
                 <div class="tracker-text">
@@ -140,7 +137,6 @@
             </div>
             {% endif %}
 
-            <!-- Tabela Desktop -->
             <div class="employees-table-container desktop-only">
                 <table class="employees-table">
                     <thead>
@@ -216,10 +212,7 @@
                                         <div class="employee-avatar" style="{% if not emp.is_active %}filter: grayscale(1);{% endif %}">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
                                         <div class="employee-info">
                                             <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                                            <div class="employee-plan">
-                                                <i class="fas fa-clock"></i>
-                                                {% if emp.is_active %} <span title="Tem acesso ou está na agenda">Ativo</span> {% else %} <span title="Sem acesso e fora da agenda">Inativo</span> {% endif %}
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </td>
@@ -276,9 +269,6 @@
                 </table>
             </div>
 
-            <!-- ========================================== -->
-            <!-- LISTA DE CARDS MOBILE -->
-            <!-- ========================================== -->
             <div class="employees-mobile-container mobile-only">
                 
                 {% if owner_in_list %}
@@ -302,7 +292,6 @@
                     </div>
                 </div>
 
-                <!-- Gaveta do Owner -->
                 <div class="bottom-sheet-overlay" id="bs-overlay-{{ owner_in_list.id }}" onclick="closeMobileSheet('{{ owner_in_list.id }}')"></div>
                 <div class="bottom-sheet" id="bs-sheet-{{ owner_in_list.id }}">
                     <div class="bottom-sheet-handle"></div>
@@ -358,7 +347,6 @@
                     </div>
                 </div>
 
-                <!-- Gaveta do Funcionário -->
                 <div class="bottom-sheet-overlay" id="bs-overlay-{{ emp.id }}" onclick="closeMobileSheet('{{ emp.id }}')"></div>
                 <div class="bottom-sheet" id="bs-sheet-{{ emp.id }}">
                     <div class="bottom-sheet-handle"></div>
@@ -414,17 +402,12 @@
         </div>
     </footer>
 
-    <!-- 📱 GAVETAS E NAVEGAÇÃO MOBILE -->
     <div class="mobile-only">
-        <!-- FAB Botão Novo Funcionário -->
         <button class="m-fab-btn" onclick="openEmployeeModal()">
             <i class="fas fa-plus"></i>
         </button>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODAIS RESTAURADOS ORIGINAIS DO SISTEMA    -->
-    <!-- ========================================== -->
     <div id="ownerModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <form method="POST" autocomplete="off">
