@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.service',
     'apps.client',
     'apps.scheduling',
+    'apps.finance', 
     'widget_tweaks',
     
     
