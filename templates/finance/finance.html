@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financeiro - Barbearia Executiva</title>
+    <title>Financeiro - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,182 +16,139 @@
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/mobile/finance.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/mobile/modals/createPool.css' %}">
-    
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <div class="logo-icon">
-                <img src="https://i.ibb.co/G3WqN7N1/logo-barbearia-Photoroom.png" alt="logo do sistema" class="logo-image">
-            </div>
-            <div class="logo-content">
-                <h1>Orbly Barber</h1>
-                <p>Sistema de agendamento profissional</p>
-            </div>
-        </div>
-        <div class="date-display">
-            <i class="fas fa-calendar-alt"></i>
-            <span id="currentDate">Carregando data...</span>
-        </div>
-        <div class="user-controls">
-            <div class="user-profile" id="userProfile">
-                <div class="avatar">RM</div>
-                <div class="user-name">Raphael Matias</div>
-                <i class="fas fa-chevron-down" id="chevronIcon"></i>
-                
-                <div class="user-sidebar">
-                    <div class="sidebar-header">
-                        <div class="sidebar-avatar">RM</div>
-                        <div class="sidebar-user-info">
-                            <span class="sidebar-name">Raphael Matias</span>
-                            <span class="sidebar-email">raphael@barbearia.com</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-menu">
-                        <a href="../0.SideBar/profile.html" class="sidebar-item">
-                            <i class="fas fa-user"></i>
-                            <span>Meu Perfil</span>
-                        </a>
-                        <a href="../../../index.html" class="sidebar-item">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Sair</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+    {% include "geral/header.html" %}
     
     <div class="nav-bar">
-        <div class="nav-tabs">
-           <a href="../home.html"><div class="nav-tab"><i class="fas fa-calendar-days"></i> Agenda</div></a>
-            <a href="../clientes.html"><div class="nav-tab"><i class="fas fa-users"></i> Clientes</div></a>
-            <a href="../3.Catalogo/planos.html"><div class="nav-tab"><i class="fas fa-credit-card"></i> Catálogo</div></a>
-            <a href="../4.History/schedule.html"><div class="nav-tab"><i class="fas fa-history"></i> Histórico</div></a>
-            <a href="../5.Dashboard/Financeiro.html"><div class="nav-tab active"><i class="fas fa-chart-line"></i> Dashboard</div></a>
-            <a href="../6.My Babershop/unit.html"><div class="nav-tab"><i class="fas fa-store"></i> Minha Barbearia</div></a>
-            <a href="../myWebsite.html"><div class="nav-tab"><i class="fas fa-pen"></i> Meu Website</div></a>
-        </div>
-        <div class="stats">
-            <div class="unit-filter">
-                <select>
-                    <option>Unidade 1</option>
-                    <option>Unidade 2</option>
-                    <option>Geral</option>
-                </select>
+        {% include "geral/nav.html" %}
+        
+        <div class="nav-content">
+            <div class="stats">
+                {% if is_admin %}
+                <div class="unit-filter desktop-unit-filter">
+                    <select onchange="location.href=this.value">
+                        <option value="{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}" {% if not unit %}selected{% endif %}>Todas as Unidades</option>
+                        {% for u in units %}
+                            <option value="{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=u.slug %}" {% if unit and unit.id == u.id %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ unit.name|default:"Unidade Atual" }}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="pages-options-Container">
+    <div class="pages-options-Container desktop-only">
         <a href="#">
             <div class="page-option active"><i class="fas fa-dollar-sign"></i> Financeiro</div>
         </a>
-        <a href="performance.html">
-            <div class="page-option"><i class="fas fa-chart-line"></i> Desempenho</div>
-        </a>
     </div>
     
+    <div class="mobile-only mobile-dashboard" style="padding: 15px;">
+        <h2 style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.5rem; font-weight: 800;">Dashboard Financeiro</h2>
+    </div>
+
     <div class="main-content">
-        <!-- Filtros na barra lateral -->
-        <div class="filters-sidebar">
+        <form method="GET" action="{% if unit %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=unit.slug %}{% else %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% endif %}" class="filters-sidebar">
             <div class="section-title">
                 <i class="fas fa-filter"></i>
-                <span>Filtros Financeiros</span>
+                <span>Filtros Temporais</span>
             </div>
             
+            {% if is_admin %}
             <div class="filter-group">
                 <label for="barberFilter">Barbeiro</label>
-                <select id="barberFilter">
-                    <option value="">Todos os barbeiros</option>
-                    <option value="barber1">Raphael Matias</option>
-                    <option value="barber2">Lucas Lopes</option>
-                    <option value="barber3">Carlos Silva</option>
+                <select id="barberFilter" name="barber">
+                    <option value="">Equipe Completa</option>
+                    {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if selected_barber == emp.id %}selected{% endif %}>{{ emp.user.name }} {{ emp.user.last_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
+            {% else %}
+                <input type="hidden" name="barber" value="{{ selected_barber }}">
+            {% endif %}
             
             <div class="filter-group">
                 <label for="dateStart">Data Início</label>
-                <input type="date" id="dateStart">
+                <input type="date" id="dateStart" name="dateStart" value="{{ start_date }}">
             </div>
             
             <div class="filter-group">
                 <label for="dateEnd">Data Fim</label>
-                <input type="date" id="dateEnd">
+                <input type="date" id="dateEnd" name="dateEnd" value="{{ end_date }}">
             </div>
             
             <div class="filter-group">
-                <button class="btn btn-primary" style="width: 100%;">
-                    <i class="fas fa-sync"></i> Aplicar Filtros
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <i class="fas fa-sync"></i> Atualizar Dados
                 </button>
             </div>
-        </div>
+        </form>
         
-        <!-- Conteúdo Financeiro -->
         <div class="right-side-desktop">
             <div class="finance-content">
-                <div class="finance-header">
+                <div class="finance-header desktop-only">
                     <div class="finance-title">
-                        <i class="fas fa-chart-line"></i> Dashboard Financeiro
+                        <i class="fas fa-chart-line"></i> Resumo Financeiro
                     </div>
                     <div class="finance-controls">
-                        <button class="btn btn-outline">
-                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        {% if is_admin %}
+                        <button class="btn btn-outline" onclick="openExpenseModal()" style="color: #e74c3c; border-color: #e74c3c; background: transparent;">
+                            <i class="fas fa-file-invoice-dollar"></i> Lançar Despesa
                         </button>
-                        <button class="btn btn-outline">
-                            <i class="fas fa-file-pdf"></i> Exportar PDF
-                        </button>
-                        <button class="btn btn-primary" onclick="openAppointmentModal()">
+                        {% endif %}
+                        <button class="btn btn-primary" onclick="openReportModal()">
                             <i class="fas fa-file-alt"></i> Gerar Relatório
                         </button>
                     </div>
                 </div>
             
-                <!-- Estatísticas em destaque -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-card-flex">
                             <i class="fas fa-money-bill-wave"></i>
-                            <div class="value">R$ 8.250</div>
+                            <div class="value">R$ {{ card_1_val|floatformat:2 }}</div>
                         </div>
-                        <div class="label">Receita Total</div>
+                        <div class="label">{{ card_1_label }}</div>
                     </div>
+                    
                     <div class="stat-card">
                          <div class="stat-card-flex">
                              <i class="fas fa-hand-holding-usd"></i>
-                             <div class="value">R$ 2.480</div>
+                             <div class="value">R$ {{ card_2_val|floatformat:2 }}</div>
                          </div>
-                        <div class="label">Comissões</div>
+                        <div class="label">{{ card_2_label }}</div>
                     </div>
+                    
                     <div class="stat-card">
                          <div class="stat-card-flex">
                              <i class="fas fa-chart-bar"></i>
-                             <div class="value">R$ 5.770</div>
+                             <div class="value">R$ {{ card_3_val|floatformat:2 }}</div>
                          </div>
-                        <div class="label">Lucro Líquido</div>
+                        <div class="label">{{ card_3_label }}</div>
                     </div>
-                    <div class="stat-card">
+                    
+                    <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
                         <div class="stat-card-flex">
-                            <i class="fas fa-shopping-cart"></i>
-                            <div class="value">142</div>
+                            <i class="fas fa-wallet"></i>
+                            <div class="value">R$ {{ card_4_val|floatformat:2 }}</div>
                         </div>
-                        <div class="label">Vendas Realizadas</div>
+                        <div class="label">{{ card_4_label }}</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Gráficos -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-chart-line"></i> Receita do Mês</h3>
-                        <select>
-                            <option>Últimos 30 dias</option>
-                            <option>Últimos 60 dias</option>
-                            <option>Últimos 90 dias</option>
-                        </select>
+                        <h3><i class="fas fa-chart-line"></i> Evolução da Receita</h3>
                     </div>
-
                     <div class="chart-container">
                         <canvas id="revenueChart"></canvas>
                     </div>
@@ -199,12 +156,7 @@
             
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-chart-pie"></i> Receitas por Categoria</h3>
-                        <select>
-                            <option>Plano</option>
-                            <option>Serviço</option>
-                            <option>Produto</option>
-                        </select>
+                        <h3><i class="fas fa-chart-pie"></i> Receitas (Serviços x Balcão)</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="categoryChart"></canvas>
@@ -213,94 +165,197 @@
             
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-users"></i> Comissões por Barbeiro</h3>
-                        <select>
-                            <option>Valor Total</option>
-                            <option>Por Plano</option>
-                            <option>Por Serviço</option>
-                            <option>Por Produto</option>
-                        </select>
+                        <h3><i class="fas fa-cut"></i> Top Serviços (Faturamento)</h3>
                     </div>
                     <div class="chart-container">
-                        <canvas id="commissionsChart"></canvas>
+                        <canvas id="servicesChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    
-    <footer>
-        <!-- <div class="total-display">
-            <div class="footer-first-row-one-item">
-                Receita total: <strong>R$ 8.250,00</strong>
-            </div>
-        </div> -->
+    <footer class="desktop-only">
         <div class="buttons-display">
             <div class="actions">
-                <button class="btn btn-outline">
-                    <i class="fas fa-print"></i> Imprimir
+                {% if is_admin %}
+                <button class="btn btn-outline" onclick="openExpenseModal()" style="color: #e74c3c; border-color: #e74c3c;">
+                    <i class="fas fa-file-invoice-dollar"></i> Lançar Despesa
                 </button>
-                <button class="btn btn-primary">
-                    <i class="fas fa-file-export"></i> Exportar Relatório
+                {% endif %}
+                <button class="btn btn-primary" onclick="openReportModal()">
+                    <i class="fas fa-file-export"></i> Relatório Completo
                 </button>
             </div>
         </div>
     </footer>
 
-    <div id="poolModalContainer">
-        <!-- Modal para Gerar Relatório -->
-        <div id="reportModal" class="modal">
-            <div class="modal-content">
+    {% if is_admin %}
+    <div id="expenseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
+        <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd;">
+                <h2 style="margin:0; font-size: 1.25rem; color:#1a233a;"><i class="fas fa-file-invoice-dollar" style="color: #e74c3c; margin-right:8px;"></i> Lançar Despesa</h2>
+                <button type="button" class="close-btn" onclick="closeExpenseModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form method="POST" style="padding: 20px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_expense">
                 
-                <div class="modal-header">
-                    <h2><i class="fas fa-file-alt"></i> Gerar Relatório</h2>
-                    <button class="close-btn" onclick="closeAppointmentModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
+                {% if not unit %}
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Unidade da Despesa</label>
+                    <select name="unit_id" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                        {% for u in units %}
+                            <option value="{{ u.id }}">{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="modal-body">
-                    <div class="filter-group">
-                        <label for="reportType">Tipo de Relatório</label>
-                        <select id="reportType">
-                            <option value="daily">Diário</option>
-                            <option value="weekly">Semanal</option>
-                            <option value="monthly" selected>Mensal</option>
-                            <option value="custom">Personalizado</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="reportBarber">Barbeiro</label>
-                        <select id="reportBarber">
-                            <option value="">Todos os barbeiros</option>
-                            <option value="barber1">Raphael Matias</option>
-                            <option value="barber2">Lucas Lopes</option>
-                            <option value="barber3">Carlos Silva</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label for="reportCategory">Categoria</label>
-                        <select id="reportCategory">
-                            <option value="">Todas as categorias</option>
-                            <option value="servicos">Serviços</option>
-                            <option value="planos">Planos</option>
-                            <option value="produtos">Produtos</option>
-                        </select>
-                    </div>
+                {% endif %}
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa (Luz, Aluguel, etc) *</label>
+                    <input type="text" name="name" required placeholder="Ex: Conta de Luz" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline" id="cancelReport" onclick="cancelAppointmentModal()">Cancelar</button>
-                    <button class="btn btn-primary" id="generateReport">Gerar</button>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Valor (R$) *</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="Ex: 150.00" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Data de Vencimento/Ocorrência *</label>
+                    <input type="date" name="due_date" required value="{{ end_date }}" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                </div>
+                
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <input type="checkbox" name="is_recurring" id="isRecurring" style="width: 18px; height: 18px;">
+                    <label for="isRecurring" style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; cursor: pointer;">Repetir todo mês (Conta Fixa)</label>
+                </div>
+
+                <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <input type="checkbox" name="is_paid" id="isPaid" checked style="width: 18px; height: 18px;">
+                    <label for="isPaid" style="font-weight: 600; font-size: 0.9rem; color: #27ae60; cursor: pointer;">Despesa já foi paga</label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="closeExpenseModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; background: transparent; cursor: pointer; font-weight: bold;">Cancelar</button>
+                    <button type="submit" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #e74c3c; color: white; cursor: pointer; font-weight: bold;">Salvar Despesa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="reportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
+        <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd;">
+                <h2 style="margin:0; font-size: 1.25rem;"><i class="fas fa-file-alt" style="color: #FF7A00;"></i> Emissão de Relatório</h2>
+                <button class="close-btn" onclick="closeReportModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 15px;">A emissão de relatórios em PDF/CSV será ativada nas próximas atualizações do sistema.</p>
+            </div>
+            <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #eaecef; display: flex; justify-content: flex-end;">
+                <button class="btn btn-outline" style="padding: 10px 15px; border-radius: 8px;" onclick="closeReportModal()">Fechar</button>
             </div>
         </div>
     </div>
     
-    
+    <script>
+        const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe }}');
+        const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe }}');
+        
+        // NOVO GRÁFICO (Top Serviços)
+        const CH_SRV_NAMES = JSON.parse('{{ chart_service_names|safe }}');
+        const CH_SRV_VALUES = JSON.parse('{{ chart_service_values|safe }}');
+        
+        const CH_CATEGORIES = JSON.parse('{{ chart_category_data|safe }}');
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'finance/js/finance.js' %}"></script>
-    <script src="{% static 'geral/js/script.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 820) {
+                const header = document.querySelector('header');
+                const unitFilter = document.querySelector('.desktop-unit-filter');
+                if (header && unitFilter) {
+                    unitFilter.style.display = 'block';
+                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
+                }
+            }
+
+            // Gráfico 1
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: CH_REV_DATES.length > 0 ? CH_REV_DATES : ['Sem Dados'],
+                    datasets: [{
+                        label: 'Receita (R$)',
+                        data: CH_REV_VALUES.length > 0 ? CH_REV_VALUES : [0],
+                        borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#3498db',
+                        pointRadius: 4, tension: 0.3, fill: true
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }, x: { grid: { display: false } } } }
+            });
+
+            // Gráfico 2
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Serviços', 'Produtos'],
+                    datasets: [{
+                        data: CH_CATEGORIES,
+                        backgroundColor: ['rgba(52, 152, 219, 0.8)', 'rgba(46, 204, 113, 0.8)'],
+                        borderWidth: 1,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Gráfico 3: Receita por Serviço (O que o Barbeiro/Dono mais ganha dinheiro fazendo)
+            const servicesContainer = document.getElementById('servicesChart');
+            if (servicesContainer) {
+                const servicesCtx = servicesContainer.getContext('2d');
+                new Chart(servicesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: CH_SRV_NAMES.length > 0 ? CH_SRV_NAMES : ['Nenhum Serviço'],
+                        datasets: [{
+                            label: 'Faturamento (R$)',
+                            data: CH_SRV_VALUES.length > 0 ? CH_SRV_VALUES : [0],
+                            backgroundColor: 'rgba(39, 174, 96, 0.8)', // Verde dinheiro
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        });
+
+        // Controles de Modais
+        function openReportModal() {
+            const m = document.getElementById('reportModal');
+            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        }
+        function closeReportModal() {
+            const m = document.getElementById('reportModal');
+            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+        function openExpenseModal() {
+            const m = document.getElementById('expenseModal');
+            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        }
+        function closeExpenseModal() {
+            const m = document.getElementById('expenseModal');
+            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+    </script>
 </body>
 </html>
