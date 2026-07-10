@@ -83,6 +83,12 @@ class Unit(models.Model):
         return f"{self.name} - {self.barbershop.name}"
 
 class Employee(models.Model):
+    CONTRACT_CHOICES = [
+        ('commission', 'Comissionado (100% Produtividade)'),
+        ('fixed_salary', 'Salário Fixo (+ Comissão)'),
+        ('chair_rental', 'Aluguel de Cadeira (Coworking)'),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
@@ -97,14 +103,17 @@ class Employee(models.Model):
     is_active = models.BooleanField("Funcionário Ativo", default=True)
     bio = models.CharField(max_length=255, null=True, blank=True)
     specialty = models.CharField(max_length=50, null=True, blank=True)
+    
+    # --- FINANCEIRO E CONTRATOS ---
+    contract_type = models.CharField(max_length=20, choices=CONTRACT_CHOICES, default='commission')
+    fixed_salary = models.DecimalField("Salário Fixo", max_digits=10, decimal_places=2, null=True, blank=True)
+    chair_rental_fee = models.DecimalField("Aluguel da Cadeira", max_digits=10, decimal_places=2, null=True, blank=True)
+    
     commission_percentage = models.BooleanField(default=False)
-    service_commission_percentage = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
-    product_commission_percentage = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
-    )
+    service_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    product_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
+    # --- PERMISSÕES DE ACESSO ---
     can_manage_cashbox = models.BooleanField(default=False)
     can_register_sell = models.BooleanField(default=False)
     can_create_appointments = models.BooleanField(default=False)

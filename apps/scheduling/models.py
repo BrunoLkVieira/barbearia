@@ -42,6 +42,9 @@ class AppointmentService(models.Model):
     service = models.ForeignKey(BarberService, on_delete=models.PROTECT)
     
     price_at_sale = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # NOVO: A "foto" da comissão no momento da venda (Blinda o histórico)
+    barber_commission_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"{self.service.name} em {self.appointment}"
