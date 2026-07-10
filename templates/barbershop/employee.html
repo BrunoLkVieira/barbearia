@@ -144,6 +144,7 @@
                             <th>Funcionário</th>
                             <th>Unidade</th>
                             <th>Cargo</th>
+                            <th>Remuneração</th>
                             <th>Status</th>
                             <th>Celular</th>
                             <th>Ações</th>
@@ -172,6 +173,9 @@
                                         {% endif %}
                                     {% endfor %}
                                 </td>
+                                
+                                <td><span class="employee-type" style="background:#2c3e50; color:white;"><i class="fas fa-handshake"></i> Isento (Titular)</span></td>
+
                                 <td><span class="employee-active type-barber" title="Conta sempre ativa">Ativo</span></td>
                                 <td>{{ owner_in_list.user.phone|default:"---" }}</td>
                                 <td>
@@ -184,9 +188,10 @@
                                                 data-unit="{{ owner_in_list.unit.id }}" data-active="true"
                                                 data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                                 data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                                data-commission-percentage="{{ owner_in_list.commission_percentage|yesno:'true,false' }}"
-                                                data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}"
-                                                data-product-commission="{{ owner_in_list.product_commission_percentage|default:'' }}">
+                                                data-contract-type="{{ owner_in_list.contract_type|default:'commission' }}"
+                                                data-fixed-salary="{{ owner_in_list.fixed_salary|default:'' }}"
+                                                data-chair-rental="{{ owner_in_list.chair_rental_fee|default:'' }}"
+                                                data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}">
                                                 <i class="fas fa-edit"></i>
                                             </div>
                                             <form method="POST" style="display:inline;" id="delete-employee-desktop-form-{{ owner_in_list.id }}">
@@ -212,7 +217,8 @@
                                         <div class="employee-avatar" style="{% if not emp.is_active %}filter: grayscale(1);{% endif %}">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
                                         <div class="employee-info">
                                             <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                                            
+                                            {% comment %} <div class="employee-plan">
+                                            </div> {% endcomment %}
                                         </div>
                                     </div>
                                 </td>
@@ -222,6 +228,20 @@
                                         <span class="employee-type type-{{ role.occupation }}" style="margin-right: 2px;">{{ role.get_occupation_display }}</span>
                                     {% empty %} <span class="employee-type type-none">Nenhum</span> {% endfor %}
                                 </td>
+
+                                <td>
+                                    {% if emp.contract_type == 'fixed_salary' %}
+                                        <span style="font-weight: 700; color: #2c3e50; font-size: 0.85rem;">Fixo: R$ {{ emp.fixed_salary|default:"0,00" }}</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">+ {{ emp.service_commission_percentage|default:"0" }}% comissão</span>
+                                    {% elif emp.contract_type == 'chair_rental' %}
+                                        <span style="font-weight: 700; color: #e53e3e; font-size: 0.85rem;">Aluguel Cadeira</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">R$ {{ emp.chair_rental_fee|default:"0,00" }}/mês</span>
+                                    {% else %}
+                                        <span style="font-weight: 700; color: #27ae60; font-size: 0.85rem;">Comissionado</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">{{ emp.service_commission_percentage|default:"0" }}% por serviço</span>
+                                    {% endif %}
+                                </td>
+
                                 <td>
                                     {% if emp.is_active %}
                                         <span class="employee-active type-barber" title="Tem acesso ou está na agenda">Ativo</span>
@@ -240,9 +260,10 @@
                                                 data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
                                                 data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                                 data-specialty="{{ emp.specialty|default:'' }}" data-bio="{{ emp.bio|default:'' }}"
-                                                data-commission-percentage="{{ emp.commission_percentage|yesno:'true,false' }}"
+                                                data-contract-type="{{ emp.contract_type|default:'commission' }}"
+                                                data-fixed-salary="{{ emp.fixed_salary|default:'' }}"
+                                                data-chair-rental="{{ emp.chair_rental_fee|default:'' }}"
                                                 data-service-commission="{{ emp.service_commission_percentage|default:'' }}"
-                                                data-product-commission="{{ emp.product_commission_percentage|default:'' }}"
                                                 data-system-access="{{ emp.system_access|yesno:'true,false' }}">
                                                 <i class="fas fa-edit"></i>
                                             </div>
@@ -262,7 +283,7 @@
                             </tr>
                         {% empty %}
                             {% if not owner_in_list %}
-                            <tr><td colspan="6" style="text-align:center;">Nenhum funcionário cadastrado.</td></tr>
+                            <tr><td colspan="7" style="text-align:center;">Nenhum funcionário cadastrado.</td></tr>
                             {% endif %}
                         {% endfor %}
                     </tbody>
@@ -282,13 +303,7 @@
                     </div>
                     <div class="m-card-body">
                         <div class="m-info-line"><i class="fas fa-store"></i> {{ owner_in_list.unit.name }}</div>
-                        <div class="m-info-line"><i class="fas fa-user-tie"></i> 
-                            {% for role in owner_in_list.roles.all %}
-                                {{ role.get_occupation_display }}{% if not forloop.last %}, {% endif %}
-                            {% empty %}
-                                Administração
-                            {% endfor %}
-                        </div>
+                        <div class="m-info-line"><i class="fas fa-file-signature" style="color: #9b59b6;"></i> Contrato: 100% (Titular)</div>
                     </div>
                 </div>
 
@@ -303,6 +318,7 @@
                         <div class="bs-divider"></div>
                         <div class="bs-details">
                             <p><i class="fas fa-store" style="color: #3498db; width:20px;"></i> <strong>Unidade:</strong> {{ owner_in_list.unit.name }}</p>
+                            <p><i class="fas fa-file-signature" style="color: #9b59b6; width:20px;"></i> <strong>Contrato:</strong> Isento (Titular da Conta)</p>
                             <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ owner_in_list.user.phone|default:"Não informado" }}</p>
                             <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ owner_in_list.user.email }}</p>
                         </div>
@@ -337,13 +353,17 @@
                     </div>
                     <div class="m-card-body">
                         <div class="m-info-line"><i class="fas fa-store"></i> {{ emp.unit.name }}</div>
-                        <div class="m-info-line"><i class="fas fa-user-tie"></i> 
-                            {% for role in emp.roles.all %}
-                                {{ role.get_occupation_display }}{% if not forloop.last %}, {% endif %}
-                            {% empty %}
-                                Sem cargo
-                            {% endfor %}
+                        
+                        <div class="m-info-line"><i class="fas fa-file-signature" style="color: #9b59b6;"></i> 
+                            {% if emp.contract_type == 'fixed_salary' %}
+                                Fixo R$ {{ emp.fixed_salary|default:"0,00" }} + {{ emp.service_commission_percentage|default:"0" }}%
+                            {% elif emp.contract_type == 'chair_rental' %}
+                                Aluguel (R$ {{ emp.chair_rental_fee|default:"0,00" }})
+                            {% else %}
+                                Comissionado ({{ emp.service_commission_percentage|default:"0" }}%)
+                            {% endif %}
                         </div>
+                        
                     </div>
                 </div>
 
@@ -362,6 +382,15 @@
                         <div class="bs-divider"></div>
                         <div class="bs-details">
                             <p><i class="fas fa-store" style="color: #3498db; width:20px;"></i> <strong>Unidade:</strong> {{ emp.unit.name }}</p>
+                            <p><i class="fas fa-file-signature" style="color: #9b59b6; width:20px;"></i> <strong>Contrato:</strong> 
+                                {% if emp.contract_type == 'fixed_salary' %}
+                                    Salário Fixo (R$ {{ emp.fixed_salary|default:"0,00" }}) + {{ emp.service_commission_percentage|default:"0" }}% de comissão
+                                {% elif emp.contract_type == 'chair_rental' %}
+                                    Aluguel de Cadeira (R$ {{ emp.chair_rental_fee|default:"0,00" }}/mês)
+                                {% else %}
+                                    100% Comissionado ({{ emp.service_commission_percentage|default:"0" }}% por serviço)
+                                {% endif %}
+                            </p>
                             <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ emp.user.phone|default:"Não informado" }}</p>
                             <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ emp.user.email }}</p>
                             <p><i class="fas fa-id-card" style="color: #95a5a6; width:20px;"></i> <strong>CPF:</strong> {{ emp.user.cpf }}</p>
@@ -513,18 +542,30 @@
                         </select>
                     </div>
                 
-                    <div class="form-group">
-                        <label><input type="checkbox" name="commission_percentage"> Paga Comissão?</label>
-                    </div>
-                    <div class="form-group">
-                        <label for="serviceCommission">Comissão Serviço (%)</label>
-                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" max="100">
-                    </div>
-                    <div class="form-group">
-                        <label for="productCommission">Comissão Produto (%)</label>
-                        <input type="number" name="product_commission_percentage" id="productCommission" class="form-control" placeholder="Ex: 10" max="100">
+                    <div class="form-group regular-field">
+                        <label for="contractType" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Tipo de Contrato <span style="color: #e53e3e;">*</span></label>
+                        <select name="contract_type" id="contractType" class="form-control" required onchange="toggleContractFields()">
+                            <option value="commission">Comissionado (100% Produtividade)</option>
+                            <option value="fixed_salary">Salário Fixo (+ Comissão)</option>
+                            <option value="chair_rental">Aluguel de Cadeira (Coworking)</option>
+                        </select>
                     </div>
 
+                    <div class="form-group regular-field" id="fixedSalaryGroup" style="display: none;">
+                        <label for="fixedSalary" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Salário Fixo Mensal (R$)</label>
+                        <input type="number" name="fixed_salary" id="fixedSalary" class="form-control" placeholder="Ex: 1500.00" step="0.01">
+                    </div>
+
+                    <div class="form-group regular-field" id="chairRentalGroup" style="display: none;">
+                        <label for="chairRentalFee" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Taxa de Aluguel da Cadeira (R$)</label>
+                        <input type="number" name="chair_rental_fee" id="chairRentalFee" class="form-control" placeholder="Ex: 800.00" step="0.01">
+                        <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px;">Neste modelo, o barbeiro fica com 100% do valor dos cortes realizados.</small>
+                    </div>
+
+                    <div class="form-group regular-field" id="serviceCommissionGroup">
+                        <label for="serviceCommission" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Comissão sobre Serviços (%)</label>
+                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" max="100">
+                    </div>
                     <div class="form-group regular-field">
                         <label>Cargos (selecione um ou mais)</label>
                         <div class="roles-checkbox-group">
@@ -589,7 +630,6 @@
             }
         });
 
-        // Modais Globais Desktop/Mobile
         window.openOwnerCreationModal = function() {
             document.getElementById('ownerModal').style.display = 'flex';
             document.body.classList.add('modal-open');
@@ -599,7 +639,6 @@
             document.body.classList.remove('modal-open');
         }
 
-        // Gavetas Mobile
         function openMobileSheet(id) {
             document.getElementById('bs-overlay-' + id).classList.add('active');
             document.getElementById('bs-sheet-' + id).classList.add('active');
@@ -611,7 +650,6 @@
             document.body.style.overflow = '';
         }
 
-        // Função Vanilla JS para explicar a regra de negócio do Tenant
         function showLimitInfo() {
             Swal.fire({
                 title: 'Como funcionam as Vagas?',

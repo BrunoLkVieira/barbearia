@@ -257,7 +257,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 emp = Employee.objects.create(
                     user=barbershop.owner_user, unit=unit_obj, is_active=True,
                     system_access=True, can_manage_cashbox=True, 
-                    can_register_sell=True, can_create_appointments=True
+                    can_register_sell=True, can_create_appointments=True,
+                    contract_type='commission' # Titular assume comissão 100% nativamente
                 )
                 Role.objects.create(employee=emp, occupation=Role.Occupation.GERENTE)
                 messages.success(request, "Você ingressou na operação com sucesso!")
@@ -273,6 +274,11 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         roles_selected = request.POST.getlist("roles")
         is_active_val = 'is_active' in request.POST 
         password_val = request.POST.get("password")
+
+        # --- ORBLY ARCHITECT: NOVOS CAMPOS DE CONTRATO CAPTURADOS AQUI ---
+        contract_type_val = request.POST.get("contract_type", "commission")
+        fixed_salary_val = _to_decimal(request.POST.get("fixed_salary"))
+        chair_rental_fee_val = _to_decimal(request.POST.get("chair_rental_fee"))
 
         if action == "create":
             if len(cpf_digits) != 11:
@@ -296,9 +302,16 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     employee = Employee.objects.create(
                         user=user, unit=unit_obj, specialty=request.POST.get("specialty", "").strip(), 
                         bio=request.POST.get("bio", "").strip(), is_active=is_active_val,
+                        
+                        # --- ORBLY ARCHITECT: SALVANDO DADOS DO CONTRATO NA CRIAÇÃO ---
+                        contract_type=contract_type_val,
+                        fixed_salary=fixed_salary_val,
+                        chair_rental_fee=chair_rental_fee_val,
+                        
                         commission_percentage='commission_percentage' in request.POST,
                         service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
                         product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
+                        
                         can_manage_cashbox='can_manage_cashbox' in request.POST,
                         can_register_sell='can_register_sell' in request.POST,
                         can_create_appointments='can_create_appointments' in request.POST,
@@ -325,11 +338,18 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             elif request.POST.get("unit_id"): emp_target.unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
 
             if emp_target.user == barbershop.owner_user:
+                # Edição do TITULAR
                 emp_target.specialty = request.POST.get("specialty", "").strip() 
                 emp_target.bio = request.POST.get("bio", "").strip()
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
+                
+                # --- ORBLY ARCHITECT: SALVANDO CONTRATO DO TITULAR ---
+                emp_target.contract_type = contract_type_val
+                emp_target.fixed_salary = fixed_salary_val
+                emp_target.chair_rental_fee = chair_rental_fee_val
                 emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
                 emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                
                 emp_target.save()
                 emp_target.roles.all().delete()
                 Role.objects.create(employee=emp_target, occupation=Role.Occupation.GERENTE)
@@ -338,6 +358,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Perfil do Titular atualizado na operação.")
             
             else:
+                # Edição de FUNCIONÁRIO COMUM
                 simulate_emp = {'unit_id': request.POST.get("unit_id") or emp_target.unit.id, 'roles': roles_selected, 'is_active': is_active_val}
                 if calculate_consumed_slots(barbershop, exclude_emp_id=emp_target.id, simulate_emp=simulate_emp) > barbershop.max_employees:
                     messages.error(request, "Ação bloqueada! Excederia o limite do seu plano.")
@@ -357,14 +378,21 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 if changed_user_fields: user.save(update_fields=changed_user_fields)
 
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
+                
+                # --- ORBLY ARCHITECT: SALVANDO CONTRATO DO FUNCIONÁRIO ---
+                emp_target.contract_type = contract_type_val
+                emp_target.fixed_salary = fixed_salary_val
+                emp_target.chair_rental_fee = chair_rental_fee_val
                 emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
                 emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                
                 emp_target.system_access = 'system_access' in request.POST
                 emp_target.can_manage_cashbox = 'can_manage_cashbox' in request.POST
                 emp_target.can_register_sell = 'can_register_sell' in request.POST
                 emp_target.can_create_appointments = 'can_create_appointments' in request.POST
                 emp_target.specialty = request.POST.get("specialty", "").strip() 
                 emp_target.bio = request.POST.get("bio", "").strip()
+                
                 emp_target.save()
 
                 with transaction.atomic():
@@ -419,7 +447,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         "active_tab": "barbershop",
     }
     return render(request, "barbershop/employee.html", context)
-
 
 @require_GET
 @login_required

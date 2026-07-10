@@ -126,6 +126,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===============================================
+    // ORBLY FINANCE: Lógica visual do Tipo de Contrato
+    // ===============================================
+    window.toggleContractFields = function() {
+        const contractType = document.getElementById('contractType');
+        if (!contractType) return;
+        
+        const type = contractType.value;
+        const fixedSalaryGroup = document.getElementById('fixedSalaryGroup');
+        const chairRentalGroup = document.getElementById('chairRentalGroup');
+        const serviceCommissionGroup = document.getElementById('serviceCommissionGroup');
+        
+        if (type === 'commission') {
+            if(fixedSalaryGroup) fixedSalaryGroup.style.display = 'none';
+            if(chairRentalGroup) chairRentalGroup.style.display = 'none';
+            if(serviceCommissionGroup) serviceCommissionGroup.style.display = 'block';
+        } else if (type === 'fixed_salary') {
+            if(fixedSalaryGroup) fixedSalaryGroup.style.display = 'block';
+            if(chairRentalGroup) chairRentalGroup.style.display = 'none';
+            if(serviceCommissionGroup) serviceCommissionGroup.style.display = 'block';
+        } else if (type === 'chair_rental') {
+            if(fixedSalaryGroup) fixedSalaryGroup.style.display = 'none';
+            if(chairRentalGroup) chairRentalGroup.style.display = 'block';
+            if(serviceCommissionGroup) serviceCommissionGroup.style.display = 'none';
+        }
+    };
+
     window.openEmployeeModal = function(employeeData = null) {
         const isActiveField = employeeForm.querySelector('#employeeIsActive');
         const isOwnerInput = document.getElementById('isOwnerInput');
@@ -195,9 +222,18 @@ document.addEventListener('DOMContentLoaded', function() {
             employeeForm.querySelector('#employeeBio').value = employeeData.bio || '';
             unitField.value = employeeData.unit;
             
-            employeeForm.querySelector('#serviceCommission').value = (employeeData.serviceCommission || '').toString().replace(',', '.');
-            employeeForm.querySelector('#productCommission').value = (employeeData.productCommission || '').toString().replace(',', '.');         
-            employeeForm.querySelector('input[name="commission_percentage"]').checked = employeeData.commissionPercentage === 'true';
+            // Novos campos Financeiros
+            const contractTypeSelect = employeeForm.querySelector('#contractType');
+            if(contractTypeSelect) contractTypeSelect.value = employeeData.contractType || 'commission';
+            
+            const fixedSalaryInput = employeeForm.querySelector('#fixedSalary');
+            if(fixedSalaryInput) fixedSalaryInput.value = (employeeData.fixedSalary || '').toString().replace(',', '.');
+            
+            const chairRentalInput = employeeForm.querySelector('#chairRentalFee');
+            if(chairRentalInput) chairRentalInput.value = (employeeData.chairRental || '').toString().replace(',', '.');
+            
+            const serviceCommInput = employeeForm.querySelector('#serviceCommission');
+            if(serviceCommInput) serviceCommInput.value = (employeeData.serviceCommission || '').toString().replace(',', '.');
             
             const sysAccessChk = document.getElementById('systemAccessCheckbox');
             if(sysAccessChk) sysAccessChk.checked = employeeData.systemAccess === 'true';
@@ -230,6 +266,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 employeeForm.querySelector('#employeeId').value = '';
                 isOwnerInput.value = "False";
                 
+                // Resetando Financeiro para padrão
+                if(employeeForm.querySelector('#contractType')) employeeForm.querySelector('#contractType').value = 'commission';
+                if(employeeForm.querySelector('#fixedSalary')) employeeForm.querySelector('#fixedSalary').value = '';
+                if(employeeForm.querySelector('#chairRentalFee')) employeeForm.querySelector('#chairRentalFee').value = '';
+                if(employeeForm.querySelector('#serviceCommission')) employeeForm.querySelector('#serviceCommission').value = '';
+                
                 // Senha ligada por padrão, a API do CPF desliga depois se não precisar
                 document.getElementById('passwordGroup').style.display = 'block';
                 passwordField.required = true;
@@ -252,6 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatePermissions(false);
             }
         }
+        
+        // Dispara visual dos contratos
+        if(typeof window.toggleContractFields === 'function') window.toggleContractFields();
+        
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
     }
@@ -281,26 +327,17 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (!text.includes('titular')) element.classList.add('type-none'); 
     });
 
-    const commissionCheckbox = document.querySelector('input[name="commission_percentage"]');
-    const serviceInput = document.getElementById('serviceCommission');
-    const productInput = document.getElementById('productCommission');
-    
-    function updateInputsState() {
-        if (commissionCheckbox && serviceInput && productInput) {
-            const isDisabled = !commissionCheckbox.checked;
-            serviceInput.disabled = isDisabled; productInput.disabled = isDisabled;
-        }
-    }
-    
+    // Observa o modal para forçar a visibilidade dos campos de contrato corretos quando abrir
     if (modal) {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && modal.style.display === 'flex') updateInputsState();
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && modal.style.display === 'flex') {
+                    if(typeof window.toggleContractFields === 'function') window.toggleContractFields();
+                }
             });
         });
         observer.observe(modal, { attributes: true });
     }
-    if (commissionCheckbox) commissionCheckbox.addEventListener('change', updateInputsState);
 
     const roleCheckboxes = document.querySelectorAll('input[name="roles"]');
     const gerenteCheckbox = document.querySelector('input[name="roles"][value="gerente"]');
