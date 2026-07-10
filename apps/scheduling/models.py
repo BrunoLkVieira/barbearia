@@ -2,6 +2,8 @@ from django.db import models
 from apps.client.models import Client
 from apps.barbershop.models import Employee, Barbershop, Unit
 from apps.service.models import BarberService
+from decimal import Decimal
+
 
 class Appointment(models.Model):
     STATUS_CHOICES = [
@@ -33,18 +35,43 @@ class Appointment(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # [BLINDAGEM] Força o recálculo dos serviços atrelados se o agendamento for editado
+        if not is_new:
+            for servico in self.services.all():
+                servico.save()
+
     def __str__(self):
         return f"{self.date} às {self.time} - {self.client.first_name}"
     
 
 class AppointmentService(models.Model):
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='services')
-    service = models.ForeignKey(BarberService, on_delete=models.PROTECT)
-    
-    price_at_sale = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    # NOVO: A "foto" da comissão no momento da venda (Blinda o histórico)
-    barber_commission_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    service = models.ForeignKey(BarberService, on_delete=models.SET_NULL, null=True)
+    price_at_sale = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    barber_commission_value = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)
+
+    def save(self, *args, **kwargs):
+        # 1. Congela o preço no momento da venda (Snapshot)
+        if not self.price_at_sale and self.service:
+            self.price_at_sale = self.service.price
+
+        # 2. Calcula e congela a comissão do profissional em Reais
+        if self.appointment_id:
+            emp = self.appointment.employee
+            
+            # [BLINDAGEM] Ignoramos o checkbox booleano para não dar erro se você esquecer de marcar.
+            # Se o barbeiro tem % de comissão > 0 na ficha dele, ele calcula.
+            if emp and emp.service_commission_percentage and Decimal(emp.service_commission_percentage) > 0:
+                percentual = Decimal(emp.service_commission_percentage) / Decimal('100.00')
+                self.barber_commission_value = Decimal(self.price_at_sale or 0.00) * percentual
+            else:
+                self.barber_commission_value = Decimal('0.00')
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.service.name} em {self.appointment}"
+        return f"{self.service.name} - {self.appointment.id}"

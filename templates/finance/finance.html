@@ -1,4 +1,5 @@
 {% load static %}
+{% load l10n %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,8 +8,11 @@
     <title>Financeiro - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
+    <!-- Bibliotecas Externas -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
+    <!-- CSS Base e Responsividade -->
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/desktop/finance.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/desktop/modals/createPool.css' %}">
@@ -54,10 +58,11 @@
     </div>
 
     <div class="main-content">
+        <!-- Sidebar de Filtros -->
         <form method="GET" action="{% if unit %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=unit.slug %}{% else %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% endif %}" class="filters-sidebar">
             <div class="section-title">
-                <i class="fas fa-filter"></i>
-                <span>Filtros Temporais</span>
+                <i class="fas fa-calendar-alt"></i>
+                <span>Competência</span>
             </div>
             
             {% if is_admin %}
@@ -75,18 +80,26 @@
             {% endif %}
             
             <div class="filter-group">
-                <label for="dateStart">Data Início</label>
-                <input type="date" id="dateStart" name="dateStart" value="{{ start_date }}">
+                <label for="monthFilter">Mês</label>
+                <select id="monthFilter" name="month">
+                    {% for m_num, m_name in meses_choices %}
+                        <option value="{{ m_num }}" {% if current_month == m_num %}selected{% endif %}>{{ m_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
             
             <div class="filter-group">
-                <label for="dateEnd">Data Fim</label>
-                <input type="date" id="dateEnd" name="dateEnd" value="{{ end_date }}">
+                <label for="yearFilter">Ano</label>
+                <select id="yearFilter" name="year">
+                    {% for y in anos_choices %}
+                        <option value="{{ y }}" {% if current_year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
             </div>
             
             <div class="filter-group">
                 <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                    <i class="fas fa-sync"></i> Atualizar Dados
+                    <i class="fas fa-sync"></i> Atualizar
                 </button>
             </div>
         </form>
@@ -109,6 +122,7 @@
                     </div>
                 </div>
             
+                <!-- Cards de Resumo -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-card-flex">
@@ -144,6 +158,7 @@
                 </div>
             </div>
             
+            <!-- Gráficos -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <div class="chart-header">
@@ -172,6 +187,79 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Tabela de Despesas (Apenas Admin sem filtro de barbeiro) -->
+            {% if is_admin and not selected_barber %}
+            <div class="chart-card" style="margin-top: 25px; height: auto;">
+                <div class="chart-header">
+                    <h3><i class="fas fa-file-invoice-dollar" style="color: #e74c3c;"></i> Gestão de Despesas</h3>
+                    <button class="btn btn-primary" onclick="openExpenseModal()" style="padding: 5px 15px; font-size: 0.85rem;">+ Nova Conta</button>
+                </div>
+                
+                <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 10px;">
+                    <i class="fas fa-info-circle"></i> Exibindo apenas as contas com vencimento na competência de <b>{{ current_month|stringformat:"02d" }}/{{ current_year }}</b>.
+                </p>
+
+                <div style="overflow-x: auto;">
+                    <table class="employees-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eaecef;">Descrição</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eaecef;">Vencimento</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eaecef;">Valor</th>
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #eaecef;">Status</th>
+                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #eaecef;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despesa in despesas_lista %}
+                            <tr style="border-bottom: 1px solid #eaecef; {% if despesa.is_paid %}background-color: #f8fff9;{% endif %}">
+                                <td style="padding: 12px; font-weight: 500;">
+                                    {{ despesa.name }}
+                                    {% if despesa.is_recurring %}<i class="fas fa-sync-alt" style="color:#3498db; font-size:0.75rem; margin-left:5px;" title="Conta Recorrente"></i>{% endif %}
+                                </td>
+                                <td style="padding: 12px;">{{ despesa.due_date|date:"d/m/Y" }}</td>
+                                <td style="padding: 12px; font-weight: bold;">R$ {{ despesa.amount|floatformat:2 }}</td>
+                                <td style="padding: 12px;">
+                                    {% if despesa.is_paid %}
+                                        <span style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Paga</span>
+                                    {% else %}
+                                        <span style="background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 12px; text-align: right;">
+                                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                        {% if not despesa.is_paid %}
+                                        <form method="POST" style="margin:0;" id="payForm_{{ despesa.id }}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="pay_expense">
+                                            <input type="hidden" name="expense_id" value="{{ despesa.id }}">
+                                            <button type="button" onclick="confirmPayment('{{ despesa.id }}')" style="background:#27ae60; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" title="Marcar como Paga"><i class="fas fa-check"></i></button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <button type="button" onclick="openEditExpenseModal('{{ despesa.id }}', '{{ despesa.name|escapejs }}', '{{ despesa.amount|unlocalize }}', '{{ despesa.due_date|date:'Y-m-d' }}', {{ despesa.is_paid|yesno:'true,false' }}, {{ despesa.is_recurring|yesno:'true,false' }})" style="background:#f39c12; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" title="Editar"><i class="fas fa-pen"></i></button>
+
+                                        <form id="deleteForm_{{ despesa.id }}" method="POST" style="margin:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="delete_expense">
+                                            <input type="hidden" name="expense_id" value="{{ despesa.id }}">
+                                            <input type="hidden" name="delete_future" id="deleteFuture_{{ despesa.id }}" value="false">
+                                            <button type="button" onclick="confirmDelete('{{ despesa.id }}', {{ despesa.is_recurring|yesno:'true,false' }})" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px; color: #a0aec0;">Nenhuma despesa registrada nesta competência.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     
@@ -190,56 +278,48 @@
         </div>
     </footer>
 
+    <!-- Modais (Somente Admin) -->
     {% if is_admin %}
+    <!-- MODAL CRIAR DESPESA -->
     <div id="expenseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
         <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <div class="modal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd;">
-                <h2 style="margin:0; font-size: 1.25rem; color:#1a233a;"><i class="fas fa-file-invoice-dollar" style="color: #e74c3c; margin-right:8px;"></i> Lançar Despesa</h2>
-                <button type="button" class="close-btn" onclick="closeExpenseModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">
+            <div class="modal-header" style="background: #1a233a; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #1a233a;">
+                <h2 style="margin:0; font-size: 1.25rem; color: #ffffff;"><i class="fas fa-file-invoice-dollar" style="color: #FF7A00; margin-right:8px;"></i> Lançar Despesa</h2>
+                <button type="button" class="close-btn" onclick="closeExpenseModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #ffffff;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
             <form method="POST" style="padding: 20px;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_expense">
-                
                 {% if not unit %}
                 <div style="margin-bottom: 15px;">
-                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Unidade da Despesa</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Unidade</label>
                     <select name="unit_id" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
-                        {% for u in units %}
-                            <option value="{{ u.id }}">{{ u.name }}</option>
-                        {% endfor %}
+                        {% for u in units %}<option value="{{ u.id }}">{{ u.name }}</option>{% endfor %}
                     </select>
                 </div>
                 {% endif %}
-
                 <div style="margin-bottom: 15px;">
-                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa (Luz, Aluguel, etc) *</label>
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa *</label>
                     <input type="text" name="name" required placeholder="Ex: Conta de Luz" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
-                
                 <div style="margin-bottom: 15px;">
                     <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Valor (R$) *</label>
-                    <input type="number" name="amount" step="0.01" required placeholder="Ex: 150.00" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                    <input type="number" name="amount" step="0.01" required placeholder="150.00" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
-                
                 <div style="margin-bottom: 15px;">
-                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Data de Vencimento/Ocorrência *</label>
-                    <input type="date" name="due_date" required value="{{ end_date }}" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Vencimento / Ocorrência *</label>
+                    <input type="date" name="due_date" required value="{{ hoje_data }}" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
-                
                 <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <input type="checkbox" name="is_recurring" id="isRecurring" style="width: 18px; height: 18px;">
                     <label for="isRecurring" style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; cursor: pointer;">Repetir todo mês (Conta Fixa)</label>
                 </div>
-
                 <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <input type="checkbox" name="is_paid" id="isPaid" checked style="width: 18px; height: 18px;">
                     <label for="isPaid" style="font-weight: 600; font-size: 0.9rem; color: #27ae60; cursor: pointer;">Despesa já foi paga</label>
                 </div>
-
                 <div style="display: flex; gap: 10px;">
                     <button type="button" onclick="closeExpenseModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; background: transparent; cursor: pointer; font-weight: bold;">Cancelar</button>
                     <button type="submit" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #e74c3c; color: white; cursor: pointer; font-weight: bold;">Salvar Despesa</button>
@@ -247,8 +327,53 @@
             </form>
         </div>
     </div>
+
+    <!-- MODAL EDITAR DESPESA -->
+    <div id="editExpenseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
+        <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="background: #1a233a; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #1a233a;">
+                <h2 style="margin:0; font-size: 1.25rem; color: #ffffff;"><i class="fas fa-pen" style="color: #f39c12; margin-right:8px;"></i> Editar Despesa</h2>
+                <button type="button" class="close-btn" onclick="closeEditExpenseModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #ffffff;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form method="POST" style="padding: 20px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_expense">
+                <input type="hidden" name="expense_id" id="editExpId">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa *</label>
+                    <input type="text" name="name" id="editExpName" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Valor (R$) *</label>
+                    <input type="number" name="amount" id="editExpAmount" step="0.01" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Vencimento *</label>
+                    <input type="date" name="due_date" id="editExpDate" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
+                </div>
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <input type="checkbox" name="is_paid" id="editExpPaid" style="width: 18px; height: 18px;">
+                    <label for="editExpPaid" style="font-weight: 600; font-size: 0.9rem; color: #27ae60; cursor: pointer;">Despesa já foi paga</label>
+                </div>
+                
+                <div id="editFutureContainer" style="margin-bottom: 20px; display: none; align-items: center; gap: 10px; background: #fff4e5; padding: 10px; border-radius: 8px; border: 1px solid #ffeaa7;">
+                    <input type="checkbox" name="edit_future" id="editExpFuture" value="true" checked style="width: 18px; height: 18px;">
+                    <label for="editExpFuture" style="font-weight: 600; font-size: 0.85rem; color: #d35400; cursor: pointer;">Aplicar alterações também aos meses futuros que ainda estão pendentes.</label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="closeEditExpenseModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; background: transparent; cursor: pointer; font-weight: bold;">Cancelar</button>
+                    <button type="submit" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #f39c12; color: white; cursor: pointer; font-weight: bold;">Atualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
     {% endif %}
 
+    <!-- MODAL RELATÓRIO -->
     <div id="reportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
         <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%;">
             <div class="modal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd;">
@@ -264,20 +389,22 @@
         </div>
     </div>
     
+    <!-- Scripts JSON -->
     <script>
         const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe }}');
         const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe }}');
-        
-        // NOVO GRÁFICO (Top Serviços)
         const CH_SRV_NAMES = JSON.parse('{{ chart_service_names|safe }}');
         const CH_SRV_VALUES = JSON.parse('{{ chart_service_values|safe }}');
-        
         const CH_CATEGORIES = JSON.parse('{{ chart_category_data|safe }}');
     </script>
 
+    <!-- JS Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Reposiciona o filtro de unidade no Mobile
             if (window.innerWidth <= 820) {
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
@@ -287,7 +414,7 @@
                 }
             }
 
-            // Gráfico 1
+            // Gráfico 1: Receita
             const revenueCtx = document.getElementById('revenueChart').getContext('2d');
             new Chart(revenueCtx, {
                 type: 'line',
@@ -304,7 +431,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }, x: { grid: { display: false } } } }
             });
 
-            // Gráfico 2
+            // Gráfico 2: Categorias
             const categoryCtx = document.getElementById('categoryChart').getContext('2d');
             new Chart(categoryCtx, {
                 type: 'doughnut',
@@ -319,7 +446,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // Gráfico 3: Receita por Serviço (O que o Barbeiro/Dono mais ganha dinheiro fazendo)
+            // Gráfico 3: Top Serviços
             const servicesContainer = document.getElementById('servicesChart');
             if (servicesContainer) {
                 const servicesCtx = servicesContainer.getContext('2d');
@@ -330,7 +457,7 @@
                         datasets: [{
                             label: 'Faturamento (R$)',
                             data: CH_SRV_VALUES.length > 0 ? CH_SRV_VALUES : [0],
-                            backgroundColor: 'rgba(39, 174, 96, 0.8)', // Verde dinheiro
+                            backgroundColor: 'rgba(39, 174, 96, 0.8)',
                             borderRadius: 5
                         }]
                     },
@@ -339,22 +466,94 @@
             }
         });
 
-        // Controles de Modais
-        function openReportModal() {
-            const m = document.getElementById('reportModal');
-            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        /* FUNÇÕES DE MODAL E RECORRÊNCIA COM SWEETALERT2 */
+        function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; document.body.style.overflow = ''; }
+        function openExpenseModal() { document.getElementById('expenseModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeExpenseModal() { document.getElementById('expenseModal').style.display = 'none'; document.body.style.overflow = ''; }
+        
+        function openEditExpenseModal(id, rawName, amount, dateStr, isPaid, isRecurring) {
+            document.getElementById('editExpId').value = id;
+            
+            let baseName = rawName;
+            if (isRecurring && rawName.includes(' (')) {
+                baseName = rawName.substring(0, rawName.lastIndexOf(' ('));
+            }
+            
+            document.getElementById('editExpName').value = baseName;
+            document.getElementById('editExpAmount').value = parseFloat(amount).toFixed(2);
+            document.getElementById('editExpDate').value = dateStr;
+            document.getElementById('editExpPaid').checked = isPaid;
+            
+            const futureContainer = document.getElementById('editFutureContainer');
+            if (isRecurring) {
+                futureContainer.style.display = 'flex';
+                document.getElementById('editExpFuture').checked = true;
+            } else {
+                futureContainer.style.display = 'none';
+            }
+            
+            document.getElementById('editExpenseModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
-        function closeReportModal() {
-            const m = document.getElementById('reportModal');
-            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        function closeEditExpenseModal() { document.getElementById('editExpenseModal').style.display = 'none'; document.body.style.overflow = ''; }
+
+        function confirmPayment(id) {
+            Swal.fire({
+                title: 'Confirmar Pagamento',
+                text: "Deseja marcar esta despesa como paga?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#27ae60',
+                cancelButtonColor: '#a0aec0',
+                confirmButtonText: 'Sim, Pagar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('payForm_' + id).submit();
+                }
+            });
         }
-        function openExpenseModal() {
-            const m = document.getElementById('expenseModal');
-            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-        }
-        function closeExpenseModal() {
-            const m = document.getElementById('expenseModal');
-            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+
+        function confirmDelete(id, isRecurring) {
+            if (isRecurring) {
+                Swal.fire({
+                    title: 'Despesa Recorrente',
+                    text: "Deseja excluir também as faturas dos meses futuros?",
+                    icon: 'warning',
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonColor: '#e74c3c',
+                    denyButtonColor: '#f39c12',
+                    cancelButtonColor: '#a0aec0',
+                    confirmButtonText: 'Apagar tudo (Futuro)',
+                    denyButtonText: 'Apenas este mês',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteFuture_' + id).value = 'true';
+                        document.getElementById('deleteForm_' + id).submit();
+                    } else if (result.isDenied) {
+                        document.getElementById('deleteFuture_' + id).value = 'false';
+                        document.getElementById('deleteForm_' + id).submit();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Excluir Despesa',
+                    text: "Tem certeza que deseja excluir esta despesa?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e74c3c',
+                    cancelButtonColor: '#a0aec0',
+                    confirmButtonText: 'Sim, excluir',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteForm_' + id).submit();
+                    }
+                });
+            }
         }
     </script>
 </body>

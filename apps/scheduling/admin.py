@@ -24,3 +24,11 @@ class AppointmentAdmin(admin.ModelAdmin):
     
     # Ordenação padrão (mais recentes primeiro)
     ordering = ('-date', '-time')
+
+
+@admin.register(AppointmentService)
+class AppointmentServiceAdmin(admin.ModelAdmin):
+    # Um controle avulso (opcional) para ver todos os serviços de forma listada, focado nas comissões
+    list_display = ('id', 'appointment', 'service', 'price_at_sale', 'barber_commission_value')
+    list_filter = ('appointment__date', 'appointment__employee')
+    search_fields = ('appointment__client__name', 'service__name')
