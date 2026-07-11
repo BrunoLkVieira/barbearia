@@ -147,7 +147,6 @@
                 </div>
             </div>
             
-            <!-- GRÁFICOS ATUALIZADOS -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <div class="chart-header">
@@ -158,7 +157,6 @@
                     </div>
                 </div>
             
-                <!-- MÉTODOS DE PAGAMENTO (Substitui Produtos x Serviços) -->
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3><i class="fas fa-wallet"></i> Métodos de Pagamento</h3>
@@ -170,14 +168,13 @@
             
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-cut"></i> Top Serviços</h3>
+                        <h3><i class="fas fa-cut"></i> Top Serviços (Faturamento)</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="servicesChart"></canvas>
                     </div>
                 </div>
                 
-                <!-- TOP PROFISSIONAIS (Somente Admin/Gerentes e visão Geral) -->
                 {% if is_admin and not selected_barber %}
                 <div class="chart-card">
                     <div class="chart-header">
@@ -383,7 +380,6 @@
         </div>
     </div>
     
-    <!-- VARIÁVEIS JSON ATUALIZADAS -->
     <script>
         const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe|default:"[]" }}');
         const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe|default:"[]" }}');
@@ -398,7 +394,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- MÁGICA DA DATA DO DIA ALINHADA COM A IMAGEM -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dateSpan = document.getElementById('currentDate');
@@ -407,13 +402,11 @@
                 const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
                 const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
                 
-                // Formato padStart garante que dias 1 a 9 fiquem como "01", "09".
                 const dia = String(now.getDate()).padStart(2, '0');
                 const mes = meses[now.getMonth()];
                 const ano = now.getFullYear();
                 const diaSemana = diasSemana[now.getDay()];
                 
-                // Saída idêntica à foto: "10 de julho de 2026 - Sexta-feira"
                 dateSpan.textContent = `${dia} de ${mes} de ${ano} - ${diaSemana}`;
             }
         });
@@ -449,7 +442,7 @@
                 }
             }
 
-            // 1. Gráfico de Receita
+            // 1. Gráfico de Receita (Tema: Laranja Orbly)
             const revenueCtx = document.getElementById('revenueChart');
             if(revenueCtx) {
                 new Chart(revenueCtx.getContext('2d'), {
@@ -459,8 +452,9 @@
                         datasets: [{
                             label: 'Receita (R$)',
                             data: CH_REV_VALUES.length > 0 ? CH_REV_VALUES : [0],
-                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                            borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#3498db',
+                            borderColor: '#FF7A00', // Laranja Orbly
+                            backgroundColor: 'rgba(255, 122, 0, 0.1)', // Laranja Transparente
+                            borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#FF7A00',
                             pointRadius: 4, tension: 0.3, fill: true
                         }]
                     },
@@ -468,7 +462,7 @@
                 });
             }
 
-            // 2. Gráfico: Métodos de Pagamento
+            // 2. Gráfico: Métodos de Pagamento (Tema: Laranja, Azul Noturno, Dourado)
             const paymentCtx = document.getElementById('paymentChart');
             if (paymentCtx) {
                 new Chart(paymentCtx.getContext('2d'), {
@@ -477,8 +471,8 @@
                         labels: CH_PAY_NAMES.length > 0 ? CH_PAY_NAMES : ['Sem Vendas'],
                         datasets: [{
                             data: CH_PAY_VALUES.length > 0 ? CH_PAY_VALUES : [1],
-                            // Cores: PIX (Ciano/Verde), Cartão (Azul), Dinheiro (Amarelo)
-                            backgroundColor: ['#1abc9c', '#3498db', '#f1c40f', '#9b59b6', '#e74c3c'],
+                            // Cores do seu sistema: Laranja Principal, Azul Escuro, Azul Secundário, Dourado, Cinza Claro
+                            backgroundColor: ['#FF7A00', '#1a233a', '#2c3e50', '#f39c12', '#a0aec0'],
                             borderWidth: 1,
                         }]
                     },
@@ -486,7 +480,7 @@
                 });
             }
 
-            // 3. Top Serviços
+            // 3. Top Serviços (Tema: Azul Ardósia)
             const servicesContainer = document.getElementById('servicesChart');
             if (servicesContainer) {
                 new Chart(servicesContainer.getContext('2d'), {
@@ -496,7 +490,7 @@
                         datasets: [{
                             label: 'Faturamento (R$)',
                             data: CH_SRV_VALUES.length > 0 ? CH_SRV_VALUES : [0],
-                            backgroundColor: 'rgba(39, 174, 96, 0.8)',
+                            backgroundColor: 'rgba(44, 62, 80, 0.9)', // Azul Ardósia escuro
                             borderRadius: 5
                         }]
                     },
@@ -504,7 +498,7 @@
                 });
             }
 
-            // 4. Top Profissionais (Faturamento Bruto)
+            // 4. Top Profissionais Faturamento Bruto (Tema: Laranja Orbly)
             const barberRevContainer = document.getElementById('barberRevenueChart');
             if (barberRevContainer && CH_BARBER_NAMES.length > 0) {
                 new Chart(barberRevContainer.getContext('2d'), {
@@ -514,7 +508,7 @@
                         datasets: [{
                             label: 'Faturamento Bruto (R$)',
                             data: CH_BARBER_REVENUES,
-                            backgroundColor: 'rgba(230, 126, 34, 0.8)',
+                            backgroundColor: 'rgba(255, 122, 0, 0.9)', // Laranja principal
                             borderRadius: 5
                         }]
                     },
@@ -563,7 +557,7 @@
                     confirmButtonText: 'Aplicar a todos (Futuros)',
                     denyButtonText: 'Apenas a este mês',
                     cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#3498db',
+                    confirmButtonColor: '#1a233a',
                     denyButtonColor: '#f39c12'
                 }).then((result) => {
                     if (result.isConfirmed) {
