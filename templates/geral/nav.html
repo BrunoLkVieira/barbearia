@@ -52,7 +52,7 @@
         </div>
     </a>
     
-    <a href="{% if is_admin %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=request.user.employees.first.unit.slug %}{% endif %}">
+    <a href="{% if is_owner %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% else %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=request.user.employees.first.unit.slug %}{% endif %}">
         <div class="nav-tab {% if active_tab == 'finance' or 'financas' in request.path %}active{% endif %}">
             <i class="fas fa-chart-line"></i> Dashboard
         </div>

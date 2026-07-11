@@ -8,11 +8,9 @@
     <title>Financeiro - {{ barbershop.name }}</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
-    <!-- Bibliotecas Externas -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
-    <!-- CSS Base e Responsividade -->
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/desktop/finance.css' %}">
     <link rel="stylesheet" href="{% static 'finance/css/desktop/modals/createPool.css' %}">
@@ -52,13 +50,8 @@
             <div class="page-option active"><i class="fas fa-dollar-sign"></i> Financeiro</div>
         </a>
     </div>
-    
-    <div class="mobile-only mobile-dashboard" style="padding: 15px;">
-        <h2 style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.5rem; font-weight: 800;">Dashboard Financeiro</h2>
-    </div>
 
     <div class="main-content">
-        <!-- Sidebar de Filtros -->
         <form method="GET" action="{% if unit %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=unit.slug %}{% else %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% endif %}" class="filters-sidebar">
             <div class="section-title">
                 <i class="fas fa-calendar-alt"></i>
@@ -106,10 +99,7 @@
         
         <div class="right-side-desktop">
             <div class="finance-content">
-                <div class="finance-header desktop-only">
-                    <div class="finance-title">
-                        <i class="fas fa-chart-line"></i> Resumo Financeiro
-                    </div>
+                <div class="finance-header desktop-only" style="justify-content: flex-end;">
                     <div class="finance-controls">
                         {% if is_admin %}
                         <button class="btn btn-outline" onclick="openExpenseModal()" style="color: #e74c3c; border-color: #e74c3c; background: transparent;">
@@ -122,7 +112,6 @@
                     </div>
                 </div>
             
-                <!-- Cards de Resumo -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-card-flex">
@@ -158,7 +147,6 @@
                 </div>
             </div>
             
-            <!-- Gráficos -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <div class="chart-header">
@@ -188,7 +176,6 @@
                 </div>
             </div>
 
-            <!-- Tabela de Despesas (Apenas Admin sem filtro de barbeiro) -->
             {% if is_admin and not selected_barber %}
             <div class="chart-card" style="margin-top: 25px; height: auto;">
                 <div class="chart-header">
@@ -278,9 +265,7 @@
         </div>
     </footer>
 
-    <!-- Modais (Somente Admin) -->
     {% if is_admin %}
-    <!-- MODAL CRIAR DESPESA -->
     <div id="expenseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
         <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
             <div class="modal-header" style="background: #1a233a; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #1a233a;">
@@ -328,7 +313,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDITAR DESPESA -->
     <div id="editExpenseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
         <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
             <div class="modal-header" style="background: #1a233a; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #1a233a;">
@@ -337,10 +321,12 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form method="POST" style="padding: 20px;">
+            <form id="editExpenseForm" method="POST" style="padding: 20px;" onsubmit="submitEditForm(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="edit_expense">
                 <input type="hidden" name="expense_id" id="editExpId">
+                <input type="hidden" name="edit_future" id="editExpFuture" value="false">
+                <input type="hidden" id="editExpIsRecurring" value="false">
                 
                 <div style="margin-bottom: 15px;">
                     <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa *</label>
@@ -354,16 +340,11 @@
                     <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Vencimento *</label>
                     <input type="date" name="due_date" id="editExpDate" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
                 </div>
-                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <input type="checkbox" name="is_paid" id="editExpPaid" style="width: 18px; height: 18px;">
                     <label for="editExpPaid" style="font-weight: 600; font-size: 0.9rem; color: #27ae60; cursor: pointer;">Despesa já foi paga</label>
                 </div>
                 
-                <div id="editFutureContainer" style="margin-bottom: 20px; display: none; align-items: center; gap: 10px; background: #fff4e5; padding: 10px; border-radius: 8px; border: 1px solid #ffeaa7;">
-                    <input type="checkbox" name="edit_future" id="editExpFuture" value="true" checked style="width: 18px; height: 18px;">
-                    <label for="editExpFuture" style="font-weight: 600; font-size: 0.85rem; color: #d35400; cursor: pointer;">Aplicar alterações também aos meses futuros que ainda estão pendentes.</label>
-                </div>
-
                 <div style="display: flex; gap: 10px;">
                     <button type="button" onclick="closeEditExpenseModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #dcdde1; background: transparent; cursor: pointer; font-weight: bold;">Cancelar</button>
                     <button type="submit" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #f39c12; color: white; cursor: pointer; font-weight: bold;">Atualizar</button>
@@ -373,7 +354,6 @@
     </div>
     {% endif %}
 
-    <!-- MODAL RELATÓRIO -->
     <div id="reportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px;">
         <div class="modal-content" style="background: #fff; border-radius: 16px; max-width: 450px; width: 100%;">
             <div class="modal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd;">
@@ -389,7 +369,6 @@
         </div>
     </div>
     
-    <!-- Scripts JSON -->
     <script>
         const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe }}');
         const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe }}');
@@ -398,10 +377,47 @@
         const CH_CATEGORIES = JSON.parse('{{ chart_category_data|safe }}');
     </script>
 
-    <!-- JS Dependências -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateSpan = document.getElementById('currentDate');
+            if (dateSpan) {
+                const now = new Date();
+                const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+                const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+                
+                const dia = now.getDate();
+                const mes = meses[now.getMonth()];
+                const ano = now.getFullYear();
+                const diaSemana = diasSemana[now.getDay()];
+                
+                // Formato idêntico ao layout: 10 de julho de 2026 - Sexta-feira
+                dateSpan.textContent = `${dia} de ${mes} de ${ano} - ${diaSemana}`;
+            }
+        });
+    </script>
+    
+    {% if messages %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+            Swal.fire({
+                icon: '{{ message.tags }}' === 'error' ? 'error' : 'success',
+                title: '{{ message.tags }}' === 'error' ? 'Erro!' : 'Sucesso!',
+                text: '{{ message }}',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true
+            });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Reposiciona o filtro de unidade no Mobile
@@ -485,18 +501,42 @@
             document.getElementById('editExpDate').value = dateStr;
             document.getElementById('editExpPaid').checked = isPaid;
             
-            const futureContainer = document.getElementById('editFutureContainer');
-            if (isRecurring) {
-                futureContainer.style.display = 'flex';
-                document.getElementById('editExpFuture').checked = true;
-            } else {
-                futureContainer.style.display = 'none';
-            }
-            
+            document.getElementById('editExpIsRecurring').value = isRecurring ? 'true' : 'false';
             document.getElementById('editExpenseModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }
         function closeEditExpenseModal() { document.getElementById('editExpenseModal').style.display = 'none'; document.body.style.overflow = ''; }
+
+        function submitEditForm(event) {
+            event.preventDefault();
+            const form = document.getElementById('editExpenseForm');
+            const isRecurring = document.getElementById('editExpIsRecurring').value === 'true';
+
+            if (isRecurring) {
+                Swal.fire({
+                    title: 'Atualizar Conta Fixa',
+                    text: "Deseja aplicar essa alteração apenas a este mês ou a todos os meses futuros pendentes?",
+                    icon: 'question',
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: 'Aplicar a todos (Futuros)',
+                    denyButtonText: 'Apenas a este mês',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3498db',
+                    denyButtonColor: '#f39c12'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('editExpFuture').value = 'true';
+                        form.submit();
+                    } else if (result.isDenied) {
+                        document.getElementById('editExpFuture').value = 'false';
+                        form.submit();
+                    }
+                });
+            } else {
+                form.submit();
+            }
+        }
 
         function confirmPayment(id) {
             Swal.fire({
@@ -519,15 +559,15 @@
             if (isRecurring) {
                 Swal.fire({
                     title: 'Despesa Recorrente',
-                    text: "Deseja excluir também as faturas dos meses futuros?",
+                    text: "Deseja excluir apenas esta fatura ou todas as futuras associadas?",
                     icon: 'warning',
                     showDenyButton: true,
                     showCancelButton: true,
                     confirmButtonColor: '#e74c3c',
                     denyButtonColor: '#f39c12',
                     cancelButtonColor: '#a0aec0',
-                    confirmButtonText: 'Apagar tudo (Futuro)',
-                    denyButtonText: 'Apenas este mês',
+                    confirmButtonText: 'Excluir Todas (Futuras)',
+                    denyButtonText: 'Apenas a deste mês',
                     cancelButtonText: 'Cancelar'
                 }).then((result) => {
                     if (result.isConfirmed) {

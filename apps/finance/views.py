@@ -2,6 +2,7 @@ import json
 import calendar
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages # <--- ADICIONE ESTE IMPORT
 from django.db.models import Sum, Q, Min
 from django.db.models.functions import TruncDay
 from django.utils import timezone
@@ -32,7 +33,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
     # =========================================================================
     # AÇÕES: CRIAR, EDITAR, PAGAR E EXCLUIR DESPESAS
     # =========================================================================
-    if request.method == "POST" and is_admin:
+    if request.method == "POST" and is_owner:
         action = request.POST.get("action")
         
         if action == "create_expense":
@@ -70,6 +71,8 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                     unit=target_unit, name=nome_despesa, amount=valor_despesa,
                     due_date=data_base, is_recurring=False, is_paid=is_paid
                 )
+                
+            messages.success(request, "Despesa lançada com sucesso!")
             return redirect(request.get_full_path())
             
         elif action == "edit_expense":
@@ -84,6 +87,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             is_paid = 'is_paid' in request.POST
             edit_future = request.POST.get("edit_future") == "true"
             
+            # Pega o nome base antigo antes de alterar o objeto
             base_name_old = exp.name.split(' (')[0] if exp.is_recurring else exp.name
             data_antiga = exp.due_date
 
@@ -93,9 +97,10 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             exp.is_paid = is_paid
             exp.save()
             
+            # ORM: Removemos o filtro de 'amount' para garantir que ele ache as contas velhas e as sobrescreva
             if exp.is_recurring and edit_future:
                 futuras = UnitExpense.objects.filter(
-                    unit=exp.unit, name__startswith=base_name_old, amount=exp.amount,
+                    unit=exp.unit, name__startswith=base_name_old,
                     due_date__gt=data_antiga, is_recurring=True, is_paid=False
                 )
                 for f_exp in futuras:
@@ -104,12 +109,14 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                     f_exp.amount = valor_despesa
                     f_exp.save()
                     
+            messages.success(request, "Conta atualizada com sucesso!")
             return redirect(request.get_full_path())
 
         elif action == "pay_expense":
             exp = get_object_or_404(UnitExpense, id=request.POST.get("expense_id"), unit__barbershop=barbershop)
             exp.is_paid = True
             exp.save()
+            messages.success(request, "Despesa liquidada!")
             return redirect(request.get_full_path())
             
         elif action == "delete_expense":
@@ -119,13 +126,14 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             if exp.is_recurring and delete_future:
                 base_name = exp.name.split(' (')[0]
                 UnitExpense.objects.filter(
-                    unit=exp.unit, name__startswith=base_name, amount=exp.amount,
-                    due_date__gte=exp.due_date, is_paid=False
+                    unit=exp.unit, name__startswith=base_name,
+                    due_date__gte=exp.due_date, is_recurring=True, is_paid=False
                 ).delete()
             else:
                 exp.delete()
+                
+            messages.success(request, "Registro excluído com sucesso!")
             return redirect(request.get_full_path())
-
     # =========================================================================
 
     hoje = timezone.localtime().date()
