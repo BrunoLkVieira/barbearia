@@ -147,6 +147,7 @@
                 </div>
             </div>
             
+            <!-- GRÁFICOS ATUALIZADOS -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <div class="chart-header">
@@ -157,23 +158,36 @@
                     </div>
                 </div>
             
+                <!-- MÉTODOS DE PAGAMENTO (Substitui Produtos x Serviços) -->
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-chart-pie"></i> Receitas (Serviços x Balcão)</h3>
+                        <h3><i class="fas fa-wallet"></i> Métodos de Pagamento</h3>
                     </div>
                     <div class="chart-container">
-                        <canvas id="categoryChart"></canvas>
+                        <canvas id="paymentChart"></canvas>
                     </div>
                 </div>
             
                 <div class="chart-card">
                     <div class="chart-header">
-                        <h3><i class="fas fa-cut"></i> Top Serviços (Faturamento)</h3>
+                        <h3><i class="fas fa-cut"></i> Top Serviços</h3>
                     </div>
                     <div class="chart-container">
                         <canvas id="servicesChart"></canvas>
                     </div>
                 </div>
+                
+                <!-- TOP PROFISSIONAIS (Somente Admin/Gerentes e visão Geral) -->
+                {% if is_admin and not selected_barber %}
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-users"></i> Top Profissionais (Bruto)</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="barberRevenueChart"></canvas>
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             {% if is_admin and not selected_barber %}
@@ -369,17 +383,22 @@
         </div>
     </div>
     
+    <!-- VARIÁVEIS JSON ATUALIZADAS -->
     <script>
-        const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe }}');
-        const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe }}');
-        const CH_SRV_NAMES = JSON.parse('{{ chart_service_names|safe }}');
-        const CH_SRV_VALUES = JSON.parse('{{ chart_service_values|safe }}');
-        const CH_CATEGORIES = JSON.parse('{{ chart_category_data|safe }}');
+        const CH_REV_DATES = JSON.parse('{{ chart_revenue_dates|safe|default:"[]" }}');
+        const CH_REV_VALUES = JSON.parse('{{ chart_revenue_values|safe|default:"[]" }}');
+        const CH_SRV_NAMES = JSON.parse('{{ chart_service_names|safe|default:"[]" }}');
+        const CH_SRV_VALUES = JSON.parse('{{ chart_service_values|safe|default:"[]" }}');
+        const CH_PAY_NAMES = JSON.parse('{{ chart_payment_names|safe|default:"[]" }}');
+        const CH_PAY_VALUES = JSON.parse('{{ chart_payment_values|safe|default:"[]" }}');
+        const CH_BARBER_NAMES = JSON.parse('{{ chart_barber_names|safe|default:"[]" }}');
+        const CH_BARBER_REVENUES = JSON.parse('{{ chart_barber_revenues|safe|default:"[]" }}');
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    <!-- MÁGICA DA DATA DO DIA ALINHADA COM A IMAGEM -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dateSpan = document.getElementById('currentDate');
@@ -388,12 +407,13 @@
                 const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
                 const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
                 
-                const dia = now.getDate();
+                // Formato padStart garante que dias 1 a 9 fiquem como "01", "09".
+                const dia = String(now.getDate()).padStart(2, '0');
                 const mes = meses[now.getMonth()];
                 const ano = now.getFullYear();
                 const diaSemana = diasSemana[now.getDay()];
                 
-                // Formato idêntico ao layout: 10 de julho de 2026 - Sexta-feira
+                // Saída idêntica à foto: "10 de julho de 2026 - Sexta-feira"
                 dateSpan.textContent = `${dia} de ${mes} de ${ano} - ${diaSemana}`;
             }
         });
@@ -420,7 +440,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Reposiciona o filtro de unidade no Mobile
             if (window.innerWidth <= 820) {
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
@@ -430,43 +449,47 @@
                 }
             }
 
-            // Gráfico 1: Receita
-            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(revenueCtx, {
-                type: 'line',
-                data: {
-                    labels: CH_REV_DATES.length > 0 ? CH_REV_DATES : ['Sem Dados'],
-                    datasets: [{
-                        label: 'Receita (R$)',
-                        data: CH_REV_VALUES.length > 0 ? CH_REV_VALUES : [0],
-                        borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#3498db',
-                        pointRadius: 4, tension: 0.3, fill: true
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }, x: { grid: { display: false } } } }
-            });
+            // 1. Gráfico de Receita
+            const revenueCtx = document.getElementById('revenueChart');
+            if(revenueCtx) {
+                new Chart(revenueCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: CH_REV_DATES.length > 0 ? CH_REV_DATES : ['Sem Dados'],
+                        datasets: [{
+                            label: 'Receita (R$)',
+                            data: CH_REV_VALUES.length > 0 ? CH_REV_VALUES : [0],
+                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3, pointBackgroundColor: '#fff', pointBorderColor: '#3498db',
+                            pointRadius: 4, tension: 0.3, fill: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }, x: { grid: { display: false } } } }
+                });
+            }
 
-            // Gráfico 2: Categorias
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            new Chart(categoryCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Serviços', 'Produtos'],
-                    datasets: [{
-                        data: CH_CATEGORIES,
-                        backgroundColor: ['rgba(52, 152, 219, 0.8)', 'rgba(46, 204, 113, 0.8)'],
-                        borderWidth: 1,
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
+            // 2. Gráfico: Métodos de Pagamento
+            const paymentCtx = document.getElementById('paymentChart');
+            if (paymentCtx) {
+                new Chart(paymentCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: CH_PAY_NAMES.length > 0 ? CH_PAY_NAMES : ['Sem Vendas'],
+                        datasets: [{
+                            data: CH_PAY_VALUES.length > 0 ? CH_PAY_VALUES : [1],
+                            // Cores: PIX (Ciano/Verde), Cartão (Azul), Dinheiro (Amarelo)
+                            backgroundColor: ['#1abc9c', '#3498db', '#f1c40f', '#9b59b6', '#e74c3c'],
+                            borderWidth: 1,
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
 
-            // Gráfico 3: Top Serviços
+            // 3. Top Serviços
             const servicesContainer = document.getElementById('servicesChart');
             if (servicesContainer) {
-                const servicesCtx = servicesContainer.getContext('2d');
-                new Chart(servicesCtx, {
+                new Chart(servicesContainer.getContext('2d'), {
                     type: 'bar',
                     data: {
                         labels: CH_SRV_NAMES.length > 0 ? CH_SRV_NAMES : ['Nenhum Serviço'],
@@ -480,9 +503,27 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
                 });
             }
+
+            // 4. Top Profissionais (Faturamento Bruto)
+            const barberRevContainer = document.getElementById('barberRevenueChart');
+            if (barberRevContainer && CH_BARBER_NAMES.length > 0) {
+                new Chart(barberRevContainer.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: CH_BARBER_NAMES,
+                        datasets: [{
+                            label: 'Faturamento Bruto (R$)',
+                            data: CH_BARBER_REVENUES,
+                            backgroundColor: 'rgba(230, 126, 34, 0.8)',
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+            }
         });
 
-        /* FUNÇÕES DE MODAL E RECORRÊNCIA COM SWEETALERT2 */
+        /* FUNÇÕES DE MODAL */
         function openReportModal() { document.getElementById('reportModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
         function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; document.body.style.overflow = ''; }
         function openExpenseModal() { document.getElementById('expenseModal').style.display = 'flex'; document.body.style.overflow = 'hidden'; }

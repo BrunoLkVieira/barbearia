@@ -2,7 +2,7 @@ import json
 import calendar
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages # <--- ADICIONE ESTE IMPORT
+from django.contrib import messages
 from django.db.models import Sum, Q, Min
 from django.db.models.functions import TruncDay
 from django.utils import timezone
@@ -33,7 +33,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
     # =========================================================================
     # AÇÕES: CRIAR, EDITAR, PAGAR E EXCLUIR DESPESAS
     # =========================================================================
-    if request.method == "POST" and is_owner:
+    if request.method == "POST" and is_admin:
         action = request.POST.get("action")
         
         if action == "create_expense":
@@ -71,7 +71,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                     unit=target_unit, name=nome_despesa, amount=valor_despesa,
                     due_date=data_base, is_recurring=False, is_paid=is_paid
                 )
-                
             messages.success(request, "Despesa lançada com sucesso!")
             return redirect(request.get_full_path())
             
@@ -87,7 +86,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             is_paid = 'is_paid' in request.POST
             edit_future = request.POST.get("edit_future") == "true"
             
-            # Pega o nome base antigo antes de alterar o objeto
             base_name_old = exp.name.split(' (')[0] if exp.is_recurring else exp.name
             data_antiga = exp.due_date
 
@@ -97,7 +95,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             exp.is_paid = is_paid
             exp.save()
             
-            # ORM: Removemos o filtro de 'amount' para garantir que ele ache as contas velhas e as sobrescreva
             if exp.is_recurring and edit_future:
                 futuras = UnitExpense.objects.filter(
                     unit=exp.unit, name__startswith=base_name_old,
@@ -131,9 +128,9 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                 ).delete()
             else:
                 exp.delete()
-                
             messages.success(request, "Registro excluído com sucesso!")
             return redirect(request.get_full_path())
+
     # =========================================================================
 
     hoje = timezone.localtime().date()
@@ -171,7 +168,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
     dados_dashboard = {}
     
     if barber_filter or not is_admin:
-        # VISÃO INDIVIDUAL DO BARBEIRO
         emp_focado = employees_scope.filter(id=barber_filter if barber_filter else logged_employee.id).first()
         
         apps_barbeiro = appointments.filter(employee=emp_focado)
@@ -189,7 +185,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
             dados_dashboard = {
                 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro,
                 'card_2_label': "Comissões", 'card_2_val': 0.00,
-                'card_3_label': "Custo Cadeira (Aluguel)", 'card_3_val': -aluguel, # Mostramos negativo para clareza
+                'card_3_label': "Custo Cadeira (Aluguel)", 'card_3_val': -aluguel,
                 'card_4_label': "Meu Ganho Líquido", 'card_4_val': ganho_liquido,
             }
         elif contract_type == 'fixed_salary':
@@ -201,7 +197,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                 'card_3_label': "Salário Fixo", 'card_3_val': salario,
                 'card_4_label': "Meu Ganho Líquido", 'card_4_val': ganho_liquido,
             }
-        else: # contract_type == 'commission'
+        else:
             dados_dashboard = {
                 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro,
                 'card_2_label': "Minhas Comissões", 'card_2_val': comissoes_geradas,
@@ -212,7 +208,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         chart_appointments = apps_barbeiro
         
     else:
-        # VISÃO GLOBAL (CAIXA DA BARBEARIA)
         total_vendas = appointments.count()
         producao_bruta_total = float(appointments.aggregate(total=Sum('total_price'))['total'] or 0.00)
         
@@ -242,27 +237,42 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         chart_appointments = appointments
 
     # ================= Gráficos Dinâmicos =================
+    
+    # 1. Evolução da Receita
     revenue_qs = chart_appointments.annotate(day=TruncDay('date')).values('day').annotate(daily_total=Sum('total_price')).order_by('day')
     chart_revenue_dates = [item['day'].strftime('%d/%m') for item in revenue_qs if item['day']]
     chart_revenue_values = [float(item['daily_total']) for item in revenue_qs]
 
-    chart_barber_names, chart_barber_commissions = [], []
-    if is_admin and not barber_filter:
-        for emp in employees_scope:
-            if emp.user == barbershop.owner_user: continue
-            soma_comissao = AppointmentService.objects.filter(appointment__in=appointments.filter(employee=emp)).aggregate(total=Sum('barber_commission_value'))['total'] or 0.00
-            if soma_comissao > 0:
-                chart_barber_names.append(emp.user.name)
-                chart_barber_commissions.append(float(soma_comissao))
-            
+    # 2. Top Serviços (O que mais vende)
     top_services_qs = AppointmentService.objects.filter(appointment__in=chart_appointments).values('service__name').annotate(total_revenue=Sum('price_at_sale')).order_by('-total_revenue')[:5]
     
+    # 3. Métodos de Pagamento (Substitui Produtos x Serviços)
+    payment_qs = chart_appointments.exclude( Q(payment_type__isnull=True) | Q(payment_type__exact='')).values('payment_type').annotate(total=Sum('total_price')).order_by('-total')
+    pm_map = {'cash': 'Dinheiro', 'card': 'Cartão', 'pix': 'PIX'}
+    chart_payment_names, chart_payment_values = [], []
+    for p in payment_qs:
+        val = float(p['total'] or 0.0)
+        if val > 0:
+            pt = p['payment_type']
+            chart_payment_names.append(pm_map.get(pt, 'Outros') if pt else 'Outros')
+            chart_payment_values.append(val)
+
+    # 4. Faturamento por Profissional (Apenas Admin)
+    chart_barber_names, chart_barber_revenues = [], []
+    if is_admin and not barber_filter:
+        barber_qs = chart_appointments.values('employee__user__name').annotate(total=Sum('total_price')).order_by('-total')
+        for b in barber_qs:
+            val = float(b['total'] or 0.0)
+            if val > 0:
+                chart_barber_names.append(b['employee__user__name'])
+                chart_barber_revenues.append(val)
+                
+    # Opções de Data
     meses_choices = [
         (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
         (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
         (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
     ]
-    
     anos_com_agendamentos = Appointment.objects.filter(unit__barbershop=barbershop).dates('date', 'year')
     anos_choices = sorted(list(set([d.year for d in anos_com_agendamentos] + [hoje.year])))
 
@@ -276,9 +286,13 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
     }
     context.update(dados_dashboard)
     context.update({
-        'chart_revenue_dates': json.dumps(chart_revenue_dates), 'chart_revenue_values': json.dumps(chart_revenue_values),
+        'chart_revenue_dates': json.dumps(chart_revenue_dates),
+        'chart_revenue_values': json.dumps(chart_revenue_values),
         'chart_service_names': json.dumps([item['service__name'] for item in top_services_qs]), 
         'chart_service_values': json.dumps([float(item['total_revenue']) for item in top_services_qs]),
-        'chart_category_data': json.dumps([dados_dashboard['card_1_val'], 0.00]),
+        'chart_payment_names': json.dumps(chart_payment_names),
+        'chart_payment_values': json.dumps(chart_payment_values),
+        'chart_barber_names': json.dumps(chart_barber_names),
+        'chart_barber_revenues': json.dumps(chart_barber_revenues),
     })
     return render(request, "finance/finance.html", context)
