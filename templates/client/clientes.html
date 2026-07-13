@@ -15,7 +15,26 @@
     <link rel="stylesheet" href="{% static 'client/css/mobile/client.css' %}">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>.swal2-container {z-index: 99999 !important;}</style>
+    <style>
+        .swal2-container {z-index: 99999 !important;}
+        
+        /* Neutraliza o container fantasma da navbar no mobile */
+        @media (max-width: 820px) {
+            .nav-bar { 
+                display: block !important; 
+                background: transparent !important; 
+                box-shadow: none !important; 
+                border: none !important; /* Remove a linha ridícula */
+                padding: 0 !important; 
+                margin: 0 !important; 
+                min-height: 0 !important;
+            }
+            /* Garante que o esqueleto dos stats não ocupe espaço invisível */
+            .nav-content { 
+                display: none !important; 
+            }
+        }
+    </style>
 </head>
 <body>
     
@@ -24,7 +43,7 @@
     <div class="nav-bar">
         {% include 'geral/nav.html' %}
         
-        <div class="nav-content desktop-only">
+        <div class="nav-content">
             <div class="stats">
                 
                 {% if is_owner %}
@@ -42,7 +61,7 @@
                     </div>
                 {% endif %}
                 
-                <div class="stat-box">
+                <div class="stat-box desktop-only">
                     <div class="stat-value">{{ total_geral }}</div>
                     <div class="stat-label">Clientes Na Base</div>
                 </div>
@@ -367,9 +386,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (window.innerWidth <= 820) {
-                // A MÁGICA: O JS procura a class 'desktop-unit-filter'.
-                // Se for Dono, é um <select>. Se for Funcionário, é um <div> de badge!
-                // Ambos vão ser ejetados no topo perfeitamente.
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
@@ -378,7 +394,6 @@
             }
         });
 
-        // Gavetas dos Clientes (Específico da tela de clientes)
         function openMobileSheet(clientId, event) {
             if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
             document.getElementById('bs-overlay-' + clientId).classList.add('active');

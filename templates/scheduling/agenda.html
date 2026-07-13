@@ -20,7 +20,26 @@
     <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/novoAgendamento.css' %}">
     <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/novoClinte.css' %}">
     <link rel="stylesheet" href="{% static 'schedule/css/mobile/modals/editService.css' %}">
-    <style>.swal2-container {z-index: 9999;}</style>
+    <style>
+        .swal2-container {z-index: 99999 !important;}
+        
+        /* Neutraliza o container fantasma da navbar no mobile */
+        @media (max-width: 820px) {
+            .nav-bar { 
+                display: block !important; 
+                background: transparent !important; 
+                box-shadow: none !important; 
+                border: none !important; /* Remove a linha ridícula */
+                padding: 0 !important; 
+                margin: 0 !important; 
+                min-height: 0 !important;
+            }
+            /* Garante que o esqueleto dos stats não ocupe espaço invisível */
+            .nav-content { 
+                display: none !important; 
+            }
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
@@ -29,7 +48,7 @@
     <div class="nav-bar">
         {% include "geral/nav.html" %}
         
-        <div class="nav-content desktop-only">
+        <div class="nav-content">
             <div class="stats">
                 
                 {% if is_owner %}
@@ -49,11 +68,11 @@
                 </div>
                 {% endif %}
 
-                <div class="stat-box">
+                <div class="stat-box desktop-only">
                     <div class="stat-value">{{ total_appointments|default:"0" }}</div>
                     <div class="stat-label">Agendamentos</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box desktop-only">
                     <div class="stat-value">R$ {{ total_revenue|default:"0,00" }}</div>
                     <div class="stat-label">Previsão</div>
                 </div>
@@ -639,8 +658,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // ADICIONADA A MÁGICA DO FILTRO DA UNIDADE QUE FALTAVA NA AGENDA!
             if (window.innerWidth <= 820) {
-                // Sincronizar o Filtro Central do Mobile com o Desktop Oculto
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
