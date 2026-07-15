@@ -81,7 +81,7 @@
                     {% endfor %}
                 </select>
             </div>
-            {% if is_admin %}
+            {% if is_owner or is_manager %}
             <div class="row">
                 <select name="barber" onchange="document.getElementById('mobileFinanceForm').submit()">
                     <option value="">Equipe Completa</option>
@@ -122,7 +122,7 @@
                 <span>Competência</span>
             </div>
             
-            {% if is_admin %}
+            {% if is_owner or is_manager %}
             <div class="filter-group">
                 <label for="barberFilter">Barbeiro</label>
                 <select id="barberFilter" name="barber">
@@ -165,7 +165,7 @@
             <div class="finance-content desktop-only">
                 <div class="finance-header" style="justify-content: flex-end;">
                     <div class="finance-controls">
-                        {% if is_admin %}
+                        {% if is_owner or is_manager %}
                         <button class="btn btn-outline" onclick="openExpenseModal()" style="color: #e74c3c; border-color: #e74c3c; background: transparent;">
                             <i class="fas fa-file-invoice-dollar"></i> Lançar Despesa
                         </button>
@@ -236,7 +236,8 @@
                     </div>
                 </div>
                 
-                {% if is_admin and not selected_barber %}
+                {% if is_owner or is_manager %}
+                {% if not selected_barber %}
                 <div class="chart-card">
                     <div class="chart-header">
                         <h3><i class="fas fa-users"></i> Top Profissionais (Bruto)</h3>
@@ -246,9 +247,11 @@
                     </div>
                 </div>
                 {% endif %}
+                {% endif %}
             </div>
 
-            {% if is_admin and not selected_barber %}
+            {% if is_owner or is_manager %}
+            {% if not selected_barber %}
             <div class="chart-card" style="margin-top: 25px; height: auto;">
                 <div class="chart-header">
                     <h3><i class="fas fa-file-invoice-dollar" style="color: #e74c3c;"></i> Gestão de Despesas</h3>
@@ -386,13 +389,14 @@
                 </div>
             </div>
             {% endif %}
+            {% endif %}
         </div>
     </div>
     
     <footer class="desktop-only">
         <div class="buttons-display">
             <div class="actions">
-                {% if is_admin %}
+                {% if is_owner or is_manager %}
                 <button class="btn btn-outline" onclick="openExpenseModal()" style="color: #e74c3c; border-color: #e74c3c;">
                     <i class="fas fa-file-invoice-dollar"></i> Lançar Despesa
                 </button>
@@ -404,7 +408,7 @@
         </div>
     </footer>
 
-    {% if is_admin %}
+    {% if is_owner or is_manager %}
     <div class="mobile-only">
         <button class="m-fab-btn" onclick="openExpenseModal()">
             <i class="fas fa-plus"></i>
@@ -525,7 +529,6 @@
         const CH_BARBER_REVENUES = JSON.parse('{{ chart_barber_revenues|safe|default:"[]" }}');
     </script>
 
-    <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
@@ -566,7 +569,7 @@
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
-                    unitFilter.style.display = 'block'; 
+                    unitFilter.style.margin = '0 auto';
                     header.insertBefore(unitFilter, document.querySelector('.user-controls'));
                 }
             }

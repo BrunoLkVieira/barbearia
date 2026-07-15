@@ -8,18 +8,31 @@ from django.db.models.functions import TruncDay
 from django.utils import timezone
 from datetime import datetime, date
 
+from apps import barbershop
 from apps.barbershop.models import Barbershop, Unit, Employee
 from apps.scheduling.models import Appointment, AppointmentService
 from apps.finance.models import UnitExpense
+from apps.scheduling.views import get_tenant_employee
 
 @login_required
 def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+    logged_employee = Employee.objects.filter(user=request.user, unit__barbershop=barbershop).first()
     
     is_owner = (request.user == barbershop.owner_user)
-    logged_employee = Employee.objects.filter(user=request.user, unit__barbershop=barbershop).first()
-    is_admin = is_owner or (logged_employee and logged_employee.roles.filter(occupation__in=['gerente', 'caixa']).exists())
-    
+    emp = get_tenant_employee(request.user, barbershop) # Use a função que resgata o funcionário
+
+    is_manager = False
+    is_cashier = False
+
+    if emp:
+        is_manager = emp.roles.filter(occupation__iexact='gerente').exists()
+        is_cashier = emp.roles.filter(occupation__iexact='caixa').exists() and not is_manager
+
+    # Variável de segurança caso o financeiro antigo use is_admin
+    is_admin = is_owner or is_manager
+
+
     unit = None
     if not is_admin:
         if not logged_employee: return redirect('user:login')
@@ -278,7 +291,10 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
 
     context = {
         'barbershop': barbershop, 'unit': unit, 'units': barbershop.units.all() if is_admin else [unit],
-        'is_owner': is_owner, 'is_admin': is_admin, 'employees': employees_scope, 'total_vendas': total_vendas,
+        'is_owner': is_owner,
+        'is_manager': is_manager,
+        'is_cashier': is_cashier,
+        'is_admin': is_admin, 'employees': employees_scope, 'total_vendas': total_vendas,
         'current_month': current_month, 'current_year': current_year,
         'meses_choices': meses_choices, 'anos_choices': anos_choices, 'hoje_data': hoje.strftime("%Y-%m-%d"),
         'selected_barber': int(barber_filter) if barber_filter else '', 'active_tab': 'finance',
