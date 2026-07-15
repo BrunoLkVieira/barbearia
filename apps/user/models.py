@@ -41,3 +41,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def initials(self):
+        # Pega a primeira letra do nome
+        first = self.name[0].upper() if self.name else ""
+        # Pega a primeira letra da ÚLTIMA palavra do sobrenome
+        last_word = self.last_name.split()[-1] if self.last_name else ""
+        last = last_word[0].upper() if last_word else ""
+        return f"{first}{last}"

@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="sidebar-menu">
-                    <a href="#" class="sidebar-item"><i class="fas fa-user"></i><span>Meu Perfil</span></a>
+                    <a href="{% url 'user:profile' %}" class="sidebar-item"><i class="fas fa-user"></i><span>Meu Perfil</span></a>
                     
                     {% if is_owner or is_manager %}
                     <a href="{% url 'services:list_general' barbershop_slug=barbershop.slug %}" class="sidebar-item mobile-sidebar">

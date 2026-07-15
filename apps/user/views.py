@@ -10,6 +10,7 @@ from .utils.email_verification import send_verification_email
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from apps.barbershop.models import Barbershop, Employee 
+from django.contrib.auth.decorators import login_required
 
 class UserRegisterView(View):
     def get(self, request):
@@ -152,3 +153,57 @@ class VerifyEmailView(View):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             messages.error(request, 'Ocorreu um erro ao verificar o e-mail.')
         return redirect('user:register')
+    
+
+
+@login_required
+def ProfileView(request):
+    user = request.user
+    
+    funcao_display = "Cliente"
+    barbershop = None
+    
+    # 1. Definindo as permissões base para o nav.html
+    is_owner = (user.user_type == 'dono')
+    is_manager = False
+    
+    if is_owner:
+        funcao_display = "Titular (Dono da Barbearia)"
+        barbershop = Barbershop.objects.filter(owner_user=user).first()
+    else:
+        emp = Employee.objects.filter(user=user).first()
+        if emp:
+            barbershop = emp.unit.barbershop
+            
+            # Verifica se o funcionário é gerente para liberar o menu
+            is_manager = emp.roles.filter(occupation='gerente').exists()
+            
+            cargos = [role.get_occupation_display() for role in emp.roles.all()]
+            if cargos:
+                funcao_display = " / ".join(cargos)
+            else:
+                funcao_display = "Funcionário Padrão"
+
+    if request.method == 'POST':
+        user.name = request.POST.get('name')
+        user.last_name = request.POST.get('last_name')
+        
+        phone = request.POST.get('phone', '')
+        user.phone = "".join(filter(str.isdigit, phone)) 
+        
+        birth_date = request.POST.get('birth_date')
+        if birth_date:
+            user.birth_date = birth_date
+            
+        user.save()
+        messages.success(request, "Seus dados foram atualizados com sucesso!")
+        return redirect('user:profile')
+
+    # 2. Mandando TUDO para o HTML para a Navbar funcionar
+    context = {
+        'funcao_display': funcao_display,
+        'barbershop': barbershop,
+        'is_owner': is_owner,      # Faz o menu de dono aparecer!
+        'is_manager': is_manager,  # Faz o menu de gerente aparecer!
+    }
+    return render(request, 'user/perfil.html', context)
