@@ -10,7 +10,7 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('cpf', 'email', 'name', 'user_type')
+        fields = ('email', 'name', 'last_name', 'document_type', 'document', 'user_type')
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
@@ -32,10 +32,10 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('cpf', 'email', 'name', 'user_type', 'password', 'is_active', 'is_staff', 'is_superuser')
+        fields = ('email', 'name', 'last_name', 'document_type', 'document', 'phone', 'user_type', 'password', 'is_active', 'is_staff', 'is_superuser')
 
     def clean_password(self):
-        return self.initial['password']
+        return self.initial.get('password')
 
 
 # ----- Forms das Views -----
@@ -45,7 +45,7 @@ class UserRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('cpf', 'email', 'name','last_name','phone', 'user_type', 'birth_date')
+        fields = ('email', 'name', 'last_name', 'document_type', 'document', 'phone', 'user_type', 'birth_date')
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
@@ -63,14 +63,17 @@ class UserRegistrationForm(forms.ModelForm):
 
 
 class UserLoginForm(forms.Form):
-    cpf = forms.CharField(label='CPF')
+    email = forms.EmailField(label='E-mail')
     password = forms.CharField(label='Senha', widget=forms.PasswordInput)
 
     def clean(self):
-        cpf = self.cleaned_data.get('cpf')
+        email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
-        user = authenticate(cpf=cpf, password=password)
+        
+        # A autenticação agora usa email como chave principal
+        user = authenticate(email=email, password=password)
         if not user:
-            raise forms.ValidationError("CPF ou senha inválidos")
+            raise forms.ValidationError("E-mail ou senha inválidos")
+        
         self.cleaned_data['user'] = user
         return self.cleaned_data

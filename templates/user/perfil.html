@@ -26,7 +26,7 @@
         .profile-container {
             width: 100%;
             max-width: 600px;
-            margin: 0; /* Removemos aquela margem de 40px que forçava a rolagem */
+            margin: 0 auto; 
             background: #fff;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
@@ -84,23 +84,33 @@
         .form-control:focus { border-color: #FF7A00; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(255,122,0,0.1); }
         .form-control:disabled { background: #e2e8f0; color: #a0aec0; cursor: not-allowed; }
 
+        .action-buttons {
+            display: flex; gap: 10px; margin-top: 15px;
+        }
+
         .btn-save {
-            width: 100%; padding: 15px; background: linear-gradient(135deg, #FF7A00, #d35400);
+            flex: 2; padding: 15px; background: linear-gradient(135deg, #FF7A00, #d35400);
             color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1.05rem;
             cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(255,122,0,0.3);
-            margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,122,0,0.4); }
 
+        .btn-pwd {
+            flex: 1; padding: 15px; background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0;
+            border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-pwd:hover { background: #e2e8f0; color: #2d3748; }
+
         .readonly-notice { font-size: 0.8rem; color: #7f8c8d; margin-top: 5px; display: block; }
 
-        /* Ajustes Mobile e Trava da Navbar */
         @media (max-width: 820px) {
             .profile-container { margin: 15px; border-radius: 12px; }
             .header-brand { display: none !important; }
             .desktop-only { display: none !important; }
+            .action-buttons { flex-direction: column; }
             
-            /* Trava da Navbar Mobile */
             .nav-bar { display: block !important; background: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; min-height: 0 !important; }
             .nav-content { display: none !important; }
         }
@@ -111,8 +121,7 @@
 
     <div class="nav-bar">
         {% include "geral/nav.html" %}
-        <div class="nav-content desktop-only">
-            </div>
+        <div class="nav-content desktop-only"></div>
     </div>
 
     <div class="pages-options-Container desktop-only">
@@ -120,6 +129,7 @@
             <div class="page-option active"><i class="fas fa-user"></i> Meu Perfil</div>
         </a>
     </div>
+    
     <div class="main-content" style="padding-bottom: 80px;">
         <div class="profile-container">
             <div class="profile-header">
@@ -133,18 +143,35 @@
             <div class="profile-body">
                 <form method="POST" autocomplete="off">
                     {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
-                            <label>CPF</label>
-                            <input type="text" class="form-control" value="{{ request.user.cpf }}" disabled>
-                        </div>
-                        <div class="form-group">
-                            <label>E-mail</label>
+                            <label>E-mail de Acesso</label>
                             <input type="email" class="form-control" value="{{ request.user.email }}" disabled>
                         </div>
+
+                        <div class="form-group">
+                            <label>Documento</label>
+                            {% if is_owner %}
+                                <div style="display: flex; border: 1px solid #dcdde1; border-radius: 10px; overflow: hidden; background: #f8f9fa;">
+                                    <select name="document_type" id="docTypeSelect" style="border: none; background: #eaecef; padding: 12px 15px; font-weight: 700; color: #2c3e50; outline: none; cursor: pointer; border-right: 1px solid #dcdde1;">
+                                        <option value="CPF" {% if request.user.document_type == 'CPF' %}selected{% endif %}>CPF</option>
+                                        <option value="CNPJ" {% if request.user.document_type == 'CNPJ' %}selected{% endif %}>CNPJ</option>
+                                    </select>
+                                    <input type="text" name="document" id="docInput" style="flex: 1; border: none; padding: 12px 15px; outline: none; background: transparent; font-size: 0.95rem; color: #2c3e50;" value="{{ request.user.document|default:'' }}" placeholder="000.000.000-00">
+                                </div>
+                            {% else %}
+                                <input type="text" class="form-control" value="{% if request.user.document %}{{ request.user.document_type }}: {{ request.user.document }}{% else %}Não exigido / Opcional{% endif %}" disabled>
+                            {% endif %}
+                        </div>
                     </div>
-                    <span class="readonly-notice"><i class="fas fa-lock"></i> CPF e E-mail são dados de acesso e não podem ser alterados por aqui.</span>
+                    
+                    {% if is_owner %}
+                        <span class="readonly-notice"><i class="fas fa-lock"></i> O E-mail é sua chave global de acesso. O Documento é usado para notas fiscais.</span>
+                    {% else %}
+                        <span class="readonly-notice"><i class="fas fa-lock"></i> Seu E-mail é sua chave global de acesso e não pode ser alterado por aqui.</span>
+                    {% endif %}
                     
                     <hr style="border: 0; border-top: 1px dashed #eaecef; margin: 25px 0;">
 
@@ -170,25 +197,130 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-save">
-                        <i class="fas fa-save"></i> Salvar Alterações
-                    </button>
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i> Salvar Alterações
+                        </button>
+                        <button type="button" class="btn-pwd" onclick="openPasswordModal()">
+                            <i class="fas fa-key"></i> Alterar Senha
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- MODAL ALTERAR SENHA BLINDADO -->
+    <div id="passwordModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999999; justify-content: center; align-items: center; padding: 15px;">
+        <div style="background: #fff; border-radius: 16px; max-width: 400px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eaecef; background: #f8f9fa;">
+                <h2 style="color: #1a233a; font-size: 1.2rem; margin:0;"><i class="fas fa-lock" style="color: #FF7A00; margin-right: 8px;"></i> Alterar Senha</h2>
+                <button type="button" onclick="closePasswordModal()" style="background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #a0aec0; line-height: 1;">&times;</button>
+            </div>
+            
+            <form method="POST" style="padding: 20px; margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+                
+                <div style="position: relative; margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 8px; font-size: 0.9rem;">Senha Atual</label>
+                    <input type="password" name="old_password" id="oldPwd" required style="width: 100%; padding: 12px 15px; border: 1px solid #dcdde1; border-radius: 10px; font-size: 0.95rem; color: #2c3e50; background: #f8f9fa; box-sizing: border-box;">
+                    <i class="fas fa-eye" onclick="togglePwd('oldPwd', this)" style="position: absolute; right: 15px; top: 40px; color: #a0aec0; cursor: pointer;"></i>
+                </div>
+                
+                <div style="position: relative; margin-bottom: 15px;">
+                    <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 8px; font-size: 0.9rem;">Nova Senha</label>
+                    <input type="password" name="new_password" id="newPwd" minlength="6" required style="width: 100%; padding: 12px 15px; border: 1px solid #dcdde1; border-radius: 10px; font-size: 0.95rem; color: #2c3e50; background: #f8f9fa; box-sizing: border-box;">
+                    <i class="fas fa-eye" onclick="togglePwd('newPwd', this)" style="position: absolute; right: 15px; top: 40px; color: #a0aec0; cursor: pointer;"></i>
+                </div>
+                
+                <div style="position: relative; margin-bottom: 25px;">
+                    <label style="display: block; font-weight: 600; color: #2c3e50; margin-bottom: 8px; font-size: 0.9rem;">Confirmar Nova Senha</label>
+                    <input type="password" name="confirm_password" id="confPwd" minlength="6" required style="width: 100%; padding: 12px 15px; border: 1px solid #dcdde1; border-radius: 10px; font-size: 0.95rem; color: #2c3e50; background: #f8f9fa; box-sizing: border-box;">
+                    <i class="fas fa-eye" onclick="togglePwd('confPwd', this)" style="position: absolute; right: 15px; top: 40px; color: #a0aec0; cursor: pointer;"></i>
+                </div>
+                
+                <button type="submit" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #FF7A00, #d35400); color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1.05rem; cursor: pointer; box-shadow: 0 4px 15px rgba(255,122,0,0.3);">
+                    Confirmar e Atualizar
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
-    {% if messages %}
+    
     <script>
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function togglePwd(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000 });
-            {% for message in messages %}
-                Toast.fire({ icon: '{{ message.tags }}' === 'error' ? 'error' : 'success', title: '{{ message }}' });
-            {% endfor %}
+            // Máscara Inteligente de CPF/CNPJ (Apenas p/ Donos)
+            const docTypeSelect = document.getElementById('docTypeSelect');
+            const docInput = document.getElementById('docInput');
+
+            function applyMask() {
+                if(!docInput) return;
+                let v = docInput.value.replace(/\D/g, ''); 
+                
+                if (docTypeSelect && docTypeSelect.value === 'CPF') {
+                    if (v.length > 11) v = v.slice(0, 11);
+                    v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                    v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                    v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                } else if(docTypeSelect && docTypeSelect.value === 'CNPJ') {
+                    if (v.length > 14) v = v.slice(0, 14);
+                    v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                    v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                    v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                }
+                docInput.value = v;
+            }
+
+            if(docTypeSelect && docInput) {
+                applyMask(); // Formata valor inicial do banco
+                docTypeSelect.addEventListener('change', function() {
+                    docInput.value = ''; 
+                    if (this.value === 'CPF') {
+                        docInput.placeholder = '000.000.000-00';
+                        docInput.setAttribute('maxlength', '14');
+                    } else {
+                        docInput.placeholder = '00.000.000/0001-00';
+                        docInput.setAttribute('maxlength', '18');
+                    }
+                });
+                docInput.addEventListener('input', applyMask);
+            }
+
+            {% if messages %}
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 4000 });
+                {% for message in messages %}
+                    Toast.fire({ icon: '{{ message.tags }}' === 'error' ? 'error' : 'success', title: '{{ message }}' });
+                {% endfor %}
+            {% endif %}
         });
     </script>
-    {% endif %}
 </body>
 </html>

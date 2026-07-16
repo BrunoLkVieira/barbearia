@@ -408,8 +408,8 @@
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="loginCpf">CPF</label>
-                        <input type="text" id="loginCpf" required placeholder="Apenas números" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')">
+                        <label for="loginEmail">E-mail</label>
+                        <input type="email" id="loginEmail" required placeholder="seu@email.com">
                     </div>
                     <div class="form-group password-container">
                         <label for="loginPassword">Senha</label>
@@ -427,7 +427,6 @@
         </div>
     </div>
 
-    <!-- Modal de Registro -->
     <div class="modal modal-register" id="registerModal" aria-hidden="true" style="display: none;">
         <div class="modal-content register-modal-content">
             <div class="modal-header">
@@ -445,10 +444,7 @@
                         <label for="registerEmail">E-mail</label>
                         <input type="email" id="registerEmail" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required >
                     </div>
-                    <div class="form-group">
-                        <label for="registerCpf">CPF (somente números)</label>
-                        <input type="text" id="registerCpf" pattern="\d{11}" maxlength="11" required inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
-                    </div>
+                    
                     <div class="form-group">
                         <label for="registerPhone">Telefone (DDD + 9 dígitos)</label>
                         <input type="tel" id="registerPhone" pattern="[0-9]{11}" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')">

@@ -184,7 +184,7 @@
                                             <div class="action-btn edit-btn" style="background:#fed7d7; color:#c53030; border-color:#feb2b2;" title="Editar seu próprio perfil na agenda"
                                                 data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
                                                 data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
-                                                data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf="{{ owner_in_list.user.cpf }}"
+                                                data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf=""
                                                 data-unit="{{ owner_in_list.unit.id }}" data-active="true"
                                                 data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                                 data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
@@ -217,8 +217,6 @@
                                         <div class="employee-avatar" style="{% if not emp.is_active %}filter: grayscale(1);{% endif %}">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
                                         <div class="employee-info">
                                             <div class="employee-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                                            {% comment %} <div class="employee-plan">
-                                            </div> {% endcomment %}
                                         </div>
                                     </div>
                                 </td>
@@ -255,7 +253,7 @@
                                         {% if is_owner or emp.user != request.user %}
                                             <div class="action-btn edit-btn" title="Editar dados do funcionário"
                                                 data-id="{{ emp.id }}" data-is-owner="false" data-name="{{ emp.user.name }}" data-lastname="{{ emp.user.last_name }}"
-                                                data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="{{ emp.user.cpf }}"
+                                                data-email="{{ emp.user.email }}" data-phone="{{ emp.user.phone|default:'' }}" data-cpf="" data-document=""
                                                 data-birth="{{ emp.user.birth_date|date:'Y-m-d' }}"
                                                 data-unit="{{ emp.unit.id }}" data-active="{{ emp.is_active|yesno:'true,false' }}"
                                                 data-roles="{% for role in emp.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
@@ -393,7 +391,6 @@
                             </p>
                             <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ emp.user.phone|default:"Não informado" }}</p>
                             <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ emp.user.email }}</p>
-                            <p><i class="fas fa-id-card" style="color: #95a5a6; width:20px;"></i> <strong>CPF:</strong> {{ emp.user.cpf }}</p>
                         </div>
                         <div class="bs-actions" style="margin-top: 20px;">
                             {% if is_owner or emp.user != request.user %}
@@ -466,12 +463,15 @@
 
     <div id="employeeModal" class="modal">
         <div class="modal-content">
-            <form method="POST" id="employeeForm" autocomplete="off" data-check-url="{% url 'barbershop:check_employee_data' %}" data-cpf-api="{% url 'barbershop:api_check_cpf' barbershop.slug %}">
+            <form method="POST" id="employeeForm" autocomplete="off" data-check-url="{% url 'barbershop:check_employee_data' %}">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
                 <input type="hidden" name="employee_id" id="employeeId">
                 <input type="hidden" name="is_owner" id="isOwnerInput" value="False">
                 <input type="hidden" name="barbershop_slug" value="{{ barbershop.slug }}">
+
+                <input type="hidden" id="employeeCPF">
+                <input type="hidden" id="employeeDocument">
                 
                 <div class="modal-header">
                     <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Funcionário</h2>
@@ -491,29 +491,24 @@
                         </label>
                         <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Desmarque para inativar sem perder o histórico.</small>
                     </div>
-
-                    <div class="form-group regular-field" style="position: relative;">
-                        <label for="employeeCPF">CPF</label>
-                        <input type="text" name="cpf" id="employeeCPF" class="form-control" placeholder="Apenas números" minlength="11" maxlength="11" pattern="\d{11}" title="O CPF deve conter exatamente 11 números." required>
-                        <small id="cpfStatusMessage" style="color: #48bb78; font-weight: bold; display: none; margin-top: 5px;"><i class="fas fa-lock"></i> Digite a Data de Nascimento para confirmar a vinculação.</small>
-                    </div>
                     
+                    <div class="form-group regular-field" id="emailGroup">
+                        <label for="employeeEmail">E-mail <span style="color: #e53e3e;">*</span></label>
+                        <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="E-mail de acesso ao sistema" required>
+                    </div>
+
                     <div class="form-group regular-field">
                         <label for="employeeBirth">Data de Nascimento <span style="color: #e53e3e;">*</span></label>
                         <input type="date" name="birth_date" id="employeeBirth" class="form-control" required>
                     </div>
 
                     <div class="form-group regular-field">
-                        <label for="employeeName">Nome</label>
-                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite seu primeiro nome" pattern="[A-Za-zÀ-ÿ\s]+" required>
+                        <label for="employeeName">Nome <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" name="name" id="employeeName" class="form-control" placeholder="Digite o primeiro nome" pattern="[A-Za-zÀ-ÿ\s]+" required>
                     </div>
                     <div class="form-group regular-field">
-                        <label for="employeeLastName">Sobrenome</label>
-                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite seu sobrenome" pattern="[A-Za-zÀ-ÿ\s]+" required>
-                    </div>
-                    <div class="form-group regular-field" id="emailGroup">
-                        <label for="employeeEmail">Email</label>
-                        <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="Digite o email" required>
+                        <label for="employeeLastName">Sobrenome <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" name="last_name" id="employeeLastName" class="form-control" placeholder="Digite o sobrenome" pattern="[A-Za-zÀ-ÿ\s]+" required>
                     </div>
                     <div class="form-group regular-field" id="phoneGroup">
                         <label for="employeePhone">Celular</label>
@@ -522,7 +517,7 @@
                     
                     <div class="form-group" id="passwordGroup" style="display: none;">
                         <label for="employeePassword">Senha Inicial do Aplicativo <span style="color: #e53e3e;">*</span></label>
-                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso" minlength="6">
+                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso provisória" minlength="6">
                     </div>
                     
                     <div class="form-group">

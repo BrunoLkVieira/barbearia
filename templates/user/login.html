@@ -4,14 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Barbearia Executiva</title>
+    <title>Login - Orbly Barber</title>
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'user/css/desktop/login.css' %}">
-    
     
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'user/css/mobile/login.css' %}">
@@ -36,35 +35,26 @@
                 
                 {% if messages %}
                     {% for message in messages %}
-
                         {% if message.tags == 'error' %}
-                        
                             <div class="alert alert-{{ message.tags }}">
                                 {{ message }}
                             </div>
-
                         {% endif %}
-
                     {% endfor %}
                 {% endif %}
 
-
-
-        
-
-
-                <form id="loginForm"  method="post">
+                <form id="loginForm" method="post">
                     {% csrf_token %}
                     <div class="form-area">
                         <div class="form-group">
-                            <label class="form-label" for="cpf">
-                                <i class="fas fa-address-card"></i> 
-                                CPF
+                            <label class="form-label" for="email">
+                                <i class="fas fa-envelope"></i> 
+                                E-mail
                             </label>
                             <div class="input-icon">
-                                <i class="fas fa-user"></i>
+                                <i class="fas fa-at"></i>
                             </div>
-                            <input type="number" class="form-control" id="cpf" name="cpf" placeholder="CPF">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="seu@email.com" required>
                         </div>
                         
                         <div class="form-group">
@@ -75,7 +65,7 @@
                             <div class="input-icon">
                                 <i class="fas fa-key"></i>
                             </div>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" >
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
                             <div class="password-toggle" id="togglePassword" onClick="showPassword()">
                                 <i class="fas fa-eye"></i>
                             </div>
@@ -99,5 +89,22 @@
     </div>
 
     <script src="{% static 'user/js/login.js' %}"></script>
+
+    <script>
+        function showPassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('#togglePassword i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash'); // Ícone de olho cortado
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye'); // Ícone de olho normal
+            }
+        }
+    </script>
 </body>
 </html>

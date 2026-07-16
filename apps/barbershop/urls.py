@@ -3,7 +3,7 @@ from .views import (
     UnitView, EmployeeView, WorkDayView, check_employee_data, 
     MyWebsiteView, UnitLP, api_get_barbers, api_get_services, 
     process_booking_api, api_login, api_register, api_logout, 
-    api_cancel_appointment, api_get_available_times, api_check_cpf
+    api_cancel_appointment, api_get_available_times
 )
 
 app_name = "barbershop"
@@ -16,7 +16,7 @@ urlpatterns = [
     
     # Validações Assíncronas Administrativas
     path('check-employee-data/', check_employee_data, name='check_employee_data'),
-    path('<slug:barbershop_slug>/api/check-cpf/', api_check_cpf, name='api_check_cpf'), 
+   
     
     path('<slug:barbershop_slug>/funcionamento/', WorkDayView, name='workday_general'),
     path('<slug:barbershop_slug>/<slug:unit_slug>/funcionamento/', WorkDayView, name='workday_unit'),

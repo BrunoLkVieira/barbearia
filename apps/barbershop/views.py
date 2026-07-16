@@ -258,14 +258,12 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     user=barbershop.owner_user, unit=unit_obj, is_active=True,
                     system_access=True, can_manage_cashbox=True, 
                     can_register_sell=True, can_create_appointments=True,
-                    contract_type='commission' # Titular assume comissão 100% nativamente
+                    contract_type='commission'
                 )
                 Role.objects.create(employee=emp, occupation=Role.Occupation.GERENTE)
                 messages.success(request, "Você ingressou na operação com sucesso!")
             return redirect("barbershop:employee_general", barbershop_slug=barbershop.slug)
 
-        cpf = (request.POST.get("cpf") or "").strip()
-        cpf_digits = re.sub(r'\D', '', cpf)
         name = (request.POST.get("name") or "").strip()
         last_name = (request.POST.get("last_name") or "").strip()
         email = (request.POST.get("email") or "").strip()
@@ -275,25 +273,26 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         is_active_val = 'is_active' in request.POST 
         password_val = request.POST.get("password")
 
-        # --- ORBLY ARCHITECT: NOVOS CAMPOS DE CONTRATO CAPTURADOS AQUI ---
         contract_type_val = request.POST.get("contract_type", "commission")
         fixed_salary_val = _to_decimal(request.POST.get("fixed_salary"))
         chair_rental_fee_val = _to_decimal(request.POST.get("chair_rental_fee"))
 
         if action == "create":
-            if len(cpf_digits) != 11:
-                messages.error(request, "Ação bloqueada: O CPF deve conter exatamente 11 números.")
-                return redirect(request.path)
             unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             with transaction.atomic():
-                try:
-                    user = User.objects.get(cpf=cpf_digits)
+                user = None
+                
+                if email and User.objects.filter(email=email).exists():
+                    user = User.objects.get(email=email)
+                
+                if user:
                     if user.user_type == 'cliente':
                         user.user_type = 'funcionario'
                         user.save(update_fields=['user_type'])
-                except User.DoesNotExist:
+                else:
+                    # Criação limpa apenas com E-mail
                     user = User.objects.create_user(
-                        cpf=cpf_digits, email=email, name=name, last_name=last_name,
+                        email=email, name=name, last_name=last_name,
                         birth_date=birth_date_val, phone=(request.POST.get("phone") or "").strip(), 
                         user_type="funcionario", password=password_val
                     )
@@ -303,7 +302,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                         user=user, unit=unit_obj, specialty=request.POST.get("specialty", "").strip(), 
                         bio=request.POST.get("bio", "").strip(), is_active=is_active_val,
                         
-                        # --- ORBLY ARCHITECT: SALVANDO DADOS DO CONTRATO NA CRIAÇÃO ---
                         contract_type=contract_type_val,
                         fixed_salary=fixed_salary_val,
                         chair_rental_fee=chair_rental_fee_val,
@@ -321,6 +319,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                         Role.objects.create(employee=employee, occupation=role_occ)
                     update_user_system_access(user)
                     messages.success(request, f"Funcionário {user.name} salvo com sucesso!")
+                else:
+                    messages.error(request, "Este usuário já é funcionário da barbearia.")
 
         elif action == "edit":
             emp_id = request.POST.get("employee_id")
@@ -338,12 +338,10 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             elif request.POST.get("unit_id"): emp_target.unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
 
             if emp_target.user == barbershop.owner_user:
-                # Edição do TITULAR
                 emp_target.specialty = request.POST.get("specialty", "").strip() 
                 emp_target.bio = request.POST.get("bio", "").strip()
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
                 
-                # --- ORBLY ARCHITECT: SALVANDO CONTRATO DO TITULAR ---
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
@@ -358,7 +356,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Perfil do Titular atualizado na operação.")
             
             else:
-                # Edição de FUNCIONÁRIO COMUM
                 simulate_emp = {'unit_id': request.POST.get("unit_id") or emp_target.unit.id, 'roles': roles_selected, 'is_active': is_active_val}
                 if calculate_consumed_slots(barbershop, exclude_emp_id=emp_target.id, simulate_emp=simulate_emp) > barbershop.max_employees:
                     messages.error(request, "Ação bloqueada! Excederia o limite do seu plano.")
@@ -378,8 +375,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 if changed_user_fields: user.save(update_fields=changed_user_fields)
 
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
-                
-                # --- ORBLY ARCHITECT: SALVANDO CONTRATO DO FUNCIONÁRIO ---
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
@@ -448,31 +443,15 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     }
     return render(request, "barbershop/employee.html", context)
 
-@require_GET
-@login_required
-def api_check_cpf(request, barbershop_slug):
-    cpf = re.sub(r'\D', '', request.GET.get('cpf', ''))
-    if len(cpf) != 11:
-        return JsonResponse({'valid': False})
-    try:
-        user = User.objects.get(cpf=cpf)
-        emp = Employee.objects.filter(user=user, unit__barbershop__slug=barbershop_slug).first()
-        if emp:
-            return JsonResponse({'found': True, 'in_barbershop': True, 'message': 'Este CPF já atua nesta barbearia.'})
-        else:
-            return JsonResponse({'found': True, 'in_barbershop': False, 'name': user.name, 'last_name': user.last_name})
-    except User.DoesNotExist:
-        return JsonResponse({'found': False})
-
 
 @login_required
 @require_POST
 def check_employee_data(request):
-    data = {"cpf": request.POST.get("cpf", ""), "email": request.POST.get("email", "")}
+    # Simplificado, checando apenas o E-mail agora!
+    data = {"email": request.POST.get("email", "").strip()}
     roles_selected = request.POST.getlist("roles")
     employee_id = request.POST.get('employee_id')
     unit_id = request.POST.get('unit_id')
-    birth_date_str = request.POST.get("birth_date")
     is_active_val = 'is_active' in request.POST
     
     if 'is_owner' in request.POST and request.POST.get("is_owner") == "True":
@@ -480,24 +459,34 @@ def check_employee_data(request):
 
     errors = []
     if not roles_selected: errors.append("Cargo: Selecione pelo menos um cargo.")
-    if not birth_date_str: errors.append("Data de Nascimento: Campo obrigatório para segurança LGPD.")
 
-    cpf_digits = re.sub(r'\D', '', data['cpf'])
-    
-    if len(cpf_digits) != 11:
-        errors.append("CPF Inválido: O CPF deve conter exatamente 11 números.")
-    
+    email = data.get('email')
+    if email:
+        email_query = User.objects.filter(email=email)
+        if employee_id:
+            emp = Employee.objects.filter(id=employee_id).first()
+            if emp: email_query = email_query.exclude(id=emp.user.id)
+            
+        if email_query.exists():
+            target_unit = Unit.objects.filter(id=unit_id).first()
+            if target_unit and Employee.objects.filter(user=email_query.first(), unit__barbershop=target_unit.barbershop).exists():
+                errors.append("Email: Já pertence a um funcionário desta barbearia.")
+            else:
+                errors.append("Email: Este E-mail já possui cadastro na base. Peça para o funcionário usar outro ou contate o suporte.")
+
+    if not employee_id and not request.POST.get("password"):
+        errors.append("Senha: Uma senha provisória é obrigatória para criar o acesso deste novo funcionário.")
+
     if unit_id:
         target_unit = Unit.objects.filter(id=unit_id, barbershop__slug=request.POST.get("barbershop_slug")).first()
         if target_unit:
             barbershop = target_unit.barbershop
-            
             current_consumed = calculate_consumed_slots(barbershop, exclude_emp_id=employee_id)
             simulate_emp = {'unit_id': unit_id, 'roles': roles_selected, 'is_active': is_active_val}
             simulated_consumed = calculate_consumed_slots(barbershop, exclude_emp_id=employee_id, simulate_emp=simulate_emp)
             
             if simulated_consumed > barbershop.max_employees and simulated_consumed > current_consumed:
-                errors.append(f"Limite Atingido: O plano permite {barbershop.max_employees} vagas de barbeiro (O Titular e 1 admin por filial são grátis).")
+                errors.append(f"Limite Atingido: O plano permite {barbershop.max_employees} vagas de barbeiro.")
 
             if is_active_val:
                 if 'gerente' in roles_selected:
@@ -512,39 +501,12 @@ def check_employee_data(request):
                     if caixas.count() >= 2:
                         errors.append(f"A unidade {target_unit.name} já atingiu o limite de 2 Caixas.")
 
-    cpf_digits = re.sub(r'\D', '', data['cpf'])
-    if cpf_digits:
-        user_query = User.objects.filter(cpf=cpf_digits)
-        if employee_id:
-            emp = Employee.objects.filter(id=employee_id).first()
-            if emp: user_query = user_query.exclude(id=emp.user.id)
-            
-        if user_query.exists():
-            existing_user = user_query.first()
-            if not employee_id and birth_date_str and str(existing_user.birth_date) != birth_date_str:
-                 errors.append("Segurança LGPD: A Data de Nascimento não confere com o titular deste CPF no sistema Orbly.")
-            
-            if target_unit and Employee.objects.filter(user=existing_user, unit__barbershop=target_unit.barbershop).exists():
-                errors.append("CPF: Este usuário já atua nesta barbearia.")
-        else:
-            if not employee_id and not request.POST.get("password"):
-                errors.append("Senha: Uma senha é obrigatória para criar o acesso deste novo funcionário na Orbly.")
-
-    email = data.get('email')
-    if email:
-        email_query = User.objects.filter(email=email)
-        if employee_id:
-            emp = Employee.objects.filter(id=employee_id).first()
-            if emp: email_query = email_query.exclude(id=emp.user.id)
-        if email_query.exists():
-            if target_unit and Employee.objects.filter(user=email_query.first(), unit__barbershop=target_unit.barbershop).exists():
-                errors.append("Email: Já pertence a um funcionário desta barbearia.")
-
     if errors: return JsonResponse({'is_valid': False, 'errors': errors})
 
-    if not employee_id:
+    # Verificação inteligente de usuário existente pelo E-mail ao invés do CPF
+    if not employee_id and email:
         try:
-            user = User.objects.get(cpf=cpf_digits)
+            user = User.objects.get(email=email)
             return JsonResponse({'is_valid': True, 'user_exists': True, 'user_name': f'{user.name} {user.last_name}'})
         except User.DoesNotExist: pass
 
@@ -915,12 +877,11 @@ def UnitLP(request, barbershop_slug, unit_slug=None):
 def api_login(request, barbershop_slug):
     try:
         data = json.loads(request.body)
-        cpf = re.sub(r'\D', '', data.get('cpf', ''))
+        email = data.get('email', '').strip()
         password = data.get('password')
         
-        user = authenticate(request, username=cpf, password=password)
-        if user is None:
-            user = authenticate(request, cpf=cpf, password=password)
+        # Agora autenticamos usando o E-mail como chave principal
+        user = authenticate(request, username=email, password=password)
             
         if user is not None:
             login(request, user)
@@ -943,21 +904,20 @@ def api_login(request, barbershop_slug):
                         # Associa a conta global ao cliente do balcão
                         offline_client.user = user
                         offline_client.email = user.email
-                        offline_client.cpf = user.cpf
-                        offline_client.save(update_fields=['user', 'email', 'cpf'])
+                        offline_client.save(update_fields=['user', 'email'])
                     else:
                         first_n = user.name.split()[0] if user.name else "Cliente"
                         last_n = " ".join(user.name.split()[1:]) if user.name and len(user.name.split()) > 1 else ""
                         Client.objects.create(
                             user=user, barbershop=barbershop, first_name=first_n,
-                            last_name=last_n, email=user.email, phone=user.phone, cpf=user.cpf
+                            last_name=last_n, email=user.email, phone=user.phone
                         )
             except Exception as e:
                 print(f"[Aviso Orbly] Falha ao unificar perfil Client no Login: {e}")
             
             return JsonResponse({'status': 'success'})
         else:
-            return JsonResponse({'status': 'error', 'message': 'CPF ou senha incorretos. Tente novamente.'}, status=401)
+            return JsonResponse({'status': 'error', 'message': 'E-mail ou senha incorretos. Tente novamente.'}, status=401)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': 'Ocorreu um erro no servidor. Tente novamente.'}, status=400)
 
@@ -968,26 +928,20 @@ def api_register(request, barbershop_slug):
         data = json.loads(request.body)
         name = data.get('name')
         email = data.get('email')
-        cpf = re.sub(r'\D', '', data.get('cpf', ''))
         phone = re.sub(r'\D', '', data.get('phone', ''))
         password = data.get('password')
-        
-        if len(cpf) != 11:
-            return JsonResponse({'status': 'error', 'message': 'O CPF deve conter exatamente 11 dígitos.'}, status=400)
             
         if User.objects.filter(email=email).exists():
             return JsonResponse({'status': 'error', 'message': 'Este e-mail já pertence a uma conta. Por favor, faça login.'}, status=400)
-        if User.objects.filter(cpf=cpf).exists():
-            return JsonResponse({'status': 'error', 'message': 'Este CPF já possui cadastro. Por favor, feche esta tela e faça Login.'}, status=400)
             
-        # 1. Cria a conta global Orbly
+        # Cria a conta global Orbly 100% livre de documento
         user = User.objects.create_user(
-            cpf=cpf, email=email, password=password, name=name, phone=phone, user_type='cliente'
+            email=email, password=password, name=name, phone=phone, user_type='cliente'
         )
         
         barbershop = Barbershop.objects.get(slug=barbershop_slug)
         
-        # 2. MERGE O2O: Verifica se a recepcionista já cadastrou o número no balcão
+        # MERGE O2O: Verifica se a recepcionista já cadastrou o número no balcão
         offline_client = Client.objects.filter(
             barbershop=barbershop, 
             phone__icontains=phone, 
@@ -995,27 +949,24 @@ def api_register(request, barbershop_slug):
         ).first()
 
         if offline_client:
-            # Funde o histórico do balcão com a nova conta online
             offline_client.user = user
             offline_client.email = email
-            offline_client.cpf = cpf
-            # Se o balcão só salvou o primeiro nome, atualizamos com o nome completo
             if " " not in offline_client.first_name and " " in name:
                 offline_client.first_name = name.split()[0]
                 offline_client.last_name = " ".join(name.split()[1:])
-            offline_client.save()
+            offline_client.save(update_fields=['user', 'email', 'first_name', 'last_name'])
         else:
-            # Cliente 100% novo na barbearia
             first_n = name.split()[0] if name else "Cliente"
             last_n = " ".join(name.split()[1:]) if name and len(name.split()) > 1 else ""
             Client.objects.create(
                 user=user, barbershop=barbershop, first_name=first_n,
-                last_name=last_n, email=email, phone=phone, cpf=cpf
+                last_name=last_n, email=email, phone=phone
             )
         
         login(request, user)
         return JsonResponse({'status': 'success'})
     except Exception as e:
+        print(f"Erro no registro: {e}")
         return JsonResponse({'status': 'error', 'message': 'Falha ao registrar. Verifique os dados e tente novamente.'}, status=400)
 
 

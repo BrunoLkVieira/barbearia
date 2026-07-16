@@ -17,25 +17,30 @@ class UserRegisterView(View):
         return render(request, 'user/register.html')
 
     def post(self, request):
-        # origin = request.GET.get('origin', 'client') 
         name = request.POST.get('name')
         last_name = request.POST.get('last_name')
-        cpf = request.POST.get('cpf')
+        
+        # O novo sistema de documentos
+        document_type = request.POST.get('document_type', 'CPF')
+        document_raw = request.POST.get('document', '')
+        
         email = request.POST.get('email')
         phone = request.POST.get('phone')
         birth_date = request.POST.get('birth_date')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
+        # Limpeza do documento (Remove tudo que não é número)
+        import re
+        document_clean = re.sub(r'\D', '', document_raw)
+
         # Validações básicas
-        cpf = cpf.replace('.', '').replace('-', '')
-
-        if User.objects.filter(cpf=cpf).exists():
-            messages.error(request, "CPF já registrado.")
-            return redirect('system_plan:landing_page')
-
         if User.objects.filter(email=email).exists():
             messages.error(request, "E-mail já registrado.")
+            return redirect('system_plan:landing_page')
+
+        if document_clean and User.objects.filter(document=document_clean).exists():
+            messages.error(request, f"{document_type} já registrado no sistema.")
             return redirect('system_plan:landing_page')
 
         try:
@@ -44,15 +49,16 @@ class UserRegisterView(View):
             messages.error(request, "Digite um e-mail válido.")
             return redirect('system_plan:landing_page')
             
-        # Criação do usuário
+        # Criação do usuário (Agora salvando os campos novos)
         user = User(
             name=name,
             last_name=last_name,
-            cpf=cpf,
+            document_type=document_type,
+            document=document_clean,
             email=email,
             phone=phone,
-            birth_date=birth_date,
-            # user_type=origin
+            birth_date=birth_date if birth_date else None,
+            user_type='dono' # Garante que quem se cadastra por aqui é dono da barbearia
         )
         user.set_password(password1)
         user.save()
@@ -60,7 +66,7 @@ class UserRegisterView(View):
         # Envio de verificação de e-mail
         send_verification_email(request, user)
 
-        messages.success(request, "Registro realizado! Verifique seu e-mail.")
+        messages.success(request, "Conta criada com sucesso! Verifique seu e-mail para ativar.")
         return redirect('user:login')
 
 
@@ -72,9 +78,12 @@ class UserLoginView(View):
     def post(self, request):
         form = UserLoginForm(request.POST)
         if form.is_valid():
-            cpf = form.cleaned_data['cpf'].replace('.', '').replace('-', '')
+            # Pegando o email agora em vez do CPF
+            email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(request, username=cpf, password=password)
+            
+            # Autenticando com o Email
+            user = authenticate(request, username=email, password=password)
 
             if user is not None:
                 if user.user_type == 'dono':
@@ -89,15 +98,13 @@ class UserLoginView(View):
                     login(request, user)
                     return redirect("scheduling:agenda", barbershop_slug=barbershop.slug)
 
-                elif user.user_type in ['funcionario', 'gerente']:
+                elif user.user_type in ['funcionario', 'gerente', 'caixa']:
                     employee = Employee.objects.filter(user=user).select_related("unit__barbershop").first()
                     if not employee:
                         messages.error(request, "Você não está vinculado a nenhuma unidade de barbearia.")
                         return redirect("user:login")
 
-                    # ============================================================
-                    # CORREÇÃO: Barra o acesso ANTES de logar e devolve pro Login!
-                    # ============================================================
+                    # Barra o acesso ANTES de logar e devolve pro Login!
                     if not employee.system_access:
                         messages.error(request, "Seu perfil não possui permissão de acesso ao sistema.")
                         return redirect("user:login")
@@ -113,11 +120,12 @@ class UserLoginView(View):
                     return redirect("scheduling:agenda_unit", barbershop_slug=barbershop.slug, unit_slug=unit.slug)
 
                 else:
-                    messages.error(request, "Acesso negado.")
+                    # Se for cliente comum, vai para o app do cliente (se existir)
+                    messages.error(request, "Acesso negado para o painel administrativo.")
                     return redirect("user:login")
 
             else:
-                messages.error(request, "CPF ou senha inválidos")
+                messages.error(request, "E-mail ou senha inválidos")
         else:
             messages.error(request, "Preencha todos os campos corretamente.")
 
@@ -155,6 +163,7 @@ class VerifyEmailView(View):
         return redirect('user:register')
     
 
+from django.contrib.auth import update_session_auth_hash
 
 @login_required
 def ProfileView(request):
@@ -163,7 +172,6 @@ def ProfileView(request):
     funcao_display = "Cliente"
     barbershop = None
     
-    # 1. Definindo as permissões base para o nav.html
     is_owner = (user.user_type == 'dono')
     is_manager = False
     
@@ -174,36 +182,65 @@ def ProfileView(request):
         emp = Employee.objects.filter(user=user).first()
         if emp:
             barbershop = emp.unit.barbershop
-            
-            # Verifica se o funcionário é gerente para liberar o menu
             is_manager = emp.roles.filter(occupation='gerente').exists()
-            
             cargos = [role.get_occupation_display() for role in emp.roles.all()]
-            if cargos:
-                funcao_display = " / ".join(cargos)
-            else:
-                funcao_display = "Funcionário Padrão"
+            funcao_display = " / ".join(cargos) if cargos else "Funcionário Padrão"
 
     if request.method == 'POST':
-        user.name = request.POST.get('name')
-        user.last_name = request.POST.get('last_name')
-        
-        phone = request.POST.get('phone', '')
-        user.phone = "".join(filter(str.isdigit, phone)) 
-        
-        birth_date = request.POST.get('birth_date')
-        if birth_date:
-            user.birth_date = birth_date
-            
-        user.save()
-        messages.success(request, "Seus dados foram atualizados com sucesso!")
-        return redirect('user:profile')
+        action = request.POST.get('action', 'update_profile')
 
-    # 2. Mandando TUDO para o HTML para a Navbar funcionar
+        if action == 'change_password':
+            old_password = request.POST.get('old_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if not user.check_password(old_password):
+                messages.error(request, "Sua senha atual está incorreta.")
+            elif new_password != confirm_password:
+                messages.error(request, "As novas senhas não coincidem.")
+            elif len(new_password) < 6:
+                messages.error(request, "A nova senha deve ter pelo menos 6 caracteres.")
+            else:
+                user.set_password(new_password)
+                user.save()
+                # Mantém a sessão do usuário ativa após trocar a senha
+                update_session_auth_hash(request, user)
+                messages.success(request, "Sua senha foi alterada com segurança!")
+            
+            return redirect('user:profile')
+
+        elif action == 'update_profile':
+            user.name = request.POST.get('name')
+            user.last_name = request.POST.get('last_name')
+            
+            phone = request.POST.get('phone', '')
+            user.phone = "".join(filter(str.isdigit, phone)) 
+            
+            birth_date = request.POST.get('birth_date')
+            if birth_date:
+                user.birth_date = birth_date
+                
+            if is_owner:
+                doc_type = request.POST.get('document_type')
+                document = request.POST.get('document', '')
+                import re
+                doc_clean = re.sub(r'\D', '', document)
+                
+                if doc_type in ['CPF', 'CNPJ']:
+                    user.document_type = doc_type
+                if doc_clean:
+                    user.document = doc_clean
+                else:
+                    user.document = None
+                    
+            user.save()
+            messages.success(request, "Seus dados foram atualizados com sucesso!")
+            return redirect('user:profile')
+
     context = {
         'funcao_display': funcao_display,
         'barbershop': barbershop,
-        'is_owner': is_owner,      # Faz o menu de dono aparecer!
-        'is_manager': is_manager,  # Faz o menu de gerente aparecer!
+        'is_owner': is_owner,
+        'is_manager': is_manager,
     }
     return render(request, 'user/perfil.html', context)

@@ -5,6 +5,7 @@ from django.db.models import Q, Count, Max
 from django.contrib.auth.decorators import login_required
 
 from apps.barbershop.models import Barbershop, Employee, Unit
+from apps.scheduling.models import Appointment # IMPORTANTE: Nova importação aqui!
 from .models import Client
 
 def get_tenant_employee(user, barbershop):
@@ -35,12 +36,19 @@ def owner_or_employee_required(view_func):
 def ClientListView(request, barbershop_slug):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
-    # 1. MAPEAMENTO DE PERMISSÕES 
     is_owner = (request.user == barbershop.owner_user)
     emp = get_tenant_employee(request.user, barbershop)
     is_manager = emp.roles.filter(occupation__iexact='gerente').exists() if emp else False
 
-    # 2. PROCESSAMENTO DE POST (CRUD)
+    units = Unit.objects.filter(barbershop=barbershop, is_active=True)
+    unit_slug = request.GET.get('unit', 'geral')
+    
+    if is_owner:
+        current_unit = units.filter(slug=unit_slug).first() if unit_slug != 'geral' else None
+    else:
+        current_unit = emp.unit if emp else None
+        units = [current_unit] if current_unit else []
+
     if request.method == "POST":
         action = request.POST.get('action')
         client_id = request.POST.get('client_id')
@@ -49,19 +57,25 @@ def ClientListView(request, barbershop_slug):
         last_name = request.POST.get('last_name', '').strip()
         phone = request.POST.get('phone', '').strip()
         email = request.POST.get('email', '').strip()
+        birth_date_str = request.POST.get('birth_date') or None
         is_blocked = request.POST.get('is_blocked') == 'true'
+        
+        post_unit_id = request.POST.get('unit_id')
+        target_unit = Unit.objects.filter(id=post_unit_id, barbershop=barbershop).first() if post_unit_id else current_unit
 
         try:
             if action == "create":
                 Client.objects.create(
                     barbershop=barbershop,
+                    unit=target_unit,
                     first_name=first_name,
                     last_name=last_name,
                     phone=phone,
                     email=email,
+                    birth_date=birth_date_str,
                     is_blocked=is_blocked
                 )
-                messages.success(request, f"Cliente {first_name} cadastrado com sucesso!")
+                messages.success(request, f"Cliente {first_name} cadastrado na unidade com sucesso!")
 
             elif action == "update":
                 client = get_object_or_404(Client, id=client_id, barbershop=barbershop)
@@ -69,7 +83,10 @@ def ClientListView(request, barbershop_slug):
                 client.last_name = last_name
                 client.phone = phone
                 client.email = email
+                client.birth_date = birth_date_str
                 client.is_blocked = is_blocked
+                if target_unit:
+                    client.unit = target_unit
                 client.save()
                 messages.success(request, "Dados do cliente atualizados!")
 
@@ -86,29 +103,26 @@ def ClientListView(request, barbershop_slug):
         
         return redirect(request.path)
 
-    # 3. LÓGICA DE LISTAGEM (GET) E BUSCA GLOBAL NO TENANT
     search_query = request.GET.get('search', '').strip()
     sort_filter = request.GET.get('sort', '-created_at')
     status_filter = request.GET.get('status', 'all')
 
-    units = Unit.objects.filter(barbershop=barbershop, is_active=True)
-    unit_slug = request.GET.get('unit', 'geral')
-
-    # CORREÇÃO: Lógica de unidade estrita baseada no cargo
-    if is_owner:
-        current_unit = units.filter(slug=unit_slug).first() if unit_slug != 'geral' else None
-    else:
-        # Se for funcionário, crava na unidade dele e remove opções de outras unidades
-        current_unit = emp.unit if emp else None
-        units = [current_unit] if current_unit else []
-
     all_clients = Client.objects.filter(barbershop=barbershop)
 
-    # Filtro de Unidade
+    # NOVO FILTRO BLINDADO (Subquery)
     if current_unit:
-        all_clients = all_clients.filter(appointments__unit=current_unit).distinct()
+        # 1. Pega os IDs de quem já agendou nessa unidade
+        clients_with_appointments = Appointment.objects.filter(
+            unit=current_unit, barbershop=barbershop
+        ).values_list('client_id', flat=True)
 
-    # Busca Inteligente
+        # 2. Mostra se o cliente é da unidade, se é legado, ou se está na lista acima
+        all_clients = all_clients.filter(
+            Q(unit=current_unit) | 
+            Q(unit__isnull=True) | 
+            Q(id__in=clients_with_appointments)
+        ).distinct()
+
     if search_query:
         search_terms = search_query.split()
         for term in search_terms:
@@ -118,13 +132,11 @@ def ClientListView(request, barbershop_slug):
                 Q(phone__icontains=term)
             )
 
-    # Filtro de Status (Ativos / Bloqueados)
     if status_filter == 'active':
         all_clients = all_clients.filter(is_blocked=False)
     elif status_filter == 'blocked':
         all_clients = all_clients.filter(is_blocked=True)
 
-    # Annotations & Ordenação (ORM inteligente)
     all_clients = all_clients.annotate(
         completed_visits=Count('appointments', filter=Q(appointments__status='completed')),
         last_visit_date=Max('appointments__date', filter=Q(appointments__status='completed'))

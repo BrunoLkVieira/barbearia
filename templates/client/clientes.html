@@ -17,22 +17,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .swal2-container {z-index: 99999 !important;}
-        
-        /* Neutraliza o container fantasma da navbar no mobile */
         @media (max-width: 820px) {
             .nav-bar { 
                 display: block !important; 
                 background: transparent !important; 
                 box-shadow: none !important; 
-                border: none !important; /* Remove a linha ridícula */
+                border: none !important; 
                 padding: 0 !important; 
                 margin: 0 !important; 
                 min-height: 0 !important;
             }
-            /* Garante que o esqueleto dos stats não ocupe espaço invisível */
-            .nav-content { 
-                display: none !important; 
-            }
+            .nav-content { display: none !important; }
         }
     </style>
 </head>
@@ -45,7 +40,6 @@
         
         <div class="nav-content">
             <div class="stats">
-                
                 {% if is_owner %}
                     <div class="unit-filter desktop-unit-filter">
                         <select id="unitSelectFilter" onchange="window.location.href='?unit='+this.value">
@@ -117,7 +111,7 @@
                 <i class="fas fa-users"></i>
                 <span>Clientes Registrados</span>
             </div>
-            <button class="btn-new-client" onclick="openModal()">
+            <button class="btn-new-client" onclick="openClientModal()">
                 <i class="fas fa-plus"></i> Novo Cliente
             </button>
         </div>
@@ -163,7 +157,7 @@
             <div class="table-header desktop-only">
                 <div>Cliente</div>
                 <div>Contato</div>
-                <div>E-mail</div>
+                <div>Unidade Base</div>
                 <div>Visitas Concluídas</div>
                 <div>Última visita</div>
                 <div>Ações</div>
@@ -179,6 +173,9 @@
                             <div class="client-info">
                                 <div class="client-name" style="{% if client.is_blocked %}text-decoration: line-through; color: #a0aec0;{% endif %}">
                                     {{ client.first_name }} {{ client.last_name }}
+                                    {% if client.age is not None %}
+                                        <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; margin-left: 5px;">({{ client.age }} anos)</span>
+                                    {% endif %}
                                 </div>
                                 {% if client.is_blocked %}
                                     <div class="client-plan" style="color: #e53e3e;">
@@ -196,8 +193,8 @@
                             <span>{{ client.phone }}</span>
                         </div>
                         <div class="client-email desktop-only">
-                            <i class="fas fa-envelope"></i>
-                            <span>{{ client.email|default:"---" }}</span>
+                            <i class="fas fa-store"></i>
+                            <span>{{ client.unit.name|default:"Geral" }}</span>
                         </div>
                         <div class="client-visits">
                             <i class="fas fa-calendar-check"></i>
@@ -209,7 +206,7 @@
                         </div>
                         
                         <div class="client-actions desktop-only">
-                            <div class="action-btn edit" title="Editar Cliente" onclick="editClient('{{ client.id }}', '{{ client.first_name }}', '{{ client.last_name }}', '{{ client.phone }}', '{{ client.email }}', '{{ client.is_blocked|yesno:'true,false' }}')">
+                            <div class="action-btn edit" title="Editar Cliente" onclick="editClientForm('{{ client.id }}', '{{ client.first_name|escapejs }}', '{{ client.last_name|escapejs }}', '{{ client.phone }}', '{{ client.email|default:'' }}', '{{ client.birth_date|date:'Y-m-d' }}', '{{ client.unit.id|default:'' }}', '{{ client.is_blocked|yesno:'true,false' }}')">
                                 <i class="fas fa-edit"></i>
                             </div>
                             
@@ -253,8 +250,11 @@
                                 </div>
                                 
                                 <div class="bs-contact-info">
-                                    <p><i class="fab fa-whatsapp" style="color:#27ae60;"></i> {{ client.phone }}</p>
-                                    <p><i class="fas fa-envelope" style="color:#7f8c8d;"></i> {{ client.email|default:"Sem e-mail cadastrado" }}</p>
+                                    <p><i class="fab fa-whatsapp" style="color:#27ae60; width:20px; text-align:center;"></i> {{ client.phone }}</p>
+                                    {% if client.age is not None %}
+                                        <p><i class="fas fa-birthday-cake" style="color:#f39c12; width:20px; text-align:center;"></i> {{ client.age }} anos</p>
+                                    {% endif %}
+                                    <p><i class="fas fa-store" style="color:#3498db; width:20px; text-align:center;"></i> {{ client.unit.name|default:"Unidade Geral" }}</p>
                                 </div>
                                 
                                 <div class="bs-divider"></div>
@@ -264,7 +264,7 @@
                                         <i class="fas fa-history"></i> Ver Histórico
                                     </button>
                                     
-                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ client.id }}'); editClient('{{ client.id }}', '{{ client.first_name }}', '{{ client.last_name }}', '{{ client.phone }}', '{{ client.email }}', '{{ client.is_blocked|yesno:'true,false' }}');">
+                                    <button class="bs-btn bs-btn-secondary" onclick="closeMobileSheet('{{ client.id }}'); editClientForm('{{ client.id }}', '{{ client.first_name|escapejs }}', '{{ client.last_name|escapejs }}', '{{ client.phone }}', '{{ client.email|default:'' }}', '{{ client.birth_date|date:'Y-m-d' }}', '{{ client.unit.id|default:'' }}', '{{ client.is_blocked|yesno:'true,false' }}');">
                                         <i class="fas fa-edit"></i> Editar Cadastro
                                     </button>
                                     
@@ -328,7 +328,7 @@
     </footer>
 
     <div class="mobile-only">
-        <button class="btnNewClient-mobile" onclick="openModal()">
+        <button class="btnNewClient-mobile" onclick="openClientModal()">
             <i class="fas fa-plus"></i>
         </button>
     </div>
@@ -340,7 +340,7 @@
                 <h2 style="color: #1a233a; font-size: 1.25rem; margin:0; display:flex; align-items:center; gap:8px; font-weight:800;">
                     <i class="fas fa-user-plus" style="color: #FF7A00;"></i> <span id="modalTitleText">Novo Cliente</span>
                 </h2>
-                <button type="button" class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
+                <button type="button" class="close-btn" onclick="closeClientModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #a0aec0;">×</button>
             </div>
             
             <form id="clientForm" method="POST" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
@@ -361,10 +361,27 @@
                         <label for="clientPhone" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Telefone (Apenas Números) *</label>
                         <input type="text" name="phone" id="clientPhone" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
                     </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="clientBirth" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Data de Nascimento (Opcional)</label>
+                        <input type="date" name="birth_date" id="clientBirth" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label for="clientEmail" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">E-mail (Opcional)</label>
                         <input type="email" name="email" id="clientEmail" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
                     </div>
+
+                    {% if is_owner %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="clientUnit" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Unidade Base *</label>
+                        <select name="unit_id" id="clientUnit" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background: #f8f9fa; font-size:0.95rem; color:#2c3e50; box-sizing:border-box;">
+                            {% for u in units %}
+                                <option value="{{ u.id }}">{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                     
                     <div class="form-group" style="margin-bottom: 5px; background: #fff9e6; padding: 15px; border-radius: 10px; border: 1px dashed #fbd38d;">
                         <label style="display: flex; align-items: center; gap: 10px; font-weight: 700; color: #d35400; cursor: pointer; margin: 0; font-size:0.95rem;">
@@ -376,7 +393,7 @@
                 </div>
                 
                 <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eaecef; padding: 15px 20px; flex-shrink: 0;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal()" style="padding: 12px 15px; border: 1px solid #dcdde1; color: #2c3e50; background: transparent; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1;">Cancelar</button>
+                    <button type="button" class="btn btn-outline" onclick="closeClientModal()" style="padding: 12px 15px; border: 1px solid #dcdde1; color: #2c3e50; background: transparent; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1;">Cancelar</button>
                     <button type="submit" class="btn btn-primary" style="padding: 12px 15px; background: linear-gradient(135deg, #FF7A00, #d35400); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; flex:1; box-shadow: 0 4px 12px rgba(255,122,0,0.3);">Salvar</button>
                 </div>
             </form>
@@ -384,15 +401,40 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.innerWidth <= 820) {
-                const header = document.querySelector('header');
-                const unitFilter = document.querySelector('.desktop-unit-filter');
-                if (header && unitFilter) {
-                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
-                }
+        const clientModal = document.getElementById('clientModal');
+        const clientForm = document.getElementById('clientForm');
+
+        function openClientModal() {
+            clientForm.reset();
+            document.getElementById('isBlocked').checked = false;
+            document.getElementById('modalTitleText').innerText = 'Novo Cliente';
+            document.getElementById('modalAction').value = 'create';
+            document.getElementById('modalClientId').value = '';
+            clientModal.style.display = 'flex';
+        }
+
+        function closeClientModal() {
+            if(clientModal) clientModal.style.display = 'none';
+        }
+
+        function editClientForm(id, firstName, lastName, phone, email, birthDate, unitId, isBlockedStr) {
+            document.getElementById('modalTitleText').innerText = 'Editar Cliente';
+            document.getElementById('modalAction').value = 'update';
+            document.getElementById('modalClientId').value = id;
+
+            document.getElementById('firstName').value = firstName;
+            document.getElementById('lastName').value = lastName;
+            document.getElementById('clientPhone').value = phone;
+            document.getElementById('clientEmail').value = (email !== 'None' && email !== '---') ? email : '';
+            document.getElementById('clientBirth').value = (birthDate !== 'None' && birthDate !== '---') ? birthDate : '';
+            
+            if(document.getElementById('clientUnit') && unitId) {
+                document.getElementById('clientUnit').value = unitId;
             }
-        });
+            
+            document.getElementById('isBlocked').checked = (isBlockedStr === 'true');
+            clientModal.style.display = 'flex';
+        }
 
         function openMobileSheet(clientId, event) {
             if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
@@ -400,6 +442,7 @@
             document.getElementById('bs-sheet-' + clientId).classList.add('active');
             document.body.style.overflow = 'hidden';
         }
+
         function closeMobileSheet(clientId) {
             document.getElementById('bs-overlay-' + clientId).classList.remove('active');
             document.getElementById('bs-sheet-' + clientId).classList.remove('active');
@@ -408,7 +451,6 @@
     </script>
 
     <script src="{% static 'geral/js/script.js' %}"></script>
-    <script src="{% static 'client/js/client.js' %}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -444,6 +486,24 @@
                     });
                 });
             });
+
+            const searchInput = document.getElementById('clientSearch');
+            if (searchInput && searchInput.value === '') {
+                searchInput.addEventListener('keyup', function() {
+                    let filter = this.value.toLowerCase();
+                    let rows = document.querySelectorAll('.clients-tbody .table-row');
+                    
+                    rows.forEach(row => {
+                        let name = row.querySelector('.client-name').textContent.toLowerCase();
+                        let phone = row.querySelector('.client-phone').textContent.toLowerCase();
+                        if(name.includes(filter) || phone.includes(filter)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>

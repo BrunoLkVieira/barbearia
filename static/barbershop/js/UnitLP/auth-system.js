@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ==========================================
-    // FLUXO DE LOGIN E REGISTRO
+    // FLUXO DE LOGIN E REGISTRO (ATUALIZADOS LGPD)
     // ==========================================
 
     window.openLoginFromPrompt = function() {
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // LOGIN API
+    // LOGIN API - MUDANÇA: Agora usa o ID loginEmail
     document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = this.querySelector('button[type="submit"]');
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRFToken': getCookie('csrftoken') 
                 },
                 body: JSON.stringify({
-                    cpf: document.getElementById('loginCpf').value, 
+                    email: document.getElementById('loginEmail').value, 
                     password: document.getElementById('loginPassword').value
                 })
             });
@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // REGISTER API - MUDANÇA: Agora usa os IDs registerDocument e registerEmail
     // REGISTER API
     document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -148,17 +149,19 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
         btn.disabled = true;
 
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const barbershopSlug = window.location.pathname.split('/')[1];
+
         try {
-            const response = await fetch(`/${BARBERSHOP_SLUG}/api/register/`, {
+            const response = await fetch(`/${barbershopSlug}/api/register/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken') 
+                    'X-CSRFToken': csrfToken 
                 },
                 body: JSON.stringify({
                     name: document.getElementById('registerName').value,
                     email: document.getElementById('registerEmail').value,
-                    cpf: document.getElementById('registerCpf').value,
                     phone: document.getElementById('registerPhone').value,
                     password: pass
                 })
@@ -192,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // CANCEL APPOINTMENT API
+    // CANCEL APPOINTMENT API (Pode manter o do arquivo principal ou deixar aqui)
     window.cancelAppointment = async function(appointmentId) {
         if(!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
         
