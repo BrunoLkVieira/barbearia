@@ -64,7 +64,7 @@ class UserRegisterView(View):
         user.save()
 
         # Envio de verificação de e-mail
-        send_verification_email(request, user)
+        # send_verification_email(request, user)
 
         messages.success(request, "Conta criada com sucesso! Verifique seu e-mail para ativar.")
         return redirect('user:login')
