@@ -4,8 +4,39 @@ const closeModal = document.getElementById('closeModal');
 const cancelUnit = document.getElementById('cancelUnit');
 const modalTitleHeader = document.getElementById('modalTitleHeader');
 const unitForm = document.getElementById('unitForm');
-const limitBanner = document.getElementById('limitWarningBanner');
 const saveUnitBtn = document.getElementById('saveUnit');
+
+// 1. TRAVA VISUAL DE LIMITE DE SAAS NO CARREGAMENTO
+if (newUnitBtn) {
+    const consumed = parseInt(newUnitBtn.dataset.consumed);
+    const max = parseInt(newUnitBtn.dataset.max);
+    if (consumed >= max) {
+        newUnitBtn.classList.add('disabled-limit');
+        newUnitBtn.title = `Limite atingido! Máximo de ${max} unidade(s) no plano.`;
+    }
+}
+
+// 2. CONTROLE DE ABERTURA DO MODAL (Com Trava Funcional)
+if (newUnitBtn) {
+    newUnitBtn.addEventListener('click', (e) => {
+        const consumed = parseInt(newUnitBtn.dataset.consumed);
+        const max = parseInt(newUnitBtn.dataset.max);
+        
+        // Bloqueia e avisa via SweetAlert sem abrir o Modal
+        if (consumed >= max) {
+            e.preventDefault();
+            e.stopPropagation();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Limite Atingido',
+                text: `Seu plano atual permite gerenciar até ${max} filial(is). Faça um upgrade para expandir a barbearia.`,
+                confirmButtonColor: '#FF7A00'
+            });
+        } else {
+            openUnitModal(); // Abre normalmente se tiver vaga
+        }
+    });
+}
 
 function openUnitModal(editData = null) {
     if (editData) {
@@ -22,40 +53,16 @@ function openUnitModal(editData = null) {
         document.getElementById('unitInstagram').value = editData.instagram;
         document.getElementById('unitActive').value = editData.active;
         document.getElementById('formAction').value = "edit";
-        
-        limitBanner.style.display = 'none';
-        saveUnitBtn.disabled = false;
-        saveUnitBtn.style.opacity = "1";
-        saveUnitBtn.style.cursor = "pointer";
     } else {
         modalTitleHeader.textContent = 'Nova Unidade';
         unitForm.reset();
         document.getElementById('unitId').value = "";
         document.getElementById('formAction').value = "create";
-        
-        // Trava Visual UI - Limite de Unidades
-        if(newUnitBtn) {
-            const consumed = parseInt(newUnitBtn.dataset.consumed);
-            const max = parseInt(newUnitBtn.dataset.max);
-            if (consumed >= max) {
-                limitBanner.style.display = 'block';
-                saveUnitBtn.disabled = true;
-                saveUnitBtn.style.opacity = "0.5";
-                saveUnitBtn.style.cursor = "not-allowed";
-            } else { 
-                limitBanner.style.display = 'none'; 
-                saveUnitBtn.disabled = false;
-                saveUnitBtn.style.opacity = "1";
-                saveUnitBtn.style.cursor = "pointer";
-            }
-        }
     }
 
     unitModal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
-
-if(newUnitBtn) newUnitBtn.addEventListener('click', () => openUnitModal());
 
 function closeUnitModal() {
     unitModal.classList.remove('active');
@@ -65,7 +72,7 @@ function closeUnitModal() {
 if(closeModal) closeModal.addEventListener('click', closeUnitModal);
 if(cancelUnit) cancelUnit.addEventListener('click', closeUnitModal);
 
-
+// 3. SUBMISSÃO DO FORMULÁRIO (Fetch)
 if (unitForm) {
     unitForm.addEventListener('submit', function(e) {
         e.preventDefault(); 
@@ -110,9 +117,41 @@ editButtons.forEach(button => {
     });
 });
 
+// 4. INTEGRAÇÃO VIACEP E MÁSCARA INTELIGENTE (Corrigida com Regex Dinâmica)
 const cepInput = document.getElementById('unitCep');
-if(cepInput) {
-    cepInput.addEventListener('input', function() {
-        if (this.value.length > 8) this.value = this.value.slice(0, 8);
+if (cepInput) {
+    cepInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, ''); // Mantém apenas números puros
+        if (value.length > 8) value = value.slice(0, 8); // Trava limite lógico de 8 números
+        
+        // Aplica o hífen sem bloquear a digitação em tempo real
+        if (value.length > 5) {
+            value = value.replace(/^(\d{5})(\d{1,3})/, '$1-$2'); 
+        }
+        
+        e.target.value = value; 
+    });
+
+    cepInput.addEventListener('blur', async function() {
+        const cepClean = this.value.replace(/\D/g, ''); // Envia limpo pra API
+        if (cepClean.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cepClean}/json/`);
+                const data = await response.json();
+                
+                if (!data.erro) {
+                    document.getElementById('unitStreet').value = data.logradouro || '';
+                    document.getElementById('unitNeighborhood').value = data.bairro || '';
+                    document.getElementById('unitCity').value = data.localidade || '';
+                    document.getElementById('unitState').value = data.uf || '';
+                    
+                    document.getElementById('unitNumber').focus();
+                } else {
+                    console.warn("ViaCEP: CEP não encontrado na base.");
+                }
+            } catch (error) {
+                console.error("ViaCEP Falha de comunicação:", error);
+            }
+        }
     });
 }
