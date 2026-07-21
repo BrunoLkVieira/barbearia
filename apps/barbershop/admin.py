@@ -3,10 +3,10 @@ from .models import Barbershop, Unit, Employee, UnitWorkDay, EmployeeWorkDay, Em
 
 @admin.register(Barbershop)
 class BarbershopAdmin(admin.ModelAdmin):
-    list_display = ("id", "name")
+    list_display = ("id", "name", "owner_user", "max_units", "max_employees")
     search_fields = ("name",)
     ordering = ("id",)
-
+    exclude = ("slug",) # <--- Remove o campo do formulário do admin
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
@@ -14,6 +14,7 @@ class UnitAdmin(admin.ModelAdmin):
     search_fields = ("name", "barbershop__name")
     list_filter = ("is_active", "barbershop")
     ordering = ("id",)
+    exclude = ("slug", "map_link") # <-
 
 
 

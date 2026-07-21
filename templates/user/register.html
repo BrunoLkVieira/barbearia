@@ -102,7 +102,7 @@
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">WhatsApp Comercial</label>
-                    <input type="tel" name="phone" class="form-control" placeholder="(00) 00000-0000" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;">
+                    <input type="tel" name="phone" maxlength="15" class="form-control" placeholder="(00) 00000-0000" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;">
                 </div>
 
                 <div class="form-grid">
@@ -166,6 +166,15 @@
                 docInput.addEventListener('input', applyMask);
             }
         });
+
+        const phoneInput = document.querySelector('input[name="phone"]');
+        if (phoneInput) {
+            phoneInput.setAttribute('maxlength', '15'); // Trava o tamanho máximo
+            phoneInput.addEventListener('input', function (e) {
+                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            });
+        }
     </script>
 </body>
 </html>
