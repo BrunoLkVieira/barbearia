@@ -16,7 +16,21 @@
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/employee.css' %}">
     <link rel="stylesheet" href="{% static 'barbershop/css/mobile/modals/newEmployee.css' %}">
     
-    <style>.swal2-container {z-index: 9999;}</style>
+    <style>
+        .swal2-container {z-index: 9999;}
+        /* Trava visual forte contra cliques forçados */
+        .disabled-limit {
+            background: #a0aec0 !important;
+            color: #e2e8f0 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
+            pointer-events: all !important;
+        }
+        @media (max-width: 820px) {
+            .nav-bar .nav-content { display: none !important; }
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
 </head>
@@ -25,7 +39,7 @@
     
     <div class="nav-bar">
         {% include "geral/nav.html" %}
-        <div class="nav-content">
+        <div class="nav-content desktop-only">
             <div class="stats">
                 {% if is_owner %}
                     <div class="unit-filter desktop-unit-filter">
@@ -115,7 +129,12 @@
                             <i class="fas fa-crown"></i> Atuar na Operação
                         </button>
                     {% endif %}
-                    <button class="add-employee-btn" id="newEmployeeBtn" onclick="openEmployeeModal()" data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}" title="Adicionar um novo colaborador">
+                    <!-- BOTÃO LIVRE DE ONCLICK PARA PROTEÇÃO DO JAVASCRIPT -->
+                    <button class="add-employee-btn" id="newEmployeeBtn" 
+                            data-can-any="{{ can_add_any|yesno:'true,false' }}"
+                            data-can-regular="{{ can_add_regular|yesno:'true,false' }}"
+                            data-can-admin="{{ can_add_admin|yesno:'true,false' }}"
+                            data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}" title="Adicionar um novo colaborador">
                         <i class="fas fa-plus"></i> Novo Funcionário
                     </button>
                 </div>
@@ -167,6 +186,7 @@
                                 <td>{{ owner_in_list.unit.name }}</td>
                                 <td>
                                     <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
+                                    <!-- AQUI EXIBE SE O DONO FOR BARBEIRO TAMBÉM -->
                                     {% for role in owner_in_list.roles.all %}
                                         {% if role.occupation == 'barbeiro' %}
                                             <span class="employee-type type-barber">Barbeiro</span>
@@ -174,7 +194,20 @@
                                     {% endfor %}
                                 </td>
                                 
-                                <td><span class="employee-type" style="background:#2c3e50; color:white;"><i class="fas fa-handshake"></i> Isento (Titular)</span></td>
+                                <td>
+                                    {% if owner_in_list.contract_type == 'fixed_salary' %}
+                                        <span style="font-weight: 700; color: #2c3e50; font-size: 0.85rem;">Fixo: R$ {{ owner_in_list.fixed_salary|default:"0,00" }}</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">+ {{ owner_in_list.service_commission_percentage|default:"0" }}% comissão</span>
+                                    {% elif owner_in_list.contract_type == 'fixed_only' %}
+                                        <span style="font-weight: 700; color: #2c3e50; font-size: 0.85rem;">Apenas Fixo: R$ {{ owner_in_list.fixed_salary|default:"0,00" }}</span>
+                                    {% elif owner_in_list.contract_type == 'chair_rental' %}
+                                        <span style="font-weight: 700; color: #e53e3e; font-size: 0.85rem;">Aluguel Cadeira</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">R$ {{ owner_in_list.chair_rental_fee|default:"0,00" }}/mês</span>
+                                    {% else %}
+                                        <span style="font-weight: 700; color: #27ae60; font-size: 0.85rem;">Comissionado</span>
+                                        <span style="font-size: 0.75rem; color: #718096; display: block;">{{ owner_in_list.service_commission_percentage|default:"0" }}% por serviço</span>
+                                    {% endif %}
+                                </td>
 
                                 <td><span class="employee-active type-barber" title="Conta sempre ativa">Ativo</span></td>
                                 <td>{{ owner_in_list.user.phone|default:"---" }}</td>
@@ -185,6 +218,7 @@
                                                 data-id="{{ owner_in_list.id }}" data-is-owner="true" data-name="{{ owner_in_list.user.name }}" 
                                                 data-lastname="{{ owner_in_list.user.last_name }}" data-email="{{ owner_in_list.user.email }}" 
                                                 data-phone="{{ owner_in_list.user.phone|default:'' }}" data-cpf=""
+                                                data-birth="{{ owner_in_list.user.birth_date|date:'Y-m-d' }}"
                                                 data-unit="{{ owner_in_list.unit.id }}" data-active="true"
                                                 data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                                 data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
@@ -222,7 +256,8 @@
                                 </td>
                                 <td>{{ emp.unit.name }}</td>
                                 <td>
-                                    {% for role in emp.roles.all|slice:":1" %}
+                                    <!-- AQUI EXIBE TODOS OS CARGOS (Se for gerente e barbeiro, aparece os dois) -->
+                                    {% for role in emp.roles.all %}
                                         <span class="employee-type type-{{ role.occupation }}" style="margin-right: 2px;">{{ role.get_occupation_display }}</span>
                                     {% empty %} <span class="employee-type type-none">Nenhum</span> {% endfor %}
                                 </td>
@@ -231,6 +266,8 @@
                                     {% if emp.contract_type == 'fixed_salary' %}
                                         <span style="font-weight: 700; color: #2c3e50; font-size: 0.85rem;">Fixo: R$ {{ emp.fixed_salary|default:"0,00" }}</span>
                                         <span style="font-size: 0.75rem; color: #718096; display: block;">+ {{ emp.service_commission_percentage|default:"0" }}% comissão</span>
+                                    {% elif emp.contract_type == 'fixed_only' %}
+                                        <span style="font-weight: 700; color: #2c3e50; font-size: 0.85rem;">Apenas Fixo: R$ {{ emp.fixed_salary|default:"0,00" }}</span>
                                     {% elif emp.contract_type == 'chair_rental' %}
                                         <span style="font-weight: 700; color: #e53e3e; font-size: 0.85rem;">Aluguel Cadeira</span>
                                         <span style="font-size: 0.75rem; color: #718096; display: block;">R$ {{ emp.chair_rental_fee|default:"0,00" }}/mês</span>
@@ -301,7 +338,17 @@
                     </div>
                     <div class="m-card-body">
                         <div class="m-info-line"><i class="fas fa-store"></i> {{ owner_in_list.unit.name }}</div>
-                        <div class="m-info-line"><i class="fas fa-file-signature" style="color: #9b59b6;"></i> Contrato: 100% (Titular)</div>
+                        <div class="m-info-line"><i class="fas fa-file-signature" style="color: #9b59b6;"></i> 
+                            {% if owner_in_list.contract_type == 'fixed_salary' %}
+                                Fixo R$ {{ owner_in_list.fixed_salary|default:"0,00" }} + {{ owner_in_list.service_commission_percentage|default:"0" }}%
+                            {% elif owner_in_list.contract_type == 'fixed_only' %}
+                                Apenas Fixo: R$ {{ owner_in_list.fixed_salary|default:"0,00" }}
+                            {% elif owner_in_list.contract_type == 'chair_rental' %}
+                                Aluguel (R$ {{ owner_in_list.chair_rental_fee|default:"0,00" }})
+                            {% else %}
+                                Comissionado ({{ owner_in_list.service_commission_percentage|default:"0" }}%)
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -316,7 +363,17 @@
                         <div class="bs-divider"></div>
                         <div class="bs-details">
                             <p><i class="fas fa-store" style="color: #3498db; width:20px;"></i> <strong>Unidade:</strong> {{ owner_in_list.unit.name }}</p>
-                            <p><i class="fas fa-file-signature" style="color: #9b59b6; width:20px;"></i> <strong>Contrato:</strong> Isento (Titular da Conta)</p>
+                            <p><i class="fas fa-file-signature" style="color: #9b59b6; width:20px;"></i> <strong>Contrato:</strong> 
+                                {% if owner_in_list.contract_type == 'fixed_salary' %}
+                                    Salário Fixo (R$ {{ owner_in_list.fixed_salary|default:"0,00" }}) + {{ owner_in_list.service_commission_percentage|default:"0" }}%
+                                {% elif owner_in_list.contract_type == 'fixed_only' %}
+                                    Apenas Salário Fixo (R$ {{ owner_in_list.fixed_salary|default:"0,00" }})
+                                {% elif owner_in_list.contract_type == 'chair_rental' %}
+                                    Aluguel de Cadeira (R$ {{ owner_in_list.chair_rental_fee|default:"0,00" }}/mês)
+                                {% else %}
+                                    100% Comissionado ({{ owner_in_list.service_commission_percentage|default:"0" }}% por serviço)
+                                {% endif %}
+                            </p>
                             <p><i class="fab fa-whatsapp" style="color: #27ae60; width:20px;"></i> <strong>Telefone:</strong> {{ owner_in_list.user.phone|default:"Não informado" }}</p>
                             <p><i class="fas fa-envelope" style="color: #7f8c8d; width:20px;"></i> <strong>E-mail:</strong> {{ owner_in_list.user.email }}</p>
                         </div>
@@ -342,11 +399,14 @@
                         <div class="m-emp-avatar">{{ emp.user.name|slice:":1" }}{{ emp.user.last_name|slice:":1" }}</div>
                         <div class="m-emp-info">
                             <div class="m-emp-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
-                            {% if emp.is_active %}
-                                <span class="m-emp-status status-active">Ativo no Sistema</span>
-                            {% else %}
-                                <span class="m-emp-status status-inactive">Inativo (Sem Acesso)</span>
-                            {% endif %}
+                            <div class="m-emp-status {% if emp.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                <!-- CARGO VISÍVEL NO MOBILE COM ESPAÇAMENTO -->
+                                {% for r in emp.roles.all %}
+                                    <span class="employee-type type-{{ r.occupation }}" style="margin-right:2px;">{{ r.get_occupation_display|upper }}</span> 
+                                {% empty %} 
+                                    <span class="employee-type type-none">NENHUM</span> 
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                     <div class="m-card-body">
@@ -355,6 +415,8 @@
                         <div class="m-info-line"><i class="fas fa-file-signature" style="color: #9b59b6;"></i> 
                             {% if emp.contract_type == 'fixed_salary' %}
                                 Fixo R$ {{ emp.fixed_salary|default:"0,00" }} + {{ emp.service_commission_percentage|default:"0" }}%
+                            {% elif emp.contract_type == 'fixed_only' %}
+                                Apenas Fixo: R$ {{ emp.fixed_salary|default:"0,00" }}
                             {% elif emp.contract_type == 'chair_rental' %}
                                 Aluguel (R$ {{ emp.chair_rental_fee|default:"0,00" }})
                             {% else %}
@@ -383,6 +445,8 @@
                             <p><i class="fas fa-file-signature" style="color: #9b59b6; width:20px;"></i> <strong>Contrato:</strong> 
                                 {% if emp.contract_type == 'fixed_salary' %}
                                     Salário Fixo (R$ {{ emp.fixed_salary|default:"0,00" }}) + {{ emp.service_commission_percentage|default:"0" }}% de comissão
+                                {% elif emp.contract_type == 'fixed_only' %}
+                                    Apenas Salário Fixo (R$ {{ emp.fixed_salary|default:"0,00" }})
                                 {% elif emp.contract_type == 'chair_rental' %}
                                     Aluguel de Cadeira (R$ {{ emp.chair_rental_fee|default:"0,00" }}/mês)
                                 {% else %}
@@ -429,7 +493,12 @@
     </footer>
 
     <div class="mobile-only">
-        <button class="m-fab-btn" onclick="openEmployeeModal()">
+        <!-- BOTÃO MOBILE TRAVADO VIA JAVASCRIPT IGUAL AO DESKTOP -->
+        <button class="m-fab-btn add-employee-btn"
+                data-can-any="{{ can_add_any|yesno:'true,false' }}"
+                data-can-regular="{{ can_add_regular|yesno:'true,false' }}"
+                data-can-admin="{{ can_add_admin|yesno:'true,false' }}"
+                data-consumed="{{ consumed_slots }}" data-max="{{ barbershop.max_employees }}">
             <i class="fas fa-plus"></i>
         </button>
     </div>
@@ -463,26 +532,19 @@
 
     <div id="employeeModal" class="modal">
         <div class="modal-content">
-            <form method="POST" id="employeeForm" autocomplete="off" data-check-url="{% url 'barbershop:check_employee_data' %}">
+            <form method="POST" id="employeeForm" autocomplete="off">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create">
                 <input type="hidden" name="employee_id" id="employeeId">
                 <input type="hidden" name="is_owner" id="isOwnerInput" value="False">
-                <input type="hidden" name="barbershop_slug" value="{{ barbershop.slug }}">
 
-                <input type="hidden" id="employeeCPF">
-                <input type="hidden" id="employeeDocument">
-                
                 <div class="modal-header">
                     <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Funcionário</h2>
-                    <button class="close-btn" onclick="closeEmployeeModal()" type="button"><i class="fas fa-times"></i></button>
+                    <button class="close-btn" id="closeModal" type="button"><i class="fas fa-times"></i></button>
                 </div>
                 
                 <div class="modal-body">
-                    <div id="limitWarningBanner" style="display: none; background: #feebc8; border: 1px solid #f6ad55; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                        <span style="color: #dd6b20; font-weight: bold;"><i class="fas fa-exclamation-triangle"></i> Limite de Vagas Atingido</span>
-                        <p style="font-size: 0.85rem; color: #7b341e; margin-top: 5px;">Seu plano atingiu o limite de barbeiros. Você só pode adicionar cargos administrativos gratuitos ou inativar antigos.</p>
-                    </div>
+                    <div id="limitWarningBanner" style="display: none; background: #feebc8; border: 1px solid #f6ad55; padding: 10px; border-radius: 6px; margin-bottom: 15px;"></div>
 
                     <div class="form-group regular-field" style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                         <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -492,9 +554,22 @@
                         <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Desmarque para inativar sem perder o histórico.</small>
                     </div>
                     
+                    <!-- NOVO BANNER INFORMATIVO PARA VÍNCULO DE CONTA EXISTENTE -->
+                    <div id="linkInfoText" class="form-group regular-field" style="background: #e0f2fe; padding: 10px; border-radius: 6px; border: 1px solid #bae6fd; margin-bottom: 15px;">
+                        <span style="color: #0369a1; font-size: 0.85rem; line-height: 1.4; display: block;">
+                            <i class="fas fa-info-circle"></i> <strong>Atenção:</strong> Se o profissional já possui conta na plataforma, você deve digitar exatamente o mesmo <strong>E-mail</strong> e <strong>Data de Nascimento</strong> para vinculá-lo à sua barbearia.
+                        </span>
+                    </div>
+
                     <div class="form-group regular-field" id="emailGroup">
                         <label for="employeeEmail">E-mail <span style="color: #e53e3e;">*</span></label>
                         <input type="email" name="email" id="employeeEmail" class="form-control" placeholder="E-mail de acesso ao sistema" required>
+                        <small id="cpfStatusMessage" style="display:none; margin-top:5px; font-weight:bold;"></small>
+                    </div>
+                    
+                    <div class="form-group" id="passwordGroup" style="display: none;">
+                        <label for="employeePassword">Senha Inicial do Aplicativo <span style="color: #e53e3e;">*</span></label>
+                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso provisória" minlength="6">
                     </div>
 
                     <div class="form-group regular-field">
@@ -515,11 +590,6 @@
                         <input type="text" name="phone" id="employeePhone" class="form-control" placeholder="Com DDD e apenas números" maxlength="11">
                     </div>
                     
-                    <div class="form-group" id="passwordGroup" style="display: none;">
-                        <label for="employeePassword">Senha Inicial do Aplicativo <span style="color: #e53e3e;">*</span></label>
-                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso provisória" minlength="6">
-                    </div>
-                    
                     <div class="form-group">
                         <label for="employeeSpecialty">Especialidade (Opcional)</label>
                         <input type="text" name="specialty" id="employeeSpecialty" class="form-control" placeholder="Ex: Especialista em Degradê">
@@ -538,30 +608,6 @@
                     </div>
                 
                     <div class="form-group regular-field">
-                        <label for="contractType" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Tipo de Contrato <span style="color: #e53e3e;">*</span></label>
-                        <select name="contract_type" id="contractType" class="form-control" required onchange="toggleContractFields()">
-                            <option value="commission">Comissionado (100% Produtividade)</option>
-                            <option value="fixed_salary">Salário Fixo (+ Comissão)</option>
-                            <option value="chair_rental">Aluguel de Cadeira (Coworking)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group regular-field" id="fixedSalaryGroup" style="display: none;">
-                        <label for="fixedSalary" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Salário Fixo Mensal (R$)</label>
-                        <input type="number" name="fixed_salary" id="fixedSalary" class="form-control" placeholder="Ex: 1500.00" step="0.01">
-                    </div>
-
-                    <div class="form-group regular-field" id="chairRentalGroup" style="display: none;">
-                        <label for="chairRentalFee" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Taxa de Aluguel da Cadeira (R$)</label>
-                        <input type="number" name="chair_rental_fee" id="chairRentalFee" class="form-control" placeholder="Ex: 800.00" step="0.01">
-                        <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px;">Neste modelo, o barbeiro fica com 100% do valor dos cortes realizados.</small>
-                    </div>
-
-                    <div class="form-group regular-field" id="serviceCommissionGroup">
-                        <label for="serviceCommission" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Comissão sobre Serviços (%)</label>
-                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" max="100">
-                    </div>
-                    <div class="form-group regular-field">
                         <label>Cargos (selecione um ou mais)</label>
                         <div class="roles-checkbox-group">
                             {% for value, display_name in role_choices %}
@@ -574,10 +620,36 @@
                     
                     <div class="form-group owner-field" style="display: none; background: #fffaf0; padding: 10px; border-radius: 6px; border: 1px solid #feebc8; margin-bottom: 15px;">
                         <label style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" name="owner_is_barber" id="ownerIsBarber">
+                            <input type="checkbox" name="owner_is_barber" id="ownerIsBarber" value="True">
                             <strong style="color: #c53030;">Atuar como Barbeiro na Agenda</strong>
                         </label>
                         <small style="color: #c53030; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Marque se você vai atender clientes na cadeira.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contractType" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Tipo de Contrato <span style="color: #e53e3e;">*</span></label>
+                        <select name="contract_type" id="contractType" class="form-control" required onchange="toggleContractFields()">
+                            <option value="commission">Comissionado (100% Produtividade)</option>
+                            <option value="fixed_salary">Salário Fixo (+ Comissão)</option>
+                            <option value="fixed_only">Apenas Salário Fixo</option>
+                            <option value="chair_rental">Aluguel de Cadeira (Coworking)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="fixedSalaryGroup" style="display: none;">
+                        <label for="fixedSalary" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Salário Fixo Mensal (R$)</label>
+                        <input type="number" name="fixed_salary" id="fixedSalary" class="form-control" placeholder="Ex: 1500.00" step="0.01">
+                    </div>
+
+                    <div class="form-group" id="chairRentalGroup" style="display: none;">
+                        <label for="chairRentalFee" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Taxa de Aluguel da Cadeira (R$)</label>
+                        <input type="number" name="chair_rental_fee" id="chairRentalFee" class="form-control" placeholder="Ex: 800.00" step="0.01">
+                        <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px;">Neste modelo, o barbeiro fica com 100% do valor dos cortes realizados.</small>
+                    </div>
+
+                    <div class="form-group" id="serviceCommissionGroup">
+                        <label for="serviceCommission" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Comissão sobre Serviços (%)</label>
+                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" max="100">
                     </div>
 
                     <div class="form-group regular-field" id="systemAccessGroup">
@@ -587,14 +659,17 @@
                 </div>
                 
                 <div class="modal-footer">
-                    <button class="btn btn-outline" type="button" onclick="closeEmployeeModal()">Cancelar</button>
-                    <button class="btn btn-primary" type="submit">
+                    <button class="btn btn-outline" type="button" id="cancelEmployee">Cancelar</button>
+                    <button class="btn btn-primary" type="submit" id="saveEmployeeBtn">
                         <i class="fas fa-save"></i> Salvar
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- INJEÇÃO DO JSON DE LIMITES PARA O JAVASCRIPT LER -->
+    <script id="unitLimitsData" type="application/json">{{ u_limits_json|safe }}</script>
 
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/employee.js' %}"></script>
@@ -653,18 +728,16 @@
                         <p>O seu plano atual permite operar com até <b>{{ barbershop.max_employees }} profissionais</b> atuando na agenda.</p>
                         <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
                         <ul style="padding-left: 20px; margin-bottom: 0;">
-                            <li style="margin-bottom: 8px;"><b>Barbeiros:</b> Consomem 1 vaga cada na rede.</li>
-                            <li style="margin-bottom: 8px;"><b>Titular (Você):</b> É 100% grátis e isento, mesmo se atender na cadeira.</li>
-                            <li><b>Gerentes e Caixas:</b> Não consomem vagas do plano (São grátis até o limite de 1 Gerente e 2 Caixas por unidade).</li>
+                            <li style="margin-bottom: 8px;"><b>Barbeiros:</b> Consomem as vagas principais do seu plano.</li>
+                            <li style="margin-bottom: 8px;"><b>Titular (Você):</b> É 100% grátis e isento de consumir vagas.</li>
+                            <li><b>Administração:</b> O sistema concede de cortesia 1 vaga administrativa (Gerente ou Caixa) por filial. O limite máximo é de 1 Gerente por filial.</li>
                         </ul>
                     </div>
                 `,
                 icon: 'info',
                 confirmButtonColor: '#FF7A00',
                 confirmButtonText: 'Entendido',
-                customClass: {
-                    container: 'swal2-container-high-z'
-                }
+                customClass: { container: 'swal2-container-high-z' }
             });
         }
     </script>

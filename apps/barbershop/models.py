@@ -86,6 +86,7 @@ class Employee(models.Model):
     CONTRACT_CHOICES = [
         ('commission', 'Comissionado (100% Produtividade)'),
         ('fixed_salary', 'Salário Fixo (+ Comissão)'),
+        ('fixed_only', 'Apenas Salário Fixo'),
         ('chair_rental', 'Aluguel de Cadeira (Coworking)'),
     ]
 

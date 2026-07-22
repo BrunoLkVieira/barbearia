@@ -208,12 +208,84 @@ def UnitView(request, barbershop_slug):
 
     return render(request, "barbershop/unit.html", {"barbershop": barbershop, "units": units, "user": request.user, "active_units_count": active_units_count, "gerente_unit": gerente_unit, "is_owner": True, "is_manager": False, "active_tab": "barbershop",})
 
+# =========================================================
+# MOTOR SAAS: CÁLCULO INTELIGENTE DE VAGAS E LIMITES
+# =========================================================
+def get_saas_status(barbershop, exclude_emp_id=None, simulate_emp=None):
+    consumed = 0
+    u_limits = {u.id: {'free_admin_used': False, 'has_manager': False} for u in barbershop.units.all()}
+    
+    emps = Employee.objects.filter(unit__barbershop=barbershop, is_active=True).exclude(user=barbershop.owner_user)
+    if exclude_emp_id:
+        emps = emps.exclude(id=exclude_emp_id)
+        
+    for u in barbershop.units.all():
+        u_emps = emps.filter(unit=u)
+        
+        # 1. Verifica limite cravado de Gerente (1 por filial)
+        if u_emps.filter(roles__occupation='gerente').exists():
+            u_limits[u.id]['has_manager'] = True
+            
+        # 2. Verifica uso da vaga administrativa gratuita (Gerente ou Caixa PURO, sem ser barbeiro)
+        pure_admins = u_emps.filter(roles__occupation__in=['gerente', 'caixa']).exclude(roles__occupation='barbeiro').count()
+        if pure_admins > 0:
+            u_limits[u.id]['free_admin_used'] = True
+            
+        # 3. Consumo: Barbeiro gasta sempre. Admin puro gasta o que passar de 1 (vaga grátis).
+        barbers = u_emps.filter(roles__occupation='barbeiro').count()
+        consumed += barbers + max(0, pure_admins - 1)
+
+    if simulate_emp and str(simulate_emp.get('is_active')) == 'True':
+        uid = int(simulate_emp['unit_id'])
+        roles = simulate_emp.get('roles', [])
+        
+        is_barber = 'barbeiro' in roles
+        is_manager = 'gerente' in roles
+        is_cashier = 'caixa' in roles
+        is_pure_admin = (is_manager or is_cashier) and not is_barber
+        
+        if is_manager and u_limits[uid]['has_manager']:
+            return False, "Ação bloqueada: Já existe 1 Gerente operando nesta unidade.", u_limits
+        
+        if is_pure_admin:
+            if not u_limits[uid]['free_admin_used']:
+                u_limits[uid]['free_admin_used'] = True
+            else:
+                consumed += 1
+        elif is_barber:
+            consumed += 1
+            
+    if consumed > barbershop.max_employees:
+        return False, "Ação bloqueada: O limite de barbeiros do seu plano foi atingido.", u_limits
+        
+    return True, consumed, u_limits
+
 
 @login_required
-@owner_or_gerente_required
+@owner_or_gerente_required 
 def EmployeeView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
+    # =========================================================
+    # API GET NATIVA: Auto-preenchimento e bloqueio de E-mail
+    # =========================================================
+    if request.method == "GET" and request.headers.get('x-requested-with') == 'XMLHttpRequest' and "email" in request.GET:
+        email_query = request.GET.get("email", "").strip()
+        user_obj = User.objects.filter(email__iexact=email_query).first()
+        if user_obj:
+            in_barbershop = Employee.objects.filter(user=user_obj, unit__barbershop=barbershop).exists()
+            return JsonResponse({
+                "found": True,
+                "in_barbershop": in_barbershop,
+                "name": user_obj.name,
+                "last_name": user_obj.last_name,
+                "phone": user_obj.phone or "",
+            })
+        return JsonResponse({"found": False})
+
+    # =========================================================
+    # LÓGICA BASE E TENANT
+    # =========================================================
     is_owner = (request.user == barbershop.owner_user)
     gerente_unit = get_user_unit_if_manager(request.user, barbershop)
     unit = gerente_unit if gerente_unit else None
@@ -245,7 +317,14 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     ).order_by('-is_active', 'role_priority', 'user__name')
     
     regular_employees_active_count = regular_employees.filter(is_active=True).count()
-    consumed_slots = calculate_consumed_slots(barbershop)
+
+    # Busca matemática exata de vagas no SaaS
+    _, consumed_slots, u_limits = get_saas_status(barbershop)
+    u_limits_json = json.dumps(u_limits)
+
+    can_add_regular = consumed_slots < barbershop.max_employees
+    can_add_admin = any(not v['free_admin_used'] for v in u_limits.values())
+    can_add_any = can_add_regular or can_add_admin
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -278,19 +357,37 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         chair_rental_fee_val = _to_decimal(request.POST.get("chair_rental_fee"))
 
         if action == "create":
+            # BUGFIX: Proteção Backend contra "Nenhum Cargo"
+            if not roles_selected:
+                messages.error(request, "Ação bloqueada: Você deve selecionar pelo menos 1 cargo para o funcionário.")
+                return redirect(request.path)
+
             unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
+            
+            # Validação Operacional no Motor SaaS
+            simulate_emp = {'unit_id': unit_obj.id, 'roles': roles_selected, 'is_active': str(is_active_val)}
+            is_valid, status_or_msg, _ = get_saas_status(barbershop, simulate_emp=simulate_emp)
+            
+            if not is_valid:
+                messages.error(request, status_or_msg)
+                return redirect(request.path)
+
             with transaction.atomic():
                 user = None
-                
-                if email and User.objects.filter(email=email).exists():
-                    user = User.objects.get(email=email)
-                
-                if user:
+                if email and User.objects.filter(email__iexact=email).exists():
+                    user = User.objects.filter(email__iexact=email).first()
+                    if user.birth_date and birth_date_val:
+                        if str(user.birth_date) != str(birth_date_val):
+                            messages.error(request, "Segurança: A Data de Nascimento informada não confere com a conta Orbly existente.")
+                            return redirect(request.path)
+                    elif not birth_date_val:
+                        messages.error(request, "Segurança: Informe a Data de Nascimento correta para vincular a conta.")
+                        return redirect(request.path)
+                        
                     if user.user_type == 'cliente':
                         user.user_type = 'funcionario'
                         user.save(update_fields=['user_type'])
                 else:
-                    # Criação limpa apenas com E-mail
                     user = User.objects.create_user(
                         email=email, name=name, last_name=last_name,
                         birth_date=birth_date_val, phone=(request.POST.get("phone") or "").strip(), 
@@ -301,15 +398,10 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     employee = Employee.objects.create(
                         user=user, unit=unit_obj, specialty=request.POST.get("specialty", "").strip(), 
                         bio=request.POST.get("bio", "").strip(), is_active=is_active_val,
-                        
-                        contract_type=contract_type_val,
-                        fixed_salary=fixed_salary_val,
-                        chair_rental_fee=chair_rental_fee_val,
-                        
+                        contract_type=contract_type_val, fixed_salary=fixed_salary_val, chair_rental_fee=chair_rental_fee_val,
                         commission_percentage='commission_percentage' in request.POST,
                         service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
                         product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
-                        
                         can_manage_cashbox='can_manage_cashbox' in request.POST,
                         can_register_sell='can_register_sell' in request.POST,
                         can_create_appointments='can_create_appointments' in request.POST,
@@ -317,8 +409,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     )
                     for role_occ in roles_selected:
                         Role.objects.create(employee=employee, occupation=role_occ)
-                    update_user_system_access(user)
-                    messages.success(request, f"Funcionário {user.name} salvo com sucesso!")
+                    
+                    messages.success(request, f"Vínculo realizado! {user.name} faz parte da equipe.")
                 else:
                     messages.error(request, "Este usuário já é funcionário da barbearia.")
 
@@ -334,21 +426,24 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     messages.error(request, "Ação negada: Você não pode alterar as próprias permissões de gerência.")
                     return redirect(request.path)
 
-            if gerente_unit: emp_target.unit = gerente_unit
-            elif request.POST.get("unit_id"): emp_target.unit = get_object_or_404(Unit, id=request.POST.get("unit_id"), barbershop=barbershop)
+            target_unit_id = request.POST.get("unit_id") or emp_target.unit.id
+            if gerente_unit: 
+                emp_target.unit = gerente_unit
+                target_unit_id = gerente_unit.id
+            elif request.POST.get("unit_id"): 
+                emp_target.unit = get_object_or_404(Unit, id=target_unit_id, barbershop=barbershop)
 
             if emp_target.user == barbershop.owner_user:
                 emp_target.specialty = request.POST.get("specialty", "").strip() 
                 emp_target.bio = request.POST.get("bio", "").strip()
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
-                
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
                 emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
                 emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
-                
                 emp_target.save()
+                
                 emp_target.roles.all().delete()
                 Role.objects.create(employee=emp_target, occupation=Role.Occupation.GERENTE)
                 if 'owner_is_barber' in request.POST:
@@ -356,38 +451,31 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Perfil do Titular atualizado na operação.")
             
             else:
-                simulate_emp = {'unit_id': request.POST.get("unit_id") or emp_target.unit.id, 'roles': roles_selected, 'is_active': is_active_val}
-                if calculate_consumed_slots(barbershop, exclude_emp_id=emp_target.id, simulate_emp=simulate_emp) > barbershop.max_employees:
-                    messages.error(request, "Ação bloqueada! Excederia o limite do seu plano.")
+                # BUGFIX: Proteção Backend contra "Nenhum Cargo"
+                if not roles_selected:
+                    messages.error(request, "Ação bloqueada: Você deve manter pelo menos 1 cargo para o funcionário.")
+                    return redirect(request.path)
+
+                simulate_emp = {'unit_id': target_unit_id, 'roles': roles_selected, 'is_active': str(is_active_val)}
+                is_valid, status_or_msg, _ = get_saas_status(barbershop, exclude_emp_id=emp_target.id, simulate_emp=simulate_emp)
+                
+                if not is_valid:
+                    messages.error(request, status_or_msg)
                     return redirect(request.path)
 
                 emp_target.is_active = is_active_val
-                user = emp_target.user
-                changed_user_fields = []
-                for field in ["name", "last_name", "phone"]:
-                    if request.POST.get(field) is not None:
-                        setattr(user, field, request.POST.get(field).strip())
-                        changed_user_fields.append(field)
-                if request.POST.get("birth_date"):
-                    user.birth_date = request.POST.get("birth_date")
-                    changed_user_fields.append("birth_date")
-                    
-                if changed_user_fields: user.save(update_fields=changed_user_fields)
-
                 emp_target.commission_percentage = 'commission_percentage' in request.POST
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
                 emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
                 emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
-                
                 emp_target.system_access = 'system_access' in request.POST
                 emp_target.can_manage_cashbox = 'can_manage_cashbox' in request.POST
                 emp_target.can_register_sell = 'can_register_sell' in request.POST
                 emp_target.can_create_appointments = 'can_create_appointments' in request.POST
                 emp_target.specialty = request.POST.get("specialty", "").strip() 
                 emp_target.bio = request.POST.get("bio", "").strip()
-                
                 emp_target.save()
 
                 with transaction.atomic():
@@ -395,13 +483,11 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     for role_occ in roles_selected:
                         Role.objects.create(employee=emp_target, occupation=role_occ)
                 
-                update_user_system_access(user)
-                messages.success(request, f"Dados atualizados com sucesso!")
+                messages.success(request, f"Dados operacionais atualizados com sucesso!")
 
         elif action == "delete":
             emp_target = get_object_or_404(Employee, id=request.POST.get("employee_id"), unit__barbershop=barbershop)
             user_name = emp_target.user.name
-            target_user = emp_target.user
             
             if emp_target.user == barbershop.owner_user:
                 if is_owner:
@@ -412,15 +498,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             elif not is_owner and emp_target.user == request.user:
                 messages.error(request, "Ação negada: Você não pode excluir a si mesmo.")
             else:
-                if Appointment.objects.filter(employee=emp_target).exists():
-                    emp_target.is_active = False
-                    emp_target.save()
-                    update_user_system_access(target_user)
-                    messages.warning(request, f"O funcionário {user_name} foi INATIVADO para preservar o histórico.")
-                else:
-                    emp_target.delete()
-                    update_user_system_access(target_user)
-                    messages.success(request, f"Funcionário {user_name} removido definitivamente da operação.")
+                emp_target.delete()
+                messages.success(request, f"Funcionário {user_name} removido definitivamente da operação.")
 
         if gerente_unit: return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=gerente_unit.slug)
         if unit_slug: return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=unit_slug)
@@ -435,6 +514,10 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         "regular_employees": regular_employees,
         "regular_employees_active_count": regular_employees_active_count,
         "consumed_slots": consumed_slots,
+        "can_add_any": can_add_any,
+        "can_add_regular": can_add_regular,
+        "can_add_admin": can_add_admin,
+        "u_limits_json": u_limits_json, # Fornece os limites em real-time para o JS
         "is_owner": is_owner,
         "is_manager": gerente_unit is not None,
         "gerente_unit": gerente_unit,
