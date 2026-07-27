@@ -266,9 +266,6 @@ def get_saas_status(barbershop, exclude_emp_id=None, simulate_emp=None):
 def EmployeeView(request, barbershop_slug, unit_slug=None):
     barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
     
-    # =========================================================
-    # API GET NATIVA: Auto-preenchimento e bloqueio de E-mail
-    # =========================================================
     if request.method == "GET" and request.headers.get('x-requested-with') == 'XMLHttpRequest' and "email" in request.GET:
         email_query = request.GET.get("email", "").strip()
         user_obj = User.objects.filter(email__iexact=email_query).first()
@@ -283,9 +280,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             })
         return JsonResponse({"found": False})
 
-    # =========================================================
-    # LÓGICA BASE E TENANT
-    # =========================================================
     is_owner = (request.user == barbershop.owner_user)
     gerente_unit = get_user_unit_if_manager(request.user, barbershop)
     unit = gerente_unit if gerente_unit else None
@@ -318,7 +312,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     
     regular_employees_active_count = regular_employees.filter(is_active=True).count()
 
-    # Busca matemática exata de vagas no SaaS
     _, consumed_slots, u_limits = get_saas_status(barbershop)
     u_limits_json = json.dumps(u_limits)
 
@@ -357,14 +350,12 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         chair_rental_fee_val = _to_decimal(request.POST.get("chair_rental_fee"))
 
         if action == "create":
-            # BUGFIX: Proteção Backend contra "Nenhum Cargo"
             if not roles_selected:
                 messages.error(request, "Ação bloqueada: Você deve selecionar pelo menos 1 cargo para o funcionário.")
                 return redirect(request.path)
 
             unit_obj = get_object_or_404(Unit, id=unit_id, barbershop=barbershop)
             
-            # Validação Operacional no Motor SaaS
             simulate_emp = {'unit_id': unit_obj.id, 'roles': roles_selected, 'is_active': str(is_active_val)}
             is_valid, status_or_msg, _ = get_saas_status(barbershop, simulate_emp=simulate_emp)
             
@@ -405,7 +396,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                         can_manage_cashbox='can_manage_cashbox' in request.POST,
                         can_register_sell='can_register_sell' in request.POST,
                         can_create_appointments='can_create_appointments' in request.POST,
-                        system_access='system_access' in request.POST,
+                        system_access='system_access' in request.POST
                     )
                     for role_occ in roles_selected:
                         Role.objects.create(employee=employee, occupation=role_occ)
@@ -451,7 +442,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, "Perfil do Titular atualizado na operação.")
             
             else:
-                # BUGFIX: Proteção Backend contra "Nenhum Cargo"
                 if not roles_selected:
                     messages.error(request, "Ação bloqueada: Você deve manter pelo menos 1 cargo para o funcionário.")
                     return redirect(request.path)
@@ -517,7 +507,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         "can_add_any": can_add_any,
         "can_add_regular": can_add_regular,
         "can_add_admin": can_add_admin,
-        "u_limits_json": u_limits_json, # Fornece os limites em real-time para o JS
+        "u_limits_json": u_limits_json,
         "is_owner": is_owner,
         "is_manager": gerente_unit is not None,
         "gerente_unit": gerente_unit,
