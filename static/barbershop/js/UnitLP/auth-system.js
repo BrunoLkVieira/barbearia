@@ -15,11 +15,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // CONTROLES GLOBAIS DE MODAIS E UI
     // ==========================================
     
-    // Fechar modais ao clicar no 'X'
+    window.Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true,
+        background: '#2D3748',
+        color: '#F7FAFC',
+        customClass: { container: 'swal2-container-high-z' }
+    });
+
+    window.alert = function(message) {
+        if (!message) return;
+        let msgStr = String(message).toLowerCase(); 
+        let iconType = 'warning';
+        if(msgStr.includes('sucesso') || msgStr.includes('concluído') || msgStr.includes('criada')) {
+            iconType = 'success';
+        } else if (msgStr.includes('erro') || msgStr.includes('falha') || msgStr.includes('inválido')) {
+            iconType = 'error';
+        }
+        window.Toast.fire({ icon: iconType, title: String(message) });
+    };
+
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            const modal = this.closest('.modal');
+            const modal = this.closest('.modal') || this.closest('.modal-overlay');
             if (modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
@@ -27,14 +49,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Apenas fecha o Dropdown do Perfil se clicar fora (Sem afetar modais)
     window.addEventListener('click', function(e) {
         if (profileContent && profileBtn && !profileBtn.contains(e.target) && !profileContent.contains(e.target)) {
             profileContent.style.display = 'none';
         }
     });
 
-    // Dropdown Header Toggle
     if (profileBtn) {
         profileBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -43,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Revelar Senha
     window.togglePassword = function(inputId) {
         const input = document.getElementById(inputId);
         const icon = input.nextElementSibling.querySelector('i');
@@ -59,9 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ==========================================
-    // FLUXO DE LOGIN E REGISTRO (ATUALIZADOS LGPD)
+    // FLUXO DE MODAIS
     // ==========================================
-
     window.openLoginFromPrompt = function() {
         if (authPromptModal) authPromptModal.style.display = 'none';
         if (loginModal) {
@@ -95,7 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // LOGIN API - MUDANÇA: Agora usa o ID loginEmail
+    // ==========================================
+    // API: LOGIN
+    // ==========================================
     document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = this.querySelector('button[type="submit"]');
@@ -120,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 window.location.reload(); 
             } else {
-                alert(data.message);
+                alert(data.message || 'Erro ao efetuar login.');
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
@@ -131,8 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // REGISTER API - MUDANÇA: Agora usa os IDs registerDocument e registerEmail
-    // REGISTER API
+    // ==========================================
+    // API: REGISTRO (ENVIANDO SOBRENOME E DATA)
+    // ==========================================
     document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -150,28 +171,36 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.disabled = true;
 
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const barbershopSlug = window.location.pathname.split('/')[1];
+
+        // Trata a data para não enviar string vazia
+        let bDate = document.getElementById('registerBirthDate').value;
+        if (bDate === "") bDate = null;
+
+        // A MÁGICA ACONTECE AQUI: Payload atualizado com last_name e birth_date
+        const payload = {
+            name: document.getElementById('registerName').value.trim(),
+            last_name: document.getElementById('registerLastName').value.trim(),
+            email: document.getElementById('registerEmail').value.trim(),
+            phone: document.getElementById('registerPhone').value.trim(),
+            birth_date: bDate,
+            password: pass
+        };
 
         try {
-            const response = await fetch(`/${barbershopSlug}/api/register/`, {
+            const response = await fetch(`/${BARBERSHOP_SLUG}/api/register/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken 
                 },
-                body: JSON.stringify({
-                    name: document.getElementById('registerName').value,
-                    email: document.getElementById('registerEmail').value,
-                    phone: document.getElementById('registerPhone').value,
-                    password: pass
-                })
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
             
-            if (response.ok) {
+            if (response.ok || data.status === 'success') {
                 window.location.reload(); 
             } else {
-                alert(data.message);
+                alert(data.message || 'Erro ao registrar.');
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
@@ -182,7 +211,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // LOGOUT API
+    // ==========================================
+    // API: LOGOUT
+    // ==========================================
     window.logoutUser = async function() {
         try {
             const res = await fetch(`/${BARBERSHOP_SLUG}/api/logout/`, {
@@ -195,10 +226,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // CANCEL APPOINTMENT API (Pode manter o do arquivo principal ou deixar aqui)
-    window.cancelAppointment = async function(appointmentId) {
-        if(!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
+    // ==========================================
+    // API: CANCELAMENTO DE AGENDAMENTO
+    // ==========================================
+    window.appointmentToCancel = null;
+
+    window.openCancelModal = function(id) {
+        window.appointmentToCancel = id;
+        const appModal = document.getElementById('appointmentsModal');
+        const cancelModal = document.getElementById('cancelConfirmModal');
+        if(appModal) appModal.style.display = 'none';
+        if(cancelModal) {
+            cancelModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.executeCancel = async function() {
+        if (!window.appointmentToCancel) return;
         
+        const btn = document.getElementById('confirmCancelBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
+
         try {
             const res = await fetch(`/${BARBERSHOP_SLUG}/api/appointment/cancel/`, {
                 method: 'POST',
@@ -206,17 +257,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ appointment_id: appointmentId })
+                body: JSON.stringify({ appointment_id: window.appointmentToCancel })
             });
             const data = await res.json();
-            if (res.ok) {
-                alert("Agendamento cancelado com sucesso.");
-                window.location.reload();
+            
+            if (res.ok && data.status === 'success') {
+                window.Toast.fire({ icon: 'success', title: 'Agendamento cancelado com sucesso!' });
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert(data.message);
+                window.Toast.fire({ icon: 'error', title: data.message || 'Erro ao cancelar.' });
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         } catch (error) {
-            alert("Erro de conexão ao cancelar agendamento.");
+            window.Toast.fire({ icon: 'error', title: 'Erro de conexão com o servidor.' });
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     };
 

@@ -317,7 +317,6 @@
         </section>
     </main>
 
-    <!-- FIX DO FOOTER: Adicionado height: auto !important; para corrigir o vazamento de conteúdo no Desktop -->
     <footer style="background: #1a202c; padding: 30px 20px; text-align: center; color: #a0aec0; border-top: 4px solid #ED8936; height: auto !important; min-height: fit-content;">
         <div class="social-links" style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;">
             {% if unit.instagram_link %}<a href="{{ unit.instagram_link }}" style="color: #fff; font-size: 1.5rem; transition: color 0.3s;"><i class="fab fa-instagram"></i></a>{% endif %}
@@ -328,7 +327,7 @@
         </div>
     </footer>
 
-    <!-- MODAIS ORIGINAIS -->
+    <!-- MODAIS DE AUTENTICAÇÃO E AGENDAMENTO -->
     <div class="modal" id="authPromptModal" aria-hidden="true" style="display: none; z-index: 9999;">
         <div class="modal-content">
             <button class="close-modal" aria-label="Fechar modal" onclick="this.closest('.modal').style.display='none'">×</button>
@@ -427,8 +426,9 @@
         </div>
     </div>
 
+    <!-- MODAL DE REGISTRO (ATUALIZADO E BLINDADO) -->
     <div class="modal modal-register" id="registerModal" aria-hidden="true" style="display: none;">
-        <div class="modal-content register-modal-content">
+        <div class="modal-content register-modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2 id="registerModalTitle"><i class="fas fa-user-plus"></i> Criar Conta</h2>
                 <button class="close-modal" aria-label="Fechar modal">×</button>
@@ -436,36 +436,53 @@
             <form id="registerForm" method="POST" autocomplete="off">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="registerName">Nome Completo</label>
-                        <input type="text" id="registerName" required >
-                    </div>
-                    <div class="form-group">
-                        <label for="registerEmail">E-mail</label>
-                        <input type="email" id="registerEmail" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required >
-                    </div>
                     
-                    <div class="form-group">
-                        <label for="registerPhone">Telefone (DDD + 9 dígitos)</label>
-                        <input type="tel" id="registerPhone" pattern="[0-9]{11}" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="registerName" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">Nome *</label>
+                            <input type="text" id="registerName" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="registerLastName" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">Sobrenome *</label>
+                            <input type="text" id="registerLastName" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                        </div>
                     </div>
-                    <div class="form-group password-container">
-                        <label for="registerPassword">Senha</label>
-                        <input type="password" id="registerPassword" required>
-                        <button type="button" class="toggle-password" aria-label="Mostrar senha" onclick="window.togglePassword('registerPassword')">
-                            <i class="fas fa-eye" style="margin-top: .5rem;"></i>
+            
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="registerEmail" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">E-mail *</label>
+                        <input type="email" id="registerEmail" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                    </div>
+            
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="registerPhone" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">WhatsApp *</label>
+                            <input type="tel" id="registerPhone" pattern="[0-9]{11}" maxlength="11" required oninput="this.value=this.value.replace(/\D/g,'')" placeholder="Ex: 21999999999" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="registerBirthDate" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">Nascimento</label>
+                            <input type="date" id="registerBirthDate" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none; font-family: inherit;">
+                        </div>
+                    </div>
+            
+                    <div class="form-group password-container" style="margin-bottom: 15px; position: relative;">
+                        <label for="registerPassword" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">Senha *</label>
+                        <input type="password" id="registerPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" onclick="window.togglePassword('registerPassword')" style="position: absolute; right: 10px; top: 32px; background: none; border: none; cursor: pointer; color: #a0aec0;">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="form-group password-container">
-                        <label for="registerConfirmPassword">Confirmar Senha</label>
-                        <input type="password" id="registerConfirmPassword" required>
-                        <button type="button" class="toggle-password" aria-label="Mostrar senha" onclick="window.togglePassword('registerConfirmPassword')">
-                            <i class="fas fa-eye" style="margin-top: .5rem;"></i>
+
+                    <div class="form-group password-container" style="margin-bottom: 25px; position: relative;">
+                        <label for="registerConfirmPassword" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50; font-size: 0.85rem;">Confirmar Senha *</label>
+                        <input type="password" id="registerConfirmPassword" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1; outline: none;">
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" onclick="window.togglePassword('registerConfirmPassword')" style="position: absolute; right: 10px; top: 32px; background: none; border: none; cursor: pointer; color: #a0aec0;">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn-submit">Registrar</button>
+
+                    <div class="modal-footer" style="margin-top: 10px; padding: 0;">
+                        <button type="submit" class="btn-submit" style="width: 100%; padding: 12px; background: #FF7A00; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(255, 122, 0, 0.2);">Criar Conta</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -558,91 +575,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.getElementById('appointmentDate');
-            if(dateInput) {
-                const localToday = new Date();
-                const yyyy = localToday.getFullYear();
-                const mm = String(localToday.getMonth() + 1).padStart(2, '0');
-                const dd = String(localToday.getDate()).padStart(2, '0');
-                dateInput.min = `${yyyy}-${mm}-${dd}`;
-            }
-        });
-
-        // 1. TOAST GLOBAL 
-        window.Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true,
-            background: '#2D3748',
-            color: '#F7FAFC',
-            customClass: {
-                container: 'swal2-container-high-z' 
-            }
-        });
-
-        // 2. INTERCEPTADOR DE ALERTA BLINDADO
-        window.alert = function(message) {
-            if (!message) return;
-            
-            let msgStr = String(message).toLowerCase(); 
-            let iconType = 'warning';
-            
-            if(msgStr.includes('sucesso') || msgStr.includes('concluído') || msgStr.includes('agendado') || msgStr.includes('realizado')) {
-                iconType = 'success';
-            } else if (msgStr.includes('erro') || msgStr.includes('falha') || msgStr.includes('inválido') || msgStr.includes('indisponível')) {
-                iconType = 'error';
-            }
-            
-            window.Toast.fire({ icon: iconType, title: String(message) });
-        };
-
-        // 3. FLUXO DE CANCELAMENTO (MODAL NATIVO + FETCH)
-        let appointmentToCancel = null;
-
-        window.openCancelModal = function(appointmentId) {
-            appointmentToCancel = appointmentId;
-            document.getElementById('appointmentsModal').style.display = 'none'; // Esconde modal info
-            document.getElementById('cancelConfirmModal').style.display = 'flex'; // Mostra modal native de confirmação
-        };
-
-        window.executeCancel = function() {
-            if (!appointmentToCancel) return;
-            
-            const btn = document.getElementById('confirmCancelBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
-
-            fetch(`/${window.location.pathname.split('/')[1]}/api/appointment/cancel/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : ''
-                },
-                body: JSON.stringify({ appointment_id: appointmentToCancel })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    window.Toast.fire({ icon: 'success', title: 'Agendamento cancelado com sucesso!' });
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    window.Toast.fire({ icon: 'error', title: data.message || 'Erro ao cancelar.' });
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                }
-            })
-            .catch(err => {
-                window.Toast.fire({ icon: 'error', title: 'Erro de conexão com o servidor.' });
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            });
-        };
-    </script>
     <script src="{% static 'geral/js/script.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/auth-system.js' %}"></script>
     <script src="{% static 'barbershop/js/UnitLP/schedule-modal.js' %}"></script>

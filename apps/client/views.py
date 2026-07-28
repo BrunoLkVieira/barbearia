@@ -1,11 +1,17 @@
+import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Max
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.db import transaction
+from django.contrib.auth import authenticate, login, logout
 
 from apps.barbershop.models import Barbershop, Employee, Unit
-from apps.scheduling.models import Appointment # IMPORTANTE: Nova importação aqui!
+from apps.scheduling.models import Appointment
+from apps.user.models import User
 from .models import Client
 
 def get_tenant_employee(user, barbershop):
@@ -109,14 +115,11 @@ def ClientListView(request, barbershop_slug):
 
     all_clients = Client.objects.filter(barbershop=barbershop)
 
-    # NOVO FILTRO BLINDADO (Subquery)
     if current_unit:
-        # 1. Pega os IDs de quem já agendou nessa unidade
         clients_with_appointments = Appointment.objects.filter(
             unit=current_unit, barbershop=barbershop
         ).values_list('client_id', flat=True)
 
-        # 2. Mostra se o cliente é da unidade, se é legado, ou se está na lista acima
         all_clients = all_clients.filter(
             Q(unit=current_unit) | 
             Q(unit__isnull=True) | 
@@ -163,3 +166,88 @@ def ClientListView(request, barbershop_slug):
     }
     
     return render(request, 'client/clientes.html', context)
+
+
+# ===================================================================
+# APIS DA LANDING PAGE (LOGIN / REGISTRO / LOGOUT)
+# ===================================================================
+def api_register_client(request, barbershop_slug):
+    try:
+        data = json.loads(request.body)
+        
+        email = data.get('email', '').strip().lower()
+        password = data.get('password')
+        name = data.get('name', '').strip()
+        last_name = data.get('last_name', '').strip() # CAPTURA O SOBRENOME
+        phone = data.get('phone', '').strip()
+        birth_date = data.get('birth_date')
+        
+        # Blindagem: Converte string vazia para None para não dar erro no banco
+        if not birth_date:
+            birth_date = None
+
+        # TRAVA DE SEGURANÇA: Se não vier sobrenome, barra a criação!
+        if not email or not password or not name or not last_name:
+            return JsonResponse({'status': 'error', 'message': 'Por favor, preencha Nome, Sobrenome, E-mail e Senha.'}, status=400)
+
+        barbershop = get_object_or_404(Barbershop, slug=barbershop_slug)
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'status': 'error', 'message': 'Este e-mail já está cadastrado em nosso sistema.'}, status=400)
+
+        with transaction.atomic():
+            # 1. Cria o Usuário Global
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                name=name,
+                last_name=last_name,
+                phone=phone,
+                birth_date=birth_date,
+                user_type='cliente'
+            )
+            
+            # 2. Cria o Perfil de Cliente isolado na Barbearia
+            Client.objects.create(
+                user=user,
+                barbershop=barbershop,
+                first_name=name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                birth_date=birth_date
+            )
+
+        # Autentica e loga automaticamente
+        user_auth = authenticate(request, username=email, password=password)
+        if user_auth:
+            login(request, user_auth)
+
+        return JsonResponse({'status': 'success', 'message': 'Conta criada com sucesso!'})
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Erro interno: {str(e)}'}, status=500)
+
+
+
+@require_POST
+def api_login_client(request, barbershop_slug):
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+        password = data.get('password')
+
+        user_auth = authenticate(request, username=email, password=password)
+        if user_auth:
+            login(request, user_auth)
+            return JsonResponse({'status': 'success', 'message': 'Login efetuado com sucesso!'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'E-mail ou senha incorretos.'}, status=401)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Erro interno: {str(e)}'}, status=500)
+
+
+@require_POST
+def api_logout_client(request, barbershop_slug):
+    logout(request)
+    return JsonResponse({'status': 'success', 'message': 'Logout efetuado.'})

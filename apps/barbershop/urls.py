@@ -2,9 +2,11 @@ from django.urls import path
 from .views import (
     UnitView, EmployeeView, WorkDayView, check_employee_data, 
     MyWebsiteView, UnitLP, api_get_barbers, api_get_services, 
-    process_booking_api, api_login, api_register, api_logout, 
+    process_booking_api,  
     api_cancel_appointment, api_get_available_times
 )
+
+from apps.client.views import api_register_client, api_login_client, api_logout_client
 
 app_name = "barbershop"
 
@@ -28,9 +30,9 @@ urlpatterns = [
     path('<slug:barbershop_slug>/agendar/<slug:unit_slug>/', UnitLP, name='unitLP_unit'),
 
     # APIs OrblyBarber Landing Page
-    path('<slug:barbershop_slug>/api/login/', api_login, name='api_login'),
-    path('<slug:barbershop_slug>/api/register/', api_register, name='api_register'),
-    path('<slug:barbershop_slug>/api/logout/', api_logout, name='api_logout'),
+  path('<slug:barbershop_slug>/api/register/', api_register_client, name='api_register'),
+    path('<slug:barbershop_slug>/api/login/', api_login_client, name='api_login'),
+    path('<slug:barbershop_slug>/api/logout/', api_logout_client, name='api_logout'),
     path('<slug:barbershop_slug>/api/barbers/', api_get_barbers, name='api_get_barbers'),
     path('<slug:barbershop_slug>/api/services/', api_get_services, name='api_get_services'),
     path('<slug:barbershop_slug>/api/available-times/', api_get_available_times, name='api_get_available_times'), 
