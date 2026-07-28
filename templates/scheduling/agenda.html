@@ -314,11 +314,11 @@
                             <div class="bs-title-row">
                                 <h3>{{ appointment.client.first_name }} {{ appointment.client.last_name }}</h3>
                                 {% if appointment.status == 'completed' %}
-                                    <span class="bs-status-badge status-completed">FINALIZADO</span>
+                                    <span class="bs-status-badge status-completed">REALIZADO</span>
                                 {% elif appointment.status == 'cancelled' %}
                                     <span class="bs-status-badge status-cancelled">CANCELADO</span>
                                 {% else %}
-                                    <span class="bs-status-badge status-pending">AGENDADO</span>
+                                    <span class="bs-status-badge status-pending">PENDENTE</span>
                                 {% endif %}
                             </div>
                             
@@ -351,7 +351,7 @@
                                     </button>
                                     
                                     {% if is_owner or is_manager %}
-                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('.time-slot[data-appointment-id=\'{{ appointment.id }}\'] .btn-delete-swal').click();">
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('#del-desktop-{{ appointment.id }} .btn-delete-swal').click();">
                                         <i class="fas fa-trash"></i> Excluir
                                     </button>
                                     {% endif %}
@@ -388,6 +388,7 @@
         </button>
     </div>
 
+    <!-- MODAL FINALIZAR SERVIÇO -->
     <div class="endServiceModal-overlay" id="finishModal" style="display: none;">
         <div class="endServiceModal">
             <div class="endServiceModal-header">
@@ -486,7 +487,7 @@
                 <input type="hidden" name="action" value="create_appointment">
                 <div class="appointmentModal-body">
                     
-                    <!-- CAMPO CLIENTE COM BUSCA (Novo Agendamento) -->
+                    <!-- CAMPO CLIENTE COM BUSCA -->
                     <div class="form-group searchable-dropdown" id="dropdownNewApp">
                         <label class="form-label">Cliente</label>
                         <input type="text" id="clientSearchInput" class="form-control" placeholder="Buscar por nome ou telefone..." autocomplete="off">
@@ -582,11 +583,14 @@
                 <input type="hidden" name="appointment_id" id="editAppointmentId">
                 <div class="appointmentModal-body">
                     
-                    <!-- CAMPO CLIENTE COM BUSCA (Editar Agendamento) -->
+                    <!-- CAMPO CLIENTE COM BUSCA (Editar) -->
                     <div class="form-group searchable-dropdown" id="dropdownEditApp">
                         <label class="form-label">Cliente</label>
-                        <input type="text" id="editClientSearchInput" class="form-control" placeholder="Buscar por nome ou telefone..." autocomplete="off">
+                        <input type="text" id="editClientSearchInput" class="form-control" placeholder="Buscar por nome ou telefone..." autocomplete="off" {% if not is_owner and not is_manager %}disabled{% endif %}>
+                        
+                        <!-- AQUI ESTÁ A CORREÇÃO DO ID: editHiddenClientId -->
                         <input type="hidden" name="client_id" id="editHiddenClientId" required>
+                        
                         <ul class="searchable-list" id="editClientList">
                             {% for client in clients_list %}
                                 <li data-id="{{ client.id }}" data-search="{{ client.first_name|lower }} {{ client.last_name|lower }} {{ client.phone|default:''|lower }}">
@@ -632,7 +636,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editAppointmentDate" class="form-label">Data</label>
-                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required min="{{ today|date:'Y-m-d' }}">
+                            <input type="date" name="date" id="editAppointmentDate" class="form-control" required min="{{ today|date:'Y-m-d' }}" onchange="triggerEditSlotFetch()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Horários Vagos <small id="editTimeLoader" style="color:#FF7A00; display:none;"><i class="fas fa-spinner fa-spin"></i> Buscando...</small></label>
@@ -645,7 +649,7 @@
                     
                     <div class="form-group">
                         <label for="editStatusSelect" class="form-label">Status do Atendimento</label>
-                        <select name="status" id="editStatusSelect" class="form-control" onchange="toggleEditPaymentField()" required>
+                        <select name="status" id="editStatusSelect" class="form-control" required onchange="toggleEditPaymentField()">
                             <option value="scheduled">⏱️ Agendado (Pendente)</option>
                             <option value="completed">✅ Finalizado</option>
                             <option value="cancelled">❌ Cancelado</option>
@@ -673,102 +677,6 @@
             </form>
         </div>      
     </div>
-
-    <!-- SCRIPTS CORE -->
-    <script>
-        // 1. Lógica do Dropdown de Busca Vanilla JS
-        function setupSearchableDropdown(inputId, hiddenId, listId, wrapperId) {
-            const input = document.getElementById(inputId);
-            const hidden = document.getElementById(hiddenId);
-            const list = document.getElementById(listId);
-            if (!input || !list) return;
-            const items = list.querySelectorAll('li');
-
-            input.addEventListener('focus', () => list.classList.add('active'));
-
-            input.addEventListener('input', function() {
-                const term = this.value.toLowerCase();
-                items.forEach(item => {
-                    const searchText = item.getAttribute('data-search');
-                    item.style.display = searchText.includes(term) ? 'block' : 'none';
-                });
-            });
-
-            items.forEach(item => {
-                item.addEventListener('click', function() {
-                    input.value = this.childNodes[0].nodeValue.trim(); 
-                    hidden.value = this.getAttribute('data-id');
-                    list.classList.remove('active');
-                });
-            });
-
-            document.addEventListener('click', function(e) {
-                const wrapper = document.getElementById(wrapperId);
-                if (wrapper && !wrapper.contains(e.target)) {
-                    list.classList.remove('active');
-                    if(!hidden.value) input.value = ''; 
-                }
-            });
-        }
-
-        // 2. Interceptador da edição para preencher a busca corretamente ao clicar no card
-        const originalOpenEdit = window.openEditAppointmentModal;
-        window.openEditAppointmentModal = function(btn) {
-            if(originalOpenEdit) originalOpenEdit(btn);
-            
-            const clientId = btn.getAttribute('data-client-id');
-            const clientName = btn.getAttribute('data-client-name');
-            
-            if (clientId && clientName) {
-                document.getElementById('editHiddenClientId').value = clientId;
-                document.getElementById('editClientSearchInput').value = clientName;
-            }
-        };
-
-        // 3. Inicialização e Filtros Mobile
-        document.addEventListener('DOMContentLoaded', function() {
-            setupSearchableDropdown('clientSearchInput', 'hiddenClientId', 'clientList', 'dropdownNewApp');
-            setupSearchableDropdown('editClientSearchInput', 'editHiddenClientId', 'editClientList', 'dropdownEditApp');
-
-            if (window.innerWidth <= 820) {
-                const header = document.querySelector('header');
-                const unitFilter = document.querySelector('.desktop-unit-filter');
-                if (header && unitFilter) {
-                    unitFilter.style.display = 'block';
-                    header.insertBefore(unitFilter, document.querySelector('.user-controls'));
-                }
-
-                const mobileDate = document.getElementById('mobileDateFilter');
-                if(mobileDate) {
-                    mobileDate.addEventListener('change', function() {
-                        const baseUrl = window.location.pathname;
-                        window.location.href = `${baseUrl}?date=${this.value}`;
-                    });
-                }
-
-                const mobileBarber = document.getElementById('mobileBarberSelect');
-                if(mobileBarber) {
-                    mobileBarber.addEventListener('change', function() {
-                        const card = document.querySelector(`.barber-card[data-barber-id="${this.value}"]`);
-                        if(card) card.click();
-                    });
-                }
-            }
-        });
-
-        // 4. Gavetas Mobile
-        function openMobileSheet(appId, event) {
-            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
-            document.getElementById('bs-overlay-' + appId).classList.add('active');
-            document.getElementById('bs-sheet-' + appId).classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeMobileSheet(appId) {
-            document.getElementById('bs-overlay-' + appId).classList.remove('active');
-            document.getElementById('bs-sheet-' + appId).classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    </script>
 
     <script>
         const API_EMPLOYEES_URL = "{% url 'scheduling:get_employees' %}";

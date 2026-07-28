@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
-            // CORREÇÃO: Limpa a memória do barbeiro pra não bugar na próxima unidade
             sessionStorage.removeItem('activeBarberId'); 
             
             const unitSlug = this.value;
@@ -90,6 +89,10 @@ document.addEventListener('DOMContentLoaded', function() {
             calculateFinishTotal();
         });
     }
+
+    // Inicializa Dropdowns
+    setupSearchableDropdown('clientSearchInput', 'hiddenClientId', 'clientList', 'dropdownNewApp');
+    setupSearchableDropdown('editClientSearchInput', 'editHiddenClientId', 'editClientList', 'dropdownEditApp');
 });
 
 // ====================== UTILITÁRIOS ======================
@@ -101,22 +104,53 @@ function resetTimeSelect(selectId) {
     }
 }
 
+function setupSearchableDropdown(inputId, hiddenId, listId, wrapperId) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    const list = document.getElementById(listId);
+    if (!input || !list) return;
+    const items = list.querySelectorAll('li');
+
+    input.addEventListener('focus', () => list.classList.add('active'));
+
+    input.addEventListener('input', function() {
+        const term = this.value.toLowerCase();
+        items.forEach(item => {
+            const searchText = item.getAttribute('data-search');
+            item.style.display = searchText.includes(term) ? 'block' : 'none';
+        });
+    });
+
+    items.forEach(item => {
+        item.addEventListener('click', function() {
+            input.value = this.childNodes[0].nodeValue.trim(); 
+            hidden.value = this.getAttribute('data-id');
+            list.classList.remove('active');
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById(wrapperId);
+        if (wrapper && !wrapper.contains(e.target)) {
+            list.classList.remove('active');
+            if(!hidden.value) input.value = ''; 
+        }
+    });
+}
+
 function initBarberFilter() {
     const barberCards = document.querySelectorAll(".barbers .barber-card");
     const timeSlots = document.querySelectorAll(".time-slot");
     const titleName = document.querySelector(".agenda-barber-name");
     const mobileSelect = document.getElementById('mobileBarberSelect');
     
-    // Captura os elementos de números SEM precisar de IDs (Lê pela estrutura do HTML)
     const desktopStatVals = document.querySelectorAll(".nav-bar .stats .stat-box .stat-value"); 
     const mobileStatVals = document.querySelectorAll(".mobile-stats-grid .m-stat-card .m-stat-val"); 
     const footerStatVals = document.querySelectorAll(".schedule-footer .footer-stat .footer-value"); 
 
-    // Cria a mensagem de VAZIO via JS se ela não existir
     const scheduleContainer = document.querySelector('.schedule-container');
     let jsEmptyMsg = document.getElementById('js-empty-msg');
     
-    // Verifica se o Django já jogou a mensagem nativa dele
     const djangoEmptyMsg = scheduleContainer ? Array.from(scheduleContainer.children).find(el => !el.classList.contains('time-slot') && el.id !== 'js-empty-msg') : null;
 
     if (!djangoEmptyMsg && !jsEmptyMsg && scheduleContainer) {
@@ -127,7 +161,6 @@ function initBarberFilter() {
         scheduleContainer.appendChild(jsEmptyMsg);
     }
 
-    // Função central que roda a matemática e filtra a tela
     function applyFilter(selectedId) {
         let totalCount = 0; let totalRev = 0.0;
         let compCount = 0; let compRev = 0.0;
@@ -138,13 +171,12 @@ function initBarberFilter() {
             const slotStatus = slot.getAttribute("data-status"); 
             
             if (selectedId === "all" || slotBarberId === selectedId) {
-                slot.style.display = ""; // Mostra o card
+                slot.style.display = ""; 
                 visibleSlots++;
                 
                 const orderElement = slot.querySelector('.order');
                 if (orderElement) orderElement.innerText = visualOrder++;
                 
-                // Extrai o preço do card de forma cega (seja PC ou Mobile)
                 let priceStr = "0";
                 const priceAttr = slot.getAttribute('data-price-raw');
                 if (priceAttr) {
@@ -169,24 +201,21 @@ function initBarberFilter() {
                     if (!isNaN(price)) compRev += price;
                 }
             } else {
-                slot.style.display = "none"; // Esconde o card
+                slot.style.display = "none"; 
             }
         });
 
-        // Mostra a mensagem de VAZIO se a filtragem zerar a tela e o Django não tiver agido
         if (jsEmptyMsg && timeSlots.length > 0) {
             jsEmptyMsg.style.display = visibleSlots === 0 ? 'block' : 'none';
         }
 
         const formatMoney = (val) => `R$ ${val.toFixed(2).replace('.', ',')}`;
 
-        // Atualiza números do Desktop
         if (desktopStatVals.length >= 2) {
             desktopStatVals[0].innerText = totalCount;
             desktopStatVals[1].innerText = formatMoney(totalRev);
         }
 
-        // Atualiza números do Mobile
         if (mobileStatVals.length >= 4) {
             mobileStatVals[0].innerText = totalCount;
             mobileStatVals[1].innerText = formatMoney(totalRev);
@@ -194,14 +223,12 @@ function initBarberFilter() {
             mobileStatVals[3].innerText = formatMoney(compRev);
         }
 
-        // Atualiza números dos Footers
         footerStatVals.forEach((val, idx) => {
-            if(idx % 2 === 0) val.innerText = compCount; // Ímpar/Par por causa de múltiplos footers
+            if(idx % 2 === 0) val.innerText = compCount; 
             else val.innerText = formatMoney(compRev);
         });
     }
 
-    // Ação: Ao clicar no botão do Desktop
     barberCards.forEach(card => {
         card.addEventListener("click", () => {
             barberCards.forEach(c => c.classList.remove("active"));
@@ -212,15 +239,13 @@ function initBarberFilter() {
             const selectedId = card.getAttribute("data-barber-id");
             sessionStorage.setItem('activeBarberId', selectedId);
             
-            if(mobileSelect) mobileSelect.value = selectedId; // Sincroniza o Mobile
+            if(mobileSelect) mobileSelect.value = selectedId;
             
             applyFilter(selectedId);
         });
     });
 
-    // Ação: Ao mudar o Dropdown no Mobile
     if (mobileSelect) {
-        // Remove listeners duplicados caso existam recriando o nó
         const newSelect = mobileSelect.cloneNode(true);
         mobileSelect.parentNode.replaceChild(newSelect, mobileSelect);
         
@@ -228,7 +253,6 @@ function initBarberFilter() {
             const selectedId = this.value;
             sessionStorage.setItem('activeBarberId', selectedId);
             
-            // Sincroniza o Desktop
             barberCards.forEach(c => c.classList.remove("active"));
             const targetCard = document.querySelector(`.barbers .barber-card[data-barber-id="${selectedId}"]`);
             if (targetCard) {
@@ -240,7 +264,6 @@ function initBarberFilter() {
         });
     }
 
-    // Inicialização ao carregar a página
     const savedBarberId = sessionStorage.getItem('activeBarberId') || "all";
     const currentSelect = document.getElementById('mobileBarberSelect');
     
@@ -253,7 +276,6 @@ function initBarberFilter() {
         if (titleName) titleName.innerText = initialCard.querySelector(".barber-name").innerText;
     }
 
-    // Dispara a matemática inicial
     applyFilter(savedBarberId);
 }
 
@@ -406,6 +428,7 @@ function openNewAppointmentModal() {
     const appointmentModal = document.getElementById('appointmentModalContainer');
     if (appointmentModal) {
         document.getElementById('appointmentForm').reset();
+        document.getElementById('clientSearchInput').value = '';
         
         const barberGrid = document.getElementById('barberVisualGrid');
         if (barberGrid) barberGrid.innerHTML = '';
@@ -434,7 +457,7 @@ function closeNewAppointmentModal() {
 }
 
 // ====================== ABERTURA DO MODAL EDITAR ======================
-async function openEditAppointmentModal(btn) {
+window.openEditAppointmentModal = async function(btn) {
     const editModal = document.getElementById('editAppointmentModalContainer');
     if (!editModal) return;
 
@@ -442,6 +465,7 @@ async function openEditAppointmentModal(btn) {
 
     const id = btn.getAttribute('data-id');
     const clientId = btn.getAttribute('data-client-id');
+    const clientName = btn.getAttribute('data-client-name');
     const unitId = btn.getAttribute('data-unit-id');
     const barberId = btn.getAttribute('data-barber-id');
     
@@ -455,11 +479,11 @@ async function openEditAppointmentModal(btn) {
 
     document.getElementById('editAppointmentId').value = id;
     
-    const clientSelect = document.getElementById('editClientSelect');
-    if(clientSelect) clientSelect.value = clientId;
-    
-    const hiddenClient = document.getElementById('hiddenClientId');
-    if(hiddenClient) hiddenClient.value = clientId;
+    // AQUI ESTAVA O BUG DO ID! Agora ele mira no "editHiddenClientId"
+    if (clientId && clientName) {
+        document.getElementById('editHiddenClientId').value = clientId;
+        document.getElementById('editClientSearchInput').value = clientName;
+    }
 
     const dateInput = document.getElementById('editAppointmentDate');
     dateInput.value = date;
@@ -470,7 +494,6 @@ async function openEditAppointmentModal(btn) {
     document.getElementById('editHiddenBarberId').value = barberId;
     document.getElementById('originalTime').value = time;
 
-    // Seta a forma de pagamento (se existir) e atualiza a visibilidade do campo
     const payment = btn.getAttribute('data-payment');
     if (payment) document.getElementById('editPaymentSelect').value = payment;
     toggleEditPaymentField();
@@ -488,7 +511,7 @@ async function openEditAppointmentModal(btn) {
 
     editModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-}
+};
 
 function closeEditModal() {
     const editModal = document.getElementById('editAppointmentModalContainer');
