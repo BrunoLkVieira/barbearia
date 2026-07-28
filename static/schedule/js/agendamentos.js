@@ -1,4 +1,49 @@
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // ===============================================
+    // Lógica do Dropdown de Busca Vanilla JS (Igual Agenda)
+    // ===============================================
+    function setupSearchableDropdown(inputId, hiddenId, listId, wrapperId) {
+        const input = document.getElementById(inputId);
+        const hidden = document.getElementById(hiddenId);
+        const list = document.getElementById(listId);
+        if (!input || !list) return;
+        
+        const items = list.querySelectorAll('li');
+
+        input.addEventListener('focus', () => list.classList.add('active'));
+
+        input.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            items.forEach(item => {
+                const searchText = item.getAttribute('data-search');
+                item.style.display = searchText.includes(term) ? 'block' : 'none';
+            });
+        });
+
+        items.forEach(item => {
+            item.addEventListener('click', function() {
+                input.value = this.childNodes[0].nodeValue.trim(); 
+                hidden.value = this.getAttribute('data-id');
+                list.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById(wrapperId);
+            if (wrapper && !wrapper.contains(e.target)) {
+                list.classList.remove('active');
+                if(!hidden.value) input.value = ''; 
+            }
+        });
+    }
+
+    setupSearchableDropdown('searchClientNew', 'hiddenClientId', 'clientList', 'dropdownNewApp');
+    setupSearchableDropdown('editClientSearchInput', 'editHiddenClientId', 'editClientList', 'dropdownEditApp');
+
+    // ===============================================
+    // Navegação de Unidades
+    // ===============================================
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     if (unitSelectFilter) {
         unitSelectFilter.addEventListener('change', function() {
@@ -65,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editDateInput) editDateInput.addEventListener('change', () => enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect'));
     if (editTimeInput) editTimeInput.addEventListener('change', () => enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect'));
     
-    // Mostra/Oculta o Forma de Pagamento no Editar quando o status é Finalizado
+    // Mostra/Oculta a Forma de Pagamento no Editar quando o status é Finalizado
     if (editStatusSelect) {
         editStatusSelect.addEventListener('change', function() {
             const paymentGroup = document.getElementById('editPaymentGroup');
@@ -80,19 +125,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function filterHistoryTable() {
-    const input = document.getElementById('historyClientSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('.history-table tbody tr');
+// A Função original de edição, agora adaptada para preencher o input visual
+const originalOpenEdit = window.openEditAppointmentModal;
+window.openEditAppointmentModal = async function(btn) {
+    const editModal = document.getElementById('editAppointmentModalContainer');
+    if (!editModal) return;
 
-    rows.forEach(row => {
-        // A coluna 1 é a do Cliente na tabela (0: Data, 1: Cliente, 2: Serviço)
-        const clientCell = row.cells[1];
-        if (clientCell) {
-            const textContent = clientCell.textContent.toLowerCase();
-            row.style.display = textContent.includes(input) ? '' : 'none';
-        }
-    });
-}
+    document.getElementById('editAppointmentForm').reset();
+    document.getElementById('editClientSearchInput').value = '';
+
+    const id = btn.getAttribute('data-id');
+    const clientId = btn.getAttribute('data-client-id');
+    const clientName = btn.getAttribute('data-client-name');
+    const unitId = btn.getAttribute('data-unit-id');
+    const barberId = btn.getAttribute('data-barber-id');
+    
+    const servicesStr = btn.getAttribute('data-services');
+    const preSelectedSvcIds = servicesStr ? JSON.parse(servicesStr).map(String) : [];
+
+    const date = btn.getAttribute('data-date');
+    const time = btn.getAttribute('data-time');
+    const status = btn.getAttribute('data-status');
+    const payment = btn.getAttribute('data-payment');
+    const notes = btn.getAttribute('data-notes');
+
+    document.getElementById('editAppointmentId').value = id;
+    
+    if (clientId && clientName) {
+        document.getElementById('editHiddenClientId').value = clientId;
+        document.getElementById('editClientSearchInput').value = clientName;
+    }
+
+    const dateInput = document.getElementById('editAppointmentDate');
+    dateInput.value = date;
+    dateInput.defaultValue = date; 
+    
+    const statusSelect = document.getElementById('editStatusSelect');
+    statusSelect.value = status;
+    
+    const editPaymentSelect = document.getElementById('editPaymentSelect');
+    if(editPaymentSelect) editPaymentSelect.value = payment || 'cash';
+    statusSelect.dispatchEvent(new Event('change')); 
+
+    document.getElementById('editAppointmentNotes').value = notes || ''; 
+    document.getElementById('editHiddenBarberId').value = barberId;
+    document.getElementById('originalTime').value = time;
+
+    const unitSelect = document.getElementById('editUnitSelect');
+    if (unitSelect) unitSelect.value = unitId;
+
+    const barberGrid = document.getElementById('editBarberVisualGrid');
+    if (barberGrid) {
+        await loadBarbersVisual(unitId, 'editBarberVisualGrid', 'editHiddenBarberId', barberId);
+    }
+    
+    await loadServicesCheckboxes(barberId, 'editServiceCheckboxGrid', preSelectedSvcIds, true);
+    triggerEditSlotFetch();
+
+    enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect');
+
+    editModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
 
 function enforcePastStatusRule(dateId, timeId, statusId) {
     const dateVal = document.getElementById(dateId).value;
@@ -115,7 +209,7 @@ function enforcePastStatusRule(dateId, timeId, statusId) {
     
     if (isPast && statusSel.value === 'scheduled') {
         statusSel.value = 'completed'; 
-        statusSel.dispatchEvent(new Event('change')); // Força a exibição do Input Forma de Pagamento
+        statusSel.dispatchEvent(new Event('change')); 
     }
 }
 
@@ -277,6 +371,7 @@ function openNewAppointmentModal() {
     const appointmentModal = document.getElementById('appointmentModalContainer');
     if (appointmentModal) {
         document.getElementById('appointmentForm').reset();
+        document.getElementById('searchClientNew').value = '';
         
         const barberGrid = document.getElementById('barberVisualGrid');
         if (barberGrid) barberGrid.innerHTML = '';
@@ -300,66 +395,6 @@ function openNewAppointmentModal() {
 function closeNewAppointmentModal() {
     const appointmentModal = document.getElementById('appointmentModalContainer');
     if (appointmentModal) { appointmentModal.style.display = 'none'; document.body.style.overflow = ''; }
-}
-
-async function openEditAppointmentModal(btn) {
-    const editModal = document.getElementById('editAppointmentModalContainer');
-    if (!editModal) return;
-
-    document.getElementById('editAppointmentForm').reset();
-
-    const id = btn.getAttribute('data-id');
-    const clientId = btn.getAttribute('data-client-id');
-    const unitId = btn.getAttribute('data-unit-id');
-    const barberId = btn.getAttribute('data-barber-id');
-    
-    const servicesStr = btn.getAttribute('data-services');
-    const preSelectedSvcIds = servicesStr ? JSON.parse(servicesStr).map(String) : [];
-
-    const date = btn.getAttribute('data-date');
-    const time = btn.getAttribute('data-time');
-    const status = btn.getAttribute('data-status');
-    const payment = btn.getAttribute('data-payment');
-    const notes = btn.getAttribute('data-notes');
-
-    document.getElementById('editAppointmentId').value = id;
-    
-    const clientSelect = document.getElementById('editClientSelect');
-    if(clientSelect) clientSelect.value = clientId;
-    
-    const hiddenClient = document.getElementById('hiddenClientId');
-    if(hiddenClient) hiddenClient.value = clientId;
-
-    const dateInput = document.getElementById('editAppointmentDate');
-    dateInput.value = date;
-    dateInput.defaultValue = date; 
-    
-    const statusSelect = document.getElementById('editStatusSelect');
-    statusSelect.value = status;
-    
-    const editPaymentSelect = document.getElementById('editPaymentSelect');
-    if(editPaymentSelect) editPaymentSelect.value = payment || 'cash';
-    statusSelect.dispatchEvent(new Event('change')); 
-
-    document.getElementById('editAppointmentNotes').value = notes || ''; 
-    document.getElementById('editHiddenBarberId').value = barberId;
-    document.getElementById('originalTime').value = time;
-
-    const unitSelect = document.getElementById('editUnitSelect');
-    if (unitSelect) unitSelect.value = unitId;
-
-    const barberGrid = document.getElementById('editBarberVisualGrid');
-    if (barberGrid) {
-        await loadBarbersVisual(unitId, 'editBarberVisualGrid', 'editHiddenBarberId', barberId);
-    }
-    
-    await loadServicesCheckboxes(barberId, 'editServiceCheckboxGrid', preSelectedSvcIds, true);
-    triggerEditSlotFetch();
-
-    enforcePastStatusRule('editAppointmentDate', 'editAppointmentTime', 'editStatusSelect');
-
-    editModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 }
 
 function closeEditModal() {

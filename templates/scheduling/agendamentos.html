@@ -40,6 +40,54 @@
         .saas-service-duration { font-size: 0.75rem; color: #a0aec0; }
         .saas-service-icon { font-size: 1.1rem; color: #FF7A00; flex-shrink: 0; }
         .hidden-checkbox { display: none; }
+        
+        /* Ajuste do campo de busca Desktop Principal */
+        .desktop-search-form { display: flex; position: relative; align-items: center; }
+        .desktop-search-form i { position: absolute; left: 12px; color: #a0aec0; }
+        .desktop-search-form input { padding: 8px 15px 8px 35px; border-radius: 6px; border: 1px solid #cbd5e0; outline: none; width: 250px; font-family: inherit; }
+        .desktop-search-form input:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1); }
+
+        /* CUSTOM DROPDOWN COM BUSCA PARA MODAIS (Igual Agenda) */
+        .searchable-dropdown { position: relative; }
+        .searchable-list {
+            position: absolute; top: 100%; left: 0; width: 100%;
+            background: #fff; border: 1px solid #dcdde1; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-height: 220px;
+            overflow-y: auto; z-index: 9999; display: none; padding: 0; margin-top: 5px; list-style: none;
+        }
+        .searchable-list.active { display: block; }
+        .searchable-list li {
+            padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f1f2f6;
+            color: #2c3e50; font-weight: 500; font-size: 0.95rem; transition: 0.2s;
+        }
+        .searchable-list li:hover { background: #fff5eb; color: #FF7A00; }
+        .searchable-list li small { display: block; color: #7f8c8d; font-size: 0.8rem; margin-top: 2px; }
+
+        /* BARRA DE ANOTAÇÃO PERFEITA (ESTILO AGENDA) */
+        .appointment-notes-bar {
+            background-color: #fffcf2; 
+            border-left: 4px solid #f39c12; 
+            padding: 8px 12px; 
+            font-size: 0.85rem; 
+            color: #4a5568;
+            border-radius: 0 6px 6px 0;
+            display: flex;
+            align-items: center;
+        }
+        .appointment-notes-bar i {
+            color: #f39c12;
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+
+        /* MAGICA DO CSS: REMOVE A LINHA ENTRE O AGENDAMENTO E A NOTA */
+        .history-table tbody tr.has-notes td {
+            border-bottom: none !important;
+            padding-bottom: 5px !important; /* Gruda a barra na linha de cima */
+        }
+        .history-table tbody tr.notes-row td {
+            border-bottom: 1px solid #eaecef !important; /* Cria a linha divisória ABAIXO da barra */
+        }
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -120,8 +168,6 @@
                 {% endif %}
             </button>
         </div>
-        
-       
     </div>
     
     <div class="main-content">
@@ -130,7 +176,17 @@
                 <div class="content-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2><i class="fas fa-history"></i> Histórico da Agenda</h2>
                     <div style="display: flex; gap: 15px;">
-                        <input type="search" id="historyClientSearch" value="{{ search_query }}" placeholder="Pesquisar cliente (apenas na pág atual)..." onkeyup="filterHistoryTable()" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #cbd5e0; outline: none; width: 300px;">
+                        
+                        <form method="GET" action="" class="desktop-search-form">
+                            <input type="hidden" name="date_filter" value="{{ date_filter }}">
+                            <input type="hidden" name="month_filter" value="{{ month_filter }}">
+                            <input type="hidden" name="barber_filter" value="{{ barber_filter }}">
+                            <input type="hidden" name="service_filter" value="{{ service_filter }}">
+                            <input type="hidden" name="status_filter" value="{{ status_filter }}">
+                            
+                            <i class="fas fa-search"></i>
+                            <input type="search" name="search" value="{{ search_query }}" placeholder="Buscar cliente (nome ou telefone)...">
+                        </form>
                         
                         {% if not is_cashier %}
                         <button type="button" class="btn-outline" onclick="openNewAppointmentModal()" style="background-color: #FF7A00; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
@@ -142,6 +198,7 @@
                 
                 <form id="filterForm" method="GET">
                     <input type="hidden" name="page" id="pageInput" value="1">
+                    <input type="hidden" name="search" value="{{ search_query }}"> 
                     <div class="filters-container">
                         <div class="filter-group">
                             <label for="dateFilter">Por Data Específica</label>
@@ -197,22 +254,22 @@
             </div>
             
             <div class="table-container">
-                <table class="history-table desktop-only">
+                <table class="history-table desktop-only" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Data e Hora</th>
-                            <th>Cliente</th>
-                            <th>Serviço e Profissional</th>
-                            <th>Status</th>
+                            <th style="width: 15%;">Data e Hora</th>
+                            <th style="width: 25%;">Cliente</th>
+                            <th style="width: 30%;">Serviço e Profissional</th>
+                            <th style="width: 10%;">Status</th>
                             {% if is_owner or is_manager or is_cashier %}
-                            <th>Total (R$)</th>
+                            <th style="width: 10%;">Total (R$)</th>
                             {% endif %}
-                            <th>Ações</th>
+                            <th style="width: 10%; text-align: right;">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for app in page_obj %}
-                        <tr>
+                        <tr class="{% if app.notes %}has-notes{% endif %}">
                             <td data-label="Data e Hora">
                                 <div class="date-time">
                                     <div style="font-weight: bold;">{{ app.date|date:"d/m/Y" }}</div>
@@ -250,28 +307,31 @@
                             
                             {% if is_owner or is_manager or is_cashier %}
                             <td data-label="Pagamento">
-                                <div class="payment-info" style="font-weight: bold; color: #2d3748;">
-                                    R$ {{ app.total_price }}
+                                <div>
+                                    <div class="payment-info" style="font-weight: bold; color: #2d3748;">
+                                        R$ {{ app.total_price }}
+                                    </div>
+                                    {% if app.status == 'completed' and app.payment_type %}
+                                    <div style="margin-top: 5px;">
+                                        <span style="font-size: 0.70rem; background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: 500;">
+                                            {% if app.payment_type == 'cash' %}💵 Dinheiro
+                                            {% elif app.payment_type == 'card' %}💳 Cartão
+                                            {% elif app.payment_type == 'pix' %}❖ PIX
+                                            {% else %}{{ app.payment_type|title }}{% endif %}
+                                        </span>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% if app.status == 'completed' and app.payment_type %}
-                                <div style="margin-top: 5px;">
-                                    <span style="font-size: 0.70rem; background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: 500;">
-                                        {% if app.payment_type == 'cash' %}💵 Dinheiro
-                                        {% elif app.payment_type == 'card' %}💳 Cartão
-                                        {% elif app.payment_type == 'pix' %}❖ PIX
-                                        {% else %}{{ app.payment_type|title }}{% endif %}
-                                    </span>
-                                </div>
-                                {% endif %}
                             </td>
                             {% endif %}
                             
                             <td data-label="Ações">
-                                <div class="action-cell">
+                                <div class="action-cell" style="justify-content: flex-end;">
                                     {% if not is_cashier %}
                                         <div class="action-btn edit" onclick="openEditAppointmentModal(this)" title="Alterar status, horário ou observação"
                                             data-id="{{ app.id }}"
                                             data-client-id="{{ app.client.id }}"
+                                            data-client-name="{{ app.client.first_name }} {{ app.client.last_name }}"
                                             data-unit-id="{{ app.unit.id }}"
                                             data-barber-id="{{ app.employee.id }}"
                                             data-services='[{% for s in app.services.all %}"{{ s.service.id }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
@@ -299,9 +359,22 @@
                                 </div>
                             </td>
                         </tr>
+                        
+                        <!-- LINHA SECUNDÁRIA QUE GUARDA A OBSERVAÇÃO NATIVA -->
+                        {% if app.notes %}
+                        <tr class="notes-row" style="background: transparent;">
+                            <td colspan="6" style="padding: 0 15px 15px 15px; border-top: none;">
+                                <div class="appointment-notes-bar">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <strong style="margin-right: 5px;">Obs:</strong> {{ app.notes }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        
                         {% empty %}
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0;">
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0; width: 100%;">
                                 <i class="fas fa-calendar-times" style="font-size: 2.5rem; margin-bottom: 15px; display: block; color: #cbd5e0;"></i>
                                 Nenhum agendamento encontrado para o filtro selecionado.
                             </td>
@@ -361,6 +434,14 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- BARRA DE ANOTAÇÃO NO CARD MOBILE -->
+                                {% if app.notes %}
+                                <div class="appointment-notes-bar" style="margin-top: 12px; margin-left: -15px; margin-right: -15px; margin-bottom: -15px; border-radius: 0;">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <strong style="margin-right: 5px;">Obs:</strong> {{ app.notes }}
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -462,7 +543,6 @@
     </div>
 
     <div class="mobile-only">
-        
         {% if not is_cashier %}
         <button class="btnNewApp-mobile" onclick="openNewAppointmentModal()">
             <i class="fas fa-plus"></i>
@@ -475,7 +555,7 @@
             <div class="bs-content" style="padding-bottom: 0;">
                 <h3 style="margin-bottom: 15px;"><i class="fas fa-filter" style="color:#FF7A00; margin-right:8px;"></i> Filtros do Histórico</h3>
                 <form id="mobileAdvancedFilterForm" method="GET" style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; max-height: 60vh;">
-                    <input type="hidden" name="search" value="{{ search_query }}">
+                    <input type="hidden" name="search" value="{{ search_query }}"> 
                     <input type="hidden" name="page" value="1">
                     
                     <div class="form-group">
@@ -527,6 +607,7 @@
     </div>
 
 
+    <!-- MODAL DE CRIAR AGENDAMENTO COM CAMPO DE BUSCA DE CLIENTE -->
     <div id="appointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box;">
         <div class="appointmentModal-content" style="background: #fff; border-radius: 16px; max-width: 500px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
             <div class="appointmentModal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd; flex-shrink: 0;">
@@ -544,14 +625,18 @@
                 <div class="appointmentModal-body" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
                     <p style="font-size: 0.85rem; color: #718096; margin-bottom: 15px;">Lançamentos retroativos serão salvos diretamente como "Finalizados" no Caixa.</p>
                     
-                    <div class="form-group" style="margin-bottom: 15px;">
+                    <div class="form-group searchable-dropdown" id="dropdownNewApp" style="margin-bottom: 15px;">
                         <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Cliente</label>
-                        <select name="client_id" id="clientSelect" class="form-control" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background:#f8f9fa;">
-                            <option value="">Selecione um cliente...</option>
+                        <input type="text" id="searchClientNew" placeholder="🔍 Buscar cliente por nome ou telefone..." class="form-control" autocomplete="off" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background:#f8f9fa;">
+                        <input type="hidden" name="client_id" id="hiddenClientId" required>
+                        <ul class="searchable-list" id="clientList">
                             {% for client in clients_list %}
-                                <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }} ({{ client.phone }})</option>
+                                <li data-id="{{ client.id }}" data-search="{{ client.first_name|lower }} {{ client.last_name|lower }} {{ client.phone|default:''|lower }}">
+                                    {{ client.first_name }} {{ client.last_name }} 
+                                    <small><i class="fab fa-whatsapp"></i> {{ client.phone|default:'Sem contato' }}</small>
+                                </li>
                             {% endfor %}
-                        </select>
+                        </ul>
                     </div>
                     
                     {% if is_owner %}
@@ -616,6 +701,7 @@
         </div>      
     </div>
 
+    <!-- MODAL DE EDITAR AGENDAMENTO COM CAMPO DE BUSCA DE CLIENTE -->
     <div id="editAppointmentModalContainer" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box;">
         <div class="appointmentModal-content" style="background: #fff; border-radius: 16px; max-width: 500px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
             <div class="appointmentModal-header" style="display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid #ddd; flex-shrink: 0;">
@@ -632,14 +718,18 @@
                 
                 <div class="appointmentModal-body" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
                     
-                    <div class="form-group" style="margin-bottom: 15px;">
+                    <div class="form-group searchable-dropdown" id="dropdownEditApp" style="margin-bottom: 15px;">
                         <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Cliente</label>
-                        <select name="client_id" id="editClientSelect" class="form-control" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background:#f8f9fa;" {% if not is_owner and not is_manager %}disabled{% endif %}>
+                        <input type="text" id="editClientSearchInput" class="form-control" placeholder="🔍 Buscar por nome ou telefone..." autocomplete="off" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dcdde1; background:#f8f9fa;" {% if not is_owner and not is_manager %}disabled{% endif %}>
+                        <input type="hidden" name="client_id" id="editHiddenClientId" required>
+                        <ul class="searchable-list" id="editClientList">
                             {% for client in clients_list %}
-                                <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                                <li data-id="{{ client.id }}" data-search="{{ client.first_name|lower }} {{ client.last_name|lower }} {{ client.phone|default:''|lower }}">
+                                    {{ client.first_name }} {{ client.last_name }} 
+                                    <small><i class="fab fa-whatsapp"></i> {{ client.phone|default:'Sem contato' }}</small>
+                                </li>
                             {% endfor %}
-                        </select>
-                        {% if not is_owner and not is_manager %}<input type="hidden" name="client_id" id="hiddenClientId">{% endif %}
+                        </ul>
                     </div>
                     
                     {% if is_owner %}
@@ -724,13 +814,11 @@
     <script src="{% static 'geral/js/script.js' %}"></script>
     
     <script>
-        // UX: Remove a Data global do Header e centraliza a logo p/ esta tela
         document.addEventListener('DOMContentLoaded', function() {
             if (window.innerWidth <= 820) {
                 const dateDisplay = document.querySelector('header .date-display');
                 if (dateDisplay) dateDisplay.style.display = 'none';
 
-                // A MÁGICA: Empurra o Filtro de Unidade pro Header (seja Select ou Badge)
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');
                 if (header && unitFilter) {
@@ -763,17 +851,18 @@
             document.body.style.overflow = '';
         }
 
-        // Submete a busca ao dar enter
+        // Submete a busca ao dar enter no mobile
         document.getElementById('mobileSearchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const input = this.querySelector('input[name="search"]').value;
-            document.getElementById('historyClientSearch').value = input;
-            this.submit();
-        });
-
-        // Script Original
-        document.getElementById('historyClientSearch').addEventListener('search', function(e) {
-            if(this.value === '') { window.location.href = window.location.pathname; }
+            // Preserva nos inputs ocultos e submete o desktop form para não perder a paginação/filtros
+            const deskForm = document.querySelector('.desktop-search-form');
+            if(deskForm) {
+                deskForm.querySelector('input[type="search"]').value = input;
+                deskForm.submit();
+            } else {
+                this.submit();
+            }
         });
 
         document.addEventListener('DOMContentLoaded', function() {
