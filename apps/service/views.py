@@ -3,9 +3,9 @@ from decimal import Decimal
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import ProtectedError # IMPORTAÇÃO CRÍTICA AQUI
 
 from apps.barbershop.models import Barbershop, Unit, Employee
+from apps.scheduling.models import AppointmentService # IMPORTANTE: Importa para checagem
 from .models import BarberService, BaseService
 
 def get_tenant_employee(user, barbershop):
@@ -71,12 +71,12 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                 if is_manager and not is_owner:
                     svcs_to_delete = svcs_to_delete.filter(employee__unit=current_unit)
                 
-                # TRATAMENTO DE INTEGRIDADE RELACIONAL (PROTECTED ERROR)
-                try:
+                # BLINDAGEM DE SOFTWARE: Impede deleção se existir no Histórico/Agenda
+                if AppointmentService.objects.filter(service__in=svcs_to_delete).exists():
+                    messages.error(request, "Falha na exclusão: Este serviço possui agendamentos no histórico e não pode ser deletado. Para ocultá-lo, edite e desmarque os barbeiros.")
+                else:
                     svcs_to_delete.delete()
                     messages.success(request, "Serviço excluído da grade dos barbeiros selecionados!")
-                except ProtectedError:
-                    messages.error(request, "Falha na exclusão: Este serviço possui agendamentos no histórico. Para ocultá-lo, edite-o e desmarque os barbeiros.")
 
             elif action in ["create", "update"]:
                 base_service_id = request.POST.get('base_service') or None
@@ -116,19 +116,21 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                     existing_emp_ids = set(existing_svcs.values_list('employee_id', flat=True))
                     new_emp_ids = set(map(int, employee_ids))
 
-                    # TRATAMENTO DE INTEGRIDADE NO UPDATE
-                    try:
-                        for svc in existing_svcs:
-                            if svc.employee_id in new_emp_ids:
-                                svc.name = name
-                                svc.price = price
-                                svc.duration = duration
-                                svc.base_service_id = base_service_id
-                                svc.save()
+                    has_warning = False
+
+                    for svc in existing_svcs:
+                        if svc.employee_id in new_emp_ids:
+                            svc.name = name
+                            svc.price = price
+                            svc.duration = duration
+                            svc.base_service_id = base_service_id
+                            svc.save()
+                        else:
+                            # BLINDAGEM NO UPDATE: Se o dono desmarcar um barbeiro que já tem histórico
+                            if AppointmentService.objects.filter(service=svc).exists():
+                                has_warning = True
                             else:
                                 svc.delete()
-                    except ProtectedError:
-                        messages.warning(request, "Atenção: Não foi possível remover um barbeiro do serviço pois ele possui agendamentos atrelados. As demais alterações foram salvas.")
 
                     for emp_id in (new_emp_ids - existing_emp_ids):
                         target_emp = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
@@ -141,7 +143,11 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                             price=price,
                             duration=duration
                         )
-                    messages.success(request, "Catálogo atualizado e sincronizado com sucesso!")
+                    
+                    if has_warning:
+                        messages.warning(request, "Atenção: Alguns barbeiros não puderam ser removidos deste serviço pois já possuem atendimentos com ele no Histórico. As demais edições foram salvas!")
+                    else:
+                        messages.success(request, "Catálogo atualizado e sincronizado com sucesso!")
 
         except Exception as e:
             messages.error(request, f"Ocorreu um erro no processamento: {str(e)}")
