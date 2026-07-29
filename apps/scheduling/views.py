@@ -14,7 +14,7 @@ from django.db.models import Prefetch
 
 from apps.barbershop.models import Barbershop, Unit, Employee, Role, EmployeeWorkDay, EmployeeAbsence, UnitHoliday
 from apps.client.models import Client
-from apps.service.models import BarberService, BaseService 
+from apps.service.models import BarberService
 from apps.scheduling.models import Appointment, AppointmentService
 
 try:
@@ -105,8 +105,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 time_str = request.POST.get('time')
                 status_val = request.POST.get('status', 'scheduled')
                 notes_str = request.POST.get('notes', '')
-                
-                # CORREÇÃO 1: Resgatar o tipo de pagamento do Form
                 payment_type = request.POST.get('payment_type') 
 
                 if not service_ids or not time_str:
@@ -155,7 +153,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                     appointment.status = status_val
                     appointment.notes = notes_str
                     
-                    # CORREÇÃO 2: Salvar o pagamento caso o status seja Finalizado
                     if status_val == 'completed': 
                         appointment.is_paid = True
                         if payment_type: 
@@ -182,7 +179,6 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 messages.success(request, msg)
                 
             elif action == "delete_appointment":
-            # .... MANTENHA O RESTANTE DO SEU CÓDIGO INTACTO ...
                 if is_cashier:
                     messages.error(request, "Acesso Negado: Seu cargo (Caixa) não tem permissão para excluir registros.")
                     return redirect(f"{request.path}?date={current_date}")
@@ -227,15 +223,12 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
     if not is_owner and not is_manager and not is_cashier:
         appointments_query = appointments_query.filter(employee=emp)
 
-    appointments = appointments_query.order_by('time').prefetch_related('services__service__base_service')
+    appointments = appointments_query.order_by('time').prefetch_related('services__service')
 
     for app in appointments:
         app.total_duration_calc = sum([(getattr(s.service, 'duration', 30) or 30) for s in app.services.all()])
 
-    # CORREÇÃO 1: Contador do Menu Header conta apenas Pendentes
     total_appointments = appointments.count()
-    
-    # CORREÇÃO 2: Caixa Realizado e Previsão
     total_revenue = sum(app.total_price for app in appointments if app.status != 'cancelled')
     completed_appointments = appointments.filter(status='completed').count()
     completed_revenue = appointments.filter(status='completed').aggregate(total=Sum('total_price'))['total'] or Decimal('0.00')
@@ -410,9 +403,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
     barber_filter = request.GET.get('barber_filter', '')
     service_filter = request.GET.get('service_filter', '')
     status_filter = request.GET.get('status_filter', '')
-    search_query = request.GET.get('search', '').strip() # RECEBE O NOME DA URL AQUI
+    search_query = request.GET.get('search', '').strip() 
 
-    appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service__base_service')
+    appointments = appointments.select_related('client', 'employee__user', 'unit').prefetch_related('services__service')
     
     if date_filter: appointments = appointments.filter(date=date_filter)
     if month_filter:
@@ -422,10 +415,9 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
         except ValueError: pass
     
     if barber_filter: appointments = appointments.filter(employee_id=barber_filter)
-    if service_filter: appointments = appointments.filter(services__service__base_service_id=service_filter)
+    if service_filter: appointments = appointments.filter(services__service__name=service_filter)
     if status_filter: appointments = appointments.filter(status=status_filter)
 
-    # LÓGICA DE FILTRO VIA REDIRECIONAMENTO
     if search_query:
         search_terms = search_query.split()
         for term in search_terms:
@@ -446,15 +438,24 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
 
     clients_list = Client.objects.filter(barbershop=barbershop).order_by('first_name')
     
+    # [CORREÇÃO: Incluir Barbeiros inativos que possuem histórico de agendamentos]
     if is_owner:
-        barbers_list = Employee.objects.filter(unit__barbershop=barbershop, roles__occupation__iexact='barbeiro', is_active=True).distinct()
-        filter_services = BaseService.objects.filter(barberservice__employee__unit__barbershop=barbershop).distinct()
+        barbers_with_history = Appointment.objects.filter(barbershop=barbershop).values_list('employee_id', flat=True)
+        barbers_list = Employee.objects.filter(
+            Q(unit__barbershop=barbershop, is_active=True) | Q(id__in=barbers_with_history)
+        ).select_related('user').distinct().order_by('-is_active', 'user__name')
+        
+        filter_services = BarberService.objects.filter(employee__unit__barbershop=barbershop).values('name').distinct()
     elif is_manager or is_cashier:
-        barbers_list = Employee.objects.filter(unit=current_unit, roles__occupation__iexact='barbeiro', is_active=True).distinct()
-        filter_services = BaseService.objects.filter(barberservice__employee__unit=current_unit).distinct()
+        barbers_with_history = Appointment.objects.filter(unit=current_unit).values_list('employee_id', flat=True)
+        barbers_list = Employee.objects.filter(
+            Q(unit=current_unit, is_active=True) | Q(id__in=barbers_with_history)
+        ).select_related('user').distinct().order_by('-is_active', 'user__name')
+        
+        filter_services = BarberService.objects.filter(employee__unit=current_unit).values('name').distinct()
     else:
         barbers_list = [emp]
-        filter_services = BaseService.objects.filter(barberservice__employee=emp).distinct()
+        filter_services = BarberService.objects.filter(employee=emp).values('name').distinct()
 
     context = {
         'barbershop': barbershop, 'units': units, 'current_unit': current_unit, 'page_obj': page_obj,
@@ -476,6 +477,7 @@ def get_employees_by_unit(request):
         return JsonResponse({'employees': []})
     
     unit = get_object_or_404(Unit, id=unit_id)
+    # Apenas ativos para o form de agendar um novo serviço
     employees_qs = Employee.objects.filter(unit=unit, roles__occupation__iexact='barbeiro', is_active=True).select_related('user').distinct()
     
     data = []
@@ -495,12 +497,14 @@ def get_services_by_employee(request):
     if not employee_id or employee_id == 'null': 
         return JsonResponse({'services': []})
     
+    # Restaura o select_related para evitar lentidão no banco
     services = BarberService.objects.filter(employee_id=employee_id).select_related('base_service')
     data = [{
         'id': svc.id, 
         'name': svc.name, 
         'price': float(svc.price) if svc.price else 0.0,
         'duration': getattr(svc, 'duration', 30) or 30,
+        # Busca o ícone restaurado do BaseService
         'icon': svc.base_service.icon if getattr(svc, 'base_service', None) else 'fas fa-cut'
     } for svc in services]
     return JsonResponse({'services': data})
@@ -524,11 +528,9 @@ def get_available_slots(request):
     try: target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError: return JsonResponse({'slots': []})
 
-    # 1. PEGA A DATA E HORA EXATA DO SERVIDOR (Respeitando TIME_ZONE do Django)
     today_local = localdate()
     time_now_local = localtime(now()).time()
 
-    # Bloqueia dias anteriores a hoje (A menos que seja um lançamento retroativo permitido)
     if not allow_past and target_date < today_local: 
         return JsonResponse({'slots': []})
 
@@ -572,14 +574,10 @@ def get_available_slots(request):
                     break
                     
             if not conflict:
-                # BLINDAGEM MÁXIMA PARA O DIA DE HOJE!
-                # Independentemente do que o frontend pedir, se a data escolhida for HOJE,
-                # o sistema só libera se o horário do slot for MAIOR que o horário de agora.
                 if target_date == today_local:
                     if curr.time() > time_now_local:
                         slots.append(curr.strftime('%H:%M'))
                 else:
-                    # Se for dia futuro (ou dia passado em modo retroativo), adiciona normal.
                     slots.append(curr.strftime('%H:%M'))
             
             curr += timedelta(minutes=30)

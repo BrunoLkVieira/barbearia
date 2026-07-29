@@ -4,7 +4,6 @@ from apps.barbershop.models import Employee, Barbershop, Unit
 from apps.service.models import BarberService
 from decimal import Decimal
 
-
 class Appointment(models.Model):
     STATUS_CHOICES = [
         ('scheduled', 'Agendado'),
@@ -55,16 +54,16 @@ class AppointmentService(models.Model):
     barber_commission_value = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+
         # 1. Congela o preço no momento da venda (Snapshot)
         if not self.price_at_sale and self.service:
             self.price_at_sale = self.service.price
 
-        # 2. Calcula e congela a comissão do profissional em Reais
-        if self.appointment_id:
+        # 2. [SNAPSHOT FINANCEIRO] - Calcula a comissão UMA ÚNICA VEZ. 
+        # Garante a imutabilidade do passado caso a comissão do barbeiro mude no futuro.
+        if is_new and self.appointment_id:
             emp = self.appointment.employee
-            
-            # [BLINDAGEM] Ignoramos o checkbox booleano para não dar erro se você esquecer de marcar.
-            # Se o barbeiro tem % de comissão > 0 na ficha dele, ele calcula.
             if emp and emp.service_commission_percentage and Decimal(emp.service_commission_percentage) > 0:
                 percentual = Decimal(emp.service_commission_percentage) / Decimal('100.00')
                 self.barber_commission_value = Decimal(self.price_at_sale or 0.00) * percentual

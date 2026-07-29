@@ -101,10 +101,10 @@
         <div class="stats">
             {% if is_owner %}
             <div class="unit-filter desktop-unit-filter">
-                <select id="unitSelectFilter">
-                    <option value="geral" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>
+                <select id="unitSelectFilter" onchange="window.location.href=this.value">
+                    <option value="{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>
                     {% for u in units %}
-                        <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
+                        <option value="{% url 'scheduling:history_unit' barbershop_slug=barbershop.slug unit_slug=u.slug %}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>
                             {{ u.name }}
                         </option>
                     {% endfor %}
@@ -216,7 +216,7 @@
                                 <option value="">Todos</option>
                                 {% for emp in employees %}
                                     <option value="{{ emp.id }}" {% if barber_filter == emp.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ emp.user.name }}
+                                        {{ emp.user.name }} {% if not emp.is_active %}(Inativo){% endif %}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -228,7 +228,7 @@
                             <select name="service_filter" id="serviceFilter">
                                 <option value="">Todos os serviços</option>
                                 {% for svc in filter_services %}
-                                    <option value="{{ svc.id }}" {% if service_filter == svc.id|stringformat:"s" %}selected{% endif %}>
+                                    <option value="{{ svc.name }}" {% if service_filter == svc.name %}selected{% endif %}>
                                         {{ svc.name }}
                                     </option>
                                 {% endfor %}
@@ -573,7 +573,9 @@
                         <select name="barber_filter" class="form-control">
                             <option value="">Todos</option>
                             {% for emp in employees %}
-                                <option value="{{ emp.id }}" {% if barber_filter == emp.id|stringformat:"s" %}selected{% endif %}>{{ emp.user.name }}</option>
+                                <option value="{{ emp.id }}" {% if barber_filter == emp.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ emp.user.name }} {% if not emp.is_active %}(Inativo){% endif %}
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -584,7 +586,7 @@
                         <select name="service_filter" class="form-control">
                             <option value="">Todos os serviços</option>
                             {% for svc in filter_services %}
-                                <option value="{{ svc.id }}" {% if service_filter == svc.id|stringformat:"s" %}selected{% endif %}>{{ svc.name }}</option>
+                                <option value="{{ svc.name }}" {% if service_filter == svc.name %}selected{% endif %}>{{ svc.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -810,11 +812,12 @@
         const API_SLOTS_URL = "{% url 'scheduling:get_slots' %}";
         const URL_HISTORY_GENERAL = "{% url 'scheduling:history_general' barbershop_slug=barbershop.slug %}";
     </script>
-    <script src="{% static 'schedule/js/agendamentos.js' %}"></script>
     <script src="{% static 'geral/js/script.js' %}"></script>
     
+    <!-- LÓGICA DE JAVASCRIPT INJETADA E BLINDADA -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Ajustes Visuais Mobile
             if (window.innerWidth <= 820) {
                 const dateDisplay = document.querySelector('header .date-display');
                 if (dateDisplay) dateDisplay.style.display = 'none';
@@ -826,9 +829,67 @@
                     header.insertBefore(unitFilter, document.querySelector('.user-controls'));
                 }
             }
+
+            // Inicialização dos Dropdowns de Cliente
+            setupSearchableDropdown('searchClientNew', 'hiddenClientId', 'clientList', 'dropdownNewApp');
+            setupSearchableDropdown('editClientSearchInput', 'editHiddenClientId', 'editClientList', 'dropdownEditApp');
+
+            // Listeners Modal Novo Agendamento
+            const unitSelect = document.getElementById('unitSelect');
+            const hiddenBarberId = document.getElementById('hiddenBarberId');
+            const appointmentDate = document.getElementById('appointmentDate');
+
+            if (unitSelect) {
+                unitSelect.addEventListener('change', async (e) => {
+                    if(document.getElementById('barberVisualGrid')){
+                        await loadBarbersVisual(e.target.value, 'barberVisualGrid', 'hiddenBarberId');
+                        document.getElementById('serviceCheckboxGrid').innerHTML = '';
+                        resetTimeSelect('appointmentTime');
+                    }
+                });
+            }
+            if (hiddenBarberId) {
+                hiddenBarberId.addEventListener('change', async (e) => {
+                    if(e.target.value && e.target.value !== 'null') {
+                        await loadServicesCheckboxes(e.target.value, 'serviceCheckboxGrid');
+                        triggerSlotFetch();
+                    }
+                });
+            }
+            if (appointmentDate) {
+                appointmentDate.addEventListener('change', triggerSlotFetch);
+            }
+
+            // Listeners Modal Editar Agendamento
+            const editUnitSelect = document.getElementById('editUnitSelect');
+            const editHiddenBarberId = document.getElementById('editHiddenBarberId');
+            const editAppointmentDate = document.getElementById('editAppointmentDate');
+
+            if (editUnitSelect) {
+                editUnitSelect.addEventListener('change', async (e) => {
+                    if(document.getElementById('editBarberVisualGrid')) {
+                        await loadBarbersVisual(e.target.value, 'editBarberVisualGrid', 'editHiddenBarberId');
+                        document.getElementById('editServiceCheckboxGrid').innerHTML = '';
+                        resetTimeSelect('editAppointmentTime');
+                    }
+                });
+            }
+            if (editHiddenBarberId) {
+                editHiddenBarberId.addEventListener('change', async (e) => {
+                    if(e.target.value && e.target.value !== 'null') {
+                        await loadServicesCheckboxes(e.target.value, 'editServiceCheckboxGrid', [], true);
+                        triggerEditSlotFetch();
+                    }
+                });
+            }
+            if (editAppointmentDate) {
+                editAppointmentDate.addEventListener('change', triggerEditSlotFetch);
+            }
         });
 
-        // Controle dos Bottom Sheets (Gavetas)
+        // =====================================
+        // CONTROLES DE MODAIS E GAVETAS
+        // =====================================
         function openMobileSheet(appId, event) {
             if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
             document.getElementById('bs-overlay-' + appId).classList.add('active');
@@ -851,11 +912,317 @@
             document.body.style.overflow = '';
         }
 
+        // =====================================
+        // DROPWDOWN INTELIGENTE DE CLIENTES
+        // =====================================
+        function setupSearchableDropdown(inputId, hiddenId, listId, wrapperId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const list = document.getElementById(listId);
+            if (!input || !list) return;
+            const items = list.querySelectorAll('li');
+
+            input.addEventListener('focus', () => list.classList.add('active'));
+
+            input.addEventListener('input', function() {
+                const term = this.value.toLowerCase();
+                items.forEach(item => {
+                    const searchText = item.getAttribute('data-search');
+                    item.style.display = searchText.includes(term) ? 'block' : 'none';
+                });
+            });
+
+            items.forEach(item => {
+                item.addEventListener('click', function() {
+                    input.value = this.childNodes[0].nodeValue.trim(); 
+                    hidden.value = this.getAttribute('data-id');
+                    list.classList.remove('active');
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                const wrapper = document.getElementById(wrapperId);
+                if (wrapper && !wrapper.contains(e.target)) {
+                    list.classList.remove('active');
+                    if(!hidden.value) input.value = ''; 
+                }
+            });
+        }
+
+        function resetTimeSelect(selectId) {
+            const sel = document.getElementById(selectId);
+            if(sel) {
+                sel.innerHTML = '<option value="">Preencha Barbeiro, Data e Serviço antes</option>';
+                sel.classList.add('disabled-look');
+            }
+        }
+
+        // =====================================
+        // CARREGAMENTO ASSÍNCRONO (API)
+        // =====================================
+        async function loadBarbersVisual(unitId, containerId, inputId, preSelectedId = null) {
+            const container = document.getElementById(containerId);
+            if (!container || !unitId) return;
+            container.innerHTML = '<p style="color:#7f8c8d; font-size:0.9rem; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Buscando barbeiros da unidade...</p>';
+            
+            try {
+                const response = await fetch(`${API_EMPLOYEES_URL}?unit_id=${unitId}`);
+                if(!response.ok) throw new Error("Network error");
+                const data = await response.json();
+                container.innerHTML = '';
+                
+                if (data.employees && data.employees.length > 0) {
+                    data.employees.forEach(emp => {
+                        const initials = emp.name.substring(0, 2).toUpperCase();
+                        const crown = emp.is_owner ? '<i class="fas fa-crown" style="position:absolute; top:-6px; right:-6px; color:#e74c3c; background:#fff; border-radius:50%; padding:3px; font-size:0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></i>' : '';
+                        const div = document.createElement('div');
+                        div.className = `saas-barber-card ${preSelectedId == emp.id ? 'active' : ''}`;
+                        div.innerHTML = `
+                            <div class="saas-barber-avatar" style="position:relative;">${initials}${crown}</div>
+                            <div class="saas-barber-info">
+                                <div class="saas-barber-name">${emp.name}</div>
+                                <div class="saas-select-badge">${preSelectedId == emp.id ? 'Selecionado' : 'Selecionar'}</div>
+                            </div>
+                        `;
+                        div.onclick = () => {
+                            document.querySelectorAll(`#${containerId} .saas-barber-card`).forEach(c => {
+                                c.classList.remove('active');
+                                c.querySelector('.saas-select-badge').innerText = 'Selecionar';
+                            });
+                            div.classList.add('active');
+                            div.querySelector('.saas-select-badge').innerText = 'Selecionado';
+                            
+                            const hidden = document.getElementById(inputId);
+                            hidden.value = emp.id;
+                            hidden.dispatchEvent(new Event('change'));
+                        };
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<p style="color:#e74c3c; font-size:0.9rem; padding: 10px;">Nenhum barbeiro ativo nesta unidade.</p>';
+                    document.getElementById(inputId).value = '';
+                }
+            } catch (e) { 
+                console.error(e); 
+                container.innerHTML = '<p style="color:#e74c3c; font-size:0.9rem; padding: 10px;">Erro de conexão. Tente novamente.</p>';
+            }
+        }
+
+        async function loadServicesCheckboxes(employeeId, containerId, preSelectedIds = [], isEdit = false) {
+            const container = document.getElementById(containerId);
+            if (!container || !employeeId || employeeId === 'null') return;
+            container.innerHTML = '<p style="color:#7f8c8d; font-size:0.9rem; padding: 10px;"><i class="fas fa-spinner fa-spin"></i> Buscando serviços do barbeiro...</p>';
+            
+            try {
+                const response = await fetch(`${API_SERVICES_URL}?employee_id=${employeeId}`);
+                if(!response.ok) throw new Error("Network error");
+                const data = await response.json();
+                container.innerHTML = '';
+                
+                if (data.services && data.services.length > 0) {
+                    data.services.forEach(svc => {
+                        const isChecked = preSelectedIds.includes(svc.id.toString());
+                        const iconClass = svc.icon || 'fas fa-cut';
+                        const html = `
+                            <label class="saas-service-card ${isChecked ? 'selected' : ''}">
+                                <input type="checkbox" name="service_id" value="${svc.id}" data-duration="${svc.duration}" class="hidden-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleServiceCard(this); ${isEdit ? 'triggerEditSlotFetch()' : 'triggerSlotFetch()'}">
+                                <div class="saas-service-icon"><i class="${iconClass}"></i></div>
+                                <div class="saas-service-details">
+                                    <span class="saas-service-title">${svc.name}</span>
+                                    <span class="saas-service-price">R$ ${svc.price.toFixed(2).replace('.', ',')}</span>
+                                    <span class="saas-service-duration"><i class="far fa-clock"></i> ${svc.duration} min</span>
+                                </div>
+                            </label>
+                        `;
+                        container.innerHTML += html;
+                    });
+                } else {
+                    container.innerHTML = '<p style="color:#e74c3c; font-size:0.9rem; padding: 10px;">Este barbeiro não possui serviços cadastrados.</p>';
+                }
+            } catch (e) { 
+                console.error(e); 
+                container.innerHTML = '<p style="color:#e74c3c; font-size:0.9rem; padding: 10px;">Erro de conexão. Tente novamente.</p>';
+            }
+        }
+
+        function toggleServiceCard(checkbox) {
+            const card = checkbox.closest('.saas-service-card');
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        }
+
+        function triggerSlotFetch() { fetchSlots('hiddenBarberId', 'appointmentDate', '#serviceCheckboxGrid input[type="checkbox"]:checked', 'appointmentTime', 'timeLoader'); }
+        function triggerEditSlotFetch() { fetchSlots('editHiddenBarberId', 'editAppointmentDate', '#editServiceCheckboxGrid input[type="checkbox"]:checked', 'editAppointmentTime', 'editTimeLoader', document.getElementById('editAppointmentId').value, document.getElementById('originalTime').value); }
+
+        async function fetchSlots(empInputId, dateInputId, checkboxSelector, selectId, loaderId, excludeAppId = null, presetTime = null) {
+            const empId = document.getElementById(empInputId).value;
+            const dateStr = document.getElementById(dateInputId).value;
+            const checkedSvcs = document.querySelectorAll(checkboxSelector);
+            const selectEl = document.getElementById(selectId);
+            const loader = document.getElementById(loaderId);
+
+            resetTimeSelect(selectId);
+            
+            if (!empId || empId === 'null' || !dateStr || checkedSvcs.length === 0) return;
+
+            let totalDuration = 0;
+            checkedSvcs.forEach(cb => totalDuration += parseInt(cb.getAttribute('data-duration') || 30));
+
+            loader.style.display = 'inline';
+
+            try {
+                // BLINDAGEM: Retorno retroativo ativado (allow_past=true)
+                let url = `${API_SLOTS_URL}?employee_id=${empId}&date=${dateStr}&duration=${totalDuration}&allow_past=true`;
+                if (excludeAppId) url += `&exclude_app_id=${excludeAppId}`;
+
+                const response = await fetch(url);
+                if(!response.ok) throw new Error("Network error");
+                const data = await response.json();
+                
+                loader.style.display = 'none';
+                selectEl.classList.remove('disabled-look');
+                selectEl.innerHTML = '<option value="">Selecione o horário desejado...</option>';
+
+                let slots = data.slots || [];
+                const editDateEl = document.getElementById('editAppointmentDate');
+                const initialEditDate = editDateEl ? editDateEl.defaultValue : null;
+
+                if (presetTime && dateStr === initialEditDate && !slots.includes(presetTime)) {
+                    slots.push(presetTime);
+                    slots.sort(); 
+                }
+
+                if (slots.length > 0) {
+                    slots.forEach(slot => {
+                        const isSelected = (presetTime === slot && dateStr === initialEditDate) ? 'selected' : '';
+                        selectEl.innerHTML += `<option value="${slot}" ${isSelected}>${slot}</option>`;
+                    });
+                    selectEl.disabled = false;
+                } else {
+                    selectEl.innerHTML = '<option value="">Sem Horário Para Esta Duração</option>';
+                    selectEl.classList.add('disabled-look');
+                }
+            } catch (e) { 
+                console.error(e); 
+                loader.style.display = 'none'; 
+                selectEl.innerHTML = '<option value="">Erro ao buscar horários</option>';
+            }
+        }
+
+        // =====================================
+        // ABERTURA DE MODAIS
+        // =====================================
+        function openNewAppointmentModal() {
+            const appointmentModal = document.getElementById('appointmentModalContainer');
+            if (appointmentModal) {
+                document.getElementById('appointmentForm').reset();
+                document.getElementById('searchClientNew').value = '';
+                
+                const barberGrid = document.getElementById('barberVisualGrid');
+                if (barberGrid) barberGrid.innerHTML = '';
+                document.getElementById('serviceCheckboxGrid').innerHTML = '';
+                resetTimeSelect('appointmentTime');
+                
+                const unitSel = document.getElementById('unitSelect');
+                const hiddenBarberId = document.getElementById('hiddenBarberId');
+
+                if (!barberGrid && hiddenBarberId && hiddenBarberId.value) {
+                    loadServicesCheckboxes(hiddenBarberId.value, 'serviceCheckboxGrid');
+                } else if (unitSel && unitSel.value) {
+                    unitSel.dispatchEvent(new Event('change'));
+                }
+
+                appointmentModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeNewAppointmentModal() {
+            const appointmentModal = document.getElementById('appointmentModalContainer');
+            if (appointmentModal) { appointmentModal.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
+        window.openEditAppointmentModal = async function(btn) {
+            const editModal = document.getElementById('editAppointmentModalContainer');
+            if (!editModal) return;
+
+            document.getElementById('editAppointmentForm').reset();
+
+            const id = btn.getAttribute('data-id');
+            const clientId = btn.getAttribute('data-client-id');
+            const clientName = btn.getAttribute('data-client-name');
+            const unitId = btn.getAttribute('data-unit-id');
+            const barberId = btn.getAttribute('data-barber-id');
+            
+            const servicesStr = btn.getAttribute('data-services');
+            const preSelectedSvcIds = servicesStr ? JSON.parse(servicesStr) : [];
+
+            const date = btn.getAttribute('data-date');
+            const time = btn.getAttribute('data-time');
+            const status = btn.getAttribute('data-status');
+            const notes = btn.getAttribute('data-notes');
+
+            document.getElementById('editAppointmentId').value = id;
+            
+            if (clientId && clientName) {
+                document.getElementById('editHiddenClientId').value = clientId;
+                document.getElementById('editClientSearchInput').value = clientName;
+            }
+
+            const dateInput = document.getElementById('editAppointmentDate');
+            dateInput.value = date;
+            dateInput.defaultValue = date; 
+            
+            document.getElementById('editStatusSelect').value = status;
+            document.getElementById('editAppointmentNotes').value = notes || ''; 
+            document.getElementById('editHiddenBarberId').value = barberId;
+            document.getElementById('originalTime').value = time;
+
+            const payment = btn.getAttribute('data-payment');
+            if (payment) document.getElementById('editPaymentSelect').value = payment;
+            toggleEditPaymentField();
+
+            const unitSelect = document.getElementById('editUnitSelect');
+            if (unitSelect) unitSelect.value = unitId;
+
+            const barberGrid = document.getElementById('editBarberVisualGrid');
+            if (barberGrid) {
+                await loadBarbersVisual(unitId, 'editBarberVisualGrid', 'editHiddenBarberId', barberId);
+            }
+            
+            await loadServicesCheckboxes(barberId, 'editServiceCheckboxGrid', preSelectedSvcIds, true);
+            triggerEditSlotFetch();
+
+            editModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        };
+
+        function closeEditModal() {
+            const editModal = document.getElementById('editAppointmentModalContainer');
+            if (editModal) { editModal.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
+        function toggleEditPaymentField() {
+            const statusVal = document.getElementById('editStatusSelect').value;
+            const paymentGroup = document.getElementById('editPaymentGroup');
+            const paymentSelect = document.getElementById('editPaymentSelect');
+            
+            if (statusVal === 'completed') {
+                paymentGroup.style.display = 'block';
+                paymentSelect.setAttribute('required', 'required');
+            } else {
+                paymentGroup.style.display = 'none';
+                paymentSelect.removeAttribute('required');
+            }
+        }
+
         // Submete a busca ao dar enter no mobile
         document.getElementById('mobileSearchForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const input = this.querySelector('input[name="search"]').value;
-            // Preserva nos inputs ocultos e submete o desktop form para não perder a paginação/filtros
             const deskForm = document.querySelector('.desktop-search-form');
             if(deskForm) {
                 deskForm.querySelector('input[type="search"]').value = input;
@@ -865,6 +1232,7 @@
             }
         });
 
+        // SWEETALERT PARA DELETAR
         document.addEventListener('DOMContentLoaded', function() {
             {% if messages %}
                 const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
