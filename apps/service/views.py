@@ -1,11 +1,11 @@
 import time
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 from apps.barbershop.models import Barbershop, Unit, Employee
-from apps.scheduling.models import AppointmentService # IMPORTANTE: Importa para checagem
+from apps.scheduling.models import AppointmentService
 from .models import BarberService, BaseService
 
 def get_tenant_employee(user, barbershop):
@@ -82,7 +82,19 @@ def ServiceView(request, barbershop_slug, unit_slug=None):
                 base_service_id = request.POST.get('base_service') or None
                 name = request.POST.get('name')
                 price_str = request.POST.get('price', '0').replace('R$', '').replace(',', '.').strip()
-                price = Decimal(price_str)
+                
+                # =================================================================
+                # BLINDAGEM DE BACKEND: Evita Crash Matemático com Números Gigantes
+                # =================================================================
+                try:
+                    price = Decimal(price_str)
+                    if price < Decimal('0.00') or price > Decimal('99999.99'):
+                        raise ValueError
+                except (InvalidOperation, ValueError, TypeError):
+                    messages.error(request, "Bloqueio de Segurança: O preço inserido é inválido ou excede o limite permitido do sistema.")
+                    return redirect(f"{request.path}?_={int(time.time())}")
+                # =================================================================
+
                 duration = int(request.POST.get('duration', 30))
                 employee_ids = request.POST.getlist('employee_ids')
 
