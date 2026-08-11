@@ -1,115 +1,150 @@
 @media (min-width: 821px) {
-    body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        background-color: #f5f7fa;
-    }
-  
-  
-    /* Main Content */
-    .main-content {
-        flex: 1;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-  
-    .services-container {
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        padding: 20px;
-        width: 100%;
-        min-height: 60vh;
-    }
-  
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #eaecef;
-    }
-  
-    .content-header h2 {
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #2c3e50;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-  
-    .content-header h2 i {
-        color: #FF7A00;
-    }
-  
-    /* Services Table */
-    .services-table {
-      display: grid;
-      width: 100%;
-      gap: 10px;
-    }
-  
-    .services-header,
-    .service-row {
-      display: grid;
-      grid-template-columns: 1.5fr 1.5fr 1fr 1fr 120px; 
-      padding: 10px 20px;
-      color: #2c3e50;
+  body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #f5f7fa;
+      margin: 0;
+      overflow: hidden; /* Controlado via main-content agora */
+  }
+
+  /* Main Content */
+  .main-content {
+      flex: 1;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;    
-    }
-    .service-employee {
-        font-size: 0.9rem;
-        color: #555;
-        display: flex;
-        flex-direction: column; /* Coloca a unidade em uma linha abaixo do nome se necessário */
-    }
-  
-    .services-header {
+      overflow-y: auto; /* MÁGICA 1: Permite rolagem de tela se o monitor for curto */
+      min-height: 0;
+  }
+
+  .services-container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 500px; /* MÁGICA 2: Garante tamanho mínimo da caixa branca */
+  }
+
+  .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eaecef;
+      flex-shrink: 0;
+  }
+
+  .content-header h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .content-header h2 i {
+      color: #FF7A00;
+  }
+
+  /* Services Table Container */
+  .services-table {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      flex: 1;
+      overflow-x: auto; /* ROLAGEM LATERAL */
+      overflow-y: auto; /* ROLAGEM VERTICAL COM CABEÇALHO FIXO */
+      border: 1px solid #eaecef;
+      border-radius: 8px;
+      min-height: 0;
+  }
+
+  .services-table::-webkit-scrollbar { height: 8px; width: 6px; }
+  .services-table::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
+  .services-table::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 8px; }
+
+  #servicesTableBody {
+      min-width: 1050px;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .services-header {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr 1fr 100px; 
+      min-width: 1050px; /* MÁGICA 3: Impede o texto de ser esmagado lateralmente */
+      padding: 15px 20px;
       background-color: #f8f9fa;
       font-weight: bold;
       color: #2c3e50;
-      border: 1px solid #eaecef;
-      border-radius: 8px;
-    }
-  
-    .service-row{
-      border-bottom: 1px solid #eaecef;
-    }
-  
-    .service-name {
+      border-bottom: 2px solid #eaecef;
+      position: sticky; /* CABEÇALHO FIXO */
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .service-row {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr 1fr 100px; 
+      min-width: 1050px;
+      padding: 15px 20px;
+      color: #2c3e50;
+      align-items: center;
+      gap: 10px;  
+      border-bottom: 1px solid #eaecef;  
+      transition: all 0.2s ease;
+  }
+
+  .service-row:hover {
+      background-color: #f5f7fa;
+  }
+
+  .service-employee {
+      font-size: 0.9rem;
+      color: #555;
+      display: flex;
+      flex-direction: column; 
+  }
+
+  .service-name {
       font-weight: 500;
-    }
-  
-    .service-price {
+      display: flex;
+      align-items: center;
+  }
+
+  .service-price {
       font-weight: 600;
       color: #27ae60;
-    }
-  
-    .service-duration {
+  }
+
+  .service-duration {
       display: flex;
       align-items: center;
       gap: 8px;
       color: #2c3e50;
-    }
-  
-    .service-duration i {
+  }
+
+  .service-duration i {
       color: #3498db;
-    }
-  
-    .service-actions {
+  }
+
+  .service-actions {
       display: flex;
       justify-content: left;
       gap: 8px;
       margin-left: -.8rem;
-    }
-  
-    .action-btn {
+  }
+
+  .action-btn {
       width: 35px;
       height: 35px;
       border-radius: 50%;
@@ -120,104 +155,27 @@
       background-color: #f8f9fa;
       border: 1px solid #eaecef;
       transition: all 0.3s ease;
-    }
-  
-    .action-btn:hover {
-      background-color: #edf2f7;
-      transform: translateY(-3px);
-    }
-  
-    .action-btn.edit { color: #3498db; }
-    .action-btn.history { color: #FF7A00; }
-    .action-btn.delete { color: #e74c3c; }
-  
-  
-    .action-btn:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-    }
-  
   }
 
+  .action-btn:hover {
+      background-color: #edf2f7;
+      transform: translateY(-3px);
+  }
 
+  .action-btn.edit { color: #3498db; }
+  .action-btn.delete { color: #e74c3c; }
 
-
-  
-
-/* --- ESTILO CLEAN: IGUAL AO MODAL DE FOLGA --- */
-
-/* Container da lista sem fundo escuro */
-#serviceModal .barber-list {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    max-height: 250px;
-    overflow-y: auto;
-    padding: 5px;
-    margin: 15px 0;
-    background: transparent !important; /* Remove fundo cinza */
-    border: none !important; /* Remove bordas externas desnecessárias */
-}
-
-/* O Card: Branco, fino e alinhado */
-#serviceModal .barber-item {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 10px 15px !important; /* Mais fino */
-    background: #ffffff !important; /* Fundo sempre branco */
-    border: 1px solid #e2e8f0 !important; /* Borda bem fina */
-    border-radius: 8px !important;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-/* Hover sutil */
-#serviceModal .barber-item:hover {
-    border-color: #cbd5e1 !important;
-    background-color: #f8fafc !important;
-}
-
-/* ESTADO SELECIONADO: Apenas a borda acende */
-#serviceModal .barber-item:has(input:checked) {
-    border-color: #ff7300 !important; /* Laranja apenas na borda */
-    background-color: #ffffff !important; /* Mantém fundo branco */
-    box-shadow: 0 2px 6px rgba(255, 115, 0, 0.1) !important;
-}
-
-/* Checkbox no canto esquerdo */
-#serviceModal .barber-checkbox {
-    width: 16px !important;
-    height: 16px !important;
-    margin: 0 !important;
-   
-}
-
-/* Avatar Orange (Marca registrada) */
-#serviceModal .barber-avatar {
-    width: 34px !important;
-    height: 34px !important;
-    background-color: #ff7300;
-    color: white !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 600 !important;
-    font-size: 12px !important;
-}
-
-/* Nome do Barbeiro */
-#serviceModal .modal-barber-name {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    color: #334155 !important;
-}
-
-/* Instruções discretas */
-#serviceModal .selection-instruction-text {
-    font-size: 11px !important;
-    color: #94a3b8 !important;
-    margin-top: 2px !important;
+  /* --- ESTILO CLEAN DO MODAL MANTIDO --- */
+  #serviceModal .barber-list {
+      display: flex !important; flex-direction: column !important; gap: 8px !important; max-height: 250px; overflow-y: auto; padding: 5px; margin: 15px 0; background: transparent !important; border: none !important;
+  }
+  #serviceModal .barber-item {
+      display: flex !important; flex-direction: row !important; align-items: center !important; gap: 12px !important; padding: 10px 15px !important; background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important; cursor: pointer; transition: all 0.2s ease;
+  }
+  #serviceModal .barber-item:hover { border-color: #cbd5e1 !important; background-color: #f8fafc !important; }
+  #serviceModal .barber-item:has(input:checked) { border-color: #ff7300 !important; background-color: #ffffff !important; box-shadow: 0 2px 6px rgba(255, 115, 0, 0.1) !important; }
+  #serviceModal .barber-checkbox { width: 16px !important; height: 16px !important; margin: 0 !important; }
+  #serviceModal .barber-avatar { width: 34px !important; height: 34px !important; background-color: #ff7300; color: white !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; font-weight: 600 !important; font-size: 12px !important; }
+  #serviceModal .modal-barber-name { font-size: 14px !important; font-weight: 500 !important; color: #334155 !important; }
+  #serviceModal .selection-instruction-text { font-size: 11px !important; color: #94a3b8 !important; margin-top: 2px !important; }
 }

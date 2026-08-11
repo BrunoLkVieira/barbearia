@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
-    <link rel="stylesheet" href="{% static 'client/css/desktop/client.css' %}">
+    <link rel="stylesheet" href="{% static 'client/css/desktop/client.css' %}?v=1.2">
     
     <link rel="stylesheet" href="{% static 'geral/css/mobile/style.css' %}">
     <link rel="stylesheet" href="{% static 'client/css/mobile/client.css' %}">
@@ -437,7 +437,7 @@
         }
 
         function openMobileSheet(clientId, event) {
-            if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
+            if (event && (event.target.closest('button') || event.target.closest('.action-btn') || event.target.closest('a'))) return;
             document.getElementById('bs-overlay-' + clientId).classList.add('active');
             document.getElementById('bs-sheet-' + clientId).classList.add('active');
             document.body.style.overflow = 'hidden';

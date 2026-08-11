@@ -2,10 +2,11 @@
     body {
         display: flex;
         flex-direction: column;
-        min-height: 100vh;
+        height: 100vh; /* Trava a altura exata da tela */
         background-color: #f5f7fa;
         color: #333;
         margin: 0;
+        overflow: hidden; /* Remove rolagem global, controlada pelo main-content */
     }
 
     .pages-options-Container {
@@ -14,6 +15,7 @@
         padding: 15px 20px 0;
         margin-bottom: 20px; 
         background: transparent;
+        flex-shrink: 0;
     }
     
     .page-option {
@@ -40,6 +42,8 @@
         padding: 0 15px 80px; 
         display: flex;
         flex-direction: column;
+        overflow-y: auto; /* MÁGICA 1: Rolagem vertical se a tela for baixa */
+        min-height: 0; 
     }
 
     .history-container {
@@ -48,10 +52,11 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         padding: 25px;
         
-        /* NOVO: Trava a altura do container para forçar a rolagem interna */
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 300px); /* Altura da tela menos Header, Nav, Abas e Footer */
+        flex: 1;
+        min-height: 500px; /* MÁGICA 2: Tamanho mínimo digno para a tabela não amassar */
+        overflow: hidden;
     }
 
     .history-top-body {
@@ -59,19 +64,21 @@
     }
 
     /* ==================================================
-       NOVO: ROLAGEM INTERNA DA TABELA E CABEÇALHO FIXO
+       NOVO: ROLAGEM INTERNA DA TABELA HORIZONTAL/VERTICAL
     ================================================== */
     .table-container {
         flex: 1;
-        overflow-y: auto; /* Cria a barra de rolagem apenas aqui */
+        overflow-y: auto; 
+        overflow-x: auto; /* ROLAGEM HORIZONTAL ATIVADA */
         margin-top: 10px;
-        border: 1px solid #eaecef; /* Opcional: contorno na tabela para ficar elegante */
+        border: 1px solid #eaecef;
         border-radius: 8px;
     }
 
     /* Personalizando a barra de rolagem da tabela para ficar premium */
     .table-container::-webkit-scrollbar {
         width: 6px;
+        height: 8px; /* Altura do scroll horizontal */
     }
     .table-container::-webkit-scrollbar-track {
         background: #f1f1f1; 
@@ -87,6 +94,7 @@
 
     .history-table {
         width: 100%;
+        min-width: 1050px; /* MÁGICA 3: Força a rolagem lateral em telas menores */
         border-collapse: collapse;
     }
 
@@ -102,7 +110,7 @@
         position: sticky;
         top: 0;
         z-index: 10; /* Fica acima das linhas ao rolar */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra que aparece ao rolar */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
     .history-table td {
@@ -204,33 +212,6 @@
         color: #fff;
     }
 
-    /* History Table */
-    .history-table {
-        width: 100%;
-        border-collapse: collapse;
-        overflow-y: auto;
-    }
-
-    .history-table th {
-        background-color: #f8f9fa;
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-        color: #2c3e50;
-        border-bottom: 2px solid #eaecef;
-    }
-
-    .history-table td {
-        padding: 15px 10px;
-        border-bottom: 1px solid #eaecef;
-        color: #2c3e50;
-        vertical-align: middle;
-    }
-
-    .history-table tr:hover {
-        background-color: #f5f7fa;
-    }
-
     .client-cell {
         display: flex;
         align-items: center;
@@ -249,6 +230,7 @@
         font-size: 0.9rem;
         background: #fff5eb;
         color: #FF7A00;
+        flex-shrink: 0;
     }
 
     .service-cell {
@@ -325,7 +307,7 @@
        BARRA ESCURA DE PAGINAÇÃO (FOOTER FIXO NA TELA)
     ================================================== */
     .history-bottom-footer {
-        position: fixed; /* Fixa na tela */
+        position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
@@ -335,7 +317,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        z-index: 100; /* Fica por cima de tabelas e conteúdos normais */
+        z-index: 100;
         box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
     }
 
