@@ -1,33 +1,66 @@
-/* ==========================================
-   ESTILOS GERAIS E ESTRUTURA
-========================================== */
-body {
-    background-color: #f5f7fa;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    color: #333;
-    position: relative;
-    overflow-x: hidden;
-}
-
 @media (min-width: 821px) {
-    .main-content {
+    body {
         display: flex;
-        flex: 1;
-        padding: 15px;
-        gap: 20px;
+        flex-direction: column;
+        height: 100vh; /* Trava a altura exata da tela */
+        background-color: #f5f7fa;
+        color: #333;
+        margin: 0;
+        overflow: hidden; /* A rolagem global vai para o main-content */
     }
+
+    .pages-options-Container {
+        display: flex;
+        gap: 10px;
+        padding: 15px 20px 0;
+        margin-bottom: 20px; 
+        background: transparent;
+        flex-shrink: 0;
+    }
+    
+    .page-option {
+        background: #2c3e50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px 8px 0 0;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .page-option.active {
+        background: #FF7A00;
+    }
+    
+    .pages-options-Container a {
+        text-decoration: none;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 0 15px 15px 15px; 
+        display: flex;
+        flex-direction: row; /* Mantém os painéis lado a lado */
+        gap: 20px;
+        overflow-y: auto; /* MÁGICA 1: Permite rolar a tela se o monitor for baixo */
+        overflow-x: auto; /* MÁGICA 1.2: Rola pros lados se a tela for muito estreita */
+        min-height: 0; 
+    }
+
     .barbers {
         width: 260px;
+        min-width: 260px;
         background-color: #ffffff;
         border-radius: 12px;
         padding: 20px 0;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        height: calc(85vh - 115px);
         display: flex;
         flex-direction: column;
+        min-height: 550px; /* MÁGICA 2: A caixa branca NUNCA será menor que 550px de altura */
+        flex-shrink: 0; /* Impede a barra lateral de ser esmagada */
     }
+    
     .section-title {
         padding: 0 20px 15px;
         font-weight: 600;
@@ -38,10 +71,21 @@ body {
         align-items: center;
         gap: 10px;
         font-size: 1.1rem;
+        flex-shrink: 0;
     }
     .section-title i{ color: #FF7A00; }
-    .barber-list { padding: 0 15px; overflow-y: auto; flex: 1; }
     
+    .barber-list { 
+        padding: 0 15px; 
+        overflow-y: auto; 
+        flex: 1; 
+        min-height: 0; /* Libera rolagem no flexbox */
+    }
+    
+    .barber-list::-webkit-scrollbar { width: 4px; }
+    .barber-list::-webkit-scrollbar-track { background: transparent; }
+    .barber-list::-webkit-scrollbar-thumb { background: #d1d9e0; border-radius: 4px;}
+
     .barber-card {
         display: flex;
         align-items: center;
@@ -75,13 +119,17 @@ body {
         background: linear-gradient(135deg, #FF7A00, #d35400);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         color: white;
+        flex-shrink: 0;
     }
-    .barber-info { flex: 1; }
+    .barber-info { flex: 1; overflow: hidden; }
     .barber-name {
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 3px;
         font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .barber-specialty { font-size: 0.85rem; color: #7f8c8d; }
     
@@ -91,15 +139,18 @@ body {
         border-radius: 12px;
         padding: 20px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        height: calc(85vh - 115px);
         display: flex;
         flex-direction: column;
+        min-height: 550px; /* MÁGICA 3: Painel de horários não amassa na vertical */
+        min-width: 650px; /* MÁGICA 3.2: Painel não amassa na horizontal */
     }
+    
     .agenda-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        flex-shrink: 0;
     }
     .agenda-title {
         display: flex;
@@ -114,42 +165,55 @@ body {
     .agenda-controls { display: flex; gap: 15px; }
 
     .btnNewAppointment {
-        padding: 9px 6px;
+        padding: 9px 15px;
         border: 1px solid #d1d9e0;
         border-radius: 6px;        
         background: linear-gradient(135deg, #FF7A00, #d35400);
         color: white;
         box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
-        width: 90%;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-weight: bold;
+        white-space: nowrap;
     }
     .btnNewAppointment:hover{ opacity: 0.9; transform: translateY(-2px); }
+    
     .time-filter { display: flex; gap: 10px; align-items: center; }
-    .time-filter select {
+    .time-filter input {
         padding: 9px 15px;
         border: 1px solid #d1d9e0;
         border-radius: 6px;
         background-color: #f8f9fa;
         color: #2c3e50;
         font-size: 0.95rem;
-        min-width: 180px;
+        min-width: 150px;
+        outline: none;
     }
-    .schedule-container {
-        flex: 1;
-        overflow-y: auto;
-        padding-right: 10px;
-    }
+    .time-filter input:focus { border-color: #FF7A00; }
+    
     .schedule-header {
         display: grid;
-        grid-template-columns: 100px 1fr 150px;
+        grid-template-columns: 80px 1fr 140px;
         padding: 12px 20px;
         background-color: #f8f9fa;
         border-radius: 8px;
         margin-bottom: 10px;
         font-weight: 600;
         color: #2c3e50;
+        flex-shrink: 0;
     }
+    
+    .schedule-container {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 10px;
+        min-height: 0; /* Crucial para o flexbox rolar a lista de agendamentos */
+    }
+    
+    .schedule-container::-webkit-scrollbar { width: 6px; }
+    .schedule-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px;}
+    .schedule-container::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 8px;}
+    .schedule-container::-webkit-scrollbar-thumb:hover { background: #95a5a6; }
     
     .time-slot {
         display: grid;
@@ -162,6 +226,7 @@ body {
         background-color: #ffffff;
         border: 1px solid #eaecef;
         transition: all 0.3s ease;
+        gap: 15px;
     }
     .time-slot:hover {
         transform: translateY(-3px);
@@ -195,25 +260,24 @@ body {
     }
     .time { font-size: 1.2rem; font-weight: 600; color: #2c3e50; }
     .duration { font-size: 0.85rem; color: #7f8c8d; margin-top: 5px; }
-    .client-info { padding: 0 20px; border-right: 1px solid #eaecef; display: flex; flex-direction: column; justify-content: center; }
+    .client-info { padding: 0 10px; border-right: 1px solid #eaecef; display: flex; flex-direction: column; justify-content: center; }
     
     .client-header { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 15px; }
-    .client-name { font-weight: 700; font-size: 1.15rem; color: #2c3e50; display: flex; align-items: center; gap: 10px; }
+    .client-name { font-weight: 700; font-size: 1.15rem; color: #2c3e50; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .client-name i { color: #3498db; }
     
-    /* Layout Horizontal Limpo da Info do Cliente */
     .service-details-grid {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 15px;
     }
     
     .detail-group {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
     }
 
     .detail-line {
@@ -226,7 +290,7 @@ body {
     .detail-label {
         color: #7f8c8d;
         font-weight: 500;
-        min-width: 70px;
+        min-width: 65px;
     }
     
     .detail-value {
@@ -278,7 +342,7 @@ body {
     .status-cancelled { background-color: #ffebee; color: #c62828; }
     
     .client-actions {
-        padding-left: 20px;
+        padding-left: 10px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -293,15 +357,21 @@ body {
         border-radius: 6px;
         background-color: #f8f9fa;
         color: #2c3e50;
-        font-weight: 500;
+        font-weight: 600; 
         cursor: pointer;
         transition: all 0.3s ease;
         border: 1px solid #eaecef;
         width: 100%;
         justify-content: center;
+        font-size: 0.9rem;
     }
     .action-btn:hover { background-color: #edf2f7; transform: translateX(3px); }
-    .action-btn i { color: #FF7A00; }
+    .action-btn.edit { color: #e67e22; border-color: #fdebd0;}
+    .action-btn.edit i { color: #e67e22; }
+    .action-btn.btn-delete { color: #e74c3c; border-color: #fadbd8; background: #fdf0ed;}
+    .action-btn.btn-delete i { color: #e74c3c; }
+    .action-btn.finish-btn { color: #27ae60; border-color: #d5f5e3; background: #e8f5e9; }
+    .action-btn.finish-btn i { color: #27ae60; }
 
     .schedule-footer {
         display: flex;
@@ -312,182 +382,46 @@ body {
         border-top: 1px solid #eaecef;
         border-radius: 0 0 12px 12px;
         margin-top: 10px;
+        flex-shrink: 0;
     }
     .footer-stat { display: flex; align-items: center; gap: 10px; }
     .footer-label { font-weight: 600; color: #7f8c8d; font-size: 0.95rem; }
     .footer-label i { color: #FF7A00; margin-right: 4px; }
     .footer-value { font-size: 1.1rem; font-weight: 700; color: #2c3e50; transition: all 1s ease; }
     .footer-value.total-cash { color: #27ae60; font-size: 1.2rem; }
-}
 
-/* ==========================================
-   UI COMPONENTS - COMPATIBILIDADE TOTAL (FORA DE MEDIA QUERIES)
-========================================== */
+    /* UI COMPONENTS - MODAIS DA AGENDA (Intocáveis) */
+    .disabled-look {
+        background-color: #e9ecef !important;
+        pointer-events: none;
+        color: #6c757d !important;
+        cursor: not-allowed;
+    }
 
-/* Dropdown visualmente bloqueado sem quebrar o POST do formulario */
-.disabled-look {
-    background-color: #e9ecef !important;
-    pointer-events: none;
-    color: #6c757d !important;
-    cursor: not-allowed;
-}
+    .saas-barber-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 5px; }
+    .saas-barber-card { border: 2px solid #eaecef; border-radius: 12px; padding: 15px 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s ease; background: #fff; }
+    .saas-barber-card.active { border-color: #3498db; background: #f0f7ff; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.15); }
+    .saas-barber-card .saas-barber-avatar { width: 40px; height: 40px; min-width: 40px; font-size: 1rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; background: #FF7A00; color: white; }
+    .saas-barber-info { display: flex; flex-direction: column; align-items: flex-start; }
+    .saas-barber-name { font-size: 0.85rem; font-weight: 700; color: #2c3e50; line-height: 1.1; margin-bottom: 5px; }
+    .saas-select-badge { font-size: 0.7rem; background: #3498db; color: white; padding: 3px 8px; border-radius: 4px; font-weight: 600; opacity: 0.8; }
+    .saas-barber-card.active .saas-select-badge { background: #2ecc71; opacity: 1; }
 
-/* Botão Excluir e Alinhamento */
-.delete-form-wrapper { margin: 0; width: 100%; display: flex; flex-direction: column; }
-.btn-delete {
-    color: #e74c3c !important;
-    border: 1px solid #fadbd8 !important;
-    background-color: #fdf0ed !important;
-    font-weight: 600;
-}
-.btn-delete i { color: #e74c3c !important; }
-.btn-delete:hover {
-    background-color: #e74c3c !important;
-    color: #fff !important;
-}
-.btn-delete:hover i { color: #fff !important; }
+    .saas-service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 5px; max-height: 220px; overflow-y: auto; padding-right: 5px; }
+    .saas-service-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; border: 2px solid #eaecef; border-radius: 12px; cursor: pointer; background: #fff; transition: all 0.2s ease; user-select: none; text-align: center; }
+    .saas-service-card:hover { border-color: #FF7A00; }
+    .saas-service-card.selected { border-color: #FF7A00; background: #fff5eb; box-shadow: 0 4px 10px rgba(255, 122, 0, 0.15); }
+    .saas-service-card .saas-service-icon { font-size: 1.5rem; color: #34495e; margin-bottom: 8px; }
+    .saas-service-card.selected .saas-service-icon { color: #FF7A00; }
+    .saas-service-details { display: flex; flex-direction: column; align-items: center; }
+    .saas-service-title { font-weight: 700; color: #2c3e50; font-size: 0.95rem; margin-bottom: 5px; }
+    .saas-service-price { font-size: 1.05rem; color: #2c3e50; font-weight: 800; margin-bottom: 8px; }
+    .saas-service-duration { font-size: 0.75rem; color: #7f8c8d; background: #f1f2f6; padding: 3px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
 
-/* Malha Visual de Barbeiros (Modais) */
-.saas-barber-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 5px;
-}
-.saas-barber-card {
-    border: 2px solid #eaecef;
-    border-radius: 12px;
-    padding: 15px 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: #fff;
-}
-.saas-barber-card.active {
-    border-color: #3498db;
-    background: #f0f7ff;
-    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.15);
-}
-.saas-barber-card .saas-barber-avatar {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    font-size: 1rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    background: #FF7A00;
-    color: white;
-}
-.saas-barber-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-.saas-barber-name {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #2c3e50;
-    line-height: 1.1;
-    margin-bottom: 5px;
-}
-.saas-select-badge {
-    font-size: 0.7rem;
-    background: #3498db;
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-    opacity: 0.8;
-}
-.saas-barber-card.active .saas-select-badge {
-    background: #2ecc71;
-    opacity: 1;
-}
-
-/* Malha de Serviços (Cards) */
-.saas-service-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
-    margin-top: 5px;
-    max-height: 220px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-.saas-service-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    border: 2px solid #eaecef;
-    border-radius: 12px;
-    cursor: pointer;
-    background: #fff;
-    transition: all 0.2s ease;
-    user-select: none;
-    text-align: center;
-}
-.saas-service-card:hover { border-color: #FF7A00; }
-.saas-service-card.selected {
-    border-color: #FF7A00;
-    background: #fff5eb;
-    box-shadow: 0 4px 10px rgba(255, 122, 0, 0.15);
-}
-.saas-service-card .saas-service-icon {
-    font-size: 1.5rem;
-    color: #34495e;
-    margin-bottom: 8px;
-}
-.saas-service-card.selected .saas-service-icon { color: #FF7A00; }
-.saas-service-details { display: flex; flex-direction: column; align-items: center; }
-.saas-service-title { font-weight: 700; color: #2c3e50; font-size: 0.95rem; margin-bottom: 5px; }
-.saas-service-price { font-size: 1.05rem; color: #2c3e50; font-weight: 800; margin-bottom: 8px; }
-.saas-service-duration {
-    font-size: 0.75rem;
-    color: #7f8c8d;
-    background: #f1f2f6;
-    padding: 3px 10px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-weight: 500;
-}
-
-/* Grid Extra Modal Finalizar */
-.custom-service-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 12px 15px;
-    border: 2px solid #eaecef;
-    border-radius: 10px;
-    cursor: pointer;
-    background: #fff;
-    transition: all 0.2s ease;
-    position: relative;
-    user-select: none;
-}
-.custom-service-card:hover { border-color: #FF7A00; }
-.custom-service-card.selected { border-color: #FF7A00; background: #fff5eb; }
-.hidden-checkbox { display: none; }
-.custom-service-card .svc-check-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #FF7A00;
-    font-size: 1.2rem;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all 0.2s ease;
-}
-.custom-service-card.selected .svc-check-icon {
-    opacity: 1;
-    transform: scale(1);
+    .custom-service-card { display: flex; flex-direction: column; justify-content: space-between; padding: 12px 15px; border: 2px solid #eaecef; border-radius: 10px; cursor: pointer; background: #fff; transition: all 0.2s ease; position: relative; user-select: none; }
+    .custom-service-card:hover { border-color: #FF7A00; }
+    .custom-service-card.selected { border-color: #FF7A00; background: #fff5eb; }
+    .hidden-checkbox { display: none; }
+    .custom-service-card .svc-check-icon { position: absolute; top: 10px; right: 10px; color: #FF7A00; font-size: 1.2rem; opacity: 0; transform: scale(0.5); transition: all 0.2s ease; }
+    .custom-service-card.selected .svc-check-icon { opacity: 1; transform: scale(1); }
 }
