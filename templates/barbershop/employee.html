@@ -311,7 +311,7 @@
                                                 </button>
                                             </form>
                                         {% else %}
-                                            <span style="color: #a0aec0; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
+                                            <span style="color: #e74c3c; font-size: 0.85rem;" title="Você não pode editar suas próprias permissões."><i class="fas fa-lock"></i></span>
                                         {% endif %}
                                     </div>
                                 </td>
@@ -638,18 +638,18 @@
 
                     <div class="form-group" id="fixedSalaryGroup" style="display: none;">
                         <label for="fixedSalary" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Salário Fixo Mensal (R$)</label>
-                        <input type="number" name="fixed_salary" id="fixedSalary" class="form-control" placeholder="Ex: 1500.00" step="0.01">
+                        <input type="number" name="fixed_salary" id="fixedSalary" class="form-control" placeholder="Ex: 1500.00" step="0.01" min="0" max="99999.99">
                     </div>
 
                     <div class="form-group" id="chairRentalGroup" style="display: none;">
                         <label for="chairRentalFee" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Taxa de Aluguel da Cadeira (R$)</label>
-                        <input type="number" name="chair_rental_fee" id="chairRentalFee" class="form-control" placeholder="Ex: 800.00" step="0.01">
+                        <input type="number" name="chair_rental_fee" id="chairRentalFee" class="form-control" placeholder="Ex: 800.00" step="0.01" min="0" max="99999.99">
                         <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px;">Neste modelo, o barbeiro fica com 100% do valor dos cortes realizados.</small>
                     </div>
 
                     <div class="form-group" id="serviceCommissionGroup">
                         <label for="serviceCommission" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Comissão sobre Serviços (%)</label>
-                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" max="100">
+                        <input type="number" name="service_commission_percentage" id="serviceCommission" class="form-control" placeholder="Ex: 50" min="0" max="100" step="0.01">
                     </div>
 
                     <div class="form-group regular-field" id="systemAccessGroup">

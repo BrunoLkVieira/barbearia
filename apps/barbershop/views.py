@@ -346,8 +346,31 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         password_val = request.POST.get("password")
 
         contract_type_val = request.POST.get("contract_type", "commission")
-        fixed_salary_val = _to_decimal(request.POST.get("fixed_salary"))
-        chair_rental_fee_val = _to_decimal(request.POST.get("chair_rental_fee"))
+        
+        # =================================================================
+        # BLINDAGEM DE BACKEND: INTERCEPTA NÚMEROS ASTRONÔMICOS OU INVÁLIDOS
+        # =================================================================
+        def parse_financial_input(field_name, max_limit):
+            raw_val = request.POST.get(field_name)
+            if not raw_val:
+                return Decimal('0.00')
+            try:
+                val = Decimal(str(raw_val).replace(',', '.'))
+                if val < 0 or val > Decimal(str(max_limit)):
+                    raise ValueError
+                return val
+            except (InvalidOperation, ValueError, TypeError):
+                raise ValueError
+
+        try:
+            fixed_salary_val = parse_financial_input("fixed_salary", 99999.99)
+            chair_rental_fee_val = parse_financial_input("chair_rental_fee", 99999.99)
+            service_comm_val = parse_financial_input("service_commission_percentage", 100.00)
+            product_comm_val = parse_financial_input("product_commission_percentage", 100.00)
+        except ValueError:
+            messages.error(request, "Bloqueio de Segurança: Um valor financeiro inserido é inválido ou excede o limite (Comissão máxima: 100%).")
+            return redirect(request.path)
+        # =================================================================
 
         if action == "create":
             if not roles_selected:
@@ -391,8 +414,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                         bio=request.POST.get("bio", "").strip(), is_active=is_active_val,
                         contract_type=contract_type_val, fixed_salary=fixed_salary_val, chair_rental_fee=chair_rental_fee_val,
                         commission_percentage='commission_percentage' in request.POST,
-                        service_commission_percentage=_to_decimal(request.POST.get("service_commission_percentage")),
-                        product_commission_percentage=_to_decimal(request.POST.get("product_commission_percentage")),
+                        service_commission_percentage=service_comm_val,
+                        product_commission_percentage=product_comm_val,
                         can_manage_cashbox='can_manage_cashbox' in request.POST,
                         can_register_sell='can_register_sell' in request.POST,
                         can_create_appointments='can_create_appointments' in request.POST,
@@ -431,8 +454,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
-                emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
-                emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                emp_target.service_commission_percentage = service_comm_val
+                emp_target.product_commission_percentage = product_comm_val
                 emp_target.save()
                 
                 emp_target.roles.all().delete()
@@ -458,8 +481,8 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                 emp_target.contract_type = contract_type_val
                 emp_target.fixed_salary = fixed_salary_val
                 emp_target.chair_rental_fee = chair_rental_fee_val
-                emp_target.service_commission_percentage = _to_decimal(request.POST.get("service_commission_percentage"))
-                emp_target.product_commission_percentage = _to_decimal(request.POST.get("product_commission_percentage"))
+                emp_target.service_commission_percentage = service_comm_val
+                emp_target.product_commission_percentage = product_comm_val
                 emp_target.system_access = 'system_access' in request.POST
                 emp_target.can_manage_cashbox = 'can_manage_cashbox' in request.POST
                 emp_target.can_register_sell = 'can_register_sell' in request.POST
@@ -520,7 +543,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
 @login_required
 @require_POST
 def check_employee_data(request):
-    # Simplificado, checando apenas o E-mail agora!
     data = {"email": request.POST.get("email", "").strip()}
     roles_selected = request.POST.getlist("roles")
     employee_id = request.POST.get('employee_id')
@@ -576,7 +598,6 @@ def check_employee_data(request):
 
     if errors: return JsonResponse({'is_valid': False, 'errors': errors})
 
-    # Verificação inteligente de usuário existente pelo E-mail ao invés do CPF
     if not employee_id and email:
         try:
             user = User.objects.get(email=email)
