@@ -1,5 +1,4 @@
 let allDaysActive = false;
-let globalTimeOptions = []; 
 
 document.addEventListener('DOMContentLoaded', function () {
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
@@ -11,10 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
         Swal.fire({ title: 'Erros Encontrados', html: errorHtml, icon: 'error', confirmButtonColor: '#7066e0' });
     }
 
-    const baseSelect = document.querySelector('.time-input.start-time');
-    if(baseSelect) Array.from(baseSelect.options).forEach(opt => globalTimeOptions.push(opt.value));
-
-    const formsAjax = document.querySelectorAll('.holiday-form, #unitWorkdayForm');
+    const formsAjax = document.querySelectorAll('.holiday-form');
     formsAjax.forEach(form => {
         form.addEventListener('submit', async function(e) {
             e.preventDefault(); 
@@ -31,6 +27,45 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    const unitWorkdayForm = document.getElementById('unitWorkdayForm');
+    if (unitWorkdayForm) {
+        unitWorkdayForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Confirmar Ajuste?',
+                text: 'Mudar o expediente da barbearia irá reajustar automaticamente a disponibilidade dos barbeiros para se adequarem às novas horas. Deseja continuar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#FF7A00',
+                cancelButtonColor: '#a0aec0',
+                confirmButtonText: 'Sim, atualizar tudo!',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    closeUnitWorkdayModal();
+                    
+                    Swal.fire({
+                        title: 'Processando...',
+                        text: 'Ajustando agendas dos profissionais.',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    const formData = new FormData(unitWorkdayForm);
+                    const csrfToken = unitWorkdayForm.querySelector('[name=csrfmiddlewaretoken]').value;
+                    try {
+                        const response = await fetch(window.location.href, { method: 'POST', headers: { 'X-CSRFToken': csrfToken }, body: formData });
+                        const data = await response.json();
+                        if (response.ok && data.status === 'success') {
+                            Swal.fire({ icon: 'success', title: data.message, showConfirmButton: false, timer: 1500 });
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else { showValidationErrors(data.errors || ['Erro ao processar dados.']); }
+                    } catch (error) { showValidationErrors(['Erro de comunicação com o servidor.']); }
+                }
+            });
+        });
+    }
+
     const absenceForm = document.querySelector('.absence-form');
     if (absenceForm) {
         absenceForm.addEventListener('submit', function (e) {
@@ -46,28 +81,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (errors.length > 0) { e.preventDefault(); e.stopImmediatePropagation(); showValidationErrors(errors); }
         });
     }
-
-    const tabs = document.querySelectorAll('.barber-selector-item');
-    tabs.forEach(item => {
-        item.addEventListener('click', function() {
-            tabs.forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-            activeTabPeriod = this.dataset.target;
-            
-            document.querySelectorAll('.day-edit.morning').forEach(d => d.style.display = (activeTabPeriod === 'morning') ? 'flex' : 'none');
-            document.querySelectorAll('.day-edit.afternoon').forEach(d => d.style.display = (activeTabPeriod === 'afternoon') ? 'flex' : 'none');
-            
-            allDaysActive = false;
-            const btn = document.getElementById('batchToggleBtn');
-            if(btn) btn.innerHTML = '<i class="fas fa-check-double"></i> Ativar Todos';
-            
-            updateBatchSelectsLimits();
-        });
-    });
-    if (tabs[0]) tabs[0].click(); 
 });
 
-// INTERCEPTADOR DE AÇÕES NO MODO GLOBAL (VISÃO GERAL)
 function checkGlobalView(actionText) {
     if (typeof isGlobalView !== 'undefined' && isGlobalView) {
         Swal.fire({
@@ -81,38 +96,37 @@ function checkGlobalView(actionText) {
     return false;
 }
 
-function updatePeriodVisuals(weekday, period, isAvailable, isShopOpen, shopStart, shopEnd) {
-    const periodDiv = document.querySelector(`.day-edit[data-weekday="${weekday}"][data-period="${period}"]`);
-    if (!periodDiv) return;
+function updateDayVisuals(dayDiv, isAvailable, isShopOpen, shopStart, shopEnd) {
+    if (!dayDiv) return;
+    const checkbox = dayDiv.querySelector('.day-checkbox');
+    const inputGroup = dayDiv.querySelector('.time-input-group');
+    const warningText = dayDiv.querySelector('.closed-warning');
     
-    const checkbox = periodDiv.querySelector('.day-checkbox');
-    const sSelect = periodDiv.querySelector('.start-time');
-    const eSelect = periodDiv.querySelector('.end-time');
-    const warningText = periodDiv.querySelector('.closed-warning');
-    const inputGroup = periodDiv.querySelector('.time-input-group');
+    const sWork = dayDiv.querySelector('.start-time');
+    const eWork = dayDiv.querySelector('.end-time');
+    const sBreak = dayDiv.querySelector('.break-start-time');
+    const eBreak = dayDiv.querySelector('.break-end-time');
 
     if (!isShopOpen) {
         checkbox.checked = false; checkbox.disabled = true;
-        periodDiv.classList.replace('active', 'off');
-        inputGroup.style.display = 'none'; warningText.style.display = 'block';
+        dayDiv.classList.remove('active');
+        dayDiv.classList.add('off');
+        dayDiv.style.borderLeft = "5px solid #e53e3e";
+        dayDiv.style.opacity = "0.65";
+        
+        inputGroup.style.display = 'none'; 
+        warningText.style.display = 'block';
         return;
     } else {
         checkbox.disabled = false;
-        inputGroup.style.display = 'flex'; warningText.style.display = 'none';
+        inputGroup.style.display = 'flex'; 
+        warningText.style.display = 'none';
     }
 
-    let periodStartLimit = shopStart;
-    let periodEndLimit = shopEnd;
-    
-    if (period === 'morning') {
-        periodEndLimit = ("15:00" < shopEnd) ? "15:00" : shopEnd;
-    } else if (period === 'afternoon') {
-        periodStartLimit = ("12:00" > shopStart) ? "12:00" : shopStart;
-    }
-
-    [sSelect, eSelect].forEach(input => {
+    [sWork, eWork, sBreak, eBreak].forEach(input => {
+        if(!input) return;
         Array.from(input.options).forEach(opt => {
-            opt.disabled = (opt.value < periodStartLimit || opt.value > periodEndLimit);
+            opt.disabled = (opt.value < shopStart || opt.value > shopEnd);
             opt.style.display = opt.disabled ? 'none' : 'block';
         });
     });
@@ -120,38 +134,57 @@ function updatePeriodVisuals(weekday, period, isAvailable, isShopOpen, shopStart
     if (checkbox) checkbox.checked = isAvailable;
     
     if (isAvailable) {
-        periodDiv.classList.replace('off', 'active');
-        sSelect.disabled = false; eSelect.disabled = false;
+        dayDiv.classList.remove('off');
+        dayDiv.classList.add('active');
+        dayDiv.style.borderLeft = "5px solid #27ae60";
+        dayDiv.style.opacity = "1";
+        [sWork, eWork, sBreak, eBreak].forEach(i => i.disabled = false);
     } else {
-        periodDiv.classList.replace('active', 'off');
-        sSelect.disabled = true; eSelect.disabled = true;
+        dayDiv.classList.remove('active');
+        dayDiv.classList.add('off');
+        dayDiv.style.borderLeft = "5px solid #e53e3e";
+        dayDiv.style.opacity = "0.65";
+        [sWork, eWork, sBreak, eBreak].forEach(i => i.disabled = true);
     }
 }
 
-function updateBatchSelectsLimits() {
-    const bStart = document.getElementById('batchStartTime');
-    const bEnd = document.getElementById('batchEndTime');
-    if(!bStart || !bEnd) return;
+function applyBatchTimes() {
+    const sWork = document.getElementById('batchStartWork').value;
+    const eWork = document.getElementById('batchEndWork').value;
+    const sBreak = document.getElementById('batchStartBreak').value;
+    const eBreak = document.getElementById('batchEndBreak').value;
 
-    bStart.innerHTML = ''; bEnd.innerHTML = '';
-    
-    let startLimit = (activeTabPeriod === 'morning') ? "00:00" : "12:00";
-    let endLimit = (activeTabPeriod === 'morning') ? "15:00" : "23:30";
+    if (sWork >= eWork) {
+        Swal.fire({ title: 'Atenção', text: 'O horário de término do expediente deve ser maior que o início.', icon: 'warning', confirmButtonColor: '#FF7A00' });
+        return;
+    }
+    if (sBreak >= eBreak && sBreak !== eBreak) {
+        Swal.fire({ title: 'Atenção', text: 'A pausa está configurada incorretamente (Término menor que o Início).', icon: 'warning', confirmButtonColor: '#FF7A00' });
+        return;
+    }
 
-    globalTimeOptions.forEach(time => {
-        if(time >= startLimit && time <= endLimit) {
-            bStart.add(new Option(time, time));
-            bEnd.add(new Option(time, time));
-        }
+    document.querySelectorAll('.day-edit-card.active').forEach(dayDiv => {
+        const sWorkSel = dayDiv.querySelector('.start-time');
+        const eWorkSel = dayDiv.querySelector('.end-time');
+        const sBreakSel = dayDiv.querySelector('.break-start-time');
+        const eBreakSel = dayDiv.querySelector('.break-end-time');
+
+        if (sWorkSel && !sWorkSel.querySelector(`option[value="${sWork}"]`).disabled) sWorkSel.value = sWork;
+        if (eWorkSel && !eWorkSel.querySelector(`option[value="${eWork}"]`).disabled) eWorkSel.value = eWork;
+        if (sBreakSel && !sBreakSel.querySelector(`option[value="${sBreak}"]`).disabled) sBreakSel.value = sBreak;
+        if (eBreakSel && !eBreakSel.querySelector(`option[value="${eBreak}"]`).disabled) eBreakSel.value = eBreak;
     });
+
+    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+    Toast.fire({ icon: 'success', title: 'Horários replicados para todos os dias que estão ativos (ON)!' });
 }
 
-function toggleAllDaysInPeriod() {
+function toggleAllDays() {
     allDaysActive = !allDaysActive;
     const btn = document.getElementById('batchToggleBtn');
     if(btn) btn.innerHTML = allDaysActive ? '<i class="fas fa-times"></i> Desativar Todos' : '<i class="fas fa-check-double"></i> Ativar Todos';
     
-    document.querySelectorAll(`.day-edit.${activeTabPeriod}`).forEach(dayDiv => {
+    document.querySelectorAll(`.day-edit-card`).forEach(dayDiv => {
         const toggle = dayDiv.querySelector('.day-checkbox');
         if (toggle && !toggle.disabled) { 
             toggle.checked = allDaysActive;
@@ -160,24 +193,8 @@ function toggleAllDaysInPeriod() {
     });
 }
 
-function applyBatchTimes() {
-    const startTime = document.getElementById('batchStartTime').value;
-    const endTime = document.getElementById('batchEndTime').value;
-    
-    document.querySelectorAll(`.day-edit.${activeTabPeriod}`).forEach(dayDiv => {
-        const toggle = dayDiv.querySelector('.day-checkbox');
-        if (toggle && toggle.checked && !toggle.disabled) {
-            const sSelect = dayDiv.querySelector('.start-time');
-            const eSelect = dayDiv.querySelector('.end-time');
-            
-            if (sSelect.querySelector(`option[value="${startTime}"]`) && !sSelect.querySelector(`option[value="${startTime}"]`).disabled) sSelect.value = startTime;
-            if (eSelect.querySelector(`option[value="${endTime}"]`) && !eSelect.querySelector(`option[value="${endTime}"]`).disabled) eSelect.value = endTime;
-        }
-    });
-}
-
 function handleToggleClick(checkboxElement) {
-    const dayDiv = checkboxElement.closest('.day-edit');
+    const dayDiv = checkboxElement.closest('.day-edit-card');
     if (!dayDiv) return;
     
     const dataEl = document.getElementById('unit-workdays-data');
@@ -190,11 +207,11 @@ function handleToggleClick(checkboxElement) {
         if (uDay) { isShopOpen = uDay.is_open; shopStart = uDay.open_time; shopEnd = uDay.close_time; }
     }
     
-    updatePeriodVisuals(wIndex, dayDiv.dataset.period, checkboxElement.checked, isShopOpen, shopStart, shopEnd);
+    updateDayVisuals(dayDiv, checkboxElement.checked, isShopOpen, shopStart, shopEnd);
 }
 
 function openEditModal(employeeId) {
-    if (checkGlobalView('editar a disponibilidade do barbeiro (pois ela depende do horário de funcionamento da filial)')) return;
+    if (checkGlobalView('editar a disponibilidade do barbeiro')) return;
 
     const formEmpId = document.getElementById('formEmployeeId');
     const dataEl = document.getElementById('unit-workdays-data');
@@ -204,30 +221,49 @@ function openEditModal(employeeId) {
     formEmpId.value = employeeId;
     const employeeWorkdays = workdaysData[employeeId];
 
+    const bStart = document.getElementById('batchStartWork');
+    if (bStart) {
+        bStart.value = "09:00";
+        document.getElementById('batchEndWork').value = "19:00";
+        document.getElementById('batchStartBreak').value = "12:00";
+        document.getElementById('batchEndBreak').value = "13:00";
+    }
+
     for (let i = 0; i < 7; i++) {
         const dayData = employeeWorkdays ? employeeWorkdays[i] : null;
         const uDay = unitData[i] || unitData[String(i)];
         let isShopOpen = true; let shopStart = "00:00"; let shopEnd = "23:30";
         if (uDay) { isShopOpen = uDay.is_open; shopStart = uDay.open_time; shopEnd = uDay.close_time; }
 
-        ['morning', 'afternoon'].forEach(p => {
-            const div = document.querySelector(`.day-edit[data-weekday="${i}"][data-period="${p}"]`);
-            const isAvail = dayData ? dayData[`${p}_available`] : false; 
+        const div = document.querySelector(`.day-edit-card[data-weekday="${i}"]`);
+        if(!div) continue;
+
+        const isAvail = dayData ? (dayData.morning_available || dayData.afternoon_available) : false; 
+        updateDayVisuals(div, isAvail, isShopOpen, shopStart, shopEnd);
+        
+        if (div && isShopOpen) {
+            const sWork = div.querySelector('.start-time');
+            const sBreak = div.querySelector('.break-start-time');
+            const eBreak = div.querySelector('.break-end-time');
+            const eWork = div.querySelector('.end-time');
             
-            updatePeriodVisuals(i, p, isAvail, isShopOpen, shopStart, shopEnd);
+            let valSWork = (dayData && dayData.start_morning_work) ? dayData.start_morning_work : shopStart.substring(0,5);
+            let valSBreak = (dayData && dayData.end_morning_work) ? dayData.end_morning_work : "12:00";
+            let valEBreak = (dayData && dayData.start_afternoon_work) ? dayData.start_afternoon_work : "13:00";
+            let valEWork = (dayData && dayData.end_afternoon_work) ? dayData.end_afternoon_work : shopEnd.substring(0,5);
             
-            if (div && dayData && isShopOpen) {
-                const sSelect = div.querySelector(`[name^="start_${p}_work"]`);
-                const eSelect = div.querySelector(`[name^="end_${p}_work"]`);
-                
-                sSelect.value = dayData[`start_${p}_work`] || shopStart.substring(0,5);
-                eSelect.value = dayData[`end_${p}_work`] || shopEnd.substring(0,5);
-                
-                if (sSelect.value < shopStart) sSelect.value = shopStart.substring(0,5);
-                if (eSelect.value > shopEnd) eSelect.value = shopEnd.substring(0,5);
-            }
-        });
+            if (valSWork < shopStart) valSWork = shopStart.substring(0,5);
+            if (valEWork > shopEnd) valEWork = shopEnd.substring(0,5);
+            if (valSBreak < shopStart) valSBreak = shopStart.substring(0,5);
+            if (valEBreak > shopEnd) valEBreak = shopEnd.substring(0,5);
+            
+            if(sWork) sWork.value = valSWork;
+            if(sBreak) sBreak.value = valSBreak;
+            if(eBreak) eBreak.value = valEBreak;
+            if(eWork) eWork.value = valEWork;
+        }
     }
+    
     document.getElementById('editModal').style.display = 'flex'; document.body.style.overflow = 'hidden';
 }
 
@@ -239,17 +275,23 @@ function submitBarberAgenda() {
     const csrfToken = editWorkdayForm.querySelector('[name=csrfmiddlewaretoken]').value;
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500 });
 
+    closeEditModal();
+    Swal.fire({
+        title: 'Salvando...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
     fetch(window.location.href, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken } })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            closeEditModal(); Toast.fire({ icon: 'success', title: data.message });
+            Swal.fire({ icon: 'success', title: data.message, showConfirmButton: false, timer: 1500 });
             setTimeout(() => window.location.reload(), 1500);
         } else { Swal.fire({ title: 'Atenção', text: data.errors[0], icon: 'warning', confirmButtonColor: '#7066e0' }); }
     }).catch(() => Swal.fire('Erro', 'Conexão falhou', 'error'));
 }
 
-// RESTANTE DOS MODAIS: FERIADOS E EXPEDIENTE FÍSICO
 function editHolidayModal(holidayId, name, date) {
     if (checkGlobalView('editar este feriado')) return;
     const m = document.getElementById('editHolidayModal');

@@ -22,11 +22,13 @@
     
     <style>
         .swal2-container {z-index: 9999;}
-        .batch-actions { display: flex; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 15px; align-items: center; justify-content: space-between; }
-        .batch-actions .time-inputs { display: flex; gap: 5px; align-items: center;}
-        
         .main-content { padding-bottom: 100px; }
         footer { position: fixed; bottom: 0; right: 0; width: 100%; z-index: 100; }
+        
+        /* Blindagem do Scroll Customizado do Modal */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'geral/js/notification.js' %}"></script>
@@ -40,6 +42,7 @@
         <div class="nav-content">
             <div class="stats">
                 {% if is_owner %}
+                    {% if units.count > 1 %}
                     <div class="unit-filter desktop-unit-filter">
                         <select id="unitFilterSelect" 
                                 data-general-url="{% url 'barbershop:workday_general' barbershop_slug=barbershop.slug %}"
@@ -51,6 +54,11 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% else %}
+                    <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                        <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ units.first.name }}
+                    </div>
+                    {% endif %}
                 {% else %}
                     <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
                         <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> 
@@ -256,106 +264,117 @@
         </div>
     </footer>
 
+    <!-- MODAL BARBEIRO: Arquitetura Blindada 100% Empilhada (Stacked) -->
     <div id="editModal" class="edit-modal">
-        <div class="edit-modal-content">
+        <div class="edit-modal-content" style="max-width: 480px; width: 95%;">
             <div class="edit-modal-header">
-                <h2><i class="fas fa-user-clock"></i> Editar Agenda do Barbeiro</h2>
+                <h2><i class="fas fa-user-clock"></i> Editar Agenda</h2>
                 <button class="close-btn" onclick="closeEditModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
     
-            <div class="edit-modal-body">
-                <p style="font-size: 0.8rem; color: #a0aec0; margin-bottom: 10px; text-align: center;">Nota: O profissional não pode atender em dias ou horários em que a barbearia estiver fechada.</p>
-                <div class="barber-selector">
-                    <div class="barber-selector-item active" data-target="morning">
-                        <div>Manhã</div>
-                    </div>
-                    <div class="barber-selector-item" data-target="afternoon">
-                        <div>Tarde</div>
-                    </div>
-                </div>
+            <div class="edit-modal-body" style="padding: 20px 15px; overflow-x: hidden;">
+                <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 15px; text-align: center;">O profissional segue as travas físicas da barbearia.</p>
                 
-                <div class="days-grid">
-                    <form method="POST" action="" class="edit-calendar-form" id="editWorkdayForm">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="edit_workday">
-                        <input type="hidden" name="employee_id" id="formEmployeeId">
-    
-                        <div class="batch-actions">
-                            <button type="button" class="btn btn-outline" id="batchToggleBtn" onclick="toggleAllDaysInPeriod()" style="padding: 5px 15px; font-size: 0.8rem; flex-shrink: 0;">
+                <!-- NOTE: Removido a classe edit-calendar-form para matar a herança do CSS Grid antigo -->
+                <form method="POST" action="" id="editWorkdayForm" style="display: flex; flex-direction: column; gap: 20px; width: 100%; box-sizing: border-box;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_workday">
+                    <input type="hidden" name="employee_id" id="formEmployeeId">
+
+                    <!-- Módulo Ações em Massa (Batch) -->
+                    <div style="background: #fff5eb; border: 1px solid #fbd38d; border-radius: 10px; padding: 15px; box-shadow: 0 2px 4px rgba(237, 137, 54, 0.1); width: 100%; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="font-size: 1rem; color: #dd6b20; font-weight: 800;"><i class="fas fa-bolt"></i> Configuração Rápida</span>
+                            <button type="button" class="btn btn-outline" id="batchToggleBtn" onclick="toggleAllDays()" style="padding: 4px 12px; font-size: 0.75rem; border-color: #dd6b20; color: #dd6b20; margin:0;">
                                 <i class="fas fa-check-double"></i> Ativar Todos
                             </button>
-                            <div class="time-inputs" style="display: flex; gap: 5px; align-items: center;">
-                                <select class="time-input" id="batchStartTime" style="width: 70px; font-size: 0.8rem;"></select>
-                                <span style="font-size: 0.8rem;">às</span>
-                                <select class="time-input" id="batchEndTime" style="width: 70px; font-size: 0.8rem;"></select>
-                                <button type="button" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="applyBatchTimes()">Aplicar</button>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <small style="font-weight: 700; color: #2c3e50; width: 75px; flex-shrink: 0;"><i class="fas fa-briefcase" style="color: #FF7A00;"></i> Exp.:</small>
+                                <select id="batchStartWork" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                    {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                </select>
+                                <span style="margin: 0 8px; font-size: 0.8rem; color: #718096; flex-shrink: 0;">até</span>
+                                <select id="batchEndWork" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                    {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <small style="font-weight: 700; color: #2c3e50; width: 75px; flex-shrink: 0;"><i class="fas fa-mug-hot" style="color: #FF7A00;"></i> Pausa:</small>
+                                <select id="batchStartBreak" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                    {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                </select>
+                                <span style="margin: 0 8px; font-size: 0.8rem; color: #718096; flex-shrink: 0;">até</span>
+                                <select id="batchEndBreak" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                    {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                </select>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 15px; padding: 12px; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="applyBatchTimes()">
+                            <i class="fas fa-copy"></i> Replicar para Dias Ativos
+                        </button>
+                    </div>
 
+                    <!-- Grade de Dias -->
+                    <div class="custom-scrollbar" style="display: flex; flex-direction: column; gap: 12px; max-height: 45vh; overflow-y: auto; overflow-x: hidden; padding-right: 5px; width: 100%; box-sizing: border-box;">
                         {% for i in "0123456"|make_list %}
                             {% with weekday_index=i|add:0 %}
-                                <div class="day-edit off morning" data-weekday="{{ weekday_index }}" data-period="morning">
-                                    <div class="left-area-day">
-                                        <div class="day-abbreviation">
-                                            {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
+                                <div class="day-edit-card off" data-weekday="{{ weekday_index }}" style="display: flex; flex-direction: column; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box; transition: all 0.3s ease;">
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e0; padding-bottom: 10px; margin-bottom: 10px;">
+                                        <div style="font-weight: 800; font-size: 1.05rem; color: #2c3e50;">
+                                            {% if weekday_index == 0 %}DOMINGO{% elif weekday_index == 1 %}SEGUNDA{% elif weekday_index == 2 %}TERÇA{% elif weekday_index == 3 %}QUARTA{% elif weekday_index == 4 %}QUINTA{% elif weekday_index == 5 %}SEXTA{% else %}SÁBADO{% endif %}
                                         </div>
                                         <label class="toggle-switch">
-                                            <input type="checkbox" class="day-checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_morning">
+                                            <input type="checkbox" class="day-checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}">
                                             <span class="slider"></span>
                                         </label>
                                     </div>
-                                    <div class="time-input-group">
-                                        <select class="time-input start-time" name="start_morning_work_{{ weekday_index }}">
-                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
-                                        </select>
-                                        <span class="time-divider">-</span>
-                                        <select class="time-input end-time" name="end_morning_work_{{ weekday_index }}">
-                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="closed-warning" style="display: none; color: #e53e3e; font-size: 0.75rem; width: 100%; text-align: right;">Barbearia Fechada</div>
-                                </div>
-                            {% endwith %}
-                        {% endfor %}
-    
-                        {% for i in "0123456"|make_list %}
-                            {% with weekday_index=i|add:0 %}
-                                <div class="day-edit off afternoon" data-weekday="{{ weekday_index }}" data-period="afternoon">
-                                    <div class="left-area-day">
-                                        <div class="day-abbreviation">
-                                            {% if weekday_index == 0 %}DOM{% elif weekday_index == 1 %}SEG{% elif weekday_index == 2 %}TER{% elif weekday_index == 3 %}QUA{% elif weekday_index == 4 %}QUI{% elif weekday_index == 5 %}SEX{% else %}SAB{% endif %}
+                                    
+                                    <div class="time-input-group" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                            <small style="font-weight: 700; color: #718096; width: 75px; flex-shrink: 0;">Expediente:</small>
+                                            <select class="start-time" name="start_work_{{ weekday_index }}" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                                {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                            </select>
+                                            <span style="margin: 0 8px; font-size: 0.8rem; color: #a0aec0; flex-shrink: 0;">até</span>
+                                            <select class="end-time" name="end_work_{{ weekday_index }}" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                                {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                            </select>
                                         </div>
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" class="day-checkbox" onchange="handleToggleClick(this)" name="is_available_{{ weekday_index }}_afternoon">
-                                            <span class="slider"></span>
-                                        </label>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                            <small style="font-weight: 700; color: #718096; width: 75px; flex-shrink: 0;">Pausa:</small>
+                                            <select class="break-start-time" name="start_break_{{ weekday_index }}" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                                {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                            </select>
+                                            <span style="margin: 0 8px; font-size: 0.8rem; color: #a0aec0; flex-shrink: 0;">até</span>
+                                            <select class="break-end-time" name="end_break_{{ weekday_index }}" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; min-width: 0;">
+                                                {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="time-input-group">
-                                        <select class="time-input start-time" name="start_afternoon_work_{{ weekday_index }}">
-                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
-                                        </select>
-                                        <span class="time-divider">-</span>
-                                        <select class="time-input end-time" name="end_afternoon_work_{{ weekday_index }}">
-                                            {% for time in time_options %}<option value="{{ time }}">{{ time }}</option>{% endfor %}
-                                        </select>
+                                    <div class="closed-warning" style="display: none; color: #e53e3e; font-size: 0.85rem; font-weight: bold; text-align: center; margin-top: 10px;">
+                                        <i class="fas fa-lock"></i> Barbearia Fechada neste dia
                                     </div>
-                                    <div class="closed-warning" style="display: none; color: #e53e3e; font-size: 0.75rem; width: 100%; text-align: right;">Barbearia Fechada</div>
                                 </div>
                             {% endwith %}
                         {% endfor %}
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
             
             <div class="edit-modal-footer">
-                <button class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitBarberAgenda()">Salvar Grade</button>
+                <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="submitBarberAgenda()">Salvar Grade</button>
             </div>
         </div>
     </div>
 
+    <!-- Modais de Feriados, Ausências e Unidade -->
     {% if is_owner or is_manager %}
         <div id="createHolidayModal" class="modal">
             <div class="modal-content">
@@ -512,11 +531,9 @@
     <script src="{% static 'barbershop/js/workDay.js' %}"></script>
     <script>
         const workdaysData = {{ workdays_json|safe }};
-        let activeTabPeriod = 'morning'; 
         const isGlobalView = {% if not unit %}true{% else %}false{% endif %};
 
         document.addEventListener('DOMContentLoaded', function() {
-            // MÁGICA DO FILTRO: Move o dropdown pra dentro do Header no celular
             if (window.innerWidth <= 820) {
                 const header = document.querySelector('header');
                 const unitFilter = document.querySelector('.desktop-unit-filter');

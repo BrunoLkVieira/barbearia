@@ -607,6 +607,8 @@ def check_employee_data(request):
     return JsonResponse({'is_valid': True, 'user_exists': False})
 
 
+
+
 @login_required
 @owner_or_employee_required
 def WorkDayView(request, barbershop_slug, unit_slug=None):
@@ -627,6 +629,10 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
     
     if is_owner:
         units = barbershop.units.filter(is_active=True)
+        # IMPROVEMENT: Tirar filtro de unidade quando tiver apenas 1 e redirecionar
+        if units.count() == 1 and not unit_slug and request.method == "GET":
+            return redirect("barbershop:workday_unit", barbershop_slug=barbershop.slug, unit_slug=units.first().slug)
+            
         unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
         gerente_unit = None
     else:
@@ -648,12 +654,47 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
             for i in range(7):
                 try: wd_unit = UnitWorkDay.objects.get(unit=unit, weekday=i)
                 except UnitWorkDay.DoesNotExist: wd_unit = UnitWorkDay(unit=unit, weekday=i)
+                
                 is_open = f'unit_open_{i}' in request.POST
-                wd_unit.open_time = request.POST.get(f'unit_start_{i}') or "09:00"
-                wd_unit.close_time = request.POST.get(f'unit_end_{i}') or "19:00"
+                new_open_time = request.POST.get(f'unit_start_{i}') or "09:00"
+                new_close_time = request.POST.get(f'unit_end_{i}') or "19:00"
+                
+                wd_unit.open_time = new_open_time
+                wd_unit.close_time = new_close_time
                 wd_unit.is_open = is_open
                 wd_unit.save()
-            return JsonResponse({'status': 'success', 'message': 'Horário de funcionamento da unidade atualizado!'})
+
+                # IMPROVEMENT: Alterar/Encaixar automaticamente as agendas dos barbeiros
+                emp_workdays = EmployeeWorkDay.objects.filter(employee__unit=unit, weekday=i)
+                open_t = datetime.strptime(new_open_time, '%H:%M').time()
+                close_t = datetime.strptime(new_close_time, '%H:%M').time()
+                
+                for e_wd in emp_workdays:
+                    if not is_open:
+                        e_wd.morning_available = False
+                        e_wd.afternoon_available = False
+                        e_wd.is_active = False
+                    else:
+                        if e_wd.morning_available:
+                            if e_wd.start_morning_work and e_wd.start_morning_work < open_t:
+                                e_wd.start_morning_work = open_t
+                            if e_wd.end_morning_work and e_wd.end_morning_work > close_t:
+                                e_wd.end_morning_work = close_t
+                            if e_wd.start_morning_work and e_wd.end_morning_work and e_wd.start_morning_work >= e_wd.end_morning_work:
+                                e_wd.morning_available = False
+
+                        if e_wd.afternoon_available:
+                            if e_wd.start_afternoon_work and e_wd.start_afternoon_work < open_t:
+                                e_wd.start_afternoon_work = open_t
+                            if e_wd.end_afternoon_work and e_wd.end_afternoon_work > close_t:
+                                e_wd.end_afternoon_work = close_t
+                            if e_wd.start_afternoon_work and e_wd.end_afternoon_work and e_wd.start_afternoon_work >= e_wd.end_afternoon_work:
+                                e_wd.afternoon_available = False
+                        
+                        e_wd.is_active = e_wd.morning_available or e_wd.afternoon_available
+                    e_wd.save()
+                    
+            return JsonResponse({'status': 'success', 'message': 'Horário da unidade salvo e barbeiros reajustados!'})
 
         elif action == "edit_workday":
             emp_target_id = request.POST.get("employee_id")
@@ -671,22 +712,24 @@ def WorkDayView(request, barbershop_slug, unit_slug=None):
                 try: workday = EmployeeWorkDay.objects.get(employee=emp_target, weekday=i)
                 except EmployeeWorkDay.DoesNotExist: workday = EmployeeWorkDay(employee=emp_target, weekday=i)
                 
-                morning_is_available = f'is_available_{i}_morning' in request.POST
-                afternoon_is_available = f'is_available_{i}_afternoon' in request.POST
+                is_available = f'is_available_{i}' in request.POST
 
-                workday.morning_available = morning_is_available
-                workday.afternoon_available = afternoon_is_available
-                workday.is_active = morning_is_available or afternoon_is_available
-
-                start_morning = request.POST.get(f'start_morning_work_{i}')
-                end_morning = request.POST.get(f'end_morning_work_{i}')
-                start_afternoon = request.POST.get(f'start_afternoon_work_{i}')
-                end_afternoon = request.POST.get(f'end_afternoon_work_{i}')
-
-                workday.start_morning_work = start_morning if morning_is_available and start_morning else None
-                workday.end_morning_work = end_morning if morning_is_available and end_morning else None
-                workday.start_afternoon_work = start_afternoon if afternoon_is_available and start_afternoon else None
-                workday.end_afternoon_work = end_afternoon if afternoon_is_available and end_afternoon else None
+                if is_available:
+                    workday.start_morning_work = request.POST.get(f'start_work_{i}')
+                    workday.end_morning_work = request.POST.get(f'start_break_{i}')
+                    workday.start_afternoon_work = request.POST.get(f'end_break_{i}')
+                    workday.end_afternoon_work = request.POST.get(f'end_work_{i}')
+                    workday.morning_available = True
+                    workday.afternoon_available = True
+                    workday.is_active = True
+                else:
+                    workday.morning_available = False
+                    workday.afternoon_available = False
+                    workday.start_morning_work = None
+                    workday.end_morning_work = None
+                    workday.start_afternoon_work = None
+                    workday.end_afternoon_work = None
+                    workday.is_active = False
                 workday.save()
             return JsonResponse({'status': 'success', 'message': f'Disponibilidade de {emp_target.user.name} atualizada!'})
 

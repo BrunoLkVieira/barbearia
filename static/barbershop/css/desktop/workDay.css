@@ -7,6 +7,11 @@
         min-height: 100vh;
     }
 
+    /* FIX: Impede que as divs do mobile vazem no layout desktop */
+    .mobile-only {
+        display: none !important;
+    }
+
     /* Main Content */
     .main-content {
         flex: 1;
@@ -41,9 +46,7 @@
         gap: 10px;
     }
 
-    .section-title i{
-        color: #FF7A00;
-    }
+    .section-title i{ color: #FF7A00; }
 
     /* Barbeiros List */
     .barbers-list {
@@ -93,10 +96,7 @@
         font-size: 1.1rem;
     }
 
-    .barber-chair {
-        font-size: 0.9rem;
-        color: #7f8c8d;
-    }
+    .barber-chair { font-size: 0.9rem; color: #7f8c8d; }
 
     .available-days {
         display: flex;
@@ -120,101 +120,126 @@
     }
 
     .edit-btn {
-        width: 100%;
-        padding: 8px;
-        background: #FF7A00;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
+        width: 100%; padding: 8px; background: #FF7A00; color: white;
+        border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
     }
+    .edit-btn:hover { background: #d35400; transform: translateY(-2px); }
 
-    .edit-btn:hover {
-        background: #d35400;
-        transform: translateY(-2px);
-    }
-
-    /* Secao de dias de folga */
-    .non-working-days {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 15px;
-    }
+    /* Feriados / Dias Fechados */
+    .non-working-days { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
 
     .day-off-card {
-        background: linear-gradient(135deg, #ff7043, #f4511e);
-        color: white;
-        border-radius: 8px;
-        padding: 15px;
-        width: 13.5rem;
-        box-shadow: 0 4px 10px rgba(244, 81, 30, 0.2);
-        display: flex;
-        flex-direction: column;
-        position: relative;
+        background: linear-gradient(135deg, #ff7043, #f4511e); color: white;
+        border-radius: 8px; padding: 15px; width: 13.5rem;
+        box-shadow: 0 4px 10px rgba(244, 81, 30, 0.2); display: flex; flex-direction: column; position: relative;
     }
 
     .blue-card {
-        background: linear-gradient(135deg, #2c3e50, #1a2a6c);
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 15.5rem;
+        background: linear-gradient(135deg, #2c3e50, #1a2a6c); color: white;
+        cursor: pointer; transition: all 0.3s ease; width: 15.5rem;
     }
 
-    .day-off-date {
-        font-size: 1rem;
-        font-weight: 600;
-    }
-
-    .day-off-year{
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 2px;
-    }
-
-    .day-off-reason {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-
-    .end-absence-day{
-        font-size: .9rem;
-        color: #c62828;
-        font-weight: bold;
-    }
+    .day-off-date { font-size: 1rem; font-weight: 600; }
+    .day-off-year{ font-size: 1.1rem; font-weight: 600; margin-bottom: 2px; }
+    .day-off-reason { font-size: 0.9rem; opacity: 0.9; }
+    .end-absence-day{ font-size: .9rem; color: #c62828; font-weight: bold; }
 
     .day-off-actions {
-        position: absolute;
-        top: 10px;
-        right: 6px;
-        display: flex;
-        gap: 5px;
+        position: absolute; top: 10px; right: 6px; display: flex; gap: 5px;
     }
 
     .day-off-btn {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
+        background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 25px; height: 25px;
+        border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;
+    }
+    .day-off-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.1); }
+
+    /* ==================================================
+       MODAL DE AGENDA ISOLADO (AGENDA-MODAL-V2)
+       Arquitetura de Namespacing para ignorar CSS legado
+    ================================================== */
+    .agenda-modal-v2 {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.7); z-index: 1050;
+        display: flex; align-items: center; justify-content: center;
     }
 
-    .day-off-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.1);
+    .agenda-modal-v2-content {
+        background: #ffffff; border-radius: 12px; width: 480px; max-width: 95vw;
+        display: flex; flex-direction: column; max-height: 90vh;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden;
     }
 
+    .agenda-modal-v2-header {
+        padding: 18px 20px; border-bottom: 1px solid #e2e8f0; 
+        display: flex; justify-content: space-between; align-items: center;
+        background: #fff; flex-shrink: 0;
+    }
+    
+    .agenda-modal-v2-header h2 { margin: 0; font-size: 1.25rem; color: #1a233a; display: flex; gap: 10px; align-items: center; font-weight: 800;}
+    .agenda-modal-v2-header h2 i { color: #FF7A00; }
+    .agenda-modal-v2-header .close-btn { background: none; border: none; font-size: 1.4rem; color: #a0aec0; cursor: pointer; transition: color 0.2s;}
+    .agenda-modal-v2-header .close-btn:hover { color: #e53e3e; }
 
+    .agenda-modal-v2-body {
+        padding: 20px; overflow-y: auto; flex: 1; background: #f8f9fa;
+    }
+    
+    /* Personalização do scroll interno */
+    .agenda-modal-v2-body::-webkit-scrollbar { width: 6px; }
+    .agenda-modal-v2-body::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .agenda-modal-v2-body::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+
+    .agenda-modal-v2-form { display: flex; flex-direction: column; gap: 20px; margin: 0;}
+
+    /* Card de Lote (Batch) */
+    .batch-card-v2 {
+        background: #fff5eb; border: 1px solid #fbd38d; border-radius: 10px; 
+        padding: 18px; box-shadow: 0 2px 5px rgba(237, 137, 54, 0.05);
+    }
+    .batch-card-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+    }
+    .batch-card-header span { font-size: 1rem; color: #dd6b20; font-weight: 800; display: flex; gap: 6px; align-items: center;}
+    .batch-card-header button { padding: 5px 12px; font-size: 0.75rem; border-color: #dd6b20; color: #dd6b20; font-weight: 700;}
+    .batch-card-inputs { display: flex; flex-direction: column; gap: 10px; }
+
+    /* Grid de Dias em Pilha */
+    .days-list-v2 { display: flex; flex-direction: column; gap: 12px; }
+
+    .day-item-v2 {
+        background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; 
+        padding: 16px; transition: all 0.2s ease;
+    }
+    .day-item-v2.active { border-left: 5px solid #27ae60; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .day-item-v2.off { border-left: 5px solid #e53e3e; opacity: 0.65; background: #fdf2f2; }
+
+    .day-item-v2-header {
+        display: flex; justify-content: space-between; align-items: center; 
+        border-bottom: 1px dashed #cbd5e0; padding-bottom: 10px; margin-bottom: 12px;
+    }
+    .day-item-v2-header .day-name { font-weight: 800; font-size: 1.05rem; color: #2c3e50; letter-spacing: 0.5px;}
+
+    .time-input-group { display: flex; flex-direction: column; gap: 10px; }
+
+    .agenda-time-block {
+        display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .agenda-time-block small { width: 85px; font-weight: 700; color: #4a5568; font-size: 0.85rem; display: flex; gap: 6px; align-items: center;}
+    .agenda-time-block span { font-size: 0.8rem; color: #a0aec0; }
+
+    .agenda-time-input { 
+        flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; 
+        outline: none; background: #fff; font-size: 0.9rem; color: #2d3748;
+        appearance: auto;
+    }
+    
+    .agenda-time-input:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1); }
+    .agenda-time-input:disabled { background: #edf2f7; color: #a0aec0; cursor: not-allowed; border-color: #e2e8f0;}
+
+    .agenda-modal-v2-footer {
+        padding: 15px 20px; border-top: 1px solid #e2e8f0; background: #fff; 
+        display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;
+    }
 }
