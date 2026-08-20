@@ -1,19 +1,8 @@
-/* ==================================================
-   MOBILE-FIRST UI/UX CSS - FUNCIONÁRIOS (Morpher Edition V3)
-   Arquivo: mobile/employee.css
-================================================== */
-
 @media (max-width: 820px) {
     /* --- 1. BASE E PROFUNDIDADE --- */
     body {
-        background-color: #eaf0f6; /* Fundo premium com contraste */
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-        color: #333;
-        position: relative;
-        overflow-x: hidden;
-        padding-bottom: 85px; 
+        background-color: #eaf0f6; display: flex; flex-direction: column;
+        min-height: 100vh; color: #333; position: relative; overflow-x: hidden; padding-bottom: 85px; 
     }
 
     .mobile-only { display: block !important; }
@@ -23,59 +12,35 @@
     .user-sidebar .mobile-sidebar,
     .pages-options-Container { display: none !important; }
 
-    /* Mágica da Nav-bar global */
     .nav-bar { display: contents !important; }
     .nav-bar > *:not(.mobile-nav-container):not(.nav-content) { display: none !important; }
     .nav-bar .nav-content { display: contents !important; }
 
     .main-content { padding: 0; margin: 0; display: flex; flex-direction: column; overflow: visible;}
 
-    /* --- 2. HEADER LIMPÍSSIMO --- */
+    /* --- 2. HEADER --- */
     header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        padding: 5px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: linear-gradient(135deg, #1a233a, #0d1322);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        position: sticky; top: 0; z-index: 100; padding: 5px 15px; display: flex;
+        justify-content: space-between; align-items: center;
+        background: linear-gradient(135deg, #1a233a, #0d1322); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
     }
     .logo-content h1 { display: none !important; }
     
-    /* Filtro de Unidade Centralizado */
     .desktop-unit-filter {
         display: block !important; position: fixed; top: 40px; left: 50%;
         transform: translate(-50%, -50%); z-index: 105; width: auto;
     }
     .desktop-unit-filter select {
-        padding: 6px 15px;
-        border-radius: 20px;
-        background-color: #2c3e50 ;
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        font-size: 0.85rem;
-        
-        text-align: center;
-        outline: none;
-        appearance: none;
+        padding: 6px 15px; border-radius: 20px; background-color: #2c3e50 ; color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2); font-size: 0.85rem; text-align: center; outline: none; appearance: none;
     }
     .desktop-unit-filter select option { background-color: #2c3e50; color: #ffffff; }
 
-    /* --- 3. DASHBOARD (Vagas Consumidas e Ativos) --- */
-    .mobile-dashboard {
-        padding: 20px 15px 10px 15px;
-        display: flex; flex-direction: column; gap: 15px;
-    }
-    .mobile-section-title {
-        font-size: 1.4rem; color: #FF7A00; margin: 0; padding-left: 0; font-weight: 800; text-align: center;
-    }
+    /* --- 3. DASHBOARD --- */
+    .mobile-dashboard { padding: 20px 15px 10px 15px; display: flex; flex-direction: column; gap: 15px; }
+    .mobile-section-title { font-size: 1.4rem; color: #FF7A00; margin: 0; padding-left: 0; font-weight: 800; text-align: center; }
 
-    /* CARDS DE QUANTIDADE RETORNARAM */
-    .mobile-stats-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-    }
+    .mobile-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     .m-stat-card {
         background: #ffffff; border-radius: 14px; padding: 18px 10px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -84,7 +49,6 @@
     .m-stat-val { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
     .m-stat-label { font-size: 0.75rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Botão Atuar na Operação do Titular */
     .m-btn-act-owner {
         width: 100%; padding: 15px; border-radius: 12px; font-weight: 700; font-size: 1.05rem;
         background: #ED8936; color: white; border: none; box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
@@ -94,25 +58,19 @@
     /* --- 4. LISTA DE FUNCIONÁRIOS (CARDS) --- */
     .section { background: transparent; padding: 0; box-shadow: none; border: none; min-height: auto;}
     
-    /* CORREÇÃO DO ESPAÇAMENTO VERTICAL E O RESPIRO PARA O BOTÃO FLUTUANTE */
     .employees-mobile-container { 
         padding: 5px 15px 110px 15px !important; margin: 0; 
-        display: flex; flex-direction: column; 
-        overflow: visible;
+        display: flex; flex-direction: column; overflow: visible;
     }
 
     .m-emp-card {
         background: #ffffff; border-radius: 14px; padding: 16px;
         border: 1px solid #e2e8f0; border-left: 6px solid #27ae60; 
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); cursor: pointer; display: flex; flex-direction: column; gap: 12px;
-        margin-bottom: 16px !important; /* GARANTINDO MARGIN ENTRE OS CARDS */
+        margin-bottom: 16px !important;
     }
-    .m-emp-card:last-child {
-        margin-bottom: 0 !important;
-    }
+    .m-emp-card:last-child { margin-bottom: 0 !important; }
     .m-emp-card.inactive { border-left-color: #a0aec0; opacity: 0.8; }
-    
-    /* Card Especial do Dono */
     .m-emp-card.owner-card { border-left-color: #c53030; background-color: #fffaf0; border-color: #feebc8; }
 
     .m-card-header { display: flex; align-items: center; gap: 15px; padding-bottom: 12px; border-bottom: 1px solid #eaecef;}
@@ -135,8 +93,7 @@
     .m-info-line { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #4a5568; font-weight: 500;}
     .m-info-line i { color: #3498db; width: 16px; text-align: center;}
 
-
-    /* --- 5. FAB (Floating Action Button) --- */
+    /* --- 5. FAB --- */
     .m-fab-btn {
         position: fixed; bottom: 85px; right: 20px; width: 65px; height: 65px; border-radius: 50%; 
         background: linear-gradient(135deg, #FF7A00, #d35400); color: white; font-size: 1.8rem;
@@ -144,22 +101,7 @@
         z-index: 90; box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4); border: none; cursor: pointer;
     }
 
-
-    /* --- 6. BOTTOM NAVIGATION (MANTIDA TEMPORARIAMENTE) --- */
-    .mobile-bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%; background-color: #ffffff;
-        display: flex; justify-content: space-around; padding: 12px 0; 
-        border-top: 1px solid #e2e8f0; z-index: 99;
-    }
-    .mobile-bottom-nav .nav-item {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: #95a5a6; text-decoration: none; font-size: 0.75rem; gap: 5px; width: 33%;
-    }
-    .mobile-bottom-nav .nav-item i { font-size: 1.4rem; color: #95a5a6; }
-    .mobile-bottom-nav .nav-item.active { color: #FF7A00; font-weight: 700; }
-    .mobile-bottom-nav .nav-item.active i { color: #FF7A00; }
-
-    /* --- 7. BOTTOM SHEETS (A Gaveta) --- */
+    /* --- 7. BOTTOM SHEETS --- */
     .bottom-sheet-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
@@ -170,7 +112,6 @@
         position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff;
         border-radius: 24px 24px 0 0; z-index: 1001; transform: translateY(100%);
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
-        
     }
     .bottom-sheet.active { transform: translateY(0); }
     .bottom-sheet-handle { width: 50px; height: 6px; background: #dcdde1; border-radius: 6px; margin: 15px auto; }
@@ -196,50 +137,30 @@
     .bs-btn-secondary { background: #f8f9fa; border: 1px solid #dcdde1; color: #2c3e50; }
     .bs-btn-danger { background: #fff0f0; border: 1px solid #ffcccc; color: #e74c3c; }
 
-
-    /* --- 8. MODAL ORIGINAL BLINDADO (NOVO/EDITAR) A PROVA DE FALHAS --- */
+    /* --- 8. MODAL ORIGINAL BLINDADO --- */
     .modal {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;
         background: rgba(0, 0, 0, 0.6); padding: 15px; box-sizing: border-box;
     }
     
-    /* A MÁGICA: Só aplicamos o Flexbox e a centralização quando o JS adiciona o "display: flex" ou "block" */
-    .modal[style*="display: block"],
-    .modal[style*="display: flex"] {
-        display: flex !important;
-        align-items: center !important; 
-        justify-content: center !important;
-    }
+    .modal[style*="display: block"], .modal[style*="display: flex"] { display: flex !important; align-items: center !important;  justify-content: center !important; }
     
     .modal .modal-content {
         background: #fff; border-radius: 16px; width: 100%; max-width: 450px;
-        margin: auto; max-height: 85vh; 
-        display: flex; flex-direction: column;
+        margin: auto; max-height: 85vh; display: flex; flex-direction: column;
         overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     }
     
-    /* Força o Form a ser o flex container para rolagem interna */
-    .modal form {
-        display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin:0; padding:0;
-    }
+    .modal form { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin:0; padding:0; }
+    .modal-body { flex: 1; overflow-y: auto !important; padding: 20px !important; min-height: 0; margin-bottom:0 !important; }
     
-    /* O corpo do modal rola e não estica a tela */
-    .modal-body {
-        flex: 1; overflow-y: auto !important; padding: 20px !important; min-height: 0; margin-bottom:0 !important;
-    }
-    
-    /* O rodapé do modal fica fixo */
     .modal-footer {
         flex-shrink: 0; padding: 15px 20px !important; border-top: 1px solid #eaecef !important; background: #fff;
         display: flex; gap: 10px; justify-content: flex-end;
     }
 
-    .modal-footer .btn {
-        flex: 1; padding: 12px 15px !important; border-radius: 10px !important;
-        font-size: 1rem !important; font-weight: 700 !important; cursor: pointer; border: none;
-    }
+    .modal-footer .btn { flex: 1; padding: 12px 15px !important; border-radius: 10px !important; font-size: 1rem !important; font-weight: 700 !important; cursor: pointer; border: none; }
 
-    /* Inputs Premium no Modal */
     .form-group { margin-bottom: 15px; }
     .form-label, .modal label { font-weight: 600; color: #2c3e50; margin-bottom: 8px; display: block; font-size: 0.9rem;}
     
@@ -249,26 +170,12 @@
     }
     .form-control:focus, .form-select:focus { border-color: #FF7A00; box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15); outline: none; background: #fff;}
 
-    /* Estilo para o Tracker de Vagas MOBILE */
     .limit-tracker {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 12px 16px; cursor: pointer; transition: all 0.2s ease;
     }
-    .limit-tracker:active {
-        border-color: #FF7A00;
-        background-color: #fcfcfc;
-    }
-    .tracker-text {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
+    .limit-tracker:active { border-color: #FF7A00; background-color: #fcfcfc; }
+    .tracker-text { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
     .tracker-title { color: #64748b; font-weight: 600; }
     .tracker-numbers { color: #0f172a; }
     .tracker-numbers b { color: #FF7A00; font-size: 16px; }

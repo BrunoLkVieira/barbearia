@@ -281,19 +281,27 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         return JsonResponse({"found": False})
 
     is_owner = (request.user == barbershop.owner_user)
-    gerente_unit = get_user_unit_if_manager(request.user, barbershop)
-    unit = gerente_unit if gerente_unit else None
+    
+    # Lógica unificada para contagem de unidades
+    total_units_count = barbershop.units.count()
+
+    # Redirecionamento dinâmico se houver apenas 1 unidade no sistema
+    if is_owner:
+        if total_units_count == 1 and not unit_slug and request.method == "GET":
+            return redirect("barbershop:employee_unit", barbershop_slug=barbershop.slug, unit_slug=barbershop.units.first().slug)
+            
+        units = barbershop.units.all()
+        unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop) if unit_slug else None
+        gerente_unit = None
+    else:
+        gerente_unit = get_user_unit_if_manager(request.user, barbershop)
+        unit = gerente_unit
+        units = Unit.objects.filter(id=unit.id) if unit else Unit.objects.none()
 
     if unit:
         base_employees = Employee.objects.filter(unit=unit)
-        units = [unit]
     else:
-        if unit_slug:
-            unit = get_object_or_404(Unit, slug=unit_slug, barbershop=barbershop)
-            base_employees = Employee.objects.filter(unit=unit)
-        else:
-            base_employees = Employee.objects.filter(unit__barbershop=barbershop)
-        units = barbershop.units.all()
+        base_employees = Employee.objects.filter(unit__barbershop=barbershop)
 
     owner_employee = Employee.objects.filter(user=barbershop.owner_user, unit__barbershop=barbershop).first()
     owner_in_list = base_employees.filter(user=barbershop.owner_user).first()
@@ -330,7 +338,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     user=barbershop.owner_user, unit=unit_obj, is_active=True,
                     system_access=True, can_manage_cashbox=True, 
                     can_register_sell=True, can_create_appointments=True,
-                    contract_type='commission'
+                    contract_type='fixed_only'
                 )
                 Role.objects.create(employee=emp, occupation=Role.Occupation.GERENTE)
                 messages.success(request, "Você ingressou na operação com sucesso!")
@@ -345,11 +353,9 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
         is_active_val = 'is_active' in request.POST 
         password_val = request.POST.get("password")
 
-        contract_type_val = request.POST.get("contract_type", "commission")
+        contract_type_val = request.POST.get("contract_type", "fixed_only")
         
-        # =================================================================
-        # BLINDAGEM DE BACKEND: INTERCEPTA NÚMEROS ASTRONÔMICOS OU INVÁLIDOS
-        # =================================================================
+        # BLINDAGEM FINANCEIRA: Transforma Strings em Decimais Seguros
         def parse_financial_input(field_name, max_limit):
             raw_val = request.POST.get(field_name)
             if not raw_val:
@@ -368,9 +374,25 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
             service_comm_val = parse_financial_input("service_commission_percentage", 100.00)
             product_comm_val = parse_financial_input("product_commission_percentage", 100.00)
         except ValueError:
-            messages.error(request, "Bloqueio de Segurança: Um valor financeiro inserido é inválido ou excede o limite (Comissão máxima: 100%).")
+            messages.error(request, "Bloqueio de Segurança: Um valor financeiro inserido é inválido ou excede o limite.")
             return redirect(request.path)
-        # =================================================================
+
+        # TRAVA DE BACKEND: Garante que NÃO-BARBEIROS (Dono, Gerente, Caixa isolados) não tenham comissão
+        is_barber = False
+        if action == "edit":
+            emp_target_id = request.POST.get("employee_id")
+            emp_target = get_object_or_404(Employee, id=emp_target_id, unit__barbershop=barbershop)
+            if emp_target.user == barbershop.owner_user:
+                is_barber = 'owner_is_barber' in request.POST
+            else:
+                is_barber = 'barbeiro' in roles_selected
+        elif action == "create":
+            is_barber = 'barbeiro' in roles_selected
+
+        if not is_barber:
+            contract_type_val = 'fixed_only'
+            service_comm_val = Decimal('0.00')
+            chair_rental_fee_val = Decimal('0.00')
 
         if action == "create":
             if not roles_selected:
@@ -429,9 +451,6 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
                     messages.error(request, "Este usuário já é funcionário da barbearia.")
 
         elif action == "edit":
-            emp_id = request.POST.get("employee_id")
-            emp_target = get_object_or_404(Employee, id=emp_id, unit__barbershop=barbershop)
-            
             if not is_owner:
                 if emp_target.user == barbershop.owner_user:
                     messages.error(request, "Ação negada: Você não tem permissão para editar os dados do Titular.")
@@ -521,6 +540,7 @@ def EmployeeView(request, barbershop_slug, unit_slug=None):
     context = {
         "barbershop": barbershop,
         "units": units,
+        "total_units_count": total_units_count,
         "unit": unit,
         "owner_employee": owner_employee,
         "owner_in_list": owner_in_list,
@@ -605,8 +625,6 @@ def check_employee_data(request):
         except User.DoesNotExist: pass
 
     return JsonResponse({'is_valid': True, 'user_exists': False})
-
-
 
 
 @login_required

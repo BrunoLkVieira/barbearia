@@ -42,6 +42,7 @@
         <div class="nav-content desktop-only">
             <div class="stats">
                 {% if is_owner %}
+                    {% if total_units_count > 1 %}
                     <div class="unit-filter desktop-unit-filter">
                         <select id="unitFilterSelect" title="Filtrar por Unidade"
                             data-general-url="{% url 'barbershop:employee_general' barbershop_slug=barbershop.slug %}"
@@ -54,6 +55,12 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% else %}
+                    <!-- Só 1 unidade física ou logado na unidade filtrada -->
+                    <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
+                        <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ units.first.name|default:"Sua Barbearia" }}
+                    </div>
+                    {% endif %}
                 {% else %}
                     <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
                         <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ unit.name|default:"Unidade Atual" }}
@@ -129,7 +136,6 @@
                             <i class="fas fa-crown"></i> Atuar na Operação
                         </button>
                     {% endif %}
-                    <!-- BOTÃO LIVRE DE ONCLICK PARA PROTEÇÃO DO JAVASCRIPT -->
                     <button class="add-employee-btn" id="newEmployeeBtn" 
                             data-can-any="{{ can_add_any|yesno:'true,false' }}"
                             data-can-regular="{{ can_add_regular|yesno:'true,false' }}"
@@ -186,7 +192,6 @@
                                 <td>{{ owner_in_list.unit.name }}</td>
                                 <td>
                                     <span class="employee-type" style="background: #c53030; color: white;">Titular</span>
-                                    <!-- AQUI EXIBE SE O DONO FOR BARBEIRO TAMBÉM -->
                                     {% for role in owner_in_list.roles.all %}
                                         {% if role.occupation == 'barbeiro' %}
                                             <span class="employee-type type-barber">Barbeiro</span>
@@ -222,7 +227,7 @@
                                                 data-unit="{{ owner_in_list.unit.id }}" data-active="true"
                                                 data-roles="{% for role in owner_in_list.roles.all %}{{ role.occupation }}{% if not forloop.last %},{% endif %}{% endfor %}"
                                                 data-specialty="{{ owner_in_list.specialty|default:'' }}" data-bio="{{ owner_in_list.bio|default:'' }}"
-                                                data-contract-type="{{ owner_in_list.contract_type|default:'commission' }}"
+                                                data-contract-type="{{ owner_in_list.contract_type|default:'fixed_only' }}"
                                                 data-fixed-salary="{{ owner_in_list.fixed_salary|default:'' }}"
                                                 data-chair-rental="{{ owner_in_list.chair_rental_fee|default:'' }}"
                                                 data-service-commission="{{ owner_in_list.service_commission_percentage|default:'' }}">
@@ -256,7 +261,6 @@
                                 </td>
                                 <td>{{ emp.unit.name }}</td>
                                 <td>
-                                    <!-- AQUI EXIBE TODOS OS CARGOS (Se for gerente e barbeiro, aparece os dois) -->
                                     {% for role in emp.roles.all %}
                                         <span class="employee-type type-{{ role.occupation }}" style="margin-right: 2px;">{{ role.get_occupation_display }}</span>
                                     {% empty %} <span class="employee-type type-none">Nenhum</span> {% endfor %}
@@ -400,7 +404,6 @@
                         <div class="m-emp-info">
                             <div class="m-emp-name">{{ emp.user.name }} {{ emp.user.last_name }}</div>
                             <div class="m-emp-status {% if emp.is_active %}status-active{% else %}status-inactive{% endif %}">
-                                <!-- CARGO VISÍVEL NO MOBILE COM ESPAÇAMENTO -->
                                 {% for r in emp.roles.all %}
                                     <span class="employee-type type-{{ r.occupation }}" style="margin-right:2px;">{{ r.get_occupation_display|upper }}</span> 
                                 {% empty %} 
@@ -503,6 +506,7 @@
         </button>
     </div>
 
+    <!-- MODAL DONO -->
     <div id="ownerModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <form method="POST" autocomplete="off">
@@ -530,6 +534,7 @@
         </div>
     </div>
 
+    <!-- MODAL FUNCIONARIO -->
     <div id="employeeModal" class="modal">
         <div class="modal-content">
             <form method="POST" id="employeeForm" autocomplete="off">
@@ -554,10 +559,9 @@
                         <small style="color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 4px; margin-left: 25px;">Desmarque para inativar sem perder o histórico.</small>
                     </div>
                     
-                    <!-- NOVO BANNER INFORMATIVO PARA VÍNCULO DE CONTA EXISTENTE -->
                     <div id="linkInfoText" class="form-group regular-field" style="background: #e0f2fe; padding: 10px; border-radius: 6px; border: 1px solid #bae6fd; margin-bottom: 15px;">
                         <span style="color: #0369a1; font-size: 0.85rem; line-height: 1.4; display: block;">
-                            <i class="fas fa-info-circle"></i> <strong>Atenção:</strong> Se o profissional já possui conta na plataforma, você deve digitar exatamente o mesmo <strong>E-mail</strong> e <strong>Data de Nascimento</strong> para vinculá-lo à sua barbearia.
+                            <i class="fas fa-info-circle"></i> <strong>Atenção:</strong> Se o profissional já possui conta na plataforma, você deve digitar exatamente o mesmo <strong>E-mail</strong> e <strong>Data de Nascimento</strong> para vinculá-lo.
                         </span>
                     </div>
 
@@ -567,9 +571,15 @@
                         <small id="cpfStatusMessage" style="display:none; margin-top:5px; font-weight:bold;"></small>
                     </div>
                     
+                    <!-- NOVO: Toggle de Senha com Ícone -->
                     <div class="form-group" id="passwordGroup" style="display: none;">
                         <label for="employeePassword">Senha Inicial do Aplicativo <span style="color: #e53e3e;">*</span></label>
-                        <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha de acesso provisória" minlength="6">
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" name="password" id="employeePassword" class="form-control" placeholder="Crie uma senha provisória" minlength="6" style="padding-right: 40px; margin-top:0;">
+                            <button type="button" id="togglePasswordBtn" title="Mostrar/Ocultar Senha" style="position: absolute; right: 10px; background: transparent; border: none; color: #a0aec0; cursor: pointer; padding: 5px; outline: none; font-size: 1.1rem; top: 50%; transform: translateY(-50%);">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group regular-field">
@@ -629,10 +639,7 @@
                     <div class="form-group">
                         <label for="contractType" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Tipo de Contrato <span style="color: #e53e3e;">*</span></label>
                         <select name="contract_type" id="contractType" class="form-control" required onchange="toggleContractFields()">
-                            <option value="commission">Comissionado (100% Produtividade)</option>
-                            <option value="fixed_salary">Salário Fixo (+ Comissão)</option>
-                            <option value="fixed_only">Apenas Salário Fixo</option>
-                            <option value="chair_rental">Aluguel de Cadeira (Coworking)</option>
+                            <!-- Opções dinâmicas montadas pelo JS -->
                         </select>
                     </div>
 
