@@ -9,24 +9,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Lógica Centralizada para os filtros de Unidade (Desktop e Mobile)
     const unitSelectFilter = document.getElementById('unitSelectFilter');
-    if (unitSelectFilter) {
-        unitSelectFilter.addEventListener('change', function() {
-            sessionStorage.removeItem('activeBarberId'); 
-            
-            const unitSlug = this.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const dateParam = urlParams.get('date');
-            
-            let newUrl = URL_AGENDA_GENERAL;
-            if (unitSlug !== "geral") {
-                newUrl = URL_AGENDA_UNIT.replace('__unit__', unitSlug);
-            }
-            if (dateParam) newUrl += `?date=${dateParam}`;
-            
-            window.location.href = newUrl;
-        });
+    const mobileUnitSelectFilter = document.getElementById('mobileUnitSelectFilter');
+
+    function handleUnitFilterChange(e) {
+        sessionStorage.removeItem('activeBarberId'); 
+        
+        const unitSlug = e.target.value;
+        const urlParams = new URLSearchParams(window.location.search);
+        const dateParam = urlParams.get('date');
+        
+        let newUrl = URL_AGENDA_GENERAL;
+        if (unitSlug !== "geral") {
+            newUrl = URL_AGENDA_UNIT.replace('__unit__', unitSlug);
+        }
+        if (dateParam) newUrl += `?date=${dateParam}`;
+        
+        window.location.href = newUrl;
     }
+
+    if (unitSelectFilter) unitSelectFilter.addEventListener('change', handleUnitFilterChange);
+    if (mobileUnitSelectFilter) mobileUnitSelectFilter.addEventListener('change', handleUnitFilterChange);
 
     // Modal Create Events
     const unitSelect = document.getElementById('unitSelect');

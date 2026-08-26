@@ -55,7 +55,7 @@
         <div class="nav-content">
             <div class="stats">
                 
-                {% if is_owner %}
+                {% if units|length > 1 %}
                 <div class="unit-filter desktop-unit-filter">
                     <select id="unitSelectFilter">
                         <option value="geral" {% if not current_unit %}selected{% endif %}>Todas as Unidades</option>
@@ -68,7 +68,7 @@
                 </div>
                 {% else %}
                 <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
-                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ current_unit.name|default:"Unidade Atual" }}
+                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ units.0.name|default:"Unidade Única" }}
                 </div>
                 {% endif %}
 
@@ -86,6 +86,18 @@
 
     <div class="mobile-dashboard mobile-only">
         <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 25px 0; font-size: 1.8rem; font-weight: 800;">Agenda</h2>
+
+        {% if units|length > 1 %}
+        <div class="mobile-unit-filter" style="margin-bottom: 15px; padding: 0 2px;">
+            <select id="mobileUnitSelectFilter" class="form-control" style="border: 2px solid #3498db; background-color: #f4f9ff; font-weight: 700; color: #2c3e50; text-align: center;">
+                <option value="geral" {% if not current_unit %}selected{% endif %}>🏢 Todas as Unidades</option>
+                {% for u in units %}
+                    <option value="{{ u.slug }}" {% if current_unit and current_unit.slug == u.slug %}selected{% endif %}>📍 {{ u.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
         <div class="mobile-filters-row">
             <input type="date" id="mobileDateFilter" class="form-control" value="{{ current_date|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}">
             <select id="mobileBarberSelect" class="form-control">
@@ -503,12 +515,12 @@
                     </div>
                     
                     {% if is_owner %}
-                    <div class="form-group">
+                    <div class="form-group" {% if units|length == 1 %}style="display: none;"{% endif %}>
                         <label for="unitSelect" class="form-label">Unidade</label>
                         <select id="unitSelect" name="unit_id" class="form-control" required>
-                            <option value="">Selecione uma unidade...</option>
+                            {% if units|length > 1 %}<option value="">Selecione uma unidade...</option>{% endif %}
                             {% for u in units %}
-                                <option value="{{ u.id }}" {% if not is_owner and current_unit.id == u.id %}selected{% endif %}>{{ u.name }}</option>
+                                <option value="{{ u.id }}" {% if units|length == 1 or current_unit and current_unit.id == u.id %}selected{% endif %}>{{ u.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -588,7 +600,6 @@
                         <label class="form-label">Cliente</label>
                         <input type="text" id="editClientSearchInput" class="form-control" placeholder="Buscar por nome ou telefone..." autocomplete="off" {% if not is_owner and not is_manager %}disabled{% endif %}>
                         
-                        <!-- AQUI ESTÁ A CORREÇÃO DO ID: editHiddenClientId -->
                         <input type="hidden" name="client_id" id="editHiddenClientId" required>
                         
                         <ul class="searchable-list" id="editClientList">
@@ -602,10 +613,10 @@
                     </div>
                     
                     {% if is_owner %}
-                    <div class="form-group">
+                    <div class="form-group" {% if units|length == 1 %}style="display: none;"{% endif %}>
                         <label for="editUnitSelect" class="form-label">Unidade</label>
                         <select id="editUnitSelect" name="unit_id" class="form-control" required>
-                            <option value="">Selecione uma unidade...</option>
+                            {% if units|length > 1 %}<option value="">Selecione uma unidade...</option>{% endif %}
                             {% for u in units %}
                                 <option value="{{ u.id }}">{{ u.name }}</option>
                             {% endfor %}
