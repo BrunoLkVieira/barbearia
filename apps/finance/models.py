@@ -30,6 +30,8 @@ class PayrollSnapshot(models.Model):
     year = models.IntegerField("Ano")
     fixed_salary = models.DecimalField("Salário Fixo", max_digits=10, decimal_places=2, default=0.00)
     chair_rental_fee = models.DecimalField("Aluguel de Cadeira", max_digits=10, decimal_places=2, default=0.00)
+
+    contract_type = models.CharField("Tipo de Contrato", max_length=50, null=True, blank=True)
     
     class Meta:
         unique_together = ('employee', 'month', 'year')

@@ -47,12 +47,25 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         if barber_filter in ['None', 'todos', '']: barber_filter = ''
 
     # =========================================================================
-    # AÇÕES: DESPESAS
+    # AÇÕES: DESPESAS E EDIÇÃO DE SNAPSHOT (RETROATIVOS)
     # =========================================================================
     if request.method == "POST" and is_admin:
         action = request.POST.get("action")
         
-        if action == "create_expense":
+        if action == "edit_snapshot":
+            snap_id = request.POST.get("snapshot_id")
+            snap = get_object_or_404(PayrollSnapshot, id=snap_id, employee__unit__barbershop=barbershop)
+            try:
+                snap.contract_type = request.POST.get("contract_type")
+                snap.fixed_salary = float(request.POST.get("salary", "0").replace(",", "."))
+                snap.chair_rental_fee = float(request.POST.get("rental", "0").replace(",", "."))
+                snap.save()
+                messages.success(request, "Modelo de contrato e valores do mês atualizados com sucesso!")
+            except ValueError:
+                messages.error(request, "Erro ao formatar os valores numéricos.")
+            return redirect(request.get_full_path())
+
+        elif action == "create_expense":
             nome_despesa = request.POST.get("name")
             try: valor_despesa = float(request.POST.get("amount", "0").replace(",", "."))
             except ValueError: valor_despesa = 0.00
@@ -150,16 +163,10 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
 
     appointments = Appointment.objects.filter(base_query).select_related('employee', 'unit')
     
-    barbers_with_history = Appointment.objects.filter(base_query).values_list('employee_id', flat=True)
-    
     if unit and is_admin:
-        employees_scope = Employee.objects.filter(
-            Q(unit=unit, is_active=True) | Q(id__in=barbers_with_history, unit=unit)
-        ).select_related('user').distinct().order_by('-is_active', 'user__name')
+        employees_scope = Employee.objects.filter(unit=unit).select_related('user').distinct().order_by('-is_active', 'user__name')
     elif is_admin:
-        employees_scope = Employee.objects.filter(
-            Q(unit__barbershop=barbershop, is_active=True) | Q(id__in=barbers_with_history)
-        ).select_related('user').distinct().order_by('-is_active', 'user__name')
+        employees_scope = Employee.objects.filter(unit__barbershop=barbershop).select_related('user').distinct().order_by('-is_active', 'user__name')
     else:
         employees_scope = Employee.objects.filter(id=logged_employee.id)
 
@@ -172,9 +179,15 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         despesas_operacionais = float(despesas_lista.filter(is_paid=True).aggregate(total=Sum('amount'))['total'] or 0.00)
 
     # -----------------------------------------------------------------------------
-    # ORM STRATEGY & LAZY SNAPSHOT DE SALÁRIO
+    # ORM STRATEGY & LAZY SNAPSHOT DE SALÁRIO E TIPO DE CONTRATO
     # -----------------------------------------------------------------------------
     dados_dashboard = {}
+    
+    can_edit_snapshot = False
+    current_snapshot_id = None
+    current_snap_salary = 0.00
+    current_snap_rental = 0.00
+    current_snap_contract = 'commission'
     
     if barber_filter or not is_admin:
         emp_focado = employees_scope.filter(id=barber_filter if barber_filter else logged_employee.id).first()
@@ -192,6 +205,7 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         
         salario_acumulado = 0.00
         aluguel_acumulado = 0.00
+        active_contract_type = getattr(emp_focado, 'contract_type', 'commission')
 
         for m in selected_months:
             mes_data_inicio = date(selected_year, m, 1)
@@ -208,34 +222,46 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                     is_valid = True
             
             if is_valid:
-                # [MÁGICA DO SNAPSHOT]
                 is_past_month = (selected_year < hoje.year) or (selected_year == hoje.year and m < hoje.month)
                 current_salary = getattr(emp_focado, 'fixed_salary', 0.00) or 0.00
                 current_rental = getattr(emp_focado, 'chair_rental_fee', 0.00) or 0.00
+                current_contract = getattr(emp_focado, 'contract_type', 'commission')
 
                 snapshot, created = PayrollSnapshot.objects.get_or_create(
                     employee=emp_focado, month=m, year=selected_year,
-                    defaults={'fixed_salary': current_salary, 'chair_rental_fee': current_rental}
+                    defaults={
+                        'fixed_salary': current_salary, 
+                        'chair_rental_fee': current_rental,
+                        'contract_type': current_contract
+                    }
                 )
                 
-                # Se o mês não virou passado, a gente destrava para receber atualizações do dono
+                # Se for o mês corrente, sempre atualiza com o que está no cadastro atual do barbeiro
                 if not is_past_month:
                     snapshot.fixed_salary = current_salary
                     snapshot.chair_rental_fee = current_rental
+                    snapshot.contract_type = current_contract
                     snapshot.save()
+                    
+                # Habilita edição se filtramos exato 1 mês e 1 barbeiro
+                if len(selected_months) == 1 and is_admin:
+                    can_edit_snapshot = True
+                    current_snapshot_id = snapshot.id
+                    current_snap_salary = float(snapshot.fixed_salary)
+                    current_snap_rental = float(snapshot.chair_rental_fee)
+                    current_snap_contract = snapshot.contract_type or current_contract
                     
                 salario_acumulado += float(snapshot.fixed_salary)
                 aluguel_acumulado += float(snapshot.chair_rental_fee)
+                active_contract_type = snapshot.contract_type or current_contract
 
-        contract_type = emp_focado.contract_type if hasattr(emp_focado, 'contract_type') else 'commission'
-
-        if contract_type == 'chair_rental':
+        if active_contract_type == 'chair_rental':
             ganho_liquido = producao_bruta_barbeiro - aluguel_acumulado
-            dados_dashboard = { 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro, 'card_2_label': "Comissões", 'card_2_val': 0.00, 'card_3_label': "Custo Cadeira (Aluguel)", 'card_3_val': -aluguel_acumulado, 'card_4_label': "Meu Ganho Líquido", 'card_4_val': ganho_liquido, }
-        elif contract_type == 'fixed_salary':
+            dados_dashboard = { 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro, 'card_2_label': "Comissões", 'card_2_val': 0.00, 'card_3_label': "Custo Cadeira", 'card_3_val': -aluguel_acumulado, 'card_4_label': "Meu Ganho Líquido", 'card_4_val': ganho_liquido, }
+        elif active_contract_type == 'fixed_salary':
             ganho_liquido = comissoes_geradas + salario_acumulado
             dados_dashboard = { 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro, 'card_2_label': "Minhas Comissões", 'card_2_val': comissoes_geradas, 'card_3_label': "Salário Fixo", 'card_3_val': salario_acumulado, 'card_4_label': "Meu Ganho Líquido", 'card_4_val': ganho_liquido, }
-        elif contract_type == 'fixed_only':
+        elif active_contract_type == 'fixed_only':
             dados_dashboard = { 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro, 'card_2_label': "Comissões", 'card_2_val': 0.00, 'card_3_label': "Salário Fixo", 'card_3_val': salario_acumulado, 'card_4_label': "Meu Ganho Líquido", 'card_4_val': salario_acumulado, }
         else:
             dados_dashboard = { 'card_1_label': "Minha Produção Bruta", 'card_1_val': producao_bruta_barbeiro, 'card_2_label': "Minhas Comissões", 'card_2_val': comissoes_geradas, 'card_3_label': "Salário Fixo", 'card_3_val': 0.00, 'card_4_label': "Meu Ganho Líquido", 'card_4_val': comissoes_geradas, }
@@ -252,7 +278,6 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         
         for emp in employees_scope:
             emp_apps = appointments.filter(employee=emp)
-            contract = getattr(emp, 'contract_type', 'commission')
             
             apps_services = AppointmentService.objects.filter(appointment__in=emp_apps)
             comissoes_geradas += float(apps_services.aggregate(total=Sum('barber_commission_value'))['total'] or 0.00)
@@ -278,20 +303,28 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
                     is_past_month = (selected_year < hoje.year) or (selected_year == hoje.year and m < hoje.month)
                     current_salary = getattr(emp, 'fixed_salary', 0.00) or 0.00
                     current_rental = getattr(emp, 'chair_rental_fee', 0.00) or 0.00
+                    current_contract = getattr(emp, 'contract_type', 'commission')
 
                     snapshot, created = PayrollSnapshot.objects.get_or_create(
                         employee=emp, month=m, year=selected_year,
-                        defaults={'fixed_salary': current_salary, 'chair_rental_fee': current_rental}
+                        defaults={
+                            'fixed_salary': current_salary, 
+                            'chair_rental_fee': current_rental,
+                            'contract_type': current_contract
+                        }
                     )
                     
                     if not is_past_month:
                         snapshot.fixed_salary = current_salary
                         snapshot.chair_rental_fee = current_rental
+                        snapshot.contract_type = current_contract
                         snapshot.save()
                         
-                    if contract in ['fixed_salary', 'fixed_only']: 
+                    snap_contract = snapshot.contract_type or current_contract
+
+                    if snap_contract in ['fixed_salary', 'fixed_only']: 
                         salarios_fixos += float(snapshot.fixed_salary)
-                    elif contract == 'chair_rental': 
+                    elif snap_contract == 'chair_rental': 
                         aluguel_cadeiras_recebido += float(snapshot.chair_rental_fee)
                 
         faturamento_total_casa = producao_bruta_total + aluguel_cadeiras_recebido
@@ -336,6 +369,11 @@ def FinanceDashboardView(request, barbershop_slug, unit_slug=None):
         'meses_choices': meses_choices, 'anos_choices': anos_choices, 'hoje_data': hoje.strftime("%Y-%m-%d"),
         'selected_barber': int(barber_filter) if barber_filter else '', 'active_tab': 'finance',
         'despesas_lista': despesas_lista,
+        'can_edit_snapshot': can_edit_snapshot,
+        'current_snapshot_id': current_snapshot_id,
+        'current_snap_salary': current_snap_salary,
+        'current_snap_rental': current_snap_rental,
+        'current_snap_contract': current_snap_contract,
     }
     context.update(dados_dashboard)
     context.update({

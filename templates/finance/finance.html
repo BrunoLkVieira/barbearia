@@ -73,7 +73,7 @@
         
         <div class="nav-content desktop-only">
             <div class="stats">
-                {% if is_owner %} 
+                {% if units|length > 1 %}
                 <div class="unit-filter desktop-unit-filter">
                     <select onchange="location.href=this.value">
                         <option value="{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}" {% if not unit %}selected{% endif %}>Todas as Unidades</option>
@@ -84,9 +84,18 @@
                 </div>
                 {% else %}
                 <div class="desktop-unit-filter" style="display: flex; align-items: center; justify-content: center; background: #2c3e50; padding: 6px 18px; border-radius: 20px; color: #fff; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255, 255, 255, 0.2); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-right: 15px;">
-                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ unit.name|default:"Unidade Atual" }}
+                    <i class="fas fa-store" style="color: #FF7A00; margin-right: 6px;"></i> {{ units.0.name }}
                 </div>
                 {% endif %}
+
+                <div class="stat-box desktop-only">
+                    <div class="stat-value">{{ total_appointments|default:"0" }}</div>
+                    <div class="stat-label">Agendamentos</div>
+                </div>
+                <div class="stat-box desktop-only">
+                    <div class="stat-value">R$ {{ total_revenue|default:"0,00" }}</div>
+                    <div class="stat-label">Previsão</div>
+                </div>
             </div>
         </div>
     </div>
@@ -99,7 +108,7 @@
 
     <div class="mobile-dashboard mobile-only">
         <h2 class="mobile-section-title" style="text-align: center; color: #FF7A00; margin: 0 0 15px 0; font-size: 1.8rem; font-weight: 800;">Financeiro</h2>
-        
+
         <form method="GET" action="{% if unit %}{% url 'finance:dashboard_unit' barbershop_slug=barbershop.slug unit_slug=unit.slug %}{% else %}{% url 'finance:dashboard_general' barbershop_slug=barbershop.slug %}{% endif %}" id="mobileFinanceForm" class="m-finance-form" style="background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
@@ -157,7 +166,13 @@
             </div>
             <div class="m-stat-card">
                 <span class="m-stat-val val-red">R$ {{ card_3_val|floatformat:2 }}</span>
-                <span class="m-stat-label">{{ card_3_label }}</span>
+                <span class="m-stat-label">
+                    {{ card_3_label }}
+                    {% if can_edit_snapshot and is_admin %}
+                    <i class="fas fa-edit" style="color: #3498db; cursor: pointer; margin-left: 5px; font-size: 0.9rem;" 
+                       onclick="openSnapshotEditModal('{{ current_snapshot_id }}', '{{ current_snap_salary|unlocalize }}', '{{ current_snap_rental|unlocalize }}', '{{ current_snap_contract }}')"></i>
+                    {% endif %}
+                </span>
             </div>
             <div class="m-stat-card card-gradient">
                 <span class="m-stat-val val-white">R$ {{ card_4_val|floatformat:2 }}</span>
@@ -253,7 +268,13 @@
                              <i class="fas fa-chart-bar"></i>
                              <div class="value">R$ {{ card_3_val|floatformat:2 }}</div>
                          </div>
-                        <div class="label">{{ card_3_label }}</div>
+                        <div class="label">
+                            {{ card_3_label }}
+                            {% if can_edit_snapshot and is_admin %}
+                            <i class="fas fa-edit" style="cursor: pointer; color: #f1c40f; margin-left: 5px;" 
+                               onclick="openSnapshotEditModal('{{ current_snapshot_id }}', '{{ current_snap_salary|unlocalize }}', '{{ current_snap_rental|unlocalize }}', '{{ current_snap_contract }}')"></i>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="stat-card" style="background: linear-gradient(135deg, #e67e22, #e74c3c);">
                         <div class="stat-card-flex">
@@ -483,14 +504,15 @@
             <form method="POST" style="padding: 20px;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_expense">
-                {% if not unit %}
-                <div style="margin-bottom: 15px;">
+                <div class="form-group" {% if units|length == 1 %}style="display: none;"{% endif %}>
                     <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Unidade</label>
                     <select name="unit_id" required style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
-                        {% for u in units %}<option value="{{ u.id }}">{{ u.name }}</option>{% endfor %}
+                        {% if units|length > 1 %}<option value="">Selecione uma unidade...</option>{% endif %}
+                        {% for u in units %}
+                            <option value="{{ u.id }}" {% if units|length == 1 or unit and unit.id == u.id %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                {% endif %}
                 <div style="margin-bottom: 15px;">
                     <label style="font-weight: 600; font-size: 0.9rem; color: #2c3e50; margin-bottom: 5px; display:block;">Nome da Despesa *</label>
                     <input type="text" name="name" required placeholder="Ex: Conta de Luz" style="width: 100%; padding: 10px; border: 1px solid #dcdde1; border-radius: 8px;">
@@ -614,6 +636,70 @@
                 cb.checked = !allChecked;
                 const event = new Event('change');
                 cb.dispatchEvent(event);
+            });
+        }
+
+        // ====================== MÁGICA 2.0: EDIÇÃO DINÂMICA DE CONTRATO DO MÊS ======================
+        window.openSnapshotEditModal = function(snapId, currentSalary, currentRental, currentContract) {
+            Swal.fire({
+                title: 'Editar Base do Mês',
+                html: `
+                    <p style="font-size: 0.85rem; color: #7f8c8d; text-align: left; margin-bottom: 15px;">
+                        Ajuste o modelo de contrato e os valores <b>apenas para este mês histórico</b>.
+                    </p>
+                    <div style="text-align: left; margin-bottom: 15px;">
+                        <label style="font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Tipo de Contrato no Mês</label>
+                        <select id="swal-contract" class="swal2-input" style="max-width: 100%; height: auto; padding: 10px; font-size: 0.95rem;" onchange="toggleSwalInputs()">
+                            <option value="commission" ${currentContract === 'commission' ? 'selected' : ''}>Apenas Comissão</option>
+                            <option value="fixed_salary" ${currentContract === 'fixed_salary' ? 'selected' : ''}>Salário Fixo + Comissão</option>
+                            <option value="fixed_only" ${currentContract === 'fixed_only' ? 'selected' : ''}>Apenas Salário Fixo</option>
+                            <option value="chair_rental" ${currentContract === 'chair_rental' ? 'selected' : ''}>Aluguel de Cadeira (Fixo)</option>
+                        </select>
+                    </div>
+                    <div id="div-swal-salary" style="text-align: left; margin-bottom: 15px; display: none;">
+                        <label style="font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Salário Fixo (R$)</label>
+                        <input id="swal-salary" type="number" step="0.01" class="swal2-input" value="${currentSalary}" style="margin-top: 5px; max-width: 100%;">
+                    </div>
+                    <div id="div-swal-rental" style="text-align: left; display: none;">
+                        <label style="font-weight: 600; color: #2c3e50; font-size: 0.9rem;">Custo Cadeira / Aluguel (R$)</label>
+                        <input id="swal-rental" type="number" step="0.01" class="swal2-input" value="${currentRental}" style="margin-top: 5px; max-width: 100%;">
+                    </div>
+                `,
+                didOpen: () => {
+                    window.toggleSwalInputs = function() {
+                        const type = document.getElementById('swal-contract').value;
+                        document.getElementById('div-swal-salary').style.display = (type === 'fixed_salary' || type === 'fixed_only') ? 'block' : 'none';
+                        document.getElementById('div-swal-rental').style.display = (type === 'chair_rental') ? 'block' : 'none';
+                    };
+                    window.toggleSwalInputs();
+                },
+                showCancelButton: true,
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Salvar Mês',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    return {
+                        contract_type: document.getElementById('swal-contract').value,
+                        salary: document.getElementById('swal-salary').value || 0,
+                        rental: document.getElementById('swal-rental').value || 0
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = `
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+                        <input type="hidden" name="action" value="edit_snapshot">
+                        <input type="hidden" name="snapshot_id" value="${snapId}">
+                        <input type="hidden" name="contract_type" value="${result.value.contract_type}">
+                        <input type="hidden" name="salary" value="${result.value.salary}">
+                        <input type="hidden" name="rental" value="${result.value.rental}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
             });
         }
     </script>
