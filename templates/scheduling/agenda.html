@@ -351,7 +351,7 @@
                                     </button>
                                     
                                     {% if is_owner or is_manager %}
-                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('#del-desktop-{{ appointment.id }} .btn-delete-swal').click();">
+                                    <button class="bs-btn bs-btn-danger" onclick="closeMobileSheet('{{ appointment.id }}'); document.querySelector('.time-slot[data-appointment-id=\'{{ appointment.id }}\'] .btn-delete-swal').click();">
                                         <i class="fas fa-trash"></i> Excluir
                                     </button>
                                     {% endif %}

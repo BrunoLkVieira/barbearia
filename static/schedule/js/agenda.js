@@ -479,7 +479,6 @@ window.openEditAppointmentModal = async function(btn) {
 
     document.getElementById('editAppointmentId').value = id;
     
-    // AQUI ESTAVA O BUG DO ID! Agora ele mira no "editHiddenClientId"
     if (clientId && clientName) {
         document.getElementById('editHiddenClientId').value = clientId;
         document.getElementById('editClientSearchInput').value = clientName;
@@ -639,3 +638,27 @@ function toggleEditPaymentField() {
         paymentSelect.removeAttribute('required');
     }
 }
+
+// ====================== CONTROLE DO BOTTOM SHEET MOBILE ======================
+window.openMobileSheet = function(appId, event) {
+    // Evita abrir se clicar direto nos botões de ação que já existem na versão desktop
+    if (event && event.target.closest('.action-btn')) return;
+
+    const overlay = document.getElementById(`bs-overlay-${appId}`);
+    const sheet = document.getElementById(`bs-sheet-${appId}`);
+    if (overlay && sheet) {
+        overlay.classList.add('active');
+        sheet.classList.add('active');
+        document.body.style.overflow = 'hidden'; // trava scroll do fundo
+    }
+};
+
+window.closeMobileSheet = function(appId) {
+    const overlay = document.getElementById(`bs-overlay-${appId}`);
+    const sheet = document.getElementById(`bs-sheet-${appId}`);
+    if (overlay && sheet) {
+        overlay.classList.remove('active');
+        sheet.classList.remove('active');
+        document.body.style.overflow = ''; // devolve o scroll
+    }
+};
