@@ -11,6 +11,8 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from apps.barbershop.models import Barbershop, Employee 
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import re
 
 class UserRegisterView(View):
     def get(self, request):
@@ -20,54 +22,69 @@ class UserRegisterView(View):
         name = request.POST.get('name')
         last_name = request.POST.get('last_name')
         
-        # O novo sistema de documentos
         document_type = request.POST.get('document_type', 'CPF')
         document_raw = request.POST.get('document', '')
         
         email = request.POST.get('email')
-        phone = request.POST.get('phone')
+        phone_raw = request.POST.get('phone', '')
         birth_date = request.POST.get('birth_date')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
-        # Limpeza do documento (Remove tudo que não é número)
-        import re
-        document_clean = re.sub(r'\D', '', document_raw)
+        # Limpeza absoluta: Remove tudo que não for número
+        document_clean = re.sub(r'\D', '', document_raw) if document_raw else None
+        phone_clean = re.sub(r'\D', '', phone_raw) if phone_raw else None
 
-        # Validações básicas
+        # 1. Validações de Preenchimento Básico
+        if not name or not last_name or not email or not password1:
+            return JsonResponse({'success': False, 'message': 'Preencha todos os campos obrigatórios.'})
+
+        if password1 != password2:
+            return JsonResponse({'success': False, 'message': 'As senhas não coincidem.'})
+            
+        if len(password1) < 6:
+            return JsonResponse({'success': False, 'message': 'A senha deve ter pelo menos 6 caracteres.'})
+
+        # 2. VALIDAÇÕES CRÍTICAS DE TAMANHO (DOCUMENTO E NÚMERO)
+        if document_clean:
+            if document_type == 'CPF' and len(document_clean) != 11:
+                return JsonResponse({'success': False, 'message': 'O CPF inválido. Digite exatamente 11 números.'})
+            elif document_type == 'CNPJ' and len(document_clean) != 14:
+                return JsonResponse({'success': False, 'message': 'O CNPJ inválido. Digite exatamente 14 números.'})
+
+        if phone_clean and len(phone_clean) < 10:
+            return JsonResponse({'success': False, 'message': 'WhatsApp inválido. Certifique-se de incluir o DDD.'})
+
+        # 3. Validações de Colisão no Banco de Dados
         if User.objects.filter(email=email).exists():
-            messages.error(request, "E-mail já registrado.")
-            return redirect('system_plan:landing_page')
+            return JsonResponse({'success': False, 'message': 'E-mail já registrado no sistema.'})
 
         if document_clean and User.objects.filter(document=document_clean).exists():
-            messages.error(request, f"{document_type} já registrado no sistema.")
-            return redirect('system_plan:landing_page')
+            return JsonResponse({'success': False, 'message': f'{document_type} já registrado no sistema.'})
 
         try:
             validate_email(email)
         except ValidationError:
-            messages.error(request, "Digite um e-mail válido.")
-            return redirect('system_plan:landing_page')
+            return JsonResponse({'success': False, 'message': 'Digite um e-mail válido.'})
             
-        # Criação do usuário (Agora salvando os campos novos)
+        # Criação do usuário dono
         user = User(
             name=name,
             last_name=last_name,
             document_type=document_type,
             document=document_clean,
             email=email,
-            phone=phone,
+            phone=phone_raw,  # Salva com a máscara visual formatada no front
             birth_date=birth_date if birth_date else None,
-            user_type='dono' # Garante que quem se cadastra por aqui é dono da barbearia
+            user_type='dono' 
         )
         user.set_password(password1)
         user.save()
 
-        # Envio de verificação de e-mail
+        # Envio de verificação de e-mail (Descomentar em Produção)
         # send_verification_email(request, user)
 
-        messages.success(request, "Conta criada com sucesso! Verifique seu e-mail para ativar.")
-        return redirect('user:login')
+        return JsonResponse({'success': True, 'message': 'Conta criada com sucesso! Redirecionando para o login...'})
 
 
 class UserLoginView(View):
@@ -78,11 +95,9 @@ class UserLoginView(View):
     def post(self, request):
         form = UserLoginForm(request.POST)
         if form.is_valid():
-            # Pegando o email agora em vez do CPF
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             
-            # Autenticando com o Email
             user = authenticate(request, username=email, password=password)
 
             if user is not None:
@@ -104,7 +119,6 @@ class UserLoginView(View):
                         messages.error(request, "Você não está vinculado a nenhuma unidade de barbearia.")
                         return redirect("user:login")
 
-                    # Barra o acesso ANTES de logar e devolve pro Login!
                     if not employee.system_access:
                         messages.error(request, "Seu perfil não possui permissão de acesso ao sistema.")
                         return redirect("user:login")
@@ -115,12 +129,10 @@ class UserLoginView(View):
                         messages.error(request, "A barbearia está desativada.")
                         return redirect("user:login")
 
-                    # Se passou em tudo, loga com sucesso e manda pra agenda dele!
                     login(request, user)
                     return redirect("scheduling:agenda_unit", barbershop_slug=barbershop.slug, unit_slug=unit.slug)
 
                 else:
-                    # Se for cliente comum, vai para o app do cliente (se existir)
                     messages.error(request, "Acesso negado para o painel administrativo.")
                     return redirect("user:login")
 
@@ -203,7 +215,6 @@ def ProfileView(request):
             else:
                 user.set_password(new_password)
                 user.save()
-                # Mantém a sessão do usuário ativa após trocar a senha
                 update_session_auth_hash(request, user)
                 messages.success(request, "Sua senha foi alterada com segurança!")
             

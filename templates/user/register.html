@@ -8,6 +8,8 @@
     <link rel="shortcut icon" href="{% static 'geral/img/logo.ico' %}" type="image/x-icon">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Adicionando SweetAlert2 para os popups nativos no frontend -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     
     <link rel="stylesheet" href="{% static 'geral/css/desktop/style.css' %}">
     <link rel="stylesheet" href="{% static 'user/css/desktop/login.css' %}">
@@ -70,23 +72,23 @@
                 {% endfor %}
             {% endif %}
 
-            <form method="POST" action="{% url 'user:register' %}" autocomplete="off">
+            <form id="registerForm" method="POST" action="{% url 'user:register' %}" autocomplete="off">
                 {% csrf_token %}
                 
                 <div class="form-grid">
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 15px;">
                         <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">Nome <span style="color: #e53e3e;">*</span></label>
-                        <input type="text" name="name" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;" required>
+                        <input type="text" name="name" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 15px;">
                         <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">Sobrenome <span style="color: #e53e3e;">*</span></label>
-                        <input type="text" name="last_name" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;" required>
+                        <input type="text" name="last_name" class="form-control" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;" required>
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">E-mail de Acesso <span style="color: #e53e3e;">*</span></label>
-                    <input type="email" name="email" class="form-control" placeholder="seu@email.com" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;" required>
+                    <input type="email" name="email" class="form-control" placeholder="seu@email.com" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;" required>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
@@ -96,23 +98,25 @@
                             <option value="CPF">CPF</option>
                             <option value="CNPJ">CNPJ</option>
                         </select>
-                        <input type="text" name="document" id="docInput" style="flex: 1; border: none; padding: 12px; outline: none; background: transparent; color: #2c3e50;" placeholder="000.000.000-00">
+                        <input type="text" name="document" id="docInput" style="flex: 1; border: none; padding: 12px; outline: none; background: transparent; color: #2c3e50; box-sizing: border-box;" placeholder="000.000.000-00">
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">WhatsApp Comercial</label>
-                    <input type="tel" name="phone" maxlength="15" class="form-control" placeholder="(00) 00000-0000" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;">
+                    <input type="tel" name="phone" maxlength="15" class="form-control" placeholder="(00) 00000-0000" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;">
                 </div>
 
                 <div class="form-grid">
-                    <div class="form-group" style="margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 15px; position: relative;">
                         <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">Criar Senha <span style="color: #e53e3e;">*</span></label>
-                        <input type="password" name="password1" class="form-control" minlength="6" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;" required>
+                        <input type="password" id="password1" name="password1" class="form-control" minlength="6" style="width: 100%; padding: 12px; padding-right: 40px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;" required>
+                        <i class="fas fa-eye toggle-password" data-target="password1" style="position: absolute; right: 15px; bottom: 14px; cursor: pointer; color: #7f8c8d; font-size: 1.1rem;"></i>
                     </div>
-                    <div class="form-group" style="margin-bottom: 25px;">
+                    <div class="form-group" style="margin-bottom: 25px; position: relative;">
                         <label class="form-label" style="display: block; margin-bottom: 5px; font-weight: 600; color: #2c3e50;">Confirmar Senha <span style="color: #e53e3e;">*</span></label>
-                        <input type="password" name="password2" class="form-control" minlength="6" style="width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa;" required>
+                        <input type="password" id="password2" name="password2" class="form-control" minlength="6" style="width: 100%; padding: 12px; padding-right: 40px; border: 1px solid #dcdde1; border-radius: 8px; background: #f8f9fa; box-sizing: border-box;" required>
+                        <i class="fas fa-eye toggle-password" data-target="password2" style="position: absolute; right: 15px; bottom: 14px; cursor: pointer; color: #7f8c8d; font-size: 1.1rem;"></i>
                     </div>
                 </div>
 
@@ -127,9 +131,32 @@
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Máscara Inteligente de CPF/CNPJ
+            
+            // 1. Alternância de visibilidade da senha (Eye Icon)
+            document.querySelectorAll('.toggle-password').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.remove('fa-eye');
+                        this.classList.add('fa-eye-slash');
+                        this.style.color = '#FF7A00'; // Feedback visual de que está exposto
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('fa-eye-slash');
+                        this.classList.add('fa-eye');
+                        this.style.color = '#7f8c8d';
+                    }
+                });
+            });
+
+            // 2. Máscara Inteligente de CPF/CNPJ
             const docTypeSelect = document.getElementById('docTypeSelect');
             const docInput = document.getElementById('docInput');
 
@@ -162,19 +189,78 @@
                         docInput.setAttribute('maxlength', '18');
                     }
                 });
-
                 docInput.addEventListener('input', applyMask);
             }
-        });
 
-        const phoneInput = document.querySelector('input[name="phone"]');
-        if (phoneInput) {
-            phoneInput.setAttribute('maxlength', '15'); // Trava o tamanho máximo
-            phoneInput.addEventListener('input', function (e) {
-                let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
-                e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+            const phoneInput = document.querySelector('input[name="phone"]');
+            if (phoneInput) {
+                phoneInput.setAttribute('maxlength', '15'); 
+                phoneInput.addEventListener('input', function (e) {
+                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+                    e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                });
+            }
+
+            // 3. Submissão Assíncrona com SweetAlert2 (Sem recarregar a tela em caso de erro)
+            const registerForm = document.getElementById('registerForm');
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault(); 
+                
+                // UX: Muda texto do botão para indicar carregamento
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                submitBtn.disabled = true;
+
+                const formData = new FormData(this);
+
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+
+                    if (!data.success) {
+                        // Exibe Erro, tela permanece igual para o usuário consertar
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Falha no Cadastro',
+                            text: data.message,
+                            confirmButtonColor: '#1a233a',
+                            confirmButtonText: 'Corrigir Dados'
+                        });
+                    } else {
+                        // Sucesso, bloqueia form e joga pro Login
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: data.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        }).then(() => {
+                            window.location.href = "{% url 'user:login' %}"; 
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch Error:', error);
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro de Conexão',
+                        text: 'Ocorreu um erro ao comunicar com o servidor. Tente novamente.',
+                        confirmButtonColor: '#1a233a'
+                    });
+                });
             });
-        }
+        });
     </script>
 </body>
 </html>
