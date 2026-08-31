@@ -327,7 +327,7 @@
 
                     <div class="form-group">
                         <label for="unitWhatsapp" class="form-label"><i class="fab fa-whatsapp"></i> WhatsApp</label>
-                        <input type="text" id="unitWhatsapp" name="whatsapp_number" class="form-control" placeholder="Ex: (21) 99999-8888">
+                        <input type="tel" id="unitWhatsapp" name="whatsapp_number" class="form-control" placeholder="Ex: (21) 99999-8888" maxlength="15">
                     </div>
                     <div class="form-group">
                         <label for="unitInstagram" class="form-label"><i class="fab fa-instagram"></i> Instagram Link</label>
@@ -350,6 +350,22 @@
     <script src="{% static 'barbershop/js/unit.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
+            // ==========================================
+            // MÁSCARA INTELIGENTE DO WHATSAPP (UX/UI)
+            // ==========================================
+            const phoneInput = document.getElementById('unitWhatsapp');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function (e) {
+                    // Remove tudo que não for dígito e formata como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+                    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+                    e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+                });
+            }
+
+            // ==========================================
+            // TOASTS DE NOTIFICAÇÃO DO DJANGO
+            // ==========================================
             const Toast = Swal.mixin({
                 toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true,
                 didOpen: (toast) => { toast.addEventListener('mouseenter', Swal.stopTimer); toast.addEventListener('mouseleave', Swal.resumeTimer); }
@@ -361,6 +377,9 @@
             {% endif %}
         });
 
+        // ==========================================
+        // GESTÃO DE MODAL DO MOBILE (BOTTOM SHEET)
+        // ==========================================
         function openMobileSheet(id, event) {
             if (event && (event.target.closest('button') || event.target.closest('.action-btn'))) return;
             document.getElementById('bs-overlay-' + id).classList.add('active');
