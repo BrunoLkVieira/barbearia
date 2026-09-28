@@ -455,7 +455,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             {% if messages %}
-                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true });
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3500, timerProgressBar: true, heightAuto: false });
                 {% for message in messages %}
                     var iconType = "{{ message.tags }}";
                     if (iconType.includes("error")) iconType = "error";
@@ -478,7 +478,8 @@
                         confirmButtonColor: '#e74c3c',
                         cancelButtonColor: '#a0aec0',
                         confirmButtonText: 'Sim, excluir!',
-                        cancelButtonText: 'Cancelar'
+                        cancelButtonText: 'Cancelar',
+                        heightAuto: false
                     }).then((result) => {
                         if (result.isConfirmed) {
                             form.submit();
