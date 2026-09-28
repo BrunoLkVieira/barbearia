@@ -107,6 +107,10 @@ def SchedulingView(request, barbershop_slug, unit_slug=None):
                 notes_str = request.POST.get('notes', '')
                 payment_type = request.POST.get('payment_type') 
 
+                if not client_id:
+                    messages.error(request, "Atenção: Cliente é um campo obrigatório.")
+                    return redirect(f"{request.path}?date={current_date}")
+
                 if not service_ids or not time_str:
                     messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")
                     return redirect(f"{request.path}?date={current_date}")
@@ -298,6 +302,10 @@ def AgendamentosHistoryView(request, barbershop_slug, unit_slug=None):
             notes_str = request.POST.get("notes", "")
             payment_type = request.POST.get("payment_type")
             service_ids = request.POST.getlist('service_id')
+
+            if not client_id:
+                messages.error(request, "Atenção: Cliente é um campo obrigatório.")
+                return redirect(f"{request.path}?{request.GET.urlencode()}")
 
             if not service_ids or not time_str:
                 messages.error(request, "Atenção: Serviço e horário são campos obrigatórios.")

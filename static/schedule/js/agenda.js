@@ -9,6 +9,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const mobileDateInput = document.getElementById('mobileDateFilter');
+    if (mobileDateInput) {
+        mobileDateInput.addEventListener('change', function() {
+            const baseUrl = window.location.pathname;
+            window.location.href = `${baseUrl}?date=${this.value}`;
+        });
+    }
+
+    const appForm = document.getElementById('appointmentForm');
+    if (appForm) {
+        appForm.addEventListener('submit', function(e) {
+            if (!document.getElementById('hiddenClientId').value) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção',
+                    text: 'Por favor, selecione um cliente para agendar!'
+                });
+            }
+        });
+    }
+
+    const editForm = document.getElementById('editAppointmentForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            if (!document.getElementById('editHiddenClientId').value) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção',
+                    text: 'Por favor, selecione um cliente para salvar as alterações!'
+                });
+            }
+        });
+    }
+
     // Lógica Centralizada para os filtros de Unidade (Desktop e Mobile)
     const unitSelectFilter = document.getElementById('unitSelectFilter');
     const mobileUnitSelectFilter = document.getElementById('mobileUnitSelectFilter');
@@ -257,14 +293,12 @@ function initBarberFilter() {
             const selectedId = this.value;
             sessionStorage.setItem('activeBarberId', selectedId);
             
-            barberCards.forEach(c => c.classList.remove("active"));
             const targetCard = document.querySelector(`.barbers .barber-card[data-barber-id="${selectedId}"]`);
             if (targetCard) {
-                targetCard.classList.add("active");
-                if (titleName) titleName.innerText = targetCard.querySelector(".barber-name").innerText;
+                targetCard.click();
+            } else {
+                applyFilter(selectedId);
             }
-
-            applyFilter(selectedId);
         });
     }
 
@@ -273,14 +307,19 @@ function initBarberFilter() {
     
     if (currentSelect) currentSelect.value = savedBarberId;
     
-    barberCards.forEach(c => c.classList.remove("active"));
     const initialCard = document.querySelector(`.barbers .barber-card[data-barber-id="${savedBarberId}"]`);
     if (initialCard) {
-        initialCard.classList.add("active");
-        if (titleName) titleName.innerText = initialCard.querySelector(".barber-name").innerText;
+        initialCard.click();
+    } else {
+        const allCard = document.querySelector(`.barbers .barber-card[data-barber-id="all"]`);
+        if (allCard) {
+            allCard.click();
+        } else if (barberCards.length > 0) {
+            barberCards[0].click();
+        } else {
+            applyFilter("all");
+        }
     }
-
-    applyFilter(savedBarberId);
 }
 
 // ====================== GERAÇÃO DA MALHA DO BARBEIRO ======================
